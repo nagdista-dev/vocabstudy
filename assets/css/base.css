@@ -12,7 +12,9 @@ html {
 
 body {
   min-height: 100dvh;
-  background: var(--paper);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 55%, var(--paper)) 0, var(--paper) 420px) no-repeat,
+    var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-md);

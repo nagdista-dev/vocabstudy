@@ -137,6 +137,19 @@
 .p-back .p-def { font-size: .95em; }
 .p-back i { font-size: .85em; color: #444; }
 
+/* Download PDF: render the preview exactly like paper (A4 text width = 186mm) */
+.print-doc.pdf-render {
+  width: 186mm; max-width: none; padding: 0; border: 0; border-radius: 0; box-shadow: none; overflow: visible;
+  font-size: 10pt;
+}
+.print-doc.pdf-render .no-print { display: none !important; }
+.print-doc.pdf-render .ar-word { display: inline-block; margin-inline-start: .28em; }
+.print-doc.pdf-render .ar-word:first-child { margin-inline-start: 0; }
+.print-doc.pdf-render.layout-cards .p-head, .print-doc.pdf-render.layout-cards .p-name { display: none; }
+.print-doc.pdf-render .p-cards { margin: 0; grid-auto-rows: 66mm; break-after: page; page-break-after: always; }
+.print-doc.pdf-render .p-cards:last-child { break-after: auto; page-break-after: auto; }
+.print-doc.pdf-render .p-key { break-before: page; page-break-before: always; border-top: 0; }
+
 /* ── Smaller screens: options above, preview below ───────────────── */
 @media (max-width: 960px) {
   .print-page { grid-template-columns: 1fr; }

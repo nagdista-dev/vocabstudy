@@ -27,6 +27,7 @@
     return html`
       <li class="step ${next === step.mode ? "is-next" : ""} ${done ? "is-done" : ""}">
         <span class="step-n" aria-hidden="true">${done ? icon("check", "icon-sm") : i + 1}</span>
+        <span class="step-ico" aria-hidden="true">${icon(step.icon)}</span>
         <span class="step-copy">
           <b>${step.name}</b>
           <span class="hint">${done ? "Done " + (done === VS.todayKey() ? "today" : done) : step.text}</span>
@@ -49,9 +50,12 @@
       return html`
         <div class="page view-enter">
           <header class="day-head">
-            <div>
-              <p class="hint">${day.weekday}</p>
-              <h1>${day.label}</h1>
+            <div class="row day-title">
+              ${VS.ui.ring(s.percent, null, 64)}
+              <div>
+                <p class="hint">${day.weekday}</p>
+                <h1>${day.label}</h1>
+              </div>
             </div>
             <dl class="day-stats">
               <div><dt>Words</dt><dd>${s.total}</dd></div>

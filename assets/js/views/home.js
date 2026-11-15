@@ -73,13 +73,59 @@
 
   function stats(t) {
     const acc = t.today.answered ? Math.round((t.today.right / t.today.answered) * 100) + "%" : "—";
+    const tile = (tone, ico, label, value, small) => html`
+      <div class="stat-tile tone-${tone}">
+        <span class="stat-ico">${icon(ico, "icon-sm")}</span>
+        <span><dt>${label}</dt><dd>${value}${small ? html` <small>${small}</small>` : ""}</dd></span>
+      </div>`;
     return html`
-      <dl class="today-stats">
-        <div><dt>${icon("flame", "icon-sm")} Streak</dt><dd>${VS.plural(t.streak, "day")}</dd></div>
-        <div><dt>${icon("star", "icon-sm")} Mastered</dt><dd>${t.mastered} <small>/ ${t.words}</small></dd></div>
-        <div><dt>${icon("clock", "icon-sm")} Studied today</dt><dd>${VS.formatDuration(t.today.seconds)}</dd></div>
-        <div><dt>${icon("target", "icon-sm")} Answers today</dt><dd>${t.today.answered} <small>· ${acc} right</small></dd></div>
+      <dl class="home-stats">
+        ${tile("mark", "flame", "Streak", VS.plural(t.streak, "day"))}
+        ${tile("good", "star", "Mastered", t.mastered, "/ " + t.words)}
+        ${tile("brand", "clock", "Studied today", VS.formatDuration(t.today.seconds))}
+        ${tile("brand", "target", "Answers today", t.today.answered, "· " + acc + " right")}
       </dl>`;
+  }
+
+  /* Word spotlight: one of your words, big, with its sound and meaning.
+     Opening the app teaches something before you even start. "Next" draws
+     another — learning words first, then the rest. */
+  let spotlightId = null;
+  function pickSpotlight() {
+    const all = VS.allWords();
+    if (!all.length) return null;
+    const learning = all.filter((w) => VS.store.status(w.id) === "learning");
+    const pool = learning.length > 3 && Math.random() < 0.6 ? learning : all;
+    let w = pool[Math.floor(Math.random() * pool.length)];
+    if (w.id === spotlightId && pool.length > 1) w = pool[(pool.indexOf(w) + 1) % pool.length];
+    spotlightId = w.id;
+    return w;
+  }
+  function spotlight() {
+    const w = (spotlightId && VS.byId[spotlightId]) || pickSpotlight();
+    if (!w) return "";
+    return html`
+      <aside class="spotlight" aria-label="Word spotlight">
+        <div class="row spotlight-top">
+          <span class="hint">Word spotlight</span>
+          ${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>
+        </div>
+        <p class="spotlight-word"><span class="mark">${w.word}</span></p>
+        <div class="row">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
+        <p class="spotlight-ar" lang="ar">${w.arabic}</p>
+        <p class="spotlight-ex">“${VS.ui.example(w)}”</p>
+        <div class="row spotlight-foot">
+          <a class="btn btn-quiet" href="${VS.dayHref(w.day)}">${VS.day(w.day).label}</a>
+          <button class="btn" type="button" data-action="spotlight-next">Next word ${icon("arrow-right", "icon-sm")}</button>
+        </div>
+      </aside>`;
+  }
+
+  /* The set's CEFR spread as small badges: A2 ×3, B1 ×12 … */
+  function levelMix(day) {
+    const n = {};
+    day.words.forEach((w) => { n[w.level] = (n[w.level] || 0) + 1; });
+    return Object.keys(n).sort().map((l) => html`<span class="badge ${VS.levelGroup(l)}">${l} <small>${n[l]}</small></span>`);
   }
 
   function dayCard(day) {
@@ -89,12 +135,14 @@
     return html`
       <a class="day-card card" href="${VS.dayHref(day.iso)}">
         <span class="day-card-top">
-          <span>
+          ${VS.ui.ring(s.percent, null, 48)}
+          <span class="day-card-title">
             <b class="day-card-date">${day.label}</b>
             <span class="hint">${day.weekday} · ${VS.plural(s.total, "word")}</span>
           </span>
           ${s.due ? html`<span class="badge is-due">${s.due} due</span>` : ""}
         </span>
+        <span class="day-levels">${levelMix(day)}</span>
         <span class="mix-bar" aria-hidden="true">
           <i class="is-mastered" style="width:${seg(s.mastered)}"></i>
           <i class="is-learning" style="width:${seg(s.learning)}"></i>
@@ -193,6 +241,14 @@
 
   VS.views.home = {
     title: () => "VocabStudy",
+
+    actions: {
+      "spotlight-next"() {
+        pickSpotlight();
+        const old = VS.$(".spotlight");
+        if (old) { old.outerHTML = String(spotlight()); VS.speech.auto(VS.byId[spotlightId].word); }
+      },
+    },
     crumbs: () => [],
 
     render() {
@@ -201,8 +257,9 @@
         <div class="page view-enter">
           <section class="today card">
             <div class="today-left">${todayPanel(t)}${goal(t)}</div>
-            ${stats(t)}
+            ${spotlight()}
           </section>
+          ${stats(t)}
 
           ${backupNudge(t)}
           ${tricky()}

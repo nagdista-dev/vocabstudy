@@ -7,11 +7,12 @@
      you always get the newest days; offline you get the last saved ones.
    • Styles, scripts, icons: cache first (their URLs carry ?v=version,
      so a new build means new URLs and a fresh download).
-   • Google Fonts: saved the first time they load, then served offline.
+   • Google Fonts and the PDF maker (cdnjs): saved the first time they
+     load, then served offline.
    A new build changes CACHE, and the old cache is deleted on activate.
    ------------------------------------------------------------------ */
 const CACHE = "vocabstudy-{{VERSION}}";
-const FONTS = "vocabstudy-fonts";
+const FONTS = "vocabstudy-runtime";     // Google Fonts + the PDF maker, saved on first use
 const PRECACHE = {{PRECACHE}};
 
 self.addEventListener("install", (event) => {
@@ -31,7 +32,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
+  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com" || url.hostname === "cdnjs.cloudflare.com") {
     event.respondWith(staleWhileRevalidate(req, FONTS));
     return;
   }

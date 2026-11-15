@@ -44,6 +44,19 @@
     },
 
     /** One expandable row in a word list (day page and review page). */
+    /** A small progress ring (SVG). `pct` 0–100; `label` sits in the middle. */
+    ring(pct, label, size) {
+      const r = 16, c = 2 * Math.PI * r;
+      return html`
+        <span class="ring" style="--size:${size || 56}px" role="img" aria-label="${pct}% mastered">
+          <svg viewBox="0 0 40 40" aria-hidden="true">
+            <circle class="ring-bg" cx="20" cy="20" r="${r}"></circle>
+            <circle class="ring-fill" cx="20" cy="20" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - pct / 100)).toFixed(1)}"></circle>
+          </svg>
+          <b>${label == null ? pct + "%" : label}</b>
+        </span>`;
+    },
+
     /** Your note for a word, editable in place. Saved when you leave the box. */
     noteBox(w) {
       const note = VS.store.note(w.id);

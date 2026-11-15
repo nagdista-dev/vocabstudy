@@ -260,7 +260,7 @@
     }[layout];
     return html`
       <aside class="print-controls card no-print" aria-label="Print options">
-        <h1>Print or save as PDF</h1>
+        <h1>Download PDF or print</h1>
 
         <fieldset><legend>Words</legend>
           ${seg("source", [["days", "Days"], ["due", "Due today"], ["tricky", "Tricky"], ["learning", "Learning"], ["all", "All"]])}
@@ -295,10 +295,91 @@
         </fieldset>
 
         <div class="print-go">
-          <button class="btn btn-primary btn-lg btn-block" type="button" data-action="print-now" ${words.length ? "" : VS.raw("disabled")}>${icon("print", "icon-sm")} Print / Save as PDF</button>
-          <p class="hint">${VS.plural(words.length, "word")}. In the print window choose <b>Save as PDF</b> as the printer${layout === "cards" ? ", double-sided, flip on long edge" : ""}.</p>
+          <button class="btn btn-primary btn-lg btn-block" type="button" data-action="pdf-download" ${words.length ? "" : VS.raw("disabled")}>${icon("arrow-right", "icon-sm")} Download PDF</button>
+          <button class="btn btn-block" type="button" data-action="print-now" ${words.length ? "" : VS.raw("disabled")}>${icon("print", "icon-sm")} Print</button>
+          <p class="hint">${VS.plural(words.length, "word")} · A4${layout === "cards" ? " · print double-sided, flip on long edge" : ""}.</p>
         </div>
       </aside>`;
+  }
+
+  /* ── Download as a PDF file (no print dialog) ─────────────────────
+     html2pdf.js (html2canvas + jsPDF, MIT) draws the paper preview into an
+     A4 PDF exactly as you see it — Arabic included. It loads only the
+     first time you press the button; the service worker then keeps it
+     for offline use. Page breaks follow the same rules as printing. */
+  const PDF_LIB = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+  let pdfLib = null;
+  function loadPdfLib() {
+    if (window.html2pdf) return Promise.resolve(window.html2pdf);
+    if (!pdfLib) {
+      pdfLib = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = PDF_LIB;
+        s.crossOrigin = "anonymous";
+        s.onload = () => resolve(window.html2pdf);
+        s.onerror = () => { pdfLib = null; reject(new Error("offline")); };
+        document.head.appendChild(s);
+      });
+    }
+    return pdfLib;
+  }
+
+  function fileName(words) {
+    const layout = LAYOUTS.find((l) => l[0] === opts.layout)[1].toLowerCase().replace(/\W+/g, "-");
+    const src = opts.source === "days" && opts.days.size === 1 ? [...opts.days][0] : opts.source;
+    return `vocabstudy-${layout}-${src}-${words.length}w.pdf`;
+  }
+
+  /**
+   * html2canvas loses the spaces between Arabic words. Before drawing, put
+   * each Arabic word in its own inline box with a fixed gap: the letters
+   * inside a word still join correctly, and the gaps survive. The preview
+   * is re-rendered afterwards, so this never shows on screen.
+   */
+  function boxArabicWords(root) {
+    VS.$$('[lang="ar"]', root).forEach((el) => {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode);
+      nodes.forEach((node) => {
+        const frag = document.createDocumentFragment();
+        node.nodeValue.trim().split(/\s+/).forEach((word) => {
+          const box = document.createElement("span");
+          box.className = "ar-word";
+          box.textContent = word;
+          frag.appendChild(box);
+        });
+        node.replaceWith(frag);
+      });
+    });
+  }
+
+  async function downloadPdf(button) {
+    const doc = VS.$(".print-doc");
+    if (!doc) return;
+    button.disabled = true;
+    button.textContent = "Preparing PDF…";
+    try {
+      const html2pdf = await loadPdfLib();
+      await document.fonts.ready;
+      doc.classList.add("pdf-render");                 // paper styles, A4 width, no shadow
+      boxArabicWords(doc);
+      await html2pdf().set({
+        margin: [12, 12, 12, 12],
+        filename: fileName(pickWords()),
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "li", ".p-card", ".p-match", ".p-bank", ".p-head", ".p-name"] },
+      }).from(doc).save();
+      VS.toast("PDF saved to your downloads.");
+    } catch (e) {
+      VS.toast(e.message === "offline"
+        ? "Couldn't load the PDF maker — check your connection, or use Print → Save as PDF."
+        : "Couldn't make the PDF. Try Print → Save as PDF.");
+    } finally {
+      VS.app.render();                                 // restore the untouched preview and button
+    }
   }
 
   /** Checkboxes and selects change options directly — one listener for the whole app. */
@@ -353,6 +434,7 @@
         VS.app.render();
       },
       "print-now"() { window.print(); },
+      "pdf-download"(el) { downloadPdf(el); },
     },
   };
 })();

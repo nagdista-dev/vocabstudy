@@ -25,6 +25,7 @@
   margin: var(--s-7) 0 var(--s-4);
 }
 .section-title h2 { font-size: var(--text-lg); }
+@media (max-width: 560px) { .section-title { flex-wrap: wrap; } .section-title > .row { width: 100%; justify-content: space-between; } }
 
 /* ── App bar ───────────────────────────────────────────────────── */
 .app-bar {
@@ -196,6 +197,15 @@
   color: inherit;
   -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
+
+/* Progress ring (VS.ui.ring) */
+.ring { position: relative; display: inline-grid; place-items: center; flex: none; width: var(--size); height: var(--size); }
+.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 4.5; }
+.ring-bg { stroke: var(--surface-2); }
+.ring-fill { stroke: var(--good); stroke-linecap: round; transition: stroke-dashoffset var(--slow) var(--ease); animation: ring-in 900ms var(--ease) both; }
+.ring b { font-size: calc(var(--size) * .24); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+@keyframes ring-in { from { stroke-dashoffset: 100.5; } }
 
 /* Your note on a word (VS.ui.noteBox) */
 .note { display: grid; gap: var(--s-2); }
