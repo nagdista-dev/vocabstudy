@@ -38,9 +38,12 @@ draw from every day.
 | `core/store.js` | `VS.store` — progress, spaced repetition, settings, backup |
 | `core/speech.js` | `VS.speech.say()` — browser voices |
 | `core/practice.js` | `VS.scope`, `VS.sessionWords`, `VS.distractors`, `VS.findInExample` |
+| `core/sfx.js` | `VS.sfx.play()` — synthesised sound effects (Web Audio) |
 | `core/study-time.js` | active study time + break reminder |
-| `views/shared.js` | `VS.ui.*` — word row, activity header, results, celebrate |
-| `views/*.js` | one screen each: home, day, cards, recall, quiz, spell, match |
+| `core/importer.js` | `VS.importer` — parse pasted tables, build data files, dictionary fill |
+| `views/shared.js` | `VS.ui.*` — word row, note box, activity header, results, celebrate |
+| `views/word-browser.js` | `VS.WordBrowser` — search/filter/sort list used by day and library |
+| `views/*.js` | one screen each: home, day, cards, recall, quiz, spell, match, library, stats, print, import |
 | `app.js` | router, app bar, settings, click + keyboard handling, boot |
 
 ## Routes
@@ -53,6 +56,10 @@ draw from every day.
 | `#/day/ISO/cards\|quiz\|spell\|match\|recall` | activity | that day (recall: its due words) |
 | `#/all/cards\|quiz\|spell\|match` | activity | every word |
 | `#/tricky/cards\|quiz\|spell\|match` | activity | words missed 3+ times |
+| `#/words` | library | every word |
+| `#/stats` | progress charts | history |
+| `#/add` | add words (importer) | — |
+| `#/print/day/ISO[/layout]` | print / PDF (also `/print/recall`, `/tricky`, `/all`) | chosen in the screen |
 
 ## A view
 
@@ -83,6 +90,22 @@ Each word has a **box** 0–6 and a **due** date.
 Waits per box: 1, 3, 7, 14, 30, 60 days. Box 4+ = **mastered**.
 Tricky = 3+ wrong answers, more wrong than half the right ones, not mastered.
 
+## Installable app (PWA)
+
+`manifest.webmanifest` names the app and its icons (`tools/build_icons.py`
+renders them from `assets/favicon.svg`). `tools/build.py` writes `sw.js` from
+`tools/templates/sw.js` with the exact list of files to keep offline. Pages
+and `data/words.js` load network-first (new days arrive when online);
+versioned styles and scripts load cache-first. The service worker only runs
+over http(s); opened as a file the app works without it.
+
+## Words added in the app
+
+`VS.store.saveUserWords()` keeps them in localStorage (`userDays`) and
+`VS.addDay(iso, words, { custom: true })` merges them at start-up. A day that
+exists only in the browser has no `days/*.html` page, so `VS.dayHref()` opens
+it inside `index.html`. "Download .js" turns it into a normal data file.
+
 ## Tools
 
 | Command | Does |
@@ -90,6 +113,8 @@ Tricky = 3+ wrong answers, more wrong than half the right ones, not mastered.
 | `python3 tools/new_day.py [ISO]` | create a day file with an example row |
 | `python3 tools/build.py` | check data → write `data/words.js`, `index.html`, `days/*.html` |
 | `python3 tools/check.py` | data errors/warnings + missing files + duplicated helpers |
+| `python3 tools/build_icons.py` | app icons from the brand mark |
+| `python3 tools/screenshots.py [names]` | phone / tablet / desktop screenshots of every screen |
 
 ## Conventions
 

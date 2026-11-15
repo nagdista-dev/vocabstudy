@@ -10,7 +10,7 @@
    • Google Fonts: saved the first time they load, then served offline.
    A new build changes CACHE, and the old cache is deleted on activate.
    ------------------------------------------------------------------ */
-const CACHE = "vocabstudy-f0e58ee9cb";
+const CACHE = "vocabstudy-77a50db375";
 const FONTS = "vocabstudy-fonts";
 const PRECACHE = [
   "index.html",
@@ -26,40 +26,42 @@ const PRECACHE = [
   "days/2026-10-29.html",
   "days/2026-11-01.html",
   "days/2026-11-02.html",
-  "assets/css/tokens.css?v=6af9cd34",
+  "assets/css/tokens.css?v=6af9d053",
   "assets/css/base.css?v=6af9cd34",
-  "assets/css/components.css?v=6af9cd72",
+  "assets/css/components.css?v=6af9d053",
   "assets/css/views/home.css?v=6af9cd72",
   "assets/css/views/day.css?v=6af9cd34",
   "assets/css/views/activities.css?v=6af9cd34",
   "assets/css/views/stats.css?v=6af9cc79",
   "assets/css/views/print.css?v=6af9cfea",
   "assets/css/views/import.css?v=6af9cfa1",
+  "assets/css/views/data.css?v=6af9d089",
   "assets/css/motion.css?v=6af9c959",
   "assets/js/core/vs.js?v=6af9cf43",
-  "data/words.js?v=6af9cfea",
+  "data/words.js?v=6af9d090",
   "assets/js/core/word-forms.js?v=6af9cb63",
   "assets/js/core/icons.js?v=6af9cfa1",
-  "assets/js/core/store.js?v=6af9cf43",
-  "assets/js/core/speech.js?v=6af9c648",
+  "assets/js/core/store.js?v=6af9d089",
+  "assets/js/core/speech.js?v=6af9d053",
   "assets/js/core/sfx.js?v=6af9cdce",
   "assets/js/core/practice.js?v=6af9cb7e",
   "assets/js/core/study-time.js?v=6af9cdce",
   "assets/js/core/importer.js?v=6af9cf68",
   "assets/js/views/shared.js?v=6af9cdce",
   "assets/js/views/word-browser.js?v=6af9cbf8",
-  "assets/js/views/home.js?v=6af9cfa1",
+  "assets/js/views/home.js?v=6af9d089",
   "assets/js/views/day.js?v=6af9cc79",
-  "assets/js/views/cards.js?v=6af9cdce",
-  "assets/js/views/recall.js?v=6af9cdce",
-  "assets/js/views/quiz.js?v=6af9cf43",
+  "assets/js/views/cards.js?v=6af9d053",
+  "assets/js/views/recall.js?v=6af9d053",
+  "assets/js/views/quiz.js?v=6af9d053",
   "assets/js/views/spell.js?v=6af9cdce",
-  "assets/js/views/match.js?v=6af9cdce",
+  "assets/js/views/match.js?v=6af9d053",
   "assets/js/views/library.js?v=6af9cfa1",
   "assets/js/views/stats.js?v=6af9cc8e",
   "assets/js/views/print.js?v=6af9cfea",
   "assets/js/views/import.js?v=6af9cf89",
-  "assets/js/app.js?v=6af9cfb8"
+  "assets/js/views/data.js?v=6af9d089",
+  "assets/js/app.js?v=6af9d08f"
 ];
 
 self.addEventListener("install", (event) => {

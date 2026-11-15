@@ -241,6 +241,12 @@ kbd {
   border: 1px solid var(--line-strong); border-bottom-width: 2px; background: var(--surface);
   font: 600 .75rem/1.5 var(--font-body); color: var(--ink-2);
 }
+.sheet-group { font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; letter-spacing: .02em;
+  padding-top: var(--s-3); border-top: 1px solid var(--line); margin-bottom: calc(var(--s-2) * -1); }
+.sheet-body > .sheet-group:first-child { border-top: 0; padding-top: 0; }
+.swatches button { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.sw-blue { background: #2b48d6; } .sw-teal { background: #0b7a75; } .sw-violet { background: #6a3fc4; } .sw-rose { background: #b8325f; }
 .danger-link { color: var(--bad); font-weight: 600; font-size: var(--text-sm); justify-self: start; padding: var(--s-2) 0; }
 
 /* ── Entrance: one quiet fade when a screen changes ────────────── */

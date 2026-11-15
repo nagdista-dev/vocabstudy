@@ -5,7 +5,11 @@
 into long-term memory. Made for Arabic speakers (B1–C1), built to be used for
 hours a day, on desktop and phone.
 
-No install, no account, no server: double-click `index.html`.
+**Use it online and install it on your phone:**
+**https://nagdista-dev.github.io/vocabstudy/** — then *Install app* /
+*Add to Home Screen*. It works offline after the first visit.
+
+Or download the repo and double-click `index.html` — no server needed.
 
 ![Home: words due for recall, daily goal and progress](docs/screenshot-home.png)
 
@@ -34,10 +38,18 @@ No install, no account, no server: double-click `index.html`.
 - Full keyboard control; swipe cards on phones.
 
 **Everything else**
+- **Add words in the app**: paste a table from Excel, Google Sheets or
+  Notion; columns are recognised automatically, every row is checked, empty
+  definitions and IPA can be filled from a free dictionary. Save on the device
+  or download the data file for the project.
 - **Library**: every word from every day — search English, Arabic or your
   notes; sort by weakest.
 - **Progress**: study time, answers, mastered words, memory strength.
-- **Print or save as PDF**: word sheets, fold-over self-tests, cut-out cards.
+- **Print or save as PDF** — 7 layouts: word sheet, compact list, fold-over
+  self-test, fill-the-gap worksheet, matching worksheet, write-your-own-sentence,
+  double-sided cut-out cards. Choose one or many days, due or tricky words,
+  filters, order, fields and answer keys.
+- **Installable app (PWA)** that works offline.
 - Back up and restore your progress as a file.
 
 <img src="docs/screenshot-cards-phone.png" alt="A study card on a phone" width="260">
@@ -52,6 +64,10 @@ No install, no account, no server: double-click `index.html`.
 Keyboard: `Space` flip / reveal · `1`–`4` answer · `Enter` next · `/` search.
 
 ## Add your own words
+
+**In the app:** press **+** (Add words), paste your table, check, save.
+
+**In the project** (permanent, part of the repo):
 
 ```bash
 python3 tools/new_day.py 2026-11-16    # creates data/days/2026-11-16.js
@@ -80,7 +96,8 @@ assets/css/               tokens → base → components → screens → motion
 assets/js/core/           data, progress (SRS), speech, sounds, practice rules
 assets/js/views/          one file per screen
 assets/js/app.js          routing, app bar, settings, keyboard
-tools/                    build · check · new_day · screenshots · page template
+tools/                    build · check · new_day · build_icons · screenshots · templates
+manifest.webmanifest, sw.js   installable app + offline cache (sw.js is generated)
 docs/                     architecture, design, learning guide
 ```
 

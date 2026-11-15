@@ -108,8 +108,10 @@
     start(p, only) {
       const scope = VS.scope(p);
       const words = only || (scope ? VS.sessionWords(scope.words, VS.roundSize()) : []);
+      const chosen = TYPES.filter((t) => (VS.store.settings().quizTypes || TYPES).includes(t));
+      if (!chosen.length) chosen.push("meaning");
       s = { scope, index: 0, picked: null, right: 0, wrong: [], combo: 0,
-            questions: words.map((w, i) => makeQuestion(w, TYPES[i % TYPES.length])) };
+            questions: words.map((w, i) => makeQuestion(w, chosen[i % chosen.length])) };
       s.questions = VS.shuffle(s.questions);
     },
 
@@ -148,7 +150,7 @@
         if (ok) { s.right++; s.combo++; } else { s.wrong.push(q.w); s.combo = 0; }
         VS.sfx.play(ok ? "right" : "wrong");
         VS.app.render();
-        if (ok) VS.speech.say(q.w.word);
+        if (ok) VS.speech.auto(q.w.word);
       },
       next() { s.index++; s.picked = null; VS.app.render(); window.scrollTo({ top: 0 }); },
       restart() { VS.views.quiz.start(VS.app.params()); VS.app.render(); },

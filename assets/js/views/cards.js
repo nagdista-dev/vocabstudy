@@ -10,7 +10,28 @@
   
   let s = null;   // session: { scope, queue, index, flipped, known, learning, again }
 
+  /** Arabic-first front (Settings → Study cards show first). */
+  function arabicFront(w) {
+    return html`
+      <div class="flash-face flash-front" aria-hidden="${s.flipped}">
+        <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span></div>
+        <p class="flash-ar" lang="ar">${w.arabic}</p>
+        ${w.definition ? html`<p class="flash-def">${w.definition}</p>` : ""}
+        <p class="flash-tip">${icon("flip", "icon-sm")} Say the English word, then tap to check</p>
+      </div>
+      <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
+        <p class="flash-word"><span class="mark">${w.word}</span></p>
+        ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
+        <div class="row flash-sound">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
+        <div class="flash-example"><p>“${VS.ui.example(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}</div>
+      </div>`;
+  }
+
   function card(w) {
+    if (VS.store.settings().cardFront === "ar") {
+      return html`<div class="flash ${s.flipped ? "is-flipped" : ""}" data-action="flip" role="button" tabindex="0"
+        aria-label="${s.flipped ? "Card back" : "Card front. Press space to see the word"}">${arabicFront(w)}</div>`;
+    }
     return html`
       <div class="flash ${s.flipped ? "is-flipped" : ""}" data-action="flip" role="button" tabindex="0"
            aria-label="${s.flipped ? "Card back" : "Card front. Press space to see the meaning"}">
@@ -117,7 +138,7 @@
     mount() {
       const w = s && s.queue[s.index];
       if (!w || s.index >= s.queue.length) return;
-      if (!s.flipped) VS.speech.say(w.word);
+      if (!s.flipped && VS.store.settings().cardFront !== "ar") VS.speech.auto(w.word);
       const card = VS.$(".flash");
       card.classList.add("enter");
       swipe(card);
@@ -129,6 +150,7 @@
         if (s.suppressFlip) { s.suppressFlip = false; return; }   // the swipe already answered
         s.flipped = !s.flipped;
         VS.sfx.play("flip");
+        if (s.flipped && VS.store.settings().cardFront === "ar") VS.speech.auto(s.queue[s.index].word);
         VS.$(".flash").classList.toggle("is-flipped", s.flipped);
         VS.$$(".flash-face").forEach((f) => f.setAttribute("aria-hidden", f.classList.contains("flash-back") ? !s.flipped : s.flipped));
       },

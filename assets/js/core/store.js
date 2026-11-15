@@ -34,8 +34,11 @@
     notes: {},                                     // id → your own note / memory trick
     history: {},                                   // "2026-11-15" → [answered, right, seconds, newWords, mastered]
     userDays: {},                                  // sets added in the app: "2026-11-16" → [word objects]
+    lastBackup: "",                                // date of the last full backup download
     best: {},                                      // "match:2026-11-02" → best time in ms
-    settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true },
+    settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
+                accent: "blue", voice: "us", autoplay: true, cardFront: "en",
+                quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 
   function load() {
@@ -246,7 +249,49 @@
     settings: () => state.settings,
     setSetting(name, value) { state.settings[name] = value; save(); },
 
-    /** Everything, as a JSON string — for Settings → Back up progress. */
+    notesAll: () => state.notes,
+    lastBackup: () => state.lastBackup,
+    markBackup() { state.lastBackup = VS.todayKey(); save(); },
+
+    /**
+     * Merge a backup into this device: for every word keep the stronger memory
+     * (higher box; on a tie the later due date), add up nothing twice, keep both
+     * devices' notes and added words, and the longer history row per day.
+     */
+    mergeJSON(text) {
+      let data;
+      try { data = JSON.parse(text); } catch (e) { return false; }
+      if (!data || data.app !== "vocabstudy" || typeof data.words !== "object") return false;
+      const unpack = (p) => (Array.isArray(p) ? p : [p.box || 0, p.due || "", p.right || 0, p.wrong || 0]);
+      Object.entries(data.words).forEach(([id, p]) => {
+        const theirs = unpack(p);
+        const ours = state.words[id] ? unpack(state.words[id]) : null;
+        if (!ours || theirs[0] > ours[0] || (theirs[0] === ours[0] && theirs[1] > ours[1])) {
+          state.words[id] = [theirs[0], theirs[1], Math.max(theirs[2], ours ? ours[2] : 0), Math.max(theirs[3], ours ? ours[3] : 0)];
+        }
+      });
+      Object.entries(data.notes || {}).forEach(([id, n]) => {
+        if (!state.notes[id]) state.notes[id] = n;
+        else if (state.notes[id] !== n && !state.notes[id].includes(n)) state.notes[id] += " · " + n;
+      });
+      Object.entries(data.userDays || {}).forEach(([iso, words]) => {
+        const list = state.userDays[iso] || [];
+        const seen = new Set(list.map((w) => (w.word + "|" + (w.sense || "")).toLowerCase()));
+        words.forEach((w) => { if (!seen.has((w.word + "|" + (w.sense || "")).toLowerCase())) list.push(w); });
+        state.userDays[iso] = list;
+      });
+      Object.entries(data.history || {}).forEach(([day, row]) => {
+        const mine = state.history[day];
+        if (!mine || (row[0] || 0) > (mine[0] || 0)) state.history[day] = row;
+      });
+      Object.entries(data.done || {}).forEach(([k, d]) => { if (!state.done[k] || d > state.done[k]) state.done[k] = d; });
+      Object.entries(data.best || {}).forEach(([k, ms]) => { if (!state.best[k] || ms < state.best[k]) state.best[k] = ms; });
+      if (data.streak && data.streak.last > state.streak.last) state.streak = data.streak;
+      save();
+      return true;
+    },
+
+    /** Everything, as a JSON string — for Backup & export. */
     exportJSON: () => JSON.stringify(Object.assign({ app: "vocabstudy", version: 2, exported: VS.todayKey() }, state)),
 
     /** Replace progress with a backup. Returns false if the file isn't one. */

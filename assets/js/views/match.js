@@ -95,7 +95,7 @@
         const side = el.dataset.side;
         if (!s.start) { s.start = Date.now(); s.timer = setInterval(tick, 250); }
         s.pick[side] = s.pick[side] === el.dataset.id ? null : el.dataset.id;
-        if (side === "en" && s.pick.en) VS.speech.say(VS.byId[s.pick.en].word);
+        if (side === "en" && s.pick.en) VS.speech.auto(VS.byId[s.pick.en].word);
 
         if (s.pick.en && s.pick.ar) {
           const word = VS.byId[s.pick.en];

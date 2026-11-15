@@ -7,12 +7,17 @@
   const synth = window.speechSynthesis;
   let voice = null;
 
+  let voiceFor = "";
+
+  /** The best voice for the chosen accent (Settings → Accent): natural voices first. */
   function pickVoice() {
     if (!synth) return null;
+    const want = VS.store.settings().voice === "uk" ? /en[-_]GB/i : /en[-_]US/i;
     const voices = synth.getVoices().filter((v) => /^en[-_]/i.test(v.lang));
-    // Prefer natural-sounding US/UK voices when the system has them.
+    voiceFor = VS.store.settings().voice;
     return (
-      voices.find((v) => /natural|neural|google/i.test(v.name) && /en[-_](US|GB)/i.test(v.lang)) ||
+      voices.find((v) => /natural|neural|google|premium|enhanced/i.test(v.name) && want.test(v.lang)) ||
+      voices.find((v) => want.test(v.lang)) ||
       voices.find((v) => /en[-_](US|GB)/i.test(v.lang)) ||
       voices[0] || null
     );
@@ -27,7 +32,7 @@
       if (!synth || !VS.store.settings().sound || !text) return;
       synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      voice = voice || pickVoice();
+      if (!voice || voiceFor !== VS.store.settings().voice) voice = pickVoice();
       if (voice) u.voice = voice;
       u.lang = voice ? voice.lang : "en-US";
       u.rate = rate || VS.store.settings().rate;
@@ -39,5 +44,8 @@
     },
 
     stop() { if (synth) synth.cancel(); },
+
+    /** Say a new word on its own — only if "Say new words automatically" is on. */
+    auto(text) { if (VS.store.settings().autoplay) this.say(text); },
   };
 })();

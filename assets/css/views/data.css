@@ -1,0 +1,22 @@
+/* views/data.css — Backup & export. Three cards: icon | text | actions. */
+
+.data-page { display: grid; gap: var(--s-4); }
+.data-card {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: var(--s-4);
+  padding: var(--s-5);
+}
+.data-card h2 { font-size: var(--text-lg); margin-bottom: var(--s-1); }
+.data-card .seg { width: fit-content; max-width: 100%; margin-top: var(--s-3); }
+.data-card .hint { margin-top: var(--s-2); }
+.data-ico {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-md);
+  background: var(--brand-soft); color: var(--brand); align-self: start;
+}
+.data-foot a { color: var(--brand); }
+.backup-strip { margin-top: var(--s-5); background: var(--surface); border-color: var(--line); }
+
+@media (max-width: 760px) {
+  .data-card { grid-template-columns: 44px minmax(0, 1fr); }
+  .data-card > .row { grid-column: 1 / -1; }
+  .data-card > .row .btn { flex: 1 1 auto; }
+}

@@ -130,7 +130,7 @@
       if (input && matchMedia("(hover: hover)").matches) input.focus();
       const form = VS.$("[data-form='reveal']");
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); VS.views.recall.actions.reveal(); });
-      if (s && s.revealed && s.queue[s.index]) VS.speech.say(s.queue[s.index].word);
+      if (s && s.revealed && s.queue[s.index]) VS.speech.auto(s.queue[s.index].word);
     },
 
     actions: {

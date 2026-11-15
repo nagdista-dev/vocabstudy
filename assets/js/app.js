@@ -7,6 +7,7 @@
      #/tricky/quiz           an activity over the words you keep missing
      #/words                 the library: every word, searchable
      #/add                   add words: paste a table, preview, save
+     #/data                  backup, restore (merge/replace), export words
      #/stats                 progress charts
      #/print/day/ISO         print or save as PDF (also /print/recall, /tricky, /all)
      #/day/2026-11-02        one day: learning path + word list
@@ -46,6 +47,7 @@
     const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     if (parts[0] === "words") return { view: "library" };
     if (parts[0] === "add") return { view: "import" };
+    if (parts[0] === "data") return { view: "data" };
     if (parts[0] === "stats") return { view: "stats" };
     if (parts[0] === "print") {
       // An optional last part picks the layout: #/print/day/2026-11-02/test
@@ -132,7 +134,11 @@
   function applySettings() {
     const st = VS.store.settings();
     document.documentElement.style.setProperty("--text-scale", st.textScale);
+    document.documentElement.dataset.accent = st.accent || "blue";
   }
+
+  const QUIZ_TYPES = [["meaning", "Definition → word"], ["arabic", "Arabic → English"], ["english", "English → Arabic"],
+                      ["gap", "Fill the gap"], ["listen", "Listening"]];
 
   function settingsMarkup() {
     const st = VS.store.settings();
@@ -142,13 +148,30 @@
       <div class="sheet-head"><h2 id="settingsTitle">Settings</h2>
         <button class="icon-btn" type="button" data-action="close-settings" aria-label="Close">${icon("x")}</button></div>
       <div class="sheet-body">
+        <h3 class="sheet-group">Sound</h3>
         <div class="setting"><b>Pronunciation</b><div class="seg">${choice("sound", true, "On")}${choice("sound", false, "Off")}</div></div>
-        <div class="setting"><b>Sound effects</b><div class="seg">${choice("effects", true, "On")}${choice("effects", false, "Off")}</div></div>
+        <div class="setting"><b>Accent</b><div class="seg">${choice("voice", "us", "American")}${choice("voice", "uk", "British")}</div></div>
+        <div class="setting"><b>Say new words automatically</b><div class="seg">${choice("autoplay", true, "On")}${choice("autoplay", false, "Off")}</div></div>
         <div class="setting"><b>Speaking speed</b><div class="seg">${choice("rate", 0.7, "Slow")}${choice("rate", 0.9, "Normal")}${choice("rate", 1.1, "Fast")}</div></div>
+        <div class="setting"><b>Sound effects</b><div class="seg">${choice("effects", true, "On")}${choice("effects", false, "Off")}</div></div>
+
+        <h3 class="sheet-group">Study</h3>
+        <div class="setting"><b>Study cards show first</b><div class="seg">${choice("cardFront", "en", "English word")}${choice("cardFront", "ar", "Arabic meaning")}</div>
+          <span class="hint">Arabic first makes you produce the English word — harder, and it sticks better.</span></div>
+        <div class="setting"><b>Quiz questions</b>
+          <div class="checks">${QUIZ_TYPES.map(([v, l]) => html`<label class="check"><input type="checkbox" data-quiz-type value="${v}" ${(st.quizTypes || []).includes(v) ? VS.raw("checked") : ""}><span>${l}</span></label>`)}</div></div>
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
         <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day, across all activities.</span></div>
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
+
+        <h3 class="sheet-group">Look</h3>
+        <div class="setting"><b>Accent colour</b><div class="seg swatches">
+          ${[["blue", "Ink blue"], ["teal", "Teal"], ["violet", "Violet"], ["rose", "Rose"]].map(([v, l]) =>
+            html`<button type="button" data-action="setting" data-name="accent" data-value="${v}" aria-pressed="${st.accent === v}"><i class="swatch sw-${v}"></i>${l}</button>`)}
+        </div></div>
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
+
+        <h3 class="sheet-group">App &amp; data</h3>
         ${VS.speech.supported ? "" : html`<p class="hint">This browser has no built-in voices, so words can't be read aloud.</p>`}
         <div class="setting"><b>Install as an app</b>${installMarkup()}</div>
         <details class="setting shortcuts">
@@ -161,12 +184,9 @@
             <div><dt><kbd>/</kbd></dt><dd>Search words</dd></div>
           </dl>
         </details>
-        <div class="setting"><b>Your progress</b>
-          <p class="hint">Saved in this browser only. Back it up now and then, and to move to another device.</p>
-          <div class="row">
-            <button class="btn" type="button" data-action="export">Back up progress</button>
-            <label class="btn">Restore from file<input type="file" accept="application/json,.json" id="importFile" hidden></label>
-          </div>
+        <div class="setting"><b>Your data</b>
+          <p class="hint">Saved in this browser only. Back it up, restore it on another device, or export your words.</p>
+          <a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
         </div>
         <button class="danger-link" type="button" data-action="reset-progress">Reset all progress</button>
       </div>`;
@@ -198,15 +218,6 @@
       installPrompt.prompt();
       installPrompt.userChoice.finally(() => { installPrompt = null; VS.$("#settings").innerHTML = String(settingsMarkup()); });
     },
-    export() {
-      const blob = new Blob([VS.store.exportJSON()], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "vocabstudy-progress-" + VS.todayKey() + ".json";
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      VS.toast("Backup saved to your downloads.");
-    },
     "reset-progress"() {
       if (!confirm("Reset all progress? Your recall schedule, streak and scores will be deleted. This cannot be undone.")) return;
       VS.store.resetProgress();
@@ -227,23 +238,20 @@
     handler.call(current.view.actions && current.view.actions[name] ? current.view.actions : GLOBAL, el, e);
   });
 
+  // Quiz question types (Settings): keep at least one switched on.
+  document.addEventListener("change", (e) => {
+    if (!e.target.matches("[data-quiz-type]")) return;
+    const on = VS.$$("[data-quiz-type]").filter((c) => c.checked).map((c) => c.value);
+    if (!on.length) { e.target.checked = true; VS.toast("Keep at least one question type."); return; }
+    VS.store.setSetting("quizTypes", on);
+  });
+
   // Notes (VS.ui.noteBox) save when the box loses focus — no save button to forget.
   document.addEventListener("change", (e) => {
     const id = e.target.dataset && e.target.dataset.note;
     if (!id) return;
     VS.store.setNote(id, e.target.value);
     VS.toast(e.target.value.trim() ? "Note saved." : "Note removed.");
-  });
-
-  // Restore a backup chosen in Settings.
-  document.addEventListener("change", (e) => {
-    if (e.target.id !== "importFile" || !e.target.files[0]) return;
-    e.target.files[0].text().then((text) => {
-      if (!VS.store.importJSON(text)) { VS.toast("That file is not a VocabStudy backup."); return; }
-      VS.$("#settings").close();
-      VS.toast("Progress restored.");
-      go();
-    });
   });
 
   // Close the settings sheet when the backdrop is clicked.

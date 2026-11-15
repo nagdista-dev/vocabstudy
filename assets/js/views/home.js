@@ -156,6 +156,21 @@
       </section>`;
   }
 
+  /* Progress lives in this browser: remind once a week to keep a copy. */
+  function backupNudge(t) {
+    if (t.started < 20) return "";
+    const last = VS.store.lastBackup();
+    const days = last ? Math.round((new Date(VS.todayKey()) - new Date(last)) / 864e5) : Infinity;
+    if (days < 7) return "";
+    return html`
+      <a class="recall-strip backup-strip" href="#/data">
+        ${icon("review")}
+        <span><b>${last ? "Your last backup was " + days + " days ago" : "You haven't backed up your progress yet"}</b>
+          <span class="hint">${VS.plural(t.started, "word")} of progress live only in this browser. One tap saves a copy.</span></span>
+        ${icon("arrow-right", "icon-sm")}
+      </a>`;
+  }
+
   /* Words missed again and again get their own practice. */
   function tricky() {
     const words = VS.store.trickyWords();
@@ -188,6 +203,7 @@
             ${stats(t)}
           </section>
 
+          ${backupNudge(t)}
           ${tricky()}
           ${forecast()}
 
