@@ -16,6 +16,7 @@
 
   function makeQuestion(w, type) {
     if (type === "gap" && !VS.findInExample(w)) type = "meaning";
+    if (type === "meaning" && !w.definition) type = "arabic";
     if (type === "listen" && !(VS.speech.supported && VS.store.settings().sound)) type = "english";
     const field = type === "english" || type === "listen" ? "arabic" : "word";
     const options = VS.shuffle([w].concat(VS.distractors(w, field, 3)));

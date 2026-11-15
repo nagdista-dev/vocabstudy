@@ -23,7 +23,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "days"
-FIELDS = ["word", "type", "level", "ipa", "definition", "example", "arabic"]
+FIELDS = ["word", "type", "level", "example", "arabic"]          # required
+OPTIONAL = ["ipa", "definition"]                                   # a warning when empty
 LEVELS = {"A1", "A2", "B1", "B2", "C1", "C2"}
 TYPES = {"Noun", "Verb", "Adjective", "Adverb", "Phrase", "Phrasal Verb", "Idiom",
          "Interjection", "Conjunction", "Determiner", "Preposition", "Pronoun"}
@@ -90,6 +91,9 @@ def check_data(errors: list[str], warnings: list[str]) -> int:
             for field in FIELDS:
                 if not str(w.get(field, "")).strip():
                     errors.append(f"{where}: missing {field}")
+            for field in OPTIONAL:
+                if not str(w.get(field, "")).strip():
+                    warnings.append(f"{where}: no {field}")
             if w.get("level") and w["level"] not in LEVELS:
                 errors.append(f"{where}: level must be one of {', '.join(sorted(LEVELS))}")
             if w.get("type") and w["type"] not in TYPES:
@@ -120,6 +124,8 @@ def check_pages(errors: list[str]) -> None:
     for d in days:
         if not (ROOT / "days" / f"{d.stem}.html").exists():
             errors.append(f"days/{d.stem}.html is missing — run python3 tools/build.py")
+    if not (ROOT / "sw.js").exists():
+        errors.append("sw.js is missing — run python3 tools/build.py")
     bundle = ROOT / "data" / "words.js"
     if bundle.exists() and days and bundle.stat().st_mtime < max(d.stat().st_mtime for d in days):
         errors.append("data/words.js is older than a day file — run python3 tools/build.py")

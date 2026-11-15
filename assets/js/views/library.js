@@ -29,6 +29,7 @@
           </header>
           <div class="row library-actions">
             <a class="btn" href="#/all/quiz">${icon("quiz", "icon-sm")} Quiz everything</a>
+            <a class="btn" href="#/add">${icon("plus", "icon-sm")} Add words</a>
             <a class="btn" href="#/print/all">${icon("print", "icon-sm")} Print / PDF</a>
           </div>
           ${browser.markup()}

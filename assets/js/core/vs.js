@@ -18,27 +18,41 @@
 
   /* ── Data ─────────────────────────────────────────────────────── */
 
-  /** Called by every data/days/*.js file. */
-  VS.addDay = function (iso, words) {
+  /** Called by every data/days/*.js file — and by sets added in the app
+      (`custom: true`, saved in this browser by core/store.js). Adding to a
+      date that already exists merges the words; duplicates are skipped. */
+  VS.addDay = function (iso, words, options) {
     const date = new Date(iso + "T12:00:00");
-    const day = {
-      iso,
-      date,
-      label: date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
-      weekday: date.toLocaleDateString("en-GB", { weekday: "long" }),
-      words: [],
-    };
+    let day = VS.day(iso);
+    if (!day) {
+      day = {
+        iso,
+        date,
+        label: date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+        weekday: date.toLocaleDateString("en-GB", { weekday: "long" }),
+        words: [],
+        custom: false,     // true when every word came from the in-app importer
+        built: false,      // true when the day has its own days/*.html page
+      };
+      VS.days.push(day);
+      VS.days.sort((a, b) => (a.iso < b.iso ? 1 : -1));
+    }
+    const custom = !!(options && options.custom);
+    if (!custom) day.built = true;
+    day.custom = !day.built;
     words.forEach((w) => {
       // The id survives edits to the definition/example, so progress is kept.
       const id = iso + ":" + (w.word + (w.sense ? " (" + w.sense + ")" : "")).toLowerCase();
       const word = Object.assign({ sense: "" }, w, { id, day: iso });
       // "Blindfold (N)": the sense only repeats the word type, which a badge already shows.
       if (/^(n|v|adj|adv|noun|verb|adjective|adverb)\.?$/i.test(word.sense)) word.sense = "";
+      if (VS.byId[id]) return;                     // already in this day
+      word.custom = custom;
+      word.definition = word.definition || "";
+      word.ipa = word.ipa || "";
       day.words.push(word);
       VS.byId[id] = word;
     });
-    VS.days.push(day);
-    VS.days.sort((a, b) => (a.iso < b.iso ? 1 : -1));
   };
 
   VS.day = (iso) => VS.days.find((d) => d.iso === iso) || null;

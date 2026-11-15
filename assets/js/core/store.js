@@ -33,6 +33,7 @@
     done: {},                                      // "2026-11-02:quiz" → date last finished
     notes: {},                                     // id → your own note / memory trick
     history: {},                                   // "2026-11-15" → [answered, right, seconds, newWords, mastered]
+    userDays: {},                                  // sets added in the app: "2026-11-16" → [word objects]
     best: {},                                      // "match:2026-11-02" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true },
   };
@@ -261,11 +262,33 @@
       return true;
     },
 
+    /** Sets added with the in-app importer (views/import.js). */
+    userDays: () => state.userDays,
+    saveUserWords(iso, words) {
+      const list = state.userDays[iso] || [];
+      const seen = new Set(list.map((w) => (w.word + "|" + (w.sense || "")).toLowerCase()));
+      words.forEach((w) => {
+        const key = (w.word + "|" + (w.sense || "")).toLowerCase();
+        if (!seen.has(key)) { seen.add(key); list.push(w); }
+      });
+      state.userDays[iso] = list;
+      save();
+      VS.addDay(iso, words, { custom: true });
+    },
+    deleteUserDay(iso) {
+      delete state.userDays[iso];
+      save();
+    },
+
     resetProgress() {
-      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), { settings: state.settings });
+      // Words you added are content, not progress: they survive a reset.
+      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), { settings: state.settings, userDays: state.userDays });
       save();
     },
 
     WAIT_DAYS,
   };
+
+  // Sets added in the app join the built-in ones before any screen draws.
+  Object.keys(state.userDays || {}).sort().forEach((iso) => VS.addDay(iso, state.userDays[iso], { custom: true }));
 })();

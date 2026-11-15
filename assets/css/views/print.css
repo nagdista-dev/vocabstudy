@@ -1,90 +1,173 @@
-/* views/print.css — the paper documents (views/print.js).
-   On screen: the controls, then a white "paper" preview.
-   In print: only the document, black on white, A4, sensible page breaks. */
+/* views/print.css — the print screen and its paper documents (views/print.js).
+   On screen: options on the left, a white "paper" preview on the right.
+   In print: only the document, black on white, A4, sensible page breaks.
+   Sizes are in pt/mm inside the document because paper is measured that way. */
 
-.print-controls { display: grid; gap: var(--s-4); padding: var(--s-5); margin-bottom: var(--s-6); }
-.print-controls h1 { font-size: var(--text-xl); }
-.print-options { display: flex; flex-wrap: wrap; gap: var(--s-5); }
-.print-options .seg { flex-wrap: wrap; }
+/* ── The screen: options | preview ───────────────────────────────── */
+.print-page {
+  display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: var(--s-5); align-items: start;
+  max-width: 1320px; margin-inline: auto; padding: var(--s-5) var(--gutter) var(--s-8);
+}
+.print-controls {
+  position: sticky; top: calc(var(--bar-h) + var(--s-3));
+  max-height: calc(100dvh - var(--bar-h) - var(--s-6)); overflow-y: auto;
+  display: grid; gap: var(--s-4); padding: var(--s-5);
+}
+.print-controls h1 { font-size: var(--text-lg); }
+.print-controls fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--s-3); min-width: 0; }
+.print-controls legend { font-weight: 700; font-size: var(--text-sm); margin-bottom: var(--s-2); padding: 0; }
+.print-controls .seg { flex-wrap: wrap; }
+.print-controls fieldset + fieldset { padding-top: var(--s-4); border-top: 1px solid var(--line); }
 
-/* The paper preview */
+.day-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 2px var(--s-3); max-height: 180px; overflow-y: auto; }
+.checks { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-4); }
+.check { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 34px; font-size: var(--text-sm); cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--brand); }
+
+.ctl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+.ctl-grid label { display: grid; gap: 4px; font-size: var(--text-xs); color: var(--ink-3); }
+.ctl-grid select {
+  min-height: 40px; padding: 0 var(--s-2); border-radius: var(--r-sm);
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: var(--text-sm);
+}
+
+.layout-pick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); }
+.layout-opt {
+  display: grid; gap: 2px; text-align: start; padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
+  border: 1.5px solid var(--line); background: var(--surface); transition: border-color var(--fast);
+}
+.layout-opt b { font-size: var(--text-sm); }
+.layout-opt span { font-size: var(--text-xs); color: var(--ink-3); line-height: 1.3; }
+.layout-opt:hover { border-color: var(--line-strong); }
+.layout-opt[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-soft); }
+.layout-opt[aria-pressed="true"] b { color: var(--brand); }
+.print-go { display: grid; gap: var(--s-2); position: sticky; bottom: calc(var(--s-5) * -1); background: var(--surface); padding-bottom: var(--s-1); }
+
+/* ── The paper ───────────────────────────────────────────────────── */
 .print-doc {
   background: #fff; color: #111;
   padding: 14mm; border-radius: var(--r-md);
   box-shadow: var(--shadow-2); border: 1px solid var(--line);
-  font-size: 10.5pt; line-height: 1.4;
+  font-size: 10.5pt; line-height: 1.45;
   overflow-x: auto;
 }
+.print-doc.size-small { font-size: 9pt; }
+.print-doc.size-large { font-size: 12.5pt; }
+.print-doc p { max-width: none; }
+
 .p-head {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid #111;
-  font-size: 10pt;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding-bottom: 8px; margin-bottom: 10px; border-bottom: 2px solid #111; font-size: .95em;
 }
 .p-brand { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 700; }
 .p-brand .brand-mark { width: 18px; height: 18px; }
-.p-howto { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #444; font-size: 9.5pt; }
-.p-meta { display: block; color: #666; font-size: 8.5pt; }
+.p-name { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px; font-size: .85em; color: #555; }
+.p-name span { border-bottom: 1px solid #999; padding: 10px 0 2px; }
+.p-howto { margin-bottom: 10px; color: #444; font-size: .9em; }
+.p-meta { display: block; color: #666; font-size: .82em; }
 .p-sense { color: #555; font-weight: 400; }
-.p-ipa { display: block; color: #444; font-size: 9.5pt; }
-.p-ar { font-family: var(--font-arabic); font-size: 11.5pt; }
-.p-n { color: #888; font-size: 8.5pt; width: 2.2em; }
+.p-w { font-family: var(--font-word); font-size: 1.1em; }
+.p-ipa { display: block; color: #444; font-size: .9em; }
+.p-ar { font-family: var(--font-arabic); font-size: 1.1em; }
+.p-note { display: block; margin-top: 3px; color: #5a4a00; font-size: .85em; }
+.p-n { color: #888; font-size: .82em; width: 2.2em; }
+.p-empty-note { color: #666; padding: 24px 0; }
 
-/* Word sheet */
-.p-sheet, .p-test { width: 100%; border-collapse: collapse; }
-.p-sheet th, .p-test th {
-  text-align: start; font-size: 8.5pt; font-weight: 600; color: #555;
-  border-bottom: 1px solid #999; padding: 4px 6px;
-}
-.p-sheet td, .p-test td { padding: 6px; border-bottom: 1px solid #ddd; vertical-align: top; }
-.p-sheet tr, .p-test tr { break-inside: avoid; }
-.p-word { width: 26%; }
-.p-word b { font-family: var(--font-word); font-size: 11.5pt; }
-.p-def i { display: block; color: #444; margin-top: 2px; }
-.p-sheet .p-ar { width: 22%; text-align: right; }
+/* Word sheet and self-test tables */
+.p-table { width: 100%; border-collapse: collapse; }
+.p-table th { text-align: start; font-size: .8em; font-weight: 600; color: #555; border-bottom: 1px solid #999; padding: 4px 6px; }
+.p-table td { padding: 6px; border-bottom: 1px solid #ddd; vertical-align: top; }
+.p-table tr { break-inside: avoid; }
+.p-sheet .p-word { width: 26%; }
+.p-sheet .p-def i { display: block; color: #444; margin-top: 2px; }
+.p-sheet .p-ar, .p-ar-h { width: 22%; text-align: right; }
 
-/* Self-test: prompt | write | fold | answer | tick */
 .p-test .p-prompt { width: 30%; }
-.p-test .p-prompt b { font-family: var(--font-word); font-size: 11.5pt; }
-.p-test .p-line { width: 28%; border-bottom: 1px solid #ddd; background: linear-gradient(transparent calc(100% - 10px), #bbb calc(100% - 10px), #bbb calc(100% - 9px), transparent calc(100% - 9px)); }
+.p-test .p-line { width: 28%; background: linear-gradient(transparent calc(100% - 10px), #bbb calc(100% - 10px), #bbb calc(100% - 9px), transparent calc(100% - 9px)); }
 .p-test .p-fold { width: 0; padding: 0; border-left: 1.5px dashed #888; }
 .p-test .p-answer { width: 30%; padding-inline-start: 10px; }
 .p-test .p-tick { width: 2.4em; }
 .p-test .p-tick span { display: block; width: 14px; height: 14px; border: 1.2px solid #888; border-radius: 3px; margin: 2px auto 0; }
-.p-test [lang="ar"] { font-family: var(--font-arabic); font-size: 11.5pt; }
+
+/* Compact list: two columns, one line per word */
+.p-compact { columns: 2; column-gap: 10mm; padding-inline-start: 1.6em; }
+.p-compact li { break-inside: avoid; padding: 3px 0; border-bottom: 1px solid #eee; }
+.p-compact .ipa { color: #555; font-size: .85em; }
+.p-compact .p-ar { display: block; text-align: right; }
+
+/* Fill the gap */
+.p-bank { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 8px 10px; margin-bottom: 12px; border: 1.2px solid #999; border-radius: 6px; }
+.p-bank b { width: 100%; font-size: .8em; color: #555; }
+.p-bank span { font-family: var(--font-word); }
+.p-gaps { display: grid; gap: 10px; padding-inline-start: 1.6em; }
+.p-gaps li { break-inside: avoid; }
+.p-blank { display: inline-block; width: 30mm; border-bottom: 1.2px solid #444; margin: 0 4px; }
+.p-hint-ar { color: #666; font-size: .95em; }
+
+/* Matching: words (numbers) | meanings (letters) */
+.p-match { display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; padding: 4px 0 8px; border-bottom: 1px solid #ddd; margin-bottom: 8px; break-inside: avoid; }
+.p-match .p-meta { line-height: 1.3; }
+.p-match ol { display: grid; gap: 5px; padding-inline-start: 1.8em; }
+.p-box { display: inline-block; width: 18px; height: 18px; border: 1.2px solid #777; border-radius: 3px; vertical-align: middle; margin-inline-end: 8px; }
+.p-match .p-ar { display: block; }
+
+/* Write a sentence */
+.p-write { display: grid; gap: 14px; padding-inline-start: 1.6em; }
+.p-write li { break-inside: avoid; }
+.p-write-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.p-write-head .p-ar { margin-inline-start: auto; }
+.p-rule { display: block; height: 9mm; border-bottom: 1px solid #aaa; }
+
+/* Answer key: starts a new page when printed */
+.p-key { margin-top: 18px; padding-top: 10px; border-top: 2px solid #111; }
+.p-key h3 { font-size: 1em; margin-bottom: 6px; }
+.p-key ol { columns: 4; padding-inline-start: 1.6em; font-size: .9em; }
 
 /* Cut-out cards: 2 × 4 per A4 page */
 .p-cards {
   display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 64mm;
-  border-top: 1px dashed #999; border-left: 1px dashed #999;
-  margin-bottom: 14mm;
+  border-top: 1px dashed #999; border-left: 1px dashed #999; margin-bottom: 14mm;
 }
 .p-card {
   display: grid; align-content: center; justify-items: center; gap: 4px; text-align: center;
   padding: 8mm; border-right: 1px dashed #999; border-bottom: 1px dashed #999;
 }
-.p-front b { font-family: var(--font-word); font-size: 20pt; line-height: 1.1; }
+.p-front .p-w { font-size: 20pt; line-height: 1.1; }
 .p-back .p-ar { font-size: 15pt; }
-.p-back .p-def { font-size: 10pt; }
-.p-back i { font-size: 9pt; color: #444; }
+.p-back .p-def { font-size: .95em; }
+.p-back i { font-size: .85em; color: #444; }
 
+/* ── Smaller screens: options above, preview below ───────────────── */
+@media (max-width: 960px) {
+  .print-page { grid-template-columns: 1fr; }
+  .print-controls { position: static; max-height: none; }
+  .print-go { position: static; }
+}
 @media (max-width: 640px) {
   .print-doc { padding: 16px; font-size: 9.5pt; }
   .p-cards { grid-auto-rows: auto; }
   .p-card { padding: 16px 8px; min-height: 120px; }
-  .p-front b { font-size: 15pt; }
+  .p-front .p-w { font-size: 15pt; }
+  .p-compact { columns: 1; }
+  .p-match { grid-template-columns: 1fr; gap: 12px; }
+  .p-key ol { columns: 2; }
 }
 
-/* ── Printing ─────────────────────────────────────────────────── */
+/* ── Printing ───────────────────────────────────────────────────── */
 @page { size: A4; margin: 12mm; }
 
 @media print {
   body { background: #fff; }
   .app-bar, .no-print, .toast, .break-card, .confetti, .skip-link { display: none !important; }
-  .page { padding: 0; max-width: none; }
-  .print-doc { padding: 0; border: 0; box-shadow: none; border-radius: 0; overflow: visible; font-size: 10pt; }
+  .print-page { display: block; padding: 0; max-width: none; }
+  .print-doc { padding: 0; border: 0; box-shadow: none; border-radius: 0; overflow: visible; }
   .view-enter { animation: none; }
-  .p-sheet thead, .p-test thead { display: table-header-group; }   /* repeat headers on each page */
-  .p-cards { break-after: page; margin: 0; grid-auto-rows: 66mm; }
+  .p-table thead { display: table-header-group; }      /* repeat headers on every page */
+  .p-key { break-before: page; border-top: 0; }
+  /* Cards: no header on paper, so every sheet holds exactly 4 rows and the
+     mirrored back page lines up with its front when printed double-sided. */
+  .layout-cards .p-head, .layout-cards .p-name { display: none; }
+  .p-cards { break-after: page; margin: 0; grid-auto-rows: 67mm; }
   .p-cards:last-child { break-after: auto; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

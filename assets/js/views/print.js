@@ -1,171 +1,355 @@
 /* views/print.js — study on paper: print or save as PDF.
    ------------------------------------------------------------------
-   Three layouts, each for a different way of studying away from a screen:
+   Left: what to print and how. Right: a live preview of the paper.
+   The browser's print dialog makes the PDF ("Save as PDF"), so it works
+   offline with nothing to install. css/views/print.css hides the app
+   and the controls when printing.
 
-     Word sheet   every detail in a table — read and review
-     Self-test    prompt | write your answer | fold here | answer
-                  Fold the answer column back, test yourself, unfold to check.
-                  This is active recall on paper.
-     Cut-out cards  8 per page; the back page is mirrored so that
-                  double-sided printing (flip on long edge) lines up.
-
-   The browser's own print dialog makes the PDF ("Save as PDF"), so
-   there is nothing to install and it works offline. css/views/print.css
-   hides the app around the document when printing.
+   WHICH WORDS   one or more days · due today · tricky · still learning ·
+                 everything — then level / type filters, order and a limit.
+   LAYOUTS (each trains something different)
+     sheet     every detail in a table           read and review
+     compact   word — meaning, in columns        a fast review list
+     test      prompt | answer | fold | key      active recall on paper
+     gap       sentences with blanks + word bank use the word in context
+     match     numbers ↔ letters + answer key    recognise meanings
+     write     lines to write your own sentence  produce the word (strongest)
+     cards     8 per page, mirrored backs        cut-out flashcards
    ------------------------------------------------------------------ */
 (function () {
   "use strict";
   const { html, icon } = VS;
   const CARDS_PER_PAGE = 8;
-
-  const opts = { layout: "sheet", direction: "en", examples: true };
+  const MATCH_GROUP = 10;
 
   const LAYOUTS = [
-    ["sheet", "Word sheet"],
-    ["test", "Self-test"],
-    ["cards", "Cut-out cards"],
+    ["sheet", "Word sheet", "Every detail in a table"],
+    ["compact", "Compact list", "Word and meaning, in columns"],
+    ["test", "Self-test", "Fold the page to hide the answers"],
+    ["gap", "Fill the gap", "Sentences with a word bank"],
+    ["match", "Matching", "Pair numbers with letters"],
+    ["write", "Write a sentence", "Use each word yourself"],
+    ["cards", "Cut-out cards", "Double-sided flashcards"],
   ];
+  const SHOW = [["ipa", "IPA"], ["definition", "Definition"], ["example", "Example"], ["arabic", "Arabic"], ["notes", "My notes"]];
 
-  function title(scope) {
-    const name = { sheet: "Word sheet", test: "Self-test", cards: "Flashcards" }[opts.layout];
-    return { name, set: scope.kind === "day" ? scope.day.label + " · " + scope.day.weekday : scope.title };
+  // Options persist while the app is open, so you can tweak and re-print.
+  const opts = {
+    source: "days", days: new Set(), level: "all", type: "all", order: "file", limit: "all",
+    layout: "sheet", direction: "en", size: "normal", nameLine: true, answers: true,
+    show: new Set(["ipa", "definition", "example", "arabic", "notes"]),
+  };
+  let lastRoute = "";
+  let listening = false;
+
+  /** Set the starting source from the route the learner came from. */
+  function fromRoute(p) {
+    const key = JSON.stringify(p);
+    if (key === lastRoute) return;
+    lastRoute = key;
+    opts.days = new Set();
+    if (p.scope === "day" && VS.day(p.iso)) { opts.source = "days"; opts.days.add(p.iso); }
+    else if (p.scope === "recall") opts.source = "due";
+    else if (p.scope === "tricky") opts.source = "tricky";
+    else opts.source = "all";
+    if (p.layout && LAYOUTS.some((l) => l[0] === p.layout)) opts.layout = p.layout;
   }
 
-  /* ── Word sheet ─────────────────────────────────────────────── */
-  function sheet(words) {
-    return html`
-      <table class="p-sheet">
-        <thead><tr><th>#</th><th>Word</th><th>Meaning</th><th lang="ar">بالعربي</th></tr></thead>
-        <tbody>
-          ${words.map((w, i) => html`
-            <tr>
-              <td class="p-n">${i + 1}</td>
-              <td class="p-word">
-                <b>${w.word}</b>${w.sense ? html` <span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}
-                <span class="p-ipa ipa">${w.ipa}</span>
-                <span class="p-meta">${w.type} · ${w.level}</span>
-              </td>
-              <td class="p-def">${w.definition}${opts.examples ? html`<i>“${VS.ui.example(w)}”</i>` : ""}</td>
-              <td class="p-ar" lang="ar">${w.arabic}</td>
-            </tr>`)}
-        </tbody>
-      </table>`;
+  /* ── Choosing the words ─────────────────────────────────────── */
+  function pickWords() {
+    let words;
+    switch (opts.source) {
+      case "due": words = VS.store.dueWords(); break;
+      case "tricky": words = VS.store.trickyWords(); break;
+      case "learning": words = VS.allWords().filter((w) => VS.store.status(w.id) === "learning"); break;
+      case "all": words = VS.allWords(); break;
+      default: words = VS.days.filter((d) => opts.days.has(d.iso)).slice().reverse().flatMap((d) => d.words);
+    }
+    words = words.filter((w) =>
+      (opts.level === "all" || w.level.charAt(0) === opts.level) &&
+      (opts.type === "all" || w.type === opts.type));
+    if (opts.order === "az") words = words.slice().sort((a, b) => a.word.localeCompare(b.word));
+    if (opts.order === "random") words = VS.shuffle(words);
+    if (opts.order === "weakest") {
+      const weak = (w) => { const e = VS.store.word(w.id); return e.box * 2 - e.wrong + (e.box ? 0 : 50); };
+      words = words.slice().sort((a, b) => weak(a) - weak(b));
+    }
+    if (opts.limit !== "all") words = words.slice(0, Number(opts.limit));
+    return words;
   }
 
-  /* ── Self-test (fold) ───────────────────────────────────────── */
-  function selfTest(words) {
-    const en = opts.direction === "en";
+  function sourceLabel() {
+    if (opts.source === "days") {
+      const days = VS.days.filter((d) => opts.days.has(d.iso));
+      if (days.length === 1) return days[0].label + " · " + days[0].weekday;
+      return days.length ? VS.plural(days.length, "day") + " · " + days[days.length - 1].label + " – " + days[0].label : "No day chosen";
+    }
+    return { due: "Due for recall", tricky: "Tricky words", learning: "Still learning", all: "All words" }[opts.source];
+  }
+
+  /* ── Small pieces shared by layouts ─────────────────────────── */
+  const has = (field) => opts.show.has(field);
+  const word = (w) => html`<b class="p-w">${w.word}</b>${w.sense ? html` <span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}`;
+  const note = (w) => (has("notes") && VS.store.note(w.id) ? html`<span class="p-note">✎ ${VS.store.note(w.id)}</span>` : "");
+
+  function answerKey(title, rows) {
+    if (!opts.answers) return "";
     return html`
-      <p class="p-howto">${icon("flip", "icon-sm")} Fold the page along the dashed line so the answers are hidden.
-        Write your answer, then unfold to check. Tick the ones you got right.</p>
-      <table class="p-test">
-        <thead><tr>
-          <th>#</th><th>${en ? "Word" : "المعنى"}</th><th>Your answer</th><th class="p-fold"></th><th>${en ? "المعنى" : "Word"}</th><th>✓</th>
-        </tr></thead>
-        <tbody>
-          ${words.map((w, i) => {
-            const word = html`<b>${w.word}</b>${w.sense ? html` <span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}`;
-            const ar = html`<span lang="ar">${w.arabic}</span>`;
-            return html`
+      <section class="p-key">
+        <h3>${title}</h3>
+        <ol>${rows.map((r) => html`<li>${r}</li>`)}</ol>
+      </section>`;
+  }
+
+  /* ── Layouts ────────────────────────────────────────────────── */
+  const LAYOUT = {
+    sheet(words) {
+      const meaning = has("definition") || has("example") || has("notes");
+      return html`
+        <table class="p-table p-sheet">
+          <thead><tr><th>#</th><th>Word</th>${meaning ? html`<th>Meaning</th>` : ""}${has("arabic") ? html`<th class="p-ar-h" lang="ar">بالعربي</th>` : ""}</tr></thead>
+          <tbody>
+            ${words.map((w, i) => html`
               <tr>
                 <td class="p-n">${i + 1}</td>
-                <td class="p-prompt">${en ? word : ar}${en ? html`<span class="p-meta">${w.type}</span>` : html`<span class="p-meta">${w.definition}</span>`}</td>
-                <td class="p-line"></td>
-                <td class="p-fold" aria-hidden="true"></td>
-                <td class="p-answer">${en ? ar : word}</td>
-                <td class="p-tick"><span></span></td>
-              </tr>`;
-          })}
-        </tbody>
-      </table>`;
-  }
+                <td class="p-word">${word(w)}${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}<span class="p-meta">${w.type} · ${w.level}</span></td>
+                ${meaning ? html`<td class="p-def">${has("definition") ? w.definition : ""}${has("example") ? html`<i>“${VS.ui.example(w)}”</i>` : ""}${note(w)}</td>` : ""}
+                ${has("arabic") ? html`<td class="p-ar" lang="ar">${w.arabic}</td>` : ""}
+              </tr>`)}
+          </tbody>
+        </table>`;
+    },
 
-  /* ── Cut-out cards (front page, then mirrored back page) ────── */
-  function cards(words) {
-    const pages = [];
-    for (let i = 0; i < words.length; i += CARDS_PER_PAGE) pages.push(words.slice(i, i + CARDS_PER_PAGE));
-    // On the back of a sheet the columns swap (left ↔ right) so each back
-    // lands behind its own front when printed double-sided.
-    const mirrored = (page) => {
-      const out = [];
-      for (let r = 0; r < page.length; r += 2) out.push(page[r + 1] || null, page[r]);
-      return out;
-    };
-    return html`
-      <p class="p-howto no-print">${icon("cards", "icon-sm")} Print double-sided and choose “flip on long edge”. Cut along the lines.</p>
-      ${pages.map((page) => html`
-        <div class="p-cards">
-          ${page.map((w) => html`
-            <div class="p-card p-front">
-              <span class="p-meta">${w.type} · ${w.level}</span>
-              <b>${w.word}</b>
-              ${w.sense ? html`<span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}
-              <span class="p-ipa ipa">${w.ipa}</span>
-            </div>`)}
-        </div>
-        <div class="p-cards p-backs">
-          ${mirrored(page).map((w) => w
-            ? html`<div class="p-card p-back">
-                <span class="p-ar" lang="ar">${w.arabic}</span>
-                <span class="p-def">${w.definition}</span>
-                <i>“${VS.ui.example(w)}”</i>
-              </div>`
-            : html`<div class="p-card p-empty"></div>`)}
-        </div>`)}`;
-  }
+    compact(words) {
+      return html`
+        <ol class="p-compact">
+          ${words.map((w) => html`
+            <li>${word(w)}${has("ipa") ? html` <span class="ipa">${w.ipa}</span>` : ""}
+              ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}
+              ${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}</li>`)}
+        </ol>`;
+    },
 
+    test(words) {
+      const en = opts.direction === "en";
+      return html`
+        <p class="p-howto">Fold the page along the dashed line so the answers are hidden. Write your answer, unfold, tick the ones you got right.</p>
+        <table class="p-table p-test">
+          <thead><tr><th>#</th><th>${en ? "Word" : "Meaning"}</th><th>Your answer</th><th class="p-fold"></th><th>${en ? "Meaning" : "Word"}</th><th>✓</th></tr></thead>
+          <tbody>
+            ${words.map((w, i) => {
+              const ar = html`<span class="p-ar" lang="ar">${w.arabic}</span>`;
+              return html`
+                <tr>
+                  <td class="p-n">${i + 1}</td>
+                  <td class="p-prompt">${en ? html`${word(w)}<span class="p-meta">${w.type}</span>` : html`${ar}${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}`}</td>
+                  <td class="p-line"></td>
+                  <td class="p-fold" aria-hidden="true"></td>
+                  <td class="p-answer">${en ? ar : word(w)}</td>
+                  <td class="p-tick"><span></span></td>
+                </tr>`;
+            })}
+          </tbody>
+        </table>`;
+    },
+
+    gap(words) {
+      const items = words.map((w) => ({ w, hit: VS.findInExample(w) })).filter((x) => x.hit);
+      const skipped = words.length - items.length;
+      return html`
+        <p class="p-howto">Write the right word in each gap. Change its form if the sentence needs it (past tense, plural…).</p>
+        <div class="p-bank"><b>Word bank</b>${VS.shuffle(items).map((x) => html`<span>${x.w.word}</span>`)}</div>
+        <ol class="p-gaps">
+          ${items.map((x) => html`<li>${x.hit.before}<span class="p-blank"></span>${x.hit.after}${has("arabic") ? html` <span class="p-ar p-hint-ar" lang="ar">(${x.w.arabic})</span>` : ""}</li>`)}
+        </ol>
+        ${skipped ? html`<p class="p-meta no-print">${VS.plural(skipped, "word")} left out: the example doesn't contain the word.</p>` : ""}
+        ${answerKey("Answers", items.map((x) => x.hit.answer))}`;
+    },
+
+    match(words) {
+      const groups = [];
+      for (let i = 0; i < words.length; i += MATCH_GROUP) groups.push(words.slice(i, i + MATCH_GROUP));
+      const keys = [];
+      const body = groups.map((g, gi) => {
+        const right = VS.shuffle(g);
+        const letter = (w) => String.fromCharCode(97 + right.indexOf(w));
+        g.forEach((w, i) => keys.push(html`${gi * MATCH_GROUP + i + 1} → ${letter(w)}`));
+        return html`
+          <div class="p-match">
+            <ol start="${gi * MATCH_GROUP + 1}">${g.map((w) => html`<li><span class="p-box"></span>${word(w)}</li>`)}</ol>
+            <ol type="a">${right.map((w) => html`<li><span class="p-ar" lang="ar">${w.arabic}</span>${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}</li>`)}</ol>
+          </div>`;
+      });
+      return html`
+        <p class="p-howto">Write the letter of the right meaning in the box next to each word.</p>
+        ${body}
+        ${answerKey("Answers", keys)}`;
+    },
+
+    write(words) {
+      return html`
+        <p class="p-howto">Write a sentence of your own with each word — about your life, your work, your plans. That is how a word becomes yours.</p>
+        <ol class="p-write">
+          ${words.map((w) => html`
+            <li>
+              <div class="p-write-head">${word(w)}${has("ipa") ? html` <span class="ipa">${w.ipa}</span>` : ""}
+                ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}</div>
+              ${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}
+              ${has("example") ? html`<span class="p-meta"><i>e.g. “${w.example}”</i></span>` : ""}
+              <span class="p-rule"></span><span class="p-rule"></span>
+            </li>`)}
+        </ol>`;
+    },
+
+    cards(words) {
+      const pages = [];
+      for (let i = 0; i < words.length; i += CARDS_PER_PAGE) pages.push(words.slice(i, i + CARDS_PER_PAGE));
+      // On the back of a sheet the columns swap, so each back lands behind its front
+      // when printed double-sided ("flip on long edge").
+      const mirrored = (page) => {
+        const out = [];
+        for (let r = 0; r < page.length; r += 2) out.push(page[r + 1] || null, page[r]);
+        return out;
+      };
+      return html`
+        <p class="p-howto no-print">Print double-sided and choose “flip on long edge”. Cut along the dashed lines.</p>
+        ${pages.map((page) => html`
+          <div class="p-cards">
+            ${page.map((w) => html`
+              <div class="p-card p-front">
+                <span class="p-meta">${w.type} · ${w.level}</span>
+                <b class="p-w">${w.word}</b>
+                ${w.sense ? html`<span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}
+                ${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}
+              </div>`)}
+          </div>
+          <div class="p-cards p-backs">
+            ${mirrored(page).map((w) => w
+              ? html`<div class="p-card p-back">
+                  ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}
+                  ${has("definition") ? html`<span class="p-def">${w.definition}</span>` : ""}
+                  ${has("example") ? html`<i>“${VS.ui.example(w)}”</i>` : ""}
+                  ${note(w)}
+                </div>`
+              : html`<div class="p-card p-empty"></div>`)}
+          </div>`)}`;
+    },
+  };
+
+  /* ── Controls ───────────────────────────────────────────────── */
   function seg(name, options) {
     return html`
       <div class="seg" role="group" aria-label="${name}">
         ${options.map(([value, label]) => html`
-          <button type="button" data-action="print-opt" data-name="${name}" data-value="${value}" aria-pressed="${String(opts[name]) === value}">${label}</button>`)}
+          <button type="button" data-action="print-opt" data-name="${name}" data-value="${value}" aria-pressed="${String(opts[name]) === String(value)}">${label}</button>`)}
       </div>`;
   }
+  function check(name, value, label, on) {
+    return html`<label class="check"><input type="checkbox" data-print-toggle="${name}" value="${value}" ${on ? VS.raw("checked") : ""}><span>${label}</span></label>`;
+  }
+  function select(name, options) {
+    return html`<select data-print-select="${name}">${options.map(([v, l]) => html`<option value="${v}" ${String(opts[name]) === v ? VS.raw("selected") : ""}>${l}</option>`)}</select>`;
+  }
 
+  function controls(words) {
+    const types = [...new Set(VS.allWords().map((w) => w.type))].sort();
+    const layout = opts.layout;
+    const fields = {
+      sheet: SHOW, compact: [SHOW[0], SHOW[1], SHOW[3]], test: [SHOW[1]], gap: [SHOW[3]],
+      match: [SHOW[1]], write: SHOW.slice(0, 4), cards: SHOW,
+    }[layout];
+    return html`
+      <aside class="print-controls card no-print" aria-label="Print options">
+        <h1>Print or save as PDF</h1>
+
+        <fieldset><legend>Words</legend>
+          ${seg("source", [["days", "Days"], ["due", "Due today"], ["tricky", "Tricky"], ["learning", "Learning"], ["all", "All"]])}
+          ${opts.source === "days" ? html`
+            <div class="day-checks">${VS.days.map((d) => check("days", d.iso, html`${d.label} <span class="hint">${d.words.length}</span>`, opts.days.has(d.iso)))}</div>
+            <div class="row"><button class="btn btn-quiet" type="button" data-action="print-days" data-value="all">Select all</button>
+              <button class="btn btn-quiet" type="button" data-action="print-days" data-value="none">Clear</button></div>` : ""}
+          <div class="ctl-grid">
+            <label><span>Level</span>${select("level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]])}</label>
+            <label><span>Type</span>${select("type", [["all", "All types"]].concat(types.map((t) => [t, t])))}</label>
+            <label><span>Order</span>${select("order", [["file", "As in the set"], ["az", "A–Z"], ["random", "Random"], ["weakest", "Weakest first"]])}</label>
+            <label><span>How many</span>${select("limit", [["all", "All"], ["10", "10"], ["20", "20"], ["30", "30"], ["50", "50"]])}</label>
+          </div>
+        </fieldset>
+
+        <fieldset><legend>Layout</legend>
+          <div class="layout-pick">
+            ${LAYOUTS.map(([v, name, desc]) => html`
+              <button type="button" class="layout-opt" data-action="print-opt" data-name="layout" data-value="${v}" aria-pressed="${layout === v}">
+                <b>${name}</b><span>${desc}</span></button>`)}
+          </div>
+          ${layout === "test" ? html`<div class="setting"><b>Direction</b>${seg("direction", [["en", "English → Arabic"], ["ar", "Arabic → English"]])}</div>` : ""}
+        </fieldset>
+
+        <fieldset><legend>Show</legend>
+          <div class="checks">${fields.map(([v, l]) => check("show", v, l, opts.show.has(v)))}</div>
+          <div class="checks">
+            ${check("nameLine", "1", "Name, date and score lines", opts.nameLine)}
+            ${["gap", "match"].includes(layout) ? check("answers", "1", "Answer key", opts.answers) : ""}
+          </div>
+          <div class="setting"><b>Text size</b>${seg("size", [["small", "Small"], ["normal", "Normal"], ["large", "Large"]])}</div>
+        </fieldset>
+
+        <div class="print-go">
+          <button class="btn btn-primary btn-lg btn-block" type="button" data-action="print-now" ${words.length ? "" : VS.raw("disabled")}>${icon("print", "icon-sm")} Print / Save as PDF</button>
+          <p class="hint">${VS.plural(words.length, "word")}. In the print window choose <b>Save as PDF</b> as the printer${layout === "cards" ? ", double-sided, flip on long edge" : ""}.</p>
+        </div>
+      </aside>`;
+  }
+
+  /** Checkboxes and selects change options directly — one listener for the whole app. */
+  function onChange(e) {
+    if (VS.app.current() !== "print") return;
+    const t = e.target;
+    if (t.dataset.printToggle) {
+      const name = t.dataset.printToggle;
+      if (opts[name] instanceof Set) { if (t.checked) opts[name].add(t.value); else opts[name].delete(t.value); }
+      else opts[name] = t.checked;
+    } else if (t.dataset.printSelect) {
+      opts[t.dataset.printSelect] = t.value;
+    } else return;
+    VS.app.render();
+  }
+
+  /* ── The view ───────────────────────────────────────────────── */
   VS.views.print = {
     title: () => "Print",
     crumbs: (p) => VS.ui.crumbs(p, "Print"),
 
     render(p) {
-      const scope = VS.scope(p);
-      if (!scope) return VS.ui.emptyActivity("#/", "This set was not found.");
-      // Paper follows the day's own order (A–Z for long lists), not the random session order.
-      const words = scope.kind === "day" ? scope.day.words : scope.words.slice().sort((a, b) => a.word.localeCompare(b.word));
-      if (!words.length) return VS.ui.emptyActivity(scope.back, "There are no words to print here.");
-      const t = title(scope);
-      const pages = opts.layout === "cards" ? Math.ceil(words.length / CARDS_PER_PAGE) * 2 : null;
+      fromRoute(p);
+      const words = pickWords();
+      const name = LAYOUTS.find((l) => l[0] === opts.layout)[1];
       return html`
-        <div class="page print-page">
-          <section class="print-controls card no-print">
-            <div>
-              <h1>Study on paper</h1>
-              <p class="muted">${VS.plural(words.length, "word")} from ${t.set}. Choose a layout, then print it or save it as a PDF.</p>
-            </div>
-            <div class="print-options">
-              <div class="setting"><b>Layout</b>${seg("layout", LAYOUTS)}</div>
-              ${opts.layout === "test" ? html`<div class="setting"><b>Test direction</b>${seg("direction", [["en", "English → Arabic"], ["ar", "Arabic → English"]])}</div>` : ""}
-              ${opts.layout === "sheet" ? html`<div class="setting"><b>Examples</b>${seg("examples", [["true", "Show"], ["false", "Hide"]])}</div>` : ""}
-            </div>
-            <div class="row">
-              <button class="btn btn-primary btn-lg" type="button" data-action="print-now">${icon("print", "icon-sm")} Print / Save as PDF</button>
-              <span class="hint">In the print window, choose “Save as PDF” as the printer.${pages ? " " + pages + " pages." : ""}</span>
-            </div>
-          </section>
-
-          <article class="print-doc">
-            <header class="p-head">
-              <span class="p-brand">${VS.brandMark} VocabStudy</span>
-              <span><b>${t.name}</b> · ${t.set} · ${VS.plural(words.length, "word")}</span>
-            </header>
-            ${opts.layout === "sheet" ? sheet(words) : opts.layout === "test" ? selfTest(words) : cards(words)}
-          </article>
+        <div class="print-page">
+          ${controls(words)}
+          <div class="print-preview">
+            <article class="print-doc size-${opts.size} layout-${opts.layout}">
+              <header class="p-head">
+                <span class="p-brand">${VS.brandMark} VocabStudy</span>
+                <span><b>${name}</b> · ${sourceLabel()} · ${VS.plural(words.length, "word")}</span>
+              </header>
+              ${opts.nameLine ? html`<div class="p-name"><span>Name</span><span>Date</span><span>Score</span></div>` : ""}
+              ${words.length
+                ? LAYOUT[opts.layout](words)
+                : html`<p class="p-empty-note">No words match these options. Choose a day or loosen a filter.</p>`}
+            </article>
+          </div>
         </div>`;
     },
 
+    mount() {
+      if (!listening) { document.addEventListener("change", onChange); listening = true; }
+    },
+
     actions: {
-      "print-opt"(el) {
-        const v = el.dataset.value;
-        opts[el.dataset.name] = v === "true" ? true : v === "false" ? false : v;
+      "print-opt"(el) { opts[el.dataset.name] = el.dataset.value; VS.app.render(); },
+      "print-days"(el) {
+        opts.days = el.dataset.value === "all" ? new Set(VS.days.map((d) => d.iso)) : new Set();
         VS.app.render();
       },
       "print-now"() { window.print(); },

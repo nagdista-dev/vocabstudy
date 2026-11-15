@@ -6,6 +6,7 @@
      #/all/quiz              an activity over every word (cards | quiz | spell | match)
      #/tricky/quiz           an activity over the words you keep missing
      #/words                 the library: every word, searchable
+     #/add                   add words: paste a table, preview, save
      #/stats                 progress charts
      #/print/day/ISO         print or save as PDF (also /print/recall, /tricky, /all)
      #/day/2026-11-02        one day: learning path + word list
@@ -33,16 +34,23 @@
   const MODES = ["cards", "quiz", "spell", "match", "recall"];
 
   VS.homeHref = ROOT + "index.html";
-  VS.dayHref = (iso) => (PAGE_DAY ? (iso === PAGE_DAY ? "#/" : iso + ".html") : "days/" + iso + ".html");
+  VS.dayHref = (iso) => {
+    const day = VS.day(iso);
+    if (PAGE_DAY && iso === PAGE_DAY) return "#/";
+    if (day && !day.built) return (PAGE_DAY ? ROOT + "index.html" : "") + "#/day/" + iso;   // added in the app: no page of its own
+    return PAGE_DAY ? iso + ".html" : "days/" + iso + ".html";
+  };
 
   /* ── Routing ──────────────────────────────────────────────────── */
   function parse(hash) {
     const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     if (parts[0] === "words") return { view: "library" };
+    if (parts[0] === "add") return { view: "import" };
     if (parts[0] === "stats") return { view: "stats" };
     if (parts[0] === "print") {
-      if (parts[1] === "day" && parts[2]) return { view: "print", scope: "day", iso: parts[2] };
-      if (["recall", "tricky", "all"].includes(parts[1])) return { view: "print", scope: parts[1] };
+      // An optional last part picks the layout: #/print/day/2026-11-02/test
+      if (parts[1] === "day" && parts[2]) return { view: "print", scope: "day", iso: parts[2], layout: parts[3] };
+      if (["recall", "tricky", "all"].includes(parts[1])) return { view: "print", scope: parts[1], layout: parts[2] };
     }
     if (parts[0] === "recall") return { view: "recall", scope: "recall" };
     if ((parts[0] === "all" || parts[0] === "tricky") && MODES.includes(parts[1])) return { view: parts[1], scope: parts[0] };
@@ -99,6 +107,27 @@
     recall.setAttribute("aria-label", due ? due + " words due for recall" : "Recall — nothing due");
   }
 
+  /* ── Installable app (PWA) ─────────────────────────────────────
+     The service worker only runs over http(s) — opened as a file the
+     app still works, just without install and offline caching. */
+  let installPrompt = null;
+  const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener("load", () => navigator.serviceWorker.register(ROOT + "sw.js").catch(() => {}));
+  }
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
+  window.addEventListener("appinstalled", () => { installPrompt = null; VS.toast("VocabStudy is installed."); });
+
+  function installMarkup() {
+    if (isStandalone()) return html`<p class="hint">${icon("check", "icon-sm")} Installed — you're using the app.</p>`;
+    if (installPrompt) return html`<button class="btn btn-primary" type="button" data-action="install">Install VocabStudy</button>
+      <p class="hint">Opens like an app from your home screen and works offline.</p>`;
+    if (isIOS) return html`<p class="hint">On iPhone/iPad: tap <b>Share</b>, then <b>Add to Home Screen</b>.</p>`;
+    if (location.protocol === "file:") return html`<p class="hint">Open the online version (GitHub Pages) to install it as an app.</p>`;
+    return html`<p class="hint">Use your browser menu → <b>Install app</b> / <b>Add to Home screen</b>.</p>`;
+  }
+
   /* ── Settings ─────────────────────────────────────────────────── */
   function applySettings() {
     const st = VS.store.settings();
@@ -121,6 +150,7 @@
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
         ${VS.speech.supported ? "" : html`<p class="hint">This browser has no built-in voices, so words can't be read aloud.</p>`}
+        <div class="setting"><b>Install as an app</b>${installMarkup()}</div>
         <details class="setting shortcuts">
           <summary><b>Keyboard shortcuts</b></summary>
           <dl>
@@ -162,6 +192,11 @@
       applySettings();
       VS.$("#settings").innerHTML = String(settingsMarkup());
       if (el.dataset.name === "rate") VS.speech.say("This is how words will sound.");
+    },
+    install() {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      installPrompt.userChoice.finally(() => { installPrompt = null; VS.$("#settings").innerHTML = String(settingsMarkup()); });
     },
     export() {
       const blob = new Blob([VS.store.exportJSON()], { type: "application/json" });
@@ -235,6 +270,7 @@
   fill("settingsBtn", icon("settings"));
   fill("recallBtn", null, "#/recall");
   fill("libraryBtn", icon("book"));
+  fill("addBtn", icon("plus"));
   fill("statsBtn", icon("chart"));
   applySettings();
   VS.store.onChange(() => current && renderBar());

@@ -193,7 +193,8 @@
 
           <div class="section-title">
             <h2>Your word sets</h2>
-            <span class="hint">${VS.plural(VS.days.length, "day")} · ${VS.plural(t.words, "word")}</span>
+            <span class="row"><span class="hint">${VS.plural(VS.days.length, "day")} · ${VS.plural(t.words, "word")}</span>
+              <a class="btn btn-quiet" href="#/add">${icon("plus", "icon-sm")} Add words</a></span>
           </div>
           ${VS.days.length
             ? monthGroups()
