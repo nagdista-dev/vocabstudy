@@ -117,7 +117,8 @@
       m.days.push(d);
     });
     return months.map((m, i) => {
-      const label = m.days[0].date.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      const label = m.days.every((d) => d.sample) ? "Getting started"
+        : m.days[0].date.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
       const words = m.days.reduce((n, d) => n + d.words.length, 0);
       const due = m.days.reduce((n, d) => n + VS.store.dayStats(d).due, 0);
       return html`

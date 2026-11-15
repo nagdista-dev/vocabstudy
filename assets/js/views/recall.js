@@ -103,10 +103,19 @@
     render() {
       if (!s.scope) return VS.ui.emptyActivity("#/", "This set was not found.");
       if (!s.queue.length) {
+        const next = VS.store.nextReview();
+        const base = s.scope.day ? "#/day/" + s.scope.day.iso : "#/all";
         return html`<div class="activity"><div class="empty">
           <h2>Nothing to recall right now</h2>
-          <p>Words you study come back here on their review day.</p>
-          <a class="btn btn-primary" href="${s.scope.back}">Go back</a></div></div>`;
+          <p>${next
+            ? html`Your next recall is <b>${VS.ui.whenText(next.date)}</b>: ${VS.plural(next.count, "word")}.`
+            : "Study a set first — its words come back here on their recall days."}</p>
+          <p class="hint">Want to keep going? Practise without changing your schedule:</p>
+          <div class="row empty-actions">
+            <a class="btn btn-primary" href="${base}/quiz">${icon("quiz", "icon-sm")} Quiz</a>
+            <a class="btn" href="${base}/spell">${icon("spell", "icon-sm")} Spell</a>
+            <a class="btn btn-quiet" href="${s.scope.back}">Go back</a>
+          </div></div></div>`;
       }
       if (s.index >= s.queue.length) return html`<div class="activity">${finish()}</div>`;
       const w = s.queue[s.index];

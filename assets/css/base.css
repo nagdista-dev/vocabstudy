@@ -59,6 +59,19 @@ a { color: var(--brand); text-underline-offset: 3px; }
    it should not draw a ring around the whole page. */
 #view:focus { outline: none; }
 
+/* Scrollbars: thin, rounded and quiet — they darken only when you reach for them.
+   Firefox reads scrollbar-*; Chrome, Edge, Brave and Safari read ::-webkit-scrollbar. */
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong); border-radius: 999px;
+  border: 3px solid transparent; background-clip: padding-box;   /* a slim thumb with breathing room */
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--ink-3); }
+::-webkit-scrollbar-thumb:active { background-color: var(--brand); }
+::-webkit-scrollbar-corner { background: transparent; }
+
 ::selection { background: var(--mark); color: var(--on-mark); }
 
 .skip-link:not(:focus) { position: absolute; left: -9999px; }

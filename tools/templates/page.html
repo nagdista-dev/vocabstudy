@@ -26,17 +26,15 @@
     <a class="brand" id="brandLink" href="{{ROOT}}index.html"><span>VocabStudy</span></a>
     <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
     <div class="bar-actions">
-      <a class="icon-btn" id="addBtn" href="#/add" aria-label="Add words" title="Add words"></a>
-      <a class="icon-btn" id="libraryBtn" href="#/words" aria-label="Library — every word" title="Library"></a>
-      <a class="icon-btn" id="statsBtn" href="#/stats" aria-label="Your progress" title="Progress"></a>
-      <a class="icon-btn" id="recallBtn" href="#/recall" aria-label="Recall" title="Recall"></a>
-      <button class="icon-btn" id="settingsBtn" type="button" data-action="open-settings" aria-label="Settings"></button>
+      <nav class="bar-nav" id="barNav" aria-label="Main"></nav>
+      <button class="icon-btn" id="settingsBtn" type="button" data-action="open-settings" aria-label="Settings" title="Settings"></button>
     </div>
   </div>
 </header>
 <main id="view" tabindex="-1">
   <noscript><p class="page">VocabStudy needs JavaScript to run.</p></noscript>
 </main>
+<nav class="tab-bar" id="tabBar" aria-label="Main"></nav>
 <dialog class="sheet" id="settings" aria-labelledby="settingsTitle"></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

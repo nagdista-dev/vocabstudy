@@ -13,6 +13,10 @@ Why one words.js? Each page needs every word (recall and wrong answers
 draw from all days). One file is one download, however many days you add.
 The day files stay small and separate, so they are easy to edit.
 
+Words come from data/days/ (your private sets) or, when that folder has
+none, from data/sample/ (the Starter set). Generated files are not committed:
+the public website is built from the sample by .github/workflows/pages.yml.
+
 Run it after adding, editing or removing a file in data/days/.
 It runs tools/check.py first and stops if the data has errors.
 """
@@ -26,7 +30,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "tools" / "templates" / "page.html"
-DATA = ROOT / "data" / "days"
+PRIVATE = ROOT / "data" / "days"      # your own sets — never uploaded (.gitignore)
+SAMPLE = ROOT / "data" / "sample"     # the Starter set that ships with the app
+
+
+def data_dir() -> Path:
+    """Your sets when you have any; otherwise the Starter set (this is what the public site builds)."""
+    return PRIVATE if any(PRIVATE.glob("*.js")) else SAMPLE
+
+
+DATA = data_dir()
 BUNDLE = ROOT / "data" / "words.js"
 DAYS = ROOT / "days"
 
@@ -152,7 +165,7 @@ def main() -> int:
     write_service_worker(days)
 
     words = BUNDLE.read_text(encoding="utf-8").count("{ word:")
-    print(f"built index.html + {len(days)} day pages · {words} words in data/words.js")
+    print(f"built index.html + {len(days)} day pages · {words} words from {DATA.relative_to(ROOT)}/")
     return 0
 
 

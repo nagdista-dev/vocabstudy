@@ -96,17 +96,42 @@
     current: () => current && current.name,
   };
 
+  /* ── Navigation ──────────────────────────────────────────────────
+     One list of destinations, drawn twice: labelled links in the top bar
+     on wide screens, a bottom tab bar on phones and tablets (where the
+     thumb is). Activities hide the tab bar so nothing distracts. */
+  const NAV = [
+    { id: "home", label: "Home", icon: "home", href: () => VS.homeHref + "#/", match: ["home"] },
+    { id: "recall", label: "Recall", icon: "review", href: () => "#/recall", match: ["recall"] },
+    { id: "library", label: "Library", icon: "book", href: () => "#/words", match: ["library"] },
+    { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats"] },
+    { id: "add", label: "Add words", icon: "plus", href: () => "#/add", match: ["import"] },
+  ];
+  const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall"];
+
+  function navMarkup(due, cls) {
+    return NAV.filter((n) => cls === "tab" || n.id !== "home").map((n) => {
+      const on = n.match.includes(current.name) && !(n.id === "recall" && current.params.scope === "day");
+      const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>` : "";
+      return html`<a class="${cls}-link" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
+        ${n.id === "recall" ? VS.raw(`aria-label="Recall — ${due ? due + " words due" : "nothing due"}"`) : ""}>
+        <span class="${cls}-ico">${icon(n.icon)}${count}</span><span class="${cls}-label">${n.label}</span></a>`;
+    });
+  }
+
   /* ── App bar ──────────────────────────────────────────────────── */
   function renderBar() {
     const crumbs = current.view.crumbs ? current.view.crumbs(current.params) : [];
     const due = VS.store.totals().due;
-    const crumbsEl = VS.$("#crumbs"), recall = VS.$("#recallBtn");
-    if (!crumbsEl || !recall) return;
+    const crumbsEl = VS.$("#crumbs");
+    if (!crumbsEl) return;
+    document.body.dataset.mode = ACTIVITIES.includes(current.name) ? "activity" : "browse";
+    const barNav = VS.$("#barNav"), tabBar = VS.$("#tabBar");
+    if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
+    if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
     crumbsEl.innerHTML = String(html`
       ${crumbs.length ? html`<a href="${VS.homeHref}">All sets</a>` : ""}
       ${crumbs.map((c) => html`<span aria-hidden="true">/</span>${c.href ? html`<a href="${c.href}">${c.label}</a>` : html`<span aria-current="page">${c.label}</span>`}`)}`);
-    recall.innerHTML = String(html`${icon("review")}${due ? html`<span class="count">${due > 99 ? "99+" : due}</span>` : ""}`);
-    recall.setAttribute("aria-label", due ? due + " words due for recall" : "Recall — nothing due");
   }
 
   /* ── Installable app (PWA) ─────────────────────────────────────
@@ -276,10 +301,6 @@
   };
   fill("brandLink", html`${VS.brandMark}<span>VocabStudy</span>`, VS.homeHref);
   fill("settingsBtn", icon("settings"));
-  fill("recallBtn", null, "#/recall");
-  fill("libraryBtn", icon("book"));
-  fill("addBtn", icon("plus"));
-  fill("statsBtn", icon("chart"));
   applySettings();
   VS.store.onChange(() => current && renderBar());
   window.addEventListener("hashchange", go);

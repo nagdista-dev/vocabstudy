@@ -1,0 +1,53 @@
+# Builds the public website from the Starter set and publishes it to GitHub Pages.
+# Personal word sets (data/days/*.js) are not in the repository, so they are
+# never part of the public site.
+name: Publish site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Check and build
+        run: |
+          python3 tools/check.py --data-only
+          python3 tools/build.py
+          python3 tools/check.py
+      - name: Collect the site
+        run: |
+          mkdir _site
+          cp -r index.html days data assets manifest.webmanifest sw.js .nojekyll _site/
+          rm -rf _site/data/days
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

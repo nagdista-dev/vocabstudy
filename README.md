@@ -52,7 +52,7 @@ Or download the repo and double-click `index.html` — no server needed.
 - **Installable app (PWA)** that works offline.
 - Back up and restore your progress as a file.
 
-<img src="docs/screenshot-cards-phone.png" alt="A study card on a phone" width="260">
+<img src="docs/screenshot-cards-phone.png" alt="A study card on a phone" width="240"> <img src="docs/screenshot-quiz-phone.png" alt="A quiz question on a phone" width="240">
 
 ## Daily use
 
@@ -76,9 +76,9 @@ python3 tools/build.py                 # checks them and builds the pages
 ```
 
 ```js
-{ word: "Thrive", type: "Verb", level: "B2", ipa: "/θraɪv/",
-  definition: "To grow or do well.", example: "I thrive when I have a clear plan.",
-  arabic: "يزدهر - ينجح وينمو" },
+{ word: "Habit", type: "Noun", level: "B1", ipa: "/ˈhæbɪt/",
+  definition: "Something you do often, almost without thinking.",
+  example: "I have a habit of reading before bed.", arabic: "عادة" },
 ```
 
 `sense` is optional — use it when one word appears with two meanings:
@@ -109,6 +109,18 @@ docs/                     architecture, design, learning guide
 | [docs/DESIGN.md](docs/DESIGN.md) | change colours, fonts, spacing, motion or sounds safely |
 | [docs/LEARN.md](docs/LEARN.md) | learn web development from this codebase (Arabic) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | send an improvement |
+
+## Your words stay yours
+
+The app ships with a **Starter set**: 30 words Arabic speakers often mix up
+(borrow / lend, affect / effect, actually ≠ حالياً …). Everything else is
+yours and stays on your device:
+
+- **Add words in the app** (+ Add words): paste a table — try
+  [`data/sample/sample-import.tsv`](data/sample/sample-import.tsv) to see the format.
+- **Or keep sets as files** in `data/days/` — that folder is in `.gitignore`,
+  so your words are never uploaded, even if you fork and push this repo.
+  When it's empty, the build uses the Starter set.
 
 ## Your data
 

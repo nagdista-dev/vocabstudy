@@ -8,17 +8,27 @@
   
   let s = null;   // { scope, words, index, typed, checked, hints, right, wrong: [] }
 
-  /** Mark each typed letter as right or wrong against the answer. */
+  /**
+   * The correct spelling, letter by letter: green for letters you wrote in
+   * the right order, red (underlined) for letters you missed or got wrong.
+   * Uses the longest common subsequence, so one missing letter in the middle
+   * doesn't turn every letter after it red ("recieve" vs "receive").
+   */
   function diff(typed, answer) {
-    const a = [...answer];
-    const t = [...typed];
-    const len = Math.max(a.length, t.length);
-    const out = [];
-    for (let i = 0; i < len; i++) {
-      const ok = t[i] && a[i] && t[i].toLowerCase() === a[i].toLowerCase();
-      out.push(html`<span class="${ok ? "ch-ok" : "ch-bad"}">${t[i] || "·"}</span>`);
+    const a = [...answer.toLowerCase()];
+    const t = [...typed.toLowerCase()];
+    const L = Array.from({ length: a.length + 1 }, () => new Array(t.length + 1).fill(0));
+    for (let i = a.length - 1; i >= 0; i--)
+      for (let j = t.length - 1; j >= 0; j--)
+        L[i][j] = a[i] === t[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    const hit = new Set();
+    for (let i = 0, j = 0; i < a.length && j < t.length;) {
+      if (a[i] === t[j]) { hit.add(i); i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) i++;
+      else j++;
     }
-    return out;
+    return [...answer].map((ch, i) =>
+      ch === " " ? html`<span class="ch-space"> </span>` : html`<span class="${hit.has(i) ? "ch-ok" : "ch-bad"}">${ch}</span>`);
   }
 
   function finish() {
@@ -80,8 +90,12 @@
             ${s.checked
               ? html`<div class="feedback ${ok ? "is-right" : "is-wrong"}" role="status">
                   <p class="feedback-title">${ok ? "Correct" : "Not quite"}</p>
-                  ${ok ? "" : html`<p class="spell-line"><span class="hint">You wrote</span><span class="spell-diff">${diff(s.typed, answer)}</span></p>`}
-                  <p class="spell-line">${ok ? "" : html`<span class="hint">Correct</span>`}<span class="feedback-word"><span class="mark">${answer}</span></span> <span class="ipa">${w.ipa}</span></p>
+                  ${ok
+                    ? html`<p class="spell-line"><span class="feedback-word"><span class="mark">${answer}</span></span> <span class="ipa">${w.ipa}</span></p>`
+                    : html`
+                      <p class="spell-line"><span class="hint">You wrote</span><span class="spell-typed">${s.typed}</span></p>
+                      <p class="spell-line"><span class="hint">Correct</span><span class="spell-diff" aria-label="Correct spelling: ${answer}">${diff(s.typed, answer)}</span></p>
+                      <p class="spell-legend hint"><span class="ch-ok">green</span> = you had it · <span class="ch-bad">red</span> = missed or wrong · <span class="ipa">${w.ipa}</span></p>`}
                   <p class="feedback-example">“${VS.ui.example(w)}”</p>
                 </div>`
               : ""}

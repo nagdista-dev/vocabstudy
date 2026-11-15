@@ -13,7 +13,7 @@
   const { html, icon } = VS;
 
   const TEMPLATE = ["word\tdefinition\texample\ttype\tlevel\tipa\tarabic",
-    "Thrive\tTo grow or develop well.\tI thrive when I have a clear plan.\tVerb\tB2\t/θraɪv/\tيزدهر - ينجح وينمو"].join("\n");
+    "Habit\tSomething you do often, almost without thinking.\tI have a habit of reading before bed.\tNoun\tB1\t/ˈhæbɪt/\tعادة"].join("\n");
 
   const st = { text: "", date: VS.todayKey(), parsed: null, busy: "", saved: "" };
 
@@ -37,7 +37,7 @@
     const missing = rows.filter((r) => !r.definition || !r.ipa).length;
     const existing = VS.day(st.date);
     return html`
-      <section class="card import-step">
+      <section class="card import-step" id="importCheck">
         <h2><span class="step-n">2</span> Check</h2>
         <p class="import-summary">
           <span class="badge is-known">${ready} ready</span>
@@ -59,14 +59,14 @@
                 const [cls, label] = statusOf(r);
                 return html`
                   <tr class="is-${cls}">
-                    <td><span class="row-status is-${cls}" title="${r.issues.map((i) => i.text).join(" · ")}">${label}</span></td>
-                    <td><b>${r.word || "—"}</b>${r.sense ? html` <span class="sense">(${r.sense})</span>` : ""}
+                    <td class="c-status"><span class="row-status is-${cls}" title="${r.issues.map((i) => i.text).join(" · ")}">${label}</span></td>
+                    <td class="c-word"><b>${r.word || "—"}</b>${r.sense ? html` <span class="sense">(${r.sense})</span>` : ""}
                       ${r.issues.length ? html`<span class="row-issues">${r.issues.map((i) => i.text).join(" · ")}</span>` : ""}</td>
-                    <td>${r.type} · ${r.level}</td>
-                    <td>${r.definition || html`<span class="hint">—</span>`}</td>
-                    <td>${r.example || html`<span class="hint">—</span>`}</td>
-                    <td class="ipa">${r.ipa || html`<span class="hint">—</span>`}</td>
-                    <td lang="ar">${r.arabic || html`<span class="hint">—</span>`}</td>
+                    <td data-label="Type · level">${r.type} · ${r.level}</td>
+                    <td data-label="Definition">${r.definition || html`<span class="hint">—</span>`}</td>
+                    <td data-label="Example">${r.example || html`<span class="hint">—</span>`}</td>
+                    <td data-label="IPA" class="ipa">${r.ipa || html`<span class="hint">—</span>`}</td>
+                    <td data-label="Arabic" lang="ar">${r.arabic || html`<span class="hint">—</span>`}</td>
                   </tr>`;
               })}
             </tbody>
@@ -141,6 +141,7 @@
               <button class="btn btn-primary" type="button" data-action="import-read">Read the table</button>
               <label class="btn">Choose a file<input type="file" id="importFile2" accept=".tsv,.csv,.txt,text/plain,text/csv" hidden></label>
               <button class="btn btn-quiet" type="button" data-action="import-sample">Show an example</button>
+              <a class="btn btn-quiet" href="${VS.homeHref.replace("index.html", "")}data/sample/sample-import.tsv" download>Download a sample table</a>
             </div>
           </section>
 
@@ -166,6 +167,8 @@
         st.parsed = VS.importer.parse(st.text);
         st.saved = "";
         VS.app.render();
+        const check = VS.$("#importCheck");
+        if (check) check.scrollIntoView({ behavior: "smooth", block: "start" });
       },
       "import-sample"() {
         st.text = TEMPLATE;

@@ -23,7 +23,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = Path(__file__).resolve().parent / ".screenshots"
 WIDTHS = {"phone": (375, 812), "tablet": (768, 1024), "desktop": (1280, 900)}
-DAY = sorted((ROOT / "data" / "days").glob("*.js"))[-1].stem
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from build import data_dir  # noqa: E402  — same word source as the build
+
+DAY = sorted(data_dir().glob("*.js"))[-1].stem
 SCREENS = {
     "home": "index.html",
     "day": f"days/{DAY}.html",
@@ -32,6 +35,9 @@ SCREENS = {
     "spell": f"days/{DAY}.html#/day/{DAY}/spell",
     "match": f"days/{DAY}.html#/day/{DAY}/match",
     "library": "index.html#/words",
+    "stats": "index.html#/stats",
+    "add": "index.html#/add",
+    "data": "index.html#/data",
     "print": f"index.html#/print/day/{DAY}",
 }
 

@@ -8,11 +8,12 @@
    ------------------------------------------------------------------ */
 
 /* 1. The signature: the highlighter draws itself under a new word. */
-@keyframes mark-draw { from { background-size: 0% .48em; } }
+@keyframes mark-draw { from { background-size: 0% 100%; } }
 .flash-word .mark,
 .recall-word .mark,
 .feedback-word .mark,
-.today-count { animation: mark-draw 560ms var(--ease) 140ms both; }
+.today-count { animation: mark-draw 560ms var(--ease) 140ms both; background-repeat: no-repeat; }
+.flash-word .mark, .recall-word .mark, .feedback-word .mark { background-repeat: no-repeat; background-size: 100% 100%; }
 .today-count { background: linear-gradient(var(--mark), var(--mark)) 0 0 / 100% 100% no-repeat; }
 @keyframes count-draw { from { background-size: 0% 100%; } }
 .today-count { animation-name: count-draw; }

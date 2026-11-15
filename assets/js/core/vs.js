@@ -37,6 +37,7 @@
       VS.days.push(day);
       VS.days.sort((a, b) => (a.iso < b.iso ? 1 : -1));
     }
+    if (options && options.title) { day.label = options.title; day.weekday = "Sample set"; day.sample = true; }
     const custom = !!(options && options.custom);
     if (!custom) day.built = true;
     day.custom = !day.built;
@@ -44,7 +45,7 @@
       // The id survives edits to the definition/example, so progress is kept.
       const id = iso + ":" + (w.word + (w.sense ? " (" + w.sense + ")" : "")).toLowerCase();
       const word = Object.assign({ sense: "" }, w, { id, day: iso });
-      // "Blindfold (N)": the sense only repeats the word type, which a badge already shows.
+      // "Habit (N)": the sense only repeats the word type, which a badge already shows.
       if (/^(n|v|adj|adv|noun|verb|adjective|adverb)\.?$/i.test(word.sense)) word.sense = "";
       if (VS.byId[id]) return;                     // already in this day
       word.custom = custom;

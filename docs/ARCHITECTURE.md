@@ -11,7 +11,7 @@ tools/templates/page.html ──build.py──▶ index.html, days/*.html
 ```
 
 Every page is the **same app**. `index.html` starts on the home screen;
-`days/2026-11-02.html` has `data-day="2026-11-02"` on `<body>` and starts on
+`days/2026-01-01.html` has `data-day="2026-01-01"` on `<body>` and starts on
 that day. Both load all the words, because recall and wrong answers in a quiz
 draw from every day.
 

@@ -33,7 +33,7 @@
     speakButton: (text, label) =>
       html`<button class="speak-btn" type="button" data-action="speak" data-say="${text}" aria-label="${label || "Hear " + text}">${icon("volume", "icon-sm")}</button>`,
 
-    /** Headword + optional sense in brackets, e.g. Packed (crowded). */
+    /** Headword + optional sense in brackets, e.g. Axe (tool) — the sense tells two meanings apart. */
     headword: (w, cls) =>
       html`<span class="${cls || ""}">${w.word}</span>${w.sense ? html` <span class="sense">(${w.sense.toLowerCase()})</span>` : ""}`,
 

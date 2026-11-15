@@ -22,7 +22,10 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "data" / "days"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from build import data_dir  # noqa: E402  — one rule for where the words come from
+
+DATA = data_dir()
 FIELDS = ["word", "type", "level", "example", "arabic"]          # required
 OPTIONAL = ["ipa", "definition"]                                   # a warning when empty
 LEVELS = {"A1", "A2", "B1", "B2", "C1", "C2"}
@@ -44,8 +47,9 @@ const ctx = { window: {}, console };
 ctx.window = ctx; vm.createContext(ctx);
 for (const f of ["assets/js/core/vs.js", "assets/js/core/word-forms.js", "assets/js/core/practice.js"])
   vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), ctx);
-for (const f of fs.readdirSync(path.join(root, "data/days")).filter((f) => f.endsWith(".js")).sort())
-  vm.runInContext(fs.readFileSync(path.join(root, "data/days", f), "utf8"), ctx);
+const dir = process.argv[2];
+for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".js")).sort())
+  vm.runInContext(fs.readFileSync(path.join(dir, f), "utf8"), ctx);
 const missing = ctx.VS.allWords().filter((w) => !ctx.VS.findInExample(w, true)).map((w) => w.day + " | " + w.word);
 console.log(JSON.stringify(missing));
 """
@@ -55,7 +59,7 @@ def examples_without_word() -> list[str] | None:
     node = shutil.which("node")
     if not node:
         return None
-    out = subprocess.run([node, "-e", NODE_MATCHER, str(ROOT)], capture_output=True, text=True)
+    out = subprocess.run([node, "-e", NODE_MATCHER, str(ROOT), str(DATA)], capture_output=True, text=True)
     if out.returncode:
         raise SystemExit("matcher failed:\n" + out.stderr)
     return json.loads(out.stdout)
@@ -68,14 +72,14 @@ def check_data(errors: list[str], warnings: list[str]) -> int:
     if not files:
         errors.append("data/days/ has no word files")
     for f in files:
-        name = f"data/days/{f.name}"
+        name = f"{DATA.relative_to(ROOT)}/{f.name}"
         if not ISO.match(f.stem):
             errors.append(f"{name}: file name must be YYYY-MM-DD.js")
             continue
         text = f.read_text(encoding="utf-8")
         if f'VS.addDay("{f.stem}"' not in text:
             errors.append(f'{name}: must call VS.addDay("{f.stem}", [...])')
-        if not text.rstrip().endswith("]);"):
+        if not text.rstrip().endswith(("]);", "});")):
             errors.append(f"{name}: must end with ]);")
         for n, line in enumerate(text.splitlines(), 1):
             m = ROW.match(line)
@@ -107,7 +111,7 @@ def check_data(errors: list[str], warnings: list[str]) -> int:
         warnings.append("node not found — skipped the 'example contains the word' check")
     for item in missing or []:
         day, word = item.split(" | ", 1)
-        warnings.append(f"data/days/{day}.js ({word}): example doesn't contain the word")
+        warnings.append(f"{DATA.relative_to(ROOT)}/{day}.js ({word}): example doesn't contain the word")
     for (word, sense), days in seen.items():
         if len(days) > 1:
             same_day = len(set(days)) < len(days)
@@ -155,7 +159,7 @@ def main(argv: list[str]) -> int:
     for e in errors:
         print(f"  ERROR    {e}")
     status = "FAILED" if errors else "OK"
-    print(f"check {status}: {total} words in {len(list(DATA.glob('*.js')))} days, "
+    print(f"check {status}: {total} words in {len(list(DATA.glob('*.js')))} day(s), "
           f"{len(errors)} error(s), {len(warnings)} warning(s)")
     return 1 if errors else 0
 
