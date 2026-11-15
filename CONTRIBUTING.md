@@ -7,7 +7,7 @@ contribute.
 ## Run it
 
 ```bash
-python3 tools/build.py        # check the data, generate the pages
+python3 tools/build.py        # check everything, generate index.html
 open index.html               # or double-click it — no server needed
 ```
 
@@ -22,8 +22,10 @@ Then test the screens you changed at phone width (375px) and desktop width.
 
 ## Ground rules
 
-- **Edit sources, never generated files.** `index.html`, `days/*.html` and
-  `data/words.js` are written by `tools/build.py`.
+- **Edit sources, never generated files.** `index.html`, `data/words.js` and
+  `sw.js` are written by `tools/build.py`.
+- **Never commit personal word lists.** Learners keep their words in the app;
+  only the Starter set (`data/sample/`) belongs in the repository.
 - **One helper, one home.** Shared logic lives in `assets/js/core/`.
   `check.py` fails if a view re-implements escaping, shuffling or storage.
 - **Design tokens only.** Colours, sizes and fonts come from
