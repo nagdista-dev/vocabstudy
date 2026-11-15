@@ -134,6 +134,18 @@
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    // A new version was published: the new service worker takes over, and we
+    // offer a reload instead of switching code under the learner's feet.
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController) return;                 // first install, nothing to announce
+      const bar = document.createElement("div");
+      bar.className = "update-bar";
+      bar.setAttribute("role", "status");
+      bar.innerHTML = String(html`<span>A new version of VocabStudy is ready.</span>
+        <button class="btn btn-primary" type="button" data-action="reload">Update now</button>`);
+      document.body.appendChild(bar);
+    });
   }
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
   window.addEventListener("appinstalled", () => { installPrompt = null; VS.toast("VocabStudy is installed."); });
@@ -217,6 +229,7 @@
   const GLOBAL = (VS.actions = VS.actions || {});
   Object.assign(GLOBAL, {
     speak(el) { VS.speech.say(el.dataset.say, el); },
+    reload() { location.reload(); },
     forget(el) { VS.store.forget(el.dataset.id); VS.toast("Word reset to new."); render(); },
     "open-settings"() {
       const dlg = VS.$("#settings");

@@ -324,6 +324,15 @@ kbd {
 .view-enter { animation: view-in var(--slow) var(--ease) both; }
 @keyframes view-in { from { opacity: 0; transform: translateY(6px); } }
 
+/* "A new version is ready" (app.js, after a deploy) */
+.update-bar {
+  position: fixed; z-index: 45; left: 50%; top: calc(var(--bar-h) + var(--s-3)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);
+  background: var(--ink); color: var(--paper); border-radius: var(--r-pill); box-shadow: var(--shadow-2);
+  font-size: var(--text-sm); font-weight: 500; animation: view-in var(--slow) var(--ease);
+  max-width: calc(100vw - 32px);
+}
+
 /* Break reminder (core/study-time.js) — calm, never blocks the screen. */
 .break-card {
   position: fixed; z-index: 40; right: var(--s-5); bottom: var(--s-5);

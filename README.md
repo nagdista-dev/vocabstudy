@@ -99,6 +99,21 @@ docs/                     architecture, design, learning guide
 | [docs/LEARN.md](docs/LEARN.md) | learn web development from this codebase (Arabic) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | send an improvement |
 
+## Updating the app
+
+```bash
+# 1. change the code (assets/, data/sample/, tools/templates/)
+python3 tools/build.py            # 2. rebuild + check
+open index.html                   # 3. try it (or: python3 -m http.server)
+git add -A && git commit -m "…"   # 4. save the change
+git push                          # 5. publish
+```
+
+Pushing to `main` runs `.github/workflows/pages.yml`, which checks, builds
+and publishes the site. Installed apps pick up the new version and show
+**“A new version is ready — Update now”**. Learners' words and progress are
+untouched by updates.
+
 ## License
 
 [MIT](LICENSE) — free to use, change and share.
