@@ -28,16 +28,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      # build.py knows which files the app needs (SITE_FILES) and puts them in _site/
       - name: Check and build
         run: |
-          python3 tools/check.py --data-only
-          python3 tools/build.py
+          python3 tools/build.py --site
           python3 tools/check.py
-      - name: Collect the site
-        run: |
-          mkdir _site
-          cp -r index.html days data assets manifest.webmanifest sw.js .nojekyll _site/
-          rm -rf _site/data/days
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

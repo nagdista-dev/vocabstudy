@@ -125,8 +125,19 @@ def check_pages(errors: list[str]) -> None:
     days = sorted(DATA.glob("*.js"))
     if not (ROOT / "index.html").exists():
         errors.append("index.html is missing — run python3 tools/build.py")
-    if not (ROOT / "sw.js").exists():
+    sw = ROOT / "sw.js"
+    if not sw.exists():
         errors.append("sw.js is missing — run python3 tools/build.py")
+    else:
+        # One missing file in the precache list breaks offline install of the app.
+        listed = re.search(r"const PRECACHE = (\[.*?\]);", sw.read_text(encoding="utf-8"), re.S)
+        for f in json.loads(listed.group(1)) if listed else []:
+            if not (ROOT / f.split("?")[0]).exists():
+                errors.append(f"sw.js precaches a missing file: {f}")
+    manifest = ROOT / "manifest.webmanifest"
+    for icon in json.loads(manifest.read_text(encoding="utf-8")).get("icons", []) if manifest.exists() else []:
+        if not (ROOT / icon["src"]).exists():
+            errors.append(f"manifest.webmanifest: missing icon {icon['src']}")
     bundle = ROOT / "data" / "words.js"
     if bundle.exists() and days and bundle.stat().st_mtime < max(d.stat().st_mtime for d in days):
         errors.append("data/words.js is older than a day file — run python3 tools/build.py")
