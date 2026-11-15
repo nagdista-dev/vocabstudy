@@ -18,6 +18,9 @@
     return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
   }
 
+  /* A first visit: no words of their own and nothing studied yet. */
+  const isNewLearner = (t) => !t.started && !VS.allWords().some((w) => w.custom);
+
   function welcome() {
     const sample = VS.days.find((d) => d.sample);
     return html`
@@ -38,8 +41,7 @@
   }
 
   function todayPanel(t) {
-    const ownWords = VS.allWords().some((w) => w.custom);
-    if (!t.started && !ownWords) return welcome();
+    if (isNewLearner(t)) return welcome();
     if (!t.started) {
       const newest = VS.days[0];
       return html`
@@ -277,7 +279,7 @@
       return html`
         <div class="page view-enter">
           <section class="today card">
-            <div class="today-left">${todayPanel(t)}${goal(t)}</div>
+            <div class="today-left">${todayPanel(t)}${isNewLearner(t) ? "" : goal(t)}</div>
             ${spotlight()}
           </section>
           ${stats(t)}
