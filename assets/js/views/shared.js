@@ -15,6 +15,44 @@
     return "in " + days + " days";
   }
 
+  /* Edit / delete your own words (global actions, so they work in every list). */
+  const EDIT_FIELDS = [["word", "Word"], ["sense", "Sense"], ["arabic", "Arabic"], ["type", "Type"], ["level", "Level"],
+                       ["ipa", "IPA"], ["definition", "Definition"], ["example", "Example"]];
+  VS.actions = VS.actions || {};
+  VS.actions["word-edit"] = (el) => {
+    const w = VS.byId[el.dataset.id];
+    const body = el.closest(".word-row-body");
+    if (!w || !body) return;
+    body.innerHTML = String(html`
+      <form class="word-edit" data-edit-id="${w.id}">
+        ${EDIT_FIELDS.map(([k, label]) => html`
+          <label class="form-field ${k === "definition" || k === "example" ? "is-wide" : ""}"><span>${label}</span>
+            ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
+              : k === "level" ? html`<select name="level">${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
+              : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
+          </label>`)}
+        <div class="row is-wide">
+          <button class="btn btn-primary" type="button" data-action="word-save" data-id="${w.id}">Save changes</button>
+          <button class="btn btn-quiet" type="button" data-action="word-cancel">Cancel</button>
+        </div>
+      </form>`);
+  };
+  VS.actions["word-save"] = (el) => {
+    const form = el.closest("form");
+    const changes = {};
+    EDIT_FIELDS.forEach(([k]) => { changes[k] = form.elements[k].value.trim(); });
+    if (!changes.word || !changes.arabic) { VS.toast("The word and its Arabic meaning are needed."); return; }
+    VS.store.editUserWord(el.dataset.id, changes);
+    location.reload();                 // rebuild every list with the new version
+  };
+  VS.actions["word-cancel"] = () => VS.app.render();
+  VS.actions["word-delete"] = (el) => {
+    const w = VS.byId[el.dataset.id];
+    if (!w || !confirm(`Delete “${w.word}” from your words? This can't be undone.`)) return;
+    VS.store.deleteUserWord(w.id);
+    location.reload();
+  };
+
   VS.ui = {
     whenText,
 
@@ -95,7 +133,12 @@
               <span class="hint">${s === "new"
                 ? "Not studied yet"
                 : html`Next recall ${whenText(e.due)} · box ${e.box} of 6 · ${e.right} right, ${e.wrong} wrong`}</span>
-              ${s === "new" ? "" : html`<button class="btn btn-quiet" type="button" data-action="forget" data-id="${w.id}">${icon("review", "icon-sm")} Start over</button>`}
+              <span class="row">
+                ${s === "new" ? "" : html`<button class="btn btn-quiet" type="button" data-action="forget" data-id="${w.id}">${icon("review", "icon-sm")} Start over</button>`}
+                ${w.custom ? html`
+                  <button class="btn btn-quiet" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>
+                  <button class="btn btn-quiet danger" type="button" data-action="word-delete" data-id="${w.id}">Delete</button>` : ""}
+              </span>
             </div>
           </div>
         </details>`;

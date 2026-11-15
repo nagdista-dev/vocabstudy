@@ -18,7 +18,28 @@
     return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
   }
 
+  function welcome() {
+    const sample = VS.days.find((d) => d.sample);
+    return html`
+      <div class="today-main">
+        <p class="eyebrow">Welcome to VocabStudy</p>
+        <h1>Learn your English words — and keep them.</h1>
+        <ol class="welcome-steps">
+          <li><b>Add your words</b> — type them, paste a table, or upload a file.</li>
+          <li><b>Study</b> them once: meaning, Arabic, example and sound.</li>
+          <li><b>Recall</b> them on spaced days, so they stay for good.</li>
+        </ol>
+        <div class="row">
+          <a class="btn btn-primary btn-lg" href="#/add">${icon("plus")} Add your first words</a>
+          ${sample ? html`<a class="btn btn-lg" href="${VS.dayHref(sample.iso)}">Try the Starter set</a>` : ""}
+        </div>
+        <p class="hint">Free, no account. Your words and progress stay on this device.</p>
+      </div>`;
+  }
+
   function todayPanel(t) {
+    const ownWords = VS.allWords().some((w) => w.custom);
+    if (!t.started && !ownWords) return welcome();
     if (!t.started) {
       const newest = VS.days[0];
       return html`

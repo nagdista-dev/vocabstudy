@@ -29,11 +29,11 @@ from build import data_dir  # noqa: E402  — same word source as the build
 DAY = sorted(data_dir().glob("*.js"))[-1].stem
 SCREENS = {
     "home": "index.html",
-    "day": f"days/{DAY}.html",
-    "cards": f"days/{DAY}.html#/day/{DAY}/cards",
-    "quiz": f"days/{DAY}.html#/day/{DAY}/quiz",
-    "spell": f"days/{DAY}.html#/day/{DAY}/spell",
-    "match": f"days/{DAY}.html#/day/{DAY}/match",
+    "day": f"index.html#/day/{DAY}",
+    "cards": f"index.html#/day/{DAY}/cards",
+    "quiz": f"index.html#/day/{DAY}/quiz",
+    "spell": f"index.html#/day/{DAY}/spell",
+    "match": f"index.html#/day/{DAY}/match",
     "library": "index.html#/words",
     "stats": "index.html#/stats",
     "add": "index.html#/add",

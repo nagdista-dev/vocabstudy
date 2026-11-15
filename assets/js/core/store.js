@@ -38,7 +38,7 @@
     best: {},                                      // "match:2026-11-02" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
                 accent: "blue", voice: "us", autoplay: true, cardFront: "en",
-                quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
+                quizTypes: ["meaning", "arabic", "english", "gap", "listen"], showSample: true },
   };
 
   function load() {
@@ -325,6 +325,39 @@
       save();
     },
 
+    /**
+     * Change one of your words. If the word or its sense changes, its id
+     * changes too — progress and note move to the new id, so nothing is lost.
+     * Returns the new id. The page reloads after edits (see views/shared.js).
+     */
+    editUserWord(id, changes) {
+      const w = VS.byId[id];
+      const list = w && state.userDays[w.day];
+      if (!list) return null;
+      const key = (x) => (x.word + "|" + (x.sense || "")).toLowerCase();
+      const i = list.findIndex((x) => key(x) === key(w));
+      if (i < 0) return null;
+      list[i] = Object.assign({}, list[i], changes);
+      const newId = w.day + ":" + (list[i].word + (list[i].sense ? " (" + list[i].sense + ")" : "")).toLowerCase();
+      if (newId !== id) {
+        if (state.words[id]) { state.words[newId] = state.words[id]; delete state.words[id]; }
+        if (state.notes[id]) { state.notes[newId] = state.notes[id]; delete state.notes[id]; }
+      }
+      save();
+      return newId;
+    },
+    deleteUserWord(id) {
+      const w = VS.byId[id];
+      const list = w && state.userDays[w.day];
+      if (!list) return;
+      const key = (x) => (x.word + "|" + (x.sense || "")).toLowerCase();
+      state.userDays[w.day] = list.filter((x) => key(x) !== key(w));
+      if (!state.userDays[w.day].length) delete state.userDays[w.day];
+      delete state.words[id];
+      delete state.notes[id];
+      save();
+    },
+
     resetProgress() {
       // Words you added are content, not progress: they survive a reset.
       state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), { settings: state.settings, userDays: state.userDays });
@@ -333,6 +366,14 @@
 
     WAIT_DAYS,
   };
+
+  // The Starter set can be hidden once you have your own words (Settings → Study).
+  if (state.settings.showSample === false) {
+    VS.days.filter((d) => d.sample).forEach((d) => {
+      d.words.forEach((w) => delete VS.byId[w.id]);
+      VS.days.splice(VS.days.indexOf(d), 1);
+    });
+  }
 
   // Sets added in the app join the built-in ones before any screen draws.
   Object.keys(state.userDays || {}).sort().forEach((iso) => VS.addDay(iso, state.userDays[iso], { custom: true }));

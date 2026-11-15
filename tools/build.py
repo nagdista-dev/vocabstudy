@@ -1,47 +1,38 @@
 #!/usr/bin/env python3
-"""Build the site from the word files and one page template.
+"""Build the app: one page, plus the Starter set and the offline cache list.
 
     python3 tools/build.py
 
-Writes (all generated — never edit them by hand):
-    data/words.js          every data/days/*.js joined into one file
-    sw.js                  the offline cache list for the installed app
-    index.html             the hub: today's recall + every word set
-    days/YYYY-MM-DD.html   one page per word set
+Writes (generated — never edit by hand):
+    index.html       the whole app (every screen lives inside it)
+    data/words.js    the Starter set from data/sample/*.js
+    sw.js            the offline cache list for the installed app
 
-Why one words.js? Each page needs every word (recall and wrong answers
-draw from all days). One file is one download, however many days you add.
-The day files stay small and separate, so they are easy to edit.
+Learners add their own words inside the app (Add words): typed one by one,
+pasted from a spreadsheet, or uploaded as files. Those words stay on their
+device; nothing personal is ever part of the build.
 
-Words come from data/days/ (your private sets) or, when that folder has
-none, from data/sample/ (the Starter set). Generated files are not committed:
-the public website is built from the sample by .github/workflows/pages.yml.
-
-Run it after adding, editing or removing a file in data/days/.
-It runs tools/check.py first and stops if the data has errors.
+It runs tools/check.py first and stops if the sample data has errors.
 """
 
 from __future__ import annotations
 
 import subprocess
 import sys
-from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "tools" / "templates" / "page.html"
-PRIVATE = ROOT / "data" / "days"      # your own sets — never uploaded (.gitignore)
 SAMPLE = ROOT / "data" / "sample"     # the Starter set that ships with the app
 
 
 def data_dir() -> Path:
-    """Your sets when you have any; otherwise the Starter set (this is what the public site builds)."""
-    return PRIVATE if any(PRIVATE.glob("*.js")) else SAMPLE
+    """Where the built-in words come from: only the Starter set."""
+    return SAMPLE
 
 
 DATA = data_dir()
 BUNDLE = ROOT / "data" / "words.js"
-DAYS = ROOT / "days"
 
 # Load order matters: each file may use what the files before it define.
 STYLES = [
@@ -114,14 +105,13 @@ def render(root: str, title: str, description: str, body_attrs: str) -> str:
     return page
 
 
-def write_service_worker(days: list[Path]) -> None:
+def write_service_worker() -> None:
     """sw.js lists every file the app needs offline, with the same ?v= URLs the pages use."""
     import hashlib
     import json
     files = ["index.html", "manifest.webmanifest", "assets/favicon.svg",
              "assets/icons/icon-192.png", "assets/icons/icon-512.png",
              "assets/icons/maskable-512.png", "assets/icons/apple-touch-icon.png"]
-    files += [f"days/{d.stem}.html" for d in days]
     files += [f"{p}?v={version(p)}" for p in STYLES + SCRIPTS]
     stamp = hashlib.sha1("|".join(files).encode()).hexdigest()[:10]
     sw = (ROOT / "tools" / "templates" / "sw.js").read_text(encoding="utf-8")
@@ -129,9 +119,6 @@ def write_service_worker(days: list[Path]) -> None:
     (ROOT / "sw.js").write_text(sw, encoding="utf-8")
 
 
-def label(iso: str) -> str:
-    d = date.fromisoformat(iso)
-    return f"{d.day} {d.strftime('%b %Y')}"
 
 
 def main() -> int:
@@ -142,30 +129,19 @@ def main() -> int:
 
     days = sorted(DATA.glob("*.js"))
     bundle(days)
-
     (ROOT / "index.html").write_text(
         render("", "VocabStudy — vocabulary with spaced recall",
-               "Study a word set each day, then recall it on spaced days so it sticks.", ""),
+               "Free app for Arabic speakers learning English: add your words, then recall them on spaced days so they stick.", ""),
         encoding="utf-8")
-
-    DAYS.mkdir(exist_ok=True)
-    wanted = set()
-    for d in days:
-        iso = d.stem
-        wanted.add(f"{iso}.html")
-        (DAYS / f"{iso}.html").write_text(
-            render("../", f"{label(iso)} · VocabStudy", f"VocabStudy word set for {label(iso)}.",
-                   f' data-root="../" data-day="{iso}"'),
-            encoding="utf-8")
-    for old in DAYS.glob("*.html"):            # a deleted data file removes its page
-        if old.name not in wanted:
-            old.unlink()
-            print(f"removed days/{old.name}")
-
-    write_service_worker(days)
-
+    old_days = ROOT / "days"                       # pages from older versions: no longer used
+    if old_days.is_dir():
+        for page in old_days.glob("*.html"):
+            page.unlink()
+        if not any(old_days.iterdir()):
+            old_days.rmdir()
+    write_service_worker()
     words = BUNDLE.read_text(encoding="utf-8").count("{ word:")
-    print(f"built index.html + {len(days)} day pages · {words} words from {DATA.relative_to(ROOT)}/")
+    print(f"built index.html · {words} Starter words from {DATA.relative_to(ROOT)}/")
     return 0
 
 

@@ -1,7 +1,7 @@
 /* app.js — boots the app: routing, the app bar, settings and input.
    ------------------------------------------------------------------
    ROUTES (the part after # in the address bar)
-     #/                      home (index.html) — or the day, on a day page
+     #/                      home
      #/recall                daily recall across every day
      #/all/quiz              an activity over every word (cards | quiz | spell | match)
      #/tricky/quiz           an activity over the words you keep missing
@@ -29,18 +29,10 @@
   "use strict";
   const { html, icon } = VS;
 
-  const body = document.body;
-  const ROOT = body.dataset.root || "";            // "" on index.html, "../" on day pages
-  const PAGE_DAY = body.dataset.day || "";          // set on days/*.html
   const MODES = ["cards", "quiz", "spell", "match", "recall"];
 
-  VS.homeHref = ROOT + "index.html";
-  VS.dayHref = (iso) => {
-    const day = VS.day(iso);
-    if (PAGE_DAY && iso === PAGE_DAY) return "#/";
-    if (day && !day.built) return (PAGE_DAY ? ROOT + "index.html" : "") + "#/day/" + iso;   // added in the app: no page of its own
-    return PAGE_DAY ? iso + ".html" : "days/" + iso + ".html";
-  };
+  VS.homeHref = "index.html";
+  VS.dayHref = (iso) => "#/day/" + iso;
 
   /* ── Routing ──────────────────────────────────────────────────── */
   function parse(hash) {
@@ -60,7 +52,7 @@
       if (MODES.includes(parts[2])) return { view: parts[2], scope: "day", iso: parts[1] };
       return { view: "day", iso: parts[1] };
     }
-    return PAGE_DAY ? { view: "day", iso: PAGE_DAY } : { view: "home" };
+    return { view: "home" };
   }
 
   let current = null;     // { name, view, params }
@@ -141,7 +133,7 @@
   const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener("load", () => navigator.serviceWorker.register(ROOT + "sw.js").catch(() => {}));
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
   }
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
   window.addEventListener("appinstalled", () => { installPrompt = null; VS.toast("VocabStudy is installed."); });
@@ -185,6 +177,8 @@
           <span class="hint">Arabic first makes you produce the English word — harder, and it sticks better.</span></div>
         <div class="setting"><b>Quiz questions</b>
           <div class="checks">${QUIZ_TYPES.map(([v, l]) => html`<label class="check"><input type="checkbox" data-quiz-type value="${v}" ${(st.quizTypes || []).includes(v) ? VS.raw("checked") : ""}><span>${l}</span></label>`)}</div></div>
+        <div class="setting"><b>Starter set</b><div class="seg">${choice("showSample", true, "Show")}${choice("showSample", false, "Hide")}</div>
+          <span class="hint">The 30 built-in words. Hide them once you have your own.</span></div>
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
         <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day, across all activities.</span></div>
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
@@ -237,6 +231,7 @@
       applySettings();
       VS.$("#settings").innerHTML = String(settingsMarkup());
       if (el.dataset.name === "rate") VS.speech.say("This is how words will sound.");
+      if (el.dataset.name === "showSample") setTimeout(() => location.reload(), 300);
     },
     install() {
       if (!installPrompt) return;

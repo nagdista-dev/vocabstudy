@@ -76,6 +76,9 @@
 }
 .word-row-example { color: var(--ink-2); font-style: italic; }
 .word-row-foot { justify-content: space-between; }
+.word-edit { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+.word-edit .is-wide { grid-column: 1 / -1; }
+@media (max-width: 640px) { .word-edit { grid-template-columns: 1fr; } }
 
 @media (max-width: 760px) {
   .day-stats { width: 100%; }

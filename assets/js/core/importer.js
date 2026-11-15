@@ -6,7 +6,9 @@
    "term" or "word" all mean the headword, "category" or "pos" the type.
 
      VS.importer.parse(text) → { rows: [{ word, …, issues: [] }], columns, delimiter }
-     VS.importer.toDataFile(iso, words) → the text of data/days/ISO.js
+     VS.importer.parseDataFile(text) → { iso, rows } from a VocabStudy .js data file
+     VS.importer.checkWord(word)    → the word cleaned, with its issues
+     VS.importer.toDataFile(iso, words) → the text of a .js data file
 
    Without a header row, columns are read in this order:
      word, definition, example, type, level, ipa, arabic
@@ -83,8 +85,19 @@
 
     const rows = body.map((line, n) => {
       const cells = splitLine(line, delimiter).map((c) => c.trim());
-      const w = { word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "" };
+      const w = blank();
       columns.forEach((field, i) => { if (field && cells[i] != null && !w[field]) w[field] = cells[i]; });
+      return checkWord(w, n + (hasHeader ? 2 : 1));
+    });
+    return { rows, columns, hasHeader, delimiter };
+  }
+
+  const blank = () => ({ word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "" });
+
+  /** Clean one word and list what's missing. Used by tables, files and the one-word form. */
+  function checkWord(w, line) {
+      w = Object.assign(blank(), w);
+      Object.keys(w).forEach((k) => { w[k] = String(w[k] == null ? "" : w[k]).trim(); });
       const issues = [];
 
       // "Axe (tool)" → word "Axe", sense "tool"
@@ -107,9 +120,31 @@
       if (!w.example) issues.push({ kind: "warn", text: "no example" });
       if (!w.definition) issues.push({ kind: "warn", text: "no definition" });
       if (!w.ipa) issues.push({ kind: "warn", text: "no IPA" });
-      return Object.assign(w, { line: n + (hasHeader ? 2 : 1), issues });
-    });
-    return { rows, columns, hasHeader, delimiter };
+      return Object.assign(w, { line, issues });
+  }
+
+  /**
+   * Read a VocabStudy data file (VS.addDay("2026-11-02", [ … ])) — the
+   * format older versions kept in data/days/. Never runs the file: each
+   * { word: "…", … } row is read as data. Returns { iso, rows } or null.
+   */
+  function parseDataFile(text) {
+    const head = /VS\.addDay\(\s*["'](\d{4}-\d{2}-\d{2})["']/.exec(text);
+    if (!head) return null;
+    const rows = [];
+    const rowRe = /\{\s*word\s*:[^{}]*\}/g;
+    let m, n = 0;
+    while ((m = rowRe.exec(text))) {
+      n++;
+      const w = {};
+      const pairRe = /(\w+)\s*:\s*("(?:[^"\\]|\\.)*")/g;
+      let pm;
+      while ((pm = pairRe.exec(m[0]))) {
+        try { w[pm[1]] = JSON.parse(pm[2]); } catch (e) { /* skip a broken value */ }
+      }
+      rows.push(checkWord(w, n));
+    }
+    return { iso: head[1], rows };
   }
 
   /** The text of a data/days/ISO.js file for these words (same format as the built-in sets). */
@@ -160,5 +195,5 @@ ${rows.join("\n")}
     return filled;
   }
 
-  VS.importer = { parse, toDataFile, fillFromDictionary, FIELDS, LEVELS, TYPES };
+  VS.importer = { parse, parseDataFile, checkWord, toDataFile, fillFromDictionary, FIELDS, LEVELS, TYPES };
 })();

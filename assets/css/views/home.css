@@ -19,6 +19,9 @@
 .today-main p.muted { max-width: 52ch; }
 .today-main .btn { margin-top: var(--s-2); }
 .eyebrow { color: var(--ink-3); font-weight: 500; }
+.welcome-steps { display: grid; gap: var(--s-2); padding-inline-start: 1.3em; color: var(--ink-2); max-width: 52ch; }
+.welcome-steps b { color: var(--ink); }
+.welcome-steps li::marker { color: var(--brand); font-weight: 700; }
 .today-left { display: grid; gap: var(--s-5); align-content: start; }
 .goal { display: grid; gap: var(--s-2); max-width: 420px; }
 .goal-line { display: flex; justify-content: space-between; gap: var(--s-3); font-size: var(--text-sm); color: var(--ink-2); }
@@ -64,6 +67,29 @@
 .day-card-title { display: grid; gap: 2px; flex: 1; min-width: 0; }
 .day-levels { display: flex; flex-wrap: wrap; gap: 4px; }
 .day-levels small { opacity: .75; font-weight: 500; }
+
+/* Tricky words */
+.tricky {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); flex-wrap: wrap;
+  margin-top: var(--s-5); padding: var(--s-5);
+  border-color: color-mix(in srgb, var(--bad) 35%, var(--line));
+}
+.tricky h2 { font-size: var(--text-lg); }
+.tricky-words { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--s-3); align-items: center; }
+
+/* Recall forecast: 7 bars, today highlighted */
+.fc-bars {
+  list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s-2);
+  padding: var(--s-4) var(--s-5);
+}
+.fc-bars li { display: grid; justify-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.fc-bars b { font-size: var(--text-sm); min-height: 1.2em; }
+.fc-bars small { color: var(--ink-3); font-size: var(--text-xs); }
+.fc-bar { display: flex; align-items: end; width: 100%; max-width: 44px; height: 72px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.fc-bar i { display: block; width: 100%; background: var(--brand); border-radius: 6px 6px 0 0; transform-origin: bottom; animation: rise 600ms var(--ease) both; }
+.fc-bars .is-today .fc-bar i { background: var(--mark); }
+.fc-bars .is-today small { color: var(--ink); font-weight: 600; }
+@keyframes rise { from { transform: scaleY(0); } }
 
 /* Word sets, grouped by month */
 .month + .month { margin-top: var(--s-5); }
