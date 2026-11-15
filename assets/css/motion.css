@@ -1,0 +1,77 @@
+/* motion.css — every animation in the app, in one place.
+   ------------------------------------------------------------------
+   Rule: motion answers the learner. It shows what just happened
+   (a right answer, a card leaving, a word appearing) and is over in
+   well under a second. Nothing loops, nothing moves on its own.
+   For hours-long study days that keeps the page lively, not tiring.
+   base.css turns all of this off for "reduce motion" users.
+   ------------------------------------------------------------------ */
+
+/* 1. The signature: the highlighter draws itself under a new word. */
+@keyframes mark-draw { from { background-size: 0% .48em; } }
+.flash-word .mark,
+.recall-word .mark,
+.feedback-word .mark,
+.today-count { animation: mark-draw 560ms var(--ease) 140ms both; }
+.today-count { background: linear-gradient(var(--mark), var(--mark)) 0 0 / 100% 100% no-repeat; }
+@keyframes count-draw { from { background-size: 0% 100%; } }
+.today-count { animation-name: count-draw; }
+
+/* 2. Study cards leave in the direction of your answer. */
+@keyframes fly-right { to { transform: translateX(42%) rotate(6deg); opacity: 0; } }
+@keyframes fly-left  { to { transform: translateX(-42%) rotate(-6deg); opacity: 0; } }
+@keyframes card-in   { from { transform: translateY(14px) scale(.98); opacity: 0; } }
+.flash.leave-good  { animation: fly-right 240ms var(--ease) forwards; }
+.flash.leave-again { animation: fly-left 240ms var(--ease) forwards; }
+.flash.enter       { animation: card-in 260ms var(--ease) both; }
+.flash.is-dragging .flash-face { transition: none; }
+.flash.is-dragging { transition: none; }
+.flash { touch-action: pan-y; transition: transform var(--fast) var(--ease); }
+
+/* Swipe hints: the side you drag toward lights up. */
+.flash[data-lean="good"]  .flash-face { box-shadow: 0 0 0 3px var(--good), var(--shadow-2); }
+.flash[data-lean="again"] .flash-face { box-shadow: 0 0 0 3px var(--bad), var(--shadow-2); }
+
+/* 3. Right and wrong. */
+@keyframes pop { 40% { transform: scale(1.035); } }
+.option.is-right, .verdict.is-right { animation: pop 360ms var(--ease); }
+.tile.just-matched { animation: pop 360ms var(--ease); opacity: 1; }
+.field.is-right { animation: pop 360ms var(--ease); }
+.field.is-wrong { animation: shake 300ms; }
+
+/* 4. Combo counter: pulses each time it grows. */
+.combo {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 28px; padding: 0 10px; border-radius: var(--r-pill);
+  background: var(--mark-soft); color: var(--on-mark);
+  font-size: var(--text-xs); font-weight: 700; white-space: nowrap;
+}
+.combo.bump { animation: bump 420ms var(--ease); }
+@keyframes bump { 30% { transform: scale(1.18); background: var(--mark); } }
+
+/* 5. Results: stats arrive one after another. */
+.summary-stat { animation: card-in 360ms var(--ease) both; }
+.summary-stat:nth-child(2) { animation-delay: 80ms; }
+.summary-stat:nth-child(3) { animation-delay: 160ms; }
+
+/* One celebration for a perfect round: highlighter strips falling. */
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 70; overflow: hidden; }
+.confetti i {
+  position: absolute; top: -20px; width: 10px; height: 16px; border-radius: 2px;
+  background: var(--mark); opacity: .9;
+  animation: fall 1400ms cubic-bezier(.3, .6, .4, 1) forwards;
+}
+.confetti i:nth-child(3n)   { background: var(--brand); }
+.confetti i:nth-child(3n+1) { background: var(--good); }
+@keyframes fall { to { transform: translateY(105vh) rotate(540deg); opacity: .2; } }
+
+/* 6. Home: progress bars fill on arrival. */
+@keyframes grow { from { transform: scaleX(0); } }
+.mix-bar i { transform-origin: left; animation: grow 700ms var(--ease) 120ms both; }
+.progress > i { transform-origin: left; }
+
+/* 7. Lists and grids settle in quickly, in order. */
+.day-card, .mode, .step { animation: card-in 320ms var(--ease) both; }
+.day-card:nth-child(2), .mode:nth-child(2), .step:nth-child(2) { animation-delay: 40ms; }
+.day-card:nth-child(3), .mode:nth-child(3), .step:nth-child(3) { animation-delay: 80ms; }
+.day-card:nth-child(n+4), .mode:nth-child(4), .step:nth-child(4) { animation-delay: 120ms; }

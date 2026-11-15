@@ -1,0 +1,15 @@
+# Local tooling output — regenerated on demand
+tools/.screenshots/
+tools/qa/
+__pycache__/
+*.pyc
+
+# Editor / OS / local agent settings
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Progress backups downloaded from Settings stay on your machine
+vocabstudy-progress-*.json

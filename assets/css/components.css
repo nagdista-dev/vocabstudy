@@ -1,0 +1,261 @@
+/* components.css — the reusable building blocks.
+   Screens (css/views/*.css) combine these; they never restyle them.
+   Order: layout → app bar → buttons → surfaces → small parts → overlays. */
+
+/* ── Layout containers ─────────────────────────────────────────── */
+.page {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--s-6) var(--gutter) var(--s-8);
+}
+.activity {
+  width: 100%;
+  max-width: var(--activity-max);
+  margin-inline: auto;
+  padding: var(--s-5) var(--gutter) calc(var(--s-8) + 72px);
+}
+.stack   { display: grid; gap: var(--s-4); }
+.row     { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.spacer  { flex: 1; }
+.muted   { color: var(--ink-2); }
+.hint    { color: var(--ink-3); font-size: var(--text-sm); }
+.section-title {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3);
+  margin: var(--s-7) 0 var(--s-4);
+}
+.section-title h2 { font-size: var(--text-lg); }
+
+/* ── App bar ───────────────────────────────────────────────────── */
+.app-bar {
+  position: sticky; top: 0; z-index: 20;
+  height: var(--bar-h);
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.app-bar-inner {
+  height: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  display: flex; align-items: center; gap: var(--s-3);
+}
+.brand {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
+  color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+.brand-mark { width: 30px; height: 30px; flex: none; }
+.crumbs {
+  display: flex; align-items: center; gap: var(--s-2); min-width: 0;
+  color: var(--ink-3); font-size: var(--text-sm);
+}
+.crumbs a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
+.crumbs a:hover { color: var(--brand); }
+.crumbs span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 560px) {
+  .brand > span { display: none; }                 /* the mark alone links home */
+  .crumbs > :not(:last-child) { display: none; }   /* show only where you are */
+  .crumbs { font-weight: 600; color: var(--ink); }
+}
+.bar-actions { margin-inline-start: auto; display: flex; align-items: center; gap: var(--s-1); }
+
+/* ── Icons ─────────────────────────────────────────────────────── */
+.icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-sm { width: 16px; height: 16px; }
+.icon-lg { width: 24px; height: 24px; }
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: var(--tap); padding: 0 var(--s-4);
+  border-radius: var(--r-md); border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink);
+  font-weight: 600; font-size: var(--text-sm); line-height: 1; text-decoration: none;
+  transition: background var(--fast), border-color var(--fast), transform var(--fast), color var(--fast);
+  user-select: none; -webkit-user-select: none;
+}
+.btn:hover { border-color: var(--line-strong); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .45; pointer-events: none; }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+.btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
+.btn-quiet:hover { background: var(--surface-2); color: var(--ink); }
+.btn-good { background: var(--good-soft); border-color: transparent; color: var(--good); }
+.btn-bad  { background: var(--bad-soft);  border-color: transparent; color: var(--bad); }
+.btn-lg { min-height: 52px; padding: 0 var(--s-5); font-size: var(--text-md); border-radius: var(--r-md); }
+.btn-block { width: 100%; }
+.btn kbd {
+  font: 600 .7rem/1 var(--font-body); padding: 3px 6px; border-radius: 5px;
+  background: color-mix(in srgb, currentColor 12%, transparent); opacity: .8;
+}
+.icon-btn {
+  display: inline-grid; place-items: center; position: relative;
+  width: var(--tap); height: var(--tap); border-radius: var(--r-md);
+  color: var(--ink-2); transition: background var(--fast), color var(--fast);
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn[aria-pressed="true"] { color: var(--brand); }
+.icon-btn .count {
+  position: absolute; top: 4px; inset-inline-end: 2px;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
+  background: var(--bad); color: #fff; font: 700 .68rem/18px var(--font-body); text-align: center;
+}
+.speak-btn {
+  display: inline-grid; place-items: center; flex: none;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--brand-soft); color: var(--brand);
+  transition: transform var(--fast), background var(--fast);
+}
+.speak-btn:hover { transform: scale(1.06); }
+.speak-btn.is-speaking { background: var(--brand); color: var(--on-brand); }
+
+/* ── Surfaces ──────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+.card-pad { padding: var(--s-5); }
+
+/* ── Small parts ───────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 24px; padding: 0 var(--s-2); border-radius: var(--r-sm);
+  font-size: .75rem; font-weight: 600; white-space: nowrap;
+  background: var(--surface-2); color: var(--ink-2);
+}
+.badge.lvl-a { background: var(--lvl-a-soft); color: var(--lvl-a); }
+.badge.lvl-b { background: var(--lvl-b-soft); color: var(--lvl-b); }
+.badge.lvl-c { background: var(--lvl-c-soft); color: var(--lvl-c); }
+.badge.is-known { background: var(--good-soft); color: var(--good); }
+.badge.is-learning { background: var(--mark-soft); color: var(--on-mark); }
+
+.progress {
+  height: 8px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden;
+}
+.progress > i {
+  display: block; height: 100%; width: var(--value, 0%);
+  border-radius: inherit; background: var(--brand);
+  transition: width var(--slow) var(--ease);
+}
+.progress.is-good > i { background: var(--good); }
+
+/* The highlighter: a hand-drawn marker band behind a word. */
+.mark {
+  background: linear-gradient(104deg, transparent .4em, var(--mark) .5em, var(--mark) calc(100% - .5em), transparent calc(100% - .4em)) 0 72% / 100% .48em no-repeat;
+  padding-inline: .12em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+
+/* Segmented filter: one row of choices, one selected. Scrolls on phones. */
+.seg {
+  display: flex; gap: var(--s-1); padding: 4px; border-radius: var(--r-md);
+  background: var(--surface-2); overflow-x: auto; scrollbar-width: none;
+}
+.seg::-webkit-scrollbar { display: none; }
+.seg button {
+  flex: none; min-height: 36px; padding: 0 var(--s-3); border-radius: var(--r-sm);
+  font-size: var(--text-sm); font-weight: 500; color: var(--ink-2); white-space: nowrap;
+}
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-1); }
+
+.field {
+  display: flex; align-items: center; gap: var(--s-2);
+  min-height: var(--tap); padding: 0 var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+  color: var(--ink-3);
+}
+.field:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.field input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; height: var(--tap); color: var(--ink); }
+
+/* Activity header: back, title, step counter and progress */
+.activity-head { display: grid; gap: var(--s-3); margin-bottom: var(--s-5); }
+.activity-head .row { flex-wrap: nowrap; }
+.activity-head h1 { font-size: var(--text-lg); }
+.activity-head .count { margin-inline-start: auto; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Sticky answer bar: on phones the main action sits under the thumb */
+.action-bar {
+  display: flex; gap: var(--s-3); margin-top: var(--s-5);
+}
+.action-bar > .btn { flex: 1; }
+@media (max-width: 640px) {
+  .action-bar {
+    position: fixed; z-index: 15; left: 0; right: 0; bottom: 0; margin: 0;
+    padding: var(--s-3) var(--gutter) calc(var(--s-3) + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+  }
+  .action-bar .btn { padding: 0 var(--s-3); white-space: nowrap; }
+  .action-bar .btn .icon { display: none; }
+}
+
+.empty {
+  text-align: center; padding: var(--s-7) var(--s-5);
+  border: 1px dashed var(--line-strong); border-radius: var(--r-lg); color: var(--ink-2);
+}
+.empty h2 { font-size: var(--text-lg); color: var(--ink); margin-bottom: var(--s-2); }
+.empty .btn { margin-top: var(--s-4); }
+
+/* ── Overlays ──────────────────────────────────────────────────── */
+.toast {
+  position: fixed; z-index: 50; left: 50%; bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
+  background: var(--ink); color: var(--paper); font-weight: 500; font-size: var(--text-sm);
+  box-shadow: var(--shadow-2); transition: opacity var(--fast), transform var(--slow) var(--ease);
+  max-width: calc(100vw - 32px);
+}
+.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 640px) { .toast { bottom: 96px; } }
+
+.sheet {
+  /* base.css zeroes every margin; a modal <dialog> needs margin:auto to centre. */
+  margin: auto;
+  width: min(440px, calc(100vw - 32px)); padding: 0; border: 0;
+  border-radius: var(--r-lg); background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow-2);
+  max-height: calc(100dvh - 32px); overflow-y: auto;
+}
+.sheet::backdrop { background: rgb(10 14 25 / .45); }
+.sheet-head { display: flex; align-items: center; padding: var(--s-4) var(--s-4) 0 var(--s-5); }
+.sheet-head h2 { font-size: var(--text-lg); }
+.sheet-head .icon-btn { margin-inline-start: auto; }
+.sheet-body { padding: var(--s-4) var(--s-5) var(--s-5); display: grid; gap: var(--s-5); }
+.setting { display: grid; gap: var(--s-2); }
+.setting > b { font-size: var(--text-sm); }
+.setting .seg { width: fit-content; max-width: 100%; }
+.shortcuts summary { cursor: pointer; }
+.shortcuts dl { display: grid; gap: var(--s-2); margin-top: var(--s-2); }
+.shortcuts dl div { display: grid; grid-template-columns: 96px 1fr; gap: var(--s-3); font-size: var(--text-sm); }
+.shortcuts dd { color: var(--ink-2); }
+kbd {
+  display: inline-block; min-width: 22px; padding: 1px 6px; border-radius: 5px; text-align: center;
+  border: 1px solid var(--line-strong); border-bottom-width: 2px; background: var(--surface);
+  font: 600 .75rem/1.5 var(--font-body); color: var(--ink-2);
+}
+.danger-link { color: var(--bad); font-weight: 600; font-size: var(--text-sm); justify-self: start; padding: var(--s-2) 0; }
+
+/* ── Entrance: one quiet fade when a screen changes ────────────── */
+.view-enter { animation: view-in var(--slow) var(--ease) both; }
+@keyframes view-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* Break reminder (core/study-time.js) — calm, never blocks the screen. */
+.break-card {
+  position: fixed; z-index: 40; right: var(--s-5); bottom: var(--s-5);
+  width: min(360px, calc(100vw - 32px)); display: grid; gap: var(--s-2);
+  padding: var(--s-4) var(--s-5); border-radius: var(--r-lg);
+  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2);
+  animation: view-in var(--slow) var(--ease);
+}
+.break-card[hidden] { display: none; }
+.break-card p { color: var(--ink-2); font-size: var(--text-sm); }
+.break-card .row { margin-top: var(--s-2); }
+@media (max-width: 640px) { .break-card { right: 16px; bottom: 96px; } }

@@ -1,0 +1,101 @@
+/* tokens.css — the design system's single source of truth.
+   ---------------------------------------------------------------
+   Every colour, font, size, radius, shadow and duration lives here.
+   Other files only use var(--…). To re-theme the app, edit this file.
+
+   Identity: "Study desk" — cool paper, ink-blue for actions,
+   a highlighter yellow for the words you are learning and for rewards.
+   Green and red mean right and wrong — never decoration.
+
+   Light only, on purpose: a bright, calm page keeps a learner alert
+   through long study days. Text contrast is tuned for hours of reading.
+   --------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --paper:      #f3f5f9;   /* page background */
+  --surface:    #ffffff;   /* cards, panels */
+  --surface-2:  #eaeef5;   /* quiet fills: inputs, tracks, chips */
+  --line:       #d9dfe9;   /* borders and dividers */
+  --line-strong:#b9c2d3;
+
+  /* Text — all pass WCAG AA on --surface and --paper */
+  --ink:   #141b2d;        /* headings, body */
+  --ink-2: #465066;        /* secondary text */
+  --ink-3: #66718a;        /* hints, meta */
+
+  /* Brand: ink blue — actions, links, current place */
+  --brand:      #2b48d6;
+  --brand-hover:#2039b5;
+  --brand-soft: #e5eaff;
+  --on-brand:   #ffffff;
+
+  /* Highlighter — the signature: marks the word being learned, rewards */
+  --mark:      #ffe066;
+  --mark-soft: #fff5c7;
+  --on-mark:   #4a3900;
+
+  /* Feedback */
+  --good:      #11805b;
+  --good-soft: #dcf4e9;
+  --bad:       #c63737;
+  --bad-soft:  #fce3e3;
+
+  /* CEFR level badges — three calm steps, information only */
+  --lvl-a: #0f7a6d;  --lvl-a-soft: #d9f2ee;
+  --lvl-b: #2b48d6;  --lvl-b-soft: #e5eaff;
+  --lvl-c: #7a3fb8;  --lvl-c-soft: #f0e6fa;
+
+  /* Type — chosen for hours of reading and for learning spelling.
+     --font-word  Atkinson Hyperlegible Next: made so look-alike letters
+                  (l I 1, rn m, cl d, O 0) can't be confused. Every English
+                  word you learn, and all body text, uses it.
+     --font-display  Bricolage Grotesque: big screen headings only — never
+                  the word being learned.
+     --font-arabic   IBM Plex Sans Arabic, set a step larger than Latin
+                  (Arabic looks smaller at the same size).
+     --font-ipa      Charis SIL: the dictionary face, full IPA coverage. */
+  --font-word:    "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-body:    var(--font-word);
+  --font-display: "Bricolage Grotesque", var(--font-word);
+  --font-arabic:  "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  --font-ipa:     "Charis SIL", "Doulos SIL", "Noto Serif", Georgia, serif;
+  --arabic-scale: 1.12;    /* Arabic text is drawn this much larger */
+
+  /* Type scale — ratio 1.25 from 16px */
+  --text-xs:  .8rem;
+  --text-sm:  .9rem;
+  --text-md:  1.0625rem;   /* 17px body: easier on the eyes for long sessions */
+  --text-lg:  1.25rem;
+  --text-xl:  1.563rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: clamp(2rem, 1.4rem + 2.6vw, 3.05rem);
+
+  /* Space — 4px grid */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+  --gutter: clamp(16px, 4vw, 32px);
+
+  /* Shape */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  /* Depth — two levels only */
+  --shadow-1: 0 1px 2px rgb(20 27 45 / .06), 0 1px 1px rgb(20 27 45 / .04);
+  --shadow-2: 0 10px 30px -12px rgb(20 27 45 / .25), 0 2px 6px rgb(20 27 45 / .06);
+
+  /* Motion */
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --fast: 140ms;
+  --slow: 320ms;
+
+  /* Layout */
+  --content-max: 1080px;
+  --activity-max: 720px;
+  --bar-h: 64px;
+  --tap: 44px;             /* minimum touch target */
+}

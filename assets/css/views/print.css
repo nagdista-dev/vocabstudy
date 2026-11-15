@@ -1,0 +1,90 @@
+/* views/print.css — the paper documents (views/print.js).
+   On screen: the controls, then a white "paper" preview.
+   In print: only the document, black on white, A4, sensible page breaks. */
+
+.print-controls { display: grid; gap: var(--s-4); padding: var(--s-5); margin-bottom: var(--s-6); }
+.print-controls h1 { font-size: var(--text-xl); }
+.print-options { display: flex; flex-wrap: wrap; gap: var(--s-5); }
+.print-options .seg { flex-wrap: wrap; }
+
+/* The paper preview */
+.print-doc {
+  background: #fff; color: #111;
+  padding: 14mm; border-radius: var(--r-md);
+  box-shadow: var(--shadow-2); border: 1px solid var(--line);
+  font-size: 10.5pt; line-height: 1.4;
+  overflow-x: auto;
+}
+.p-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid #111;
+  font-size: 10pt;
+}
+.p-brand { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 700; }
+.p-brand .brand-mark { width: 18px; height: 18px; }
+.p-howto { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #444; font-size: 9.5pt; }
+.p-meta { display: block; color: #666; font-size: 8.5pt; }
+.p-sense { color: #555; font-weight: 400; }
+.p-ipa { display: block; color: #444; font-size: 9.5pt; }
+.p-ar { font-family: var(--font-arabic); font-size: 11.5pt; }
+.p-n { color: #888; font-size: 8.5pt; width: 2.2em; }
+
+/* Word sheet */
+.p-sheet, .p-test { width: 100%; border-collapse: collapse; }
+.p-sheet th, .p-test th {
+  text-align: start; font-size: 8.5pt; font-weight: 600; color: #555;
+  border-bottom: 1px solid #999; padding: 4px 6px;
+}
+.p-sheet td, .p-test td { padding: 6px; border-bottom: 1px solid #ddd; vertical-align: top; }
+.p-sheet tr, .p-test tr { break-inside: avoid; }
+.p-word { width: 26%; }
+.p-word b { font-family: var(--font-word); font-size: 11.5pt; }
+.p-def i { display: block; color: #444; margin-top: 2px; }
+.p-sheet .p-ar { width: 22%; text-align: right; }
+
+/* Self-test: prompt | write | fold | answer | tick */
+.p-test .p-prompt { width: 30%; }
+.p-test .p-prompt b { font-family: var(--font-word); font-size: 11.5pt; }
+.p-test .p-line { width: 28%; border-bottom: 1px solid #ddd; background: linear-gradient(transparent calc(100% - 10px), #bbb calc(100% - 10px), #bbb calc(100% - 9px), transparent calc(100% - 9px)); }
+.p-test .p-fold { width: 0; padding: 0; border-left: 1.5px dashed #888; }
+.p-test .p-answer { width: 30%; padding-inline-start: 10px; }
+.p-test .p-tick { width: 2.4em; }
+.p-test .p-tick span { display: block; width: 14px; height: 14px; border: 1.2px solid #888; border-radius: 3px; margin: 2px auto 0; }
+.p-test [lang="ar"] { font-family: var(--font-arabic); font-size: 11.5pt; }
+
+/* Cut-out cards: 2 × 4 per A4 page */
+.p-cards {
+  display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 64mm;
+  border-top: 1px dashed #999; border-left: 1px dashed #999;
+  margin-bottom: 14mm;
+}
+.p-card {
+  display: grid; align-content: center; justify-items: center; gap: 4px; text-align: center;
+  padding: 8mm; border-right: 1px dashed #999; border-bottom: 1px dashed #999;
+}
+.p-front b { font-family: var(--font-word); font-size: 20pt; line-height: 1.1; }
+.p-back .p-ar { font-size: 15pt; }
+.p-back .p-def { font-size: 10pt; }
+.p-back i { font-size: 9pt; color: #444; }
+
+@media (max-width: 640px) {
+  .print-doc { padding: 16px; font-size: 9.5pt; }
+  .p-cards { grid-auto-rows: auto; }
+  .p-card { padding: 16px 8px; min-height: 120px; }
+  .p-front b { font-size: 15pt; }
+}
+
+/* ── Printing ─────────────────────────────────────────────────── */
+@page { size: A4; margin: 12mm; }
+
+@media print {
+  body { background: #fff; }
+  .app-bar, .no-print, .toast, .break-card, .confetti, .skip-link { display: none !important; }
+  .page { padding: 0; max-width: none; }
+  .print-doc { padding: 0; border: 0; box-shadow: none; border-radius: 0; overflow: visible; font-size: 10pt; }
+  .view-enter { animation: none; }
+  .p-sheet thead, .p-test thead { display: table-header-group; }   /* repeat headers on each page */
+  .p-cards { break-after: page; margin: 0; grid-auto-rows: 66mm; }
+  .p-cards:last-child { break-after: auto; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
