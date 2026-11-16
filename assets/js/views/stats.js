@@ -69,6 +69,29 @@
       </figure>`;
   }
 
+  /* Next 7 days of recall, as small bars: plan your week at a glance. */
+  function forecast() {
+    const days = VS.store.forecast();
+    const max = Math.max(1, ...days.map((d) => d.count));
+    if (!days.some((d) => d.count)) return "";
+    return html`
+      <section class="forecast" aria-labelledby="fc-title">
+        <div class="section-title"><h2 id="fc-title">Recall this week</h2>
+          <span class="hint">${VS.plural(days.reduce((n, d) => n + d.count, 0), "word")} in 7 days</span></div>
+        <ol class="fc-bars card">
+          ${days.map((d, i) => {
+            const day = new Date(d.date + "T12:00:00");
+            return html`
+              <li class="${i === 0 ? "is-today" : ""}" title="${d.count} on ${day.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}">
+                <b>${d.count || ""}</b>
+                <span class="fc-bar"><i style="height:${Math.round((d.count / max) * 100)}%"></i></span>
+                <small>${i === 0 ? "Today" : day.toLocaleDateString("en-GB", { weekday: "short" })}</small>
+              </li>`;
+          })}
+        </ol>
+      </section>`;
+  }
+
   VS.views.stats = {
     title: () => "Progress",
     crumbs: () => [{ label: "Progress" }],
@@ -101,6 +124,7 @@
             <div class="card"><dt>${icon("star", "icon-sm")} Mastered</dt><dd>${t.mastered} <small>/ ${t.words}</small></dd></div>
           </dl>
 
+          ${forecast()}
           <div class="chart-grid">
             ${barChart({
               id: "time", title: "Study time", sub: "Minutes per day, last 14 days", unit: "m",

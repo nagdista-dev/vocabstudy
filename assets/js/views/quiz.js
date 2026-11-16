@@ -14,13 +14,18 @@
 
   let s = null;   // { scope, questions, index, picked, right, wrong: [] }
 
+  /* A question needs something to ask about (a definition, the Arabic, a
+     sentence with the word) and at least two answers. A word that's still
+     being auto-filled may have neither yet: it falls back, or is skipped. */
   function makeQuestion(w, type) {
     if (type === "gap" && !VS.findInExample(w)) type = "meaning";
     if (type === "meaning" && !w.definition) type = "arabic";
     if (type === "listen" && !(VS.speech.supported && VS.store.settings().sound)) type = "english";
+    if ((type === "arabic" || type === "english" || type === "listen") && !w.arabic) type = w.definition ? "meaning" : VS.findInExample(w) ? "gap" : "";
+    if (!type) return null;
     const field = type === "english" || type === "listen" ? "arabic" : "word";
     const options = VS.shuffle([w].concat(VS.distractors(w, field, 3)));
-    return { w, type, field, options };
+    return options.length < 2 ? null : { w, type, field, options };
   }
 
   function promptMarkup(q) {
@@ -111,12 +116,16 @@
       const chosen = TYPES.filter((t) => (VS.store.settings().quizTypes || TYPES).includes(t));
       if (!chosen.length) chosen.push("meaning");
       s = { scope, index: 0, picked: null, right: 0, wrong: [], combo: 0,
-            questions: words.map((w, i) => makeQuestion(w, chosen[i % chosen.length])) };
+            questions: words.map((w, i) => makeQuestion(w, chosen[i % chosen.length])).filter(Boolean) };
       s.questions = VS.shuffle(s.questions);
     },
 
     render() {
-      if (!s.scope || !s.questions.length) return VS.ui.emptyActivity("#/", "There are no words to quiz on.");
+      if (!s.scope || !s.questions.length) {
+        return VS.ui.emptyActivity("#/", VS.allWords().length < 2
+          ? "A quiz needs at least two words in your library. Add another one."
+          : "These words have no meaning yet — wait for auto-fill, or add it in your words.");
+      }
       if (s.index >= s.questions.length) return html`<div class="activity">${finish()}</div>`;
       const q = s.questions[s.index];
       return html`

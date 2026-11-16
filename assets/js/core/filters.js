@@ -2,7 +2,7 @@
    ------------------------------------------------------------------
    One filter object describes a list of words:
 
-     { q, status, level, type, box, source, added, tag, note, tricky, trap, sort }
+     { q, status, level, type, box, added, tag, note, tricky, trap, sort }
 
    It lives in the address bar ("#/words?status=learning&tag=IELTS"), so a
    filtered list can be bookmarked, reopened, and handed to any activity:
@@ -20,12 +20,11 @@
 (function () {
   "use strict";
 
-  const DEFAULTS = { q: "", status: "all", level: "all", type: "all", box: "all", source: "all",
-                     added: "all", tag: "all", note: "", tricky: "", trap: "", sort: "az" };
+  const DEFAULTS = { q: "", status: "all", level: "all", type: "all", box: "all",
+                     added: "all", tag: "all", note: "", tricky: "", trap: "", sort: "newest" };
 
   const STATUS = { all: "All", new: "New", learning: "Learning", mastered: "Mastered", due: "Due today", started: "Started" };
   const ADDED = { all: "Any time", today: "Today", week: "This week", month: "This month", older: "Older" };
-  const SOURCE = { all: "All words", mine: "My words", starter: "Starter set" };
   const SORTS = {
     az: "A–Z", za: "Z–A", newest: "Newest added", oldest: "Oldest added",
     weakest: "Weakest first", due: "Due soonest", missed: "Most mistakes", level: "Level",
@@ -68,11 +67,9 @@
       const e = store.word(w.id);
       const status = store.status(w.id);
       if (f.status === "due" ? !store.isDue(w.id) : f.status === "started" ? e.box === 0 : f.status !== "all" && status !== f.status) return false;
-      if (f.level !== "all" && (f.level.length === 1 ? w.level.charAt(0) !== f.level : w.level !== f.level)) return false;
+      if (f.level === "none" ? w.level : f.level !== "all" && (f.level.length === 1 ? w.level.charAt(0) !== f.level : w.level !== f.level)) return false;
       if (f.type !== "all" && w.type !== f.type) return false;
       if (f.box !== "all" && String(e.box) !== f.box) return false;
-      if (f.source === "mine" && !w.custom) return false;
-      if (f.source === "starter" && w.custom) return false;
       if (f.added === "older" ? w.added >= older : from && w.added < from) return false;
       if (f.tag === "none" ? w.tags.length : f.tag !== "all" && !w.tags.includes(f.tag)) return false;
       if (f.note && !store.note(w.id)) return false;
@@ -107,10 +104,10 @@
   function describe(f) {
     const parts = [];
     if (f.status !== "all") parts.push(STATUS[f.status]);
-    if (f.level !== "all") parts.push(f.level.length === 1 ? f.level + "1–" + f.level + "2" : f.level);
+    if (f.level === "none") parts.push("No level");
+    else if (f.level !== "all") parts.push(f.level.length === 1 ? f.level + "1–" + f.level + "2" : f.level);
     if (f.type !== "all") parts.push(f.type + "s");
     if (f.box !== "all") parts.push("Box " + f.box);
-    if (f.source !== "all") parts.push(SOURCE[f.source]);
     if (f.added !== "all") parts.push("Added " + ADDED[f.added].toLowerCase());
     if (f.tag === "none") parts.push("No tag");
     else if (f.tag !== "all") parts.push("#" + f.tag);
@@ -121,5 +118,5 @@
     return parts.join(" · ");
   }
 
-  VS.filters = { DEFAULTS, STATUS, ADDED, SOURCE, SORTS, BOXES, parse, query, apply, describe, active };
+  VS.filters = { DEFAULTS, STATUS, ADDED, SORTS, BOXES, parse, query, apply, describe, active };
 })();

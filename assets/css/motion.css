@@ -11,12 +11,8 @@
 @keyframes mark-draw { from { background-size: 0% 100%; } }
 .flash-word .mark,
 .recall-word .mark,
-.feedback-word .mark,
-.today-count { animation: mark-draw 560ms var(--ease) 140ms both; background-repeat: no-repeat; }
+.feedback-word .mark { animation: mark-draw 560ms var(--ease) 140ms both; background-repeat: no-repeat; }
 .flash-word .mark, .recall-word .mark, .feedback-word .mark { background-repeat: no-repeat; background-size: 100% 100%; }
-.today-count { background: linear-gradient(var(--mark), var(--mark)) 0 0 / 100% 100% no-repeat; }
-@keyframes count-draw { from { background-size: 0% 100%; } }
-.today-count { animation-name: count-draw; }
 
 /* 2. Study cards leave in the direction of your answer. */
 @keyframes fly-right { to { transform: translateX(42%) rotate(6deg); opacity: 0; } }
@@ -66,13 +62,8 @@
 .confetti i:nth-child(3n+1) { background: var(--good); }
 @keyframes fall { to { transform: translateY(105vh) rotate(540deg); opacity: .2; } }
 
-/* 6. Home: progress bars fill on arrival. */
-@keyframes grow { from { transform: scaleX(0); } }
-.mix-bar i { transform-origin: left; animation: grow 700ms var(--ease) 120ms both; }
+/* 6. Progress bars fill from the start. */
 .progress > i { transform-origin: left; }
 
-/* 7. Lists and grids settle in quickly, in order. */
-.mode, .step { animation: card-in 320ms var(--ease) both; }
-.mode:nth-child(2), .step:nth-child(2) { animation-delay: 40ms; }
-.mode:nth-child(3), .step:nth-child(3) { animation-delay: 80ms; }
-.mode:nth-child(4), .step:nth-child(4) { animation-delay: 120ms; }
+/* 7. Today's plan settles in once, when you arrive. */
+.view-enter .today-strip { animation: card-in 320ms var(--ease) 60ms both; }

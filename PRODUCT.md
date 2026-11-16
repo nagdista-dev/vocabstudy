@@ -1,10 +1,11 @@
 # Product
 
 ## What it is
-VocabStudy is a free, open-source app for **Arabic speakers learning English
-vocabulary**. Learners add their own words, study them once, then recall them
-on spaced days (1, 3, 7, 14, 30, 60) until they stay. No account, no ads,
-offline, everything on the learner's device.
+VocabStudy is a free, open-source, local-first app for **Arabic speakers
+learning English vocabulary**. The learner tells it a word they want to
+remember; the app fills in the rest, teaches it, and brings it back on spaced
+days (1, 3, 7, 14, 30, 60) until it stays. It ships with no words. No account,
+no server, no ads, offline — everything on the learner's device.
 
 ## Who it is for
 An Arabic-speaking adult (A2–C1) — a student, an employee, someone preparing
@@ -34,5 +35,10 @@ face for English words and a well-sized Arabic face for meanings.
 4. English interface; Arabic only where it teaches.
 5. Open source and readable: plain HTML, CSS and JavaScript anyone can learn from.
 
+## Surfaces
+One home: **the library**. Add a word at the top, today's plan under it, then
+every word with filters. Activities (learn, recall, quiz, spell, match, speak)
+open from there and come back to it.
+
 ## Out of scope (for now)
-Ready-made level word packs, grammar lessons, cloud sync, accounts.
+Built-in word lists, guessed CEFR levels, grammar lessons, cloud sync, accounts.

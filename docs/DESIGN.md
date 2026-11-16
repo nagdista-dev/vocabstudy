@@ -45,7 +45,11 @@ Advice, not errors: `.traps` is quiet ink on a soft fill (never red/green);
 
 ## The signature
 
-`.mark` draws a highlighter band behind a word. It appears on every new word
+The home screen opens on one box: "A word you want to remember". As you
+type, a highlighter band draws under exactly what you typed (its width is
+measured in `views/library.js`) — you are marking the word to keep.
+
+`.mark` draws the same highlighter band behind a word. It appears on every new word
 (cards, recall, quiz feedback) and draws itself in (`motion.css → mark-draw`).
 
 ## Layout

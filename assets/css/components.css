@@ -211,7 +211,7 @@
 .note-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); font-weight: 600; color: var(--ink-2); }
 .note-label .icon { color: var(--on-mark); background: var(--mark-soft); border-radius: 6px; padding: 2px; width: 22px; height: 22px; }
 .note textarea {
-  width: 100%; min-height: 64px; resize: vertical;
+  width: 100%; min-height: 64px; max-height: 240px; resize: none; field-sizing: content;
   padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md);
   background: var(--surface-2); color: var(--ink); font: inherit; font-size: var(--text-sm); line-height: 1.5;
   transition: border-color var(--fast), background var(--fast), box-shadow var(--fast);
@@ -295,7 +295,16 @@
   max-height: calc(100dvh - 32px); overflow-y: auto;
 }
 .sheet::backdrop { background: rgb(10 14 25 / .45); }
-.sheet-head { display: flex; align-items: center; padding: var(--s-4) var(--s-4) 0 var(--s-5); }
+/* The header stays pinned while the settings scroll, so Close is always in reach. */
+.sheet-head {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center;
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.sheet-foot {
+  position: sticky; bottom: 0; z-index: 2; display: flex; justify-content: flex-end;
+  padding: var(--s-3) var(--s-5); background: var(--surface); border-top: 1px solid var(--line);
+}
 .sheet-head h2 { font-size: var(--text-lg); }
 .sheet-head .icon-btn { margin-inline-start: auto; }
 .sheet-body { padding: var(--s-4) var(--s-5) var(--s-5); display: grid; gap: var(--s-5); }
@@ -368,7 +377,8 @@ kbd {
   border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
   color: var(--ink); font: inherit; font-size: var(--text-md); font-weight: 400;
 }
-.form-field textarea { resize: vertical; line-height: 1.5; }
+/* Textareas never resize by hand (a dragged box breaks the layout); they grow with the text instead. */
+.form-field textarea { resize: none; field-sizing: content; min-height: 72px; max-height: 240px; line-height: 1.5; }
 .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
 .check { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 34px; font-size: var(--text-sm); cursor: pointer; }
 .check input { width: 18px; height: 18px; accent-color: var(--brand); }

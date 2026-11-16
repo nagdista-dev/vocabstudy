@@ -1,8 +1,11 @@
-/* views/library.js — the brain of the app: every word you're learning.
+/* views/library.js — the home screen and the brain of the app: your words.
    ------------------------------------------------------------------
+   Top to bottom: one box to add a word ("a word you want to remember" —
+   the app fills in the rest, core/autofill.js), today's plan
+   (views/home.js), then every word you're learning.
+
    Search English, Arabic, definitions, examples, tags and your notes.
-   Filter by status, level, type, memory box, when you added it, source,
-   tag, notes, tricky words and sound traps; sort eight ways. Then act on
+   Filter by status, level, type, memory box, when you added it, tag, notes, tricky words and sound traps; sort eight ways. Then act on
    exactly that list: practise it, print it, export it, reset it, or
    delete it.
 
@@ -41,18 +44,16 @@
   function panel() {
     const all = VS.allWords();
     const types = [...new Set(all.map((w) => w.type))].sort();
-    const levels = [...new Set(all.map((w) => w.level))].sort();
+    const levels = [...new Set(all.map((w) => w.level).filter(Boolean))].sort();
     const tags = VS.allTags();
-    const hasStarter = all.some((w) => !w.custom);
     return html`
       <div class="lib-panel" id="libPanel" ${panelOpen ? "" : VS.raw("hidden")}>
         <div class="lib-panel-grid">
-          ${select("level", "Level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]].concat(levels.map((l) => [l, l])))}
+          ${select("level", "Level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]].concat(levels.map((l) => [l, l]), [["none", "No level"]]))}
           ${select("type", "Type", [["all", "All types"]].concat(types.map((t) => [t, t])))}
           ${select("box", "Memory", [["all", "Any memory"]].concat(F.BOXES.map((b, i) => [String(i), i ? "Box " + i + " · waits " + b : "Not studied"])))}
           ${select("added", "Added", Object.entries(F.ADDED))}
           ${select("tag", "Tag", [["all", "All tags"]].concat(tags.map((t) => [t.tag, "#" + t.tag + " (" + t.count + ")"]), [["none", "No tag"]]))}
-          ${hasStarter ? select("source", "Words", Object.entries(F.SOURCE)) : ""}
         </div>
         <div class="row lib-toggles">
           ${toggle("note", "With my notes")}
@@ -66,22 +67,25 @@
   /* What you can do with the list you're looking at. */
   function actions(list) {
     const n = list.length;
-    const mine = list.filter((w) => w.custom).length;
     const started = list.filter((w) => VS.store.status(w.id) !== "new").length;
     const modes = [["cards", "Cards"], ["quiz", "Quiz"], ["spell", "Spell"], ["match", "Match"]]
       .concat(VS.listen && VS.listen.supported ? [["speak", "Speak"]] : []);
     if (!n) return "";
     return html`
       <div class="lib-actions">
-        <span class="hint">Practise ${n === VS.allWords().length ? "all" : "these"}:</span>
-        ${modes.map(([m, l]) => (m === "match" && n < 2) ? "" : html`<a class="btn" href="${pickHref(m)}">${icon(m === "speak" ? "mic" : m, "icon-sm")} ${l}</a>`)}
+        <details class="lib-more">
+          <summary class="btn">Practise ${n === VS.allWords().length ? "all" : "these " + n} ${icon("chevron-right", "icon-sm")}</summary>
+          <div class="lib-more-menu">
+            ${modes.map(([m, l]) => (m === "match" && n < 2) ? "" : html`<a class="btn btn-quiet" href="${pickHref(m)}">${icon(m === "speak" ? "mic" : m, "icon-sm")} ${l}</a>`)}
+          </div>
+        </details>
         <details class="lib-more">
           <summary class="btn btn-quiet">More ${icon("chevron-right", "icon-sm")}</summary>
           <div class="lib-more-menu">
             <a class="btn btn-quiet" href="#/print/pick${query() ? "?" + query() : ""}">${icon("print", "icon-sm")} Print or PDF</a>
             <button class="btn btn-quiet" type="button" data-action="lib-export">${icon("book", "icon-sm")} Export CSV</button>
             ${started ? html`<button class="btn btn-quiet" type="button" data-action="lib-reset">${icon("review", "icon-sm")} Reset progress</button>` : ""}
-            ${mine ? html`<button class="btn btn-quiet danger" type="button" data-action="lib-delete">${icon("x", "icon-sm")} Delete ${mine === n ? VS.plural(mine, "word") : mine + " of mine"}</button>` : ""}
+            <button class="btn btn-quiet danger" type="button" data-action="lib-delete">${icon("x", "icon-sm")} Delete ${VS.plural(n, "word")}</button>
           </div>
         </details>
       </div>`;
@@ -110,32 +114,78 @@
               : html`<a class="btn btn-primary" href="#/add">${icon("plus")} Add words</a>`}</div>`}`;
   }
 
+  /* Progress lives in this browser: remind once a week to keep a copy. */
+  function backupNudge() {
+    const started = VS.store.totals().started;
+    if (started < 20) return "";
+    const last = VS.store.lastBackup();
+    const days = last ? Math.round((new Date(VS.todayKey()) - new Date(last)) / 864e5) : Infinity;
+    if (days < 7) return "";
+    return html`
+      <a class="recall-strip" href="#/data">
+        ${icon("review")}
+        <span><b>${last ? "Your last backup was " + days + " days ago" : "You haven't backed up your progress yet"}</b>
+          <span class="hint">${VS.plural(started, "word")} of progress live only in this browser. One tap saves a copy.</span></span>
+        ${icon("arrow-right", "icon-sm")}
+      </a>`;
+  }
+
+  function addBox() {
+    return html`
+      <form class="quick-add" data-form="quick-add" autocomplete="off">
+        <label class="quick-label" for="quickWord">A word you want to remember</label>
+        <div class="add-line">
+          <span class="field field-xl"><input id="quickWord" placeholder="Type a word or phrase" aria-label="An English word or phrase you want to remember"
+            spellcheck="false" autocapitalize="off" enterkeyhint="done"/></span>
+          <button class="btn btn-primary btn-lg" type="submit">${icon("plus", "icon-sm")} Add</button>
+        </div>
+        <p class="hint">${VS.autofill.enabled()
+          ? "Press Enter — the app adds the meaning, Arabic, example and sound."
+          : "Auto-fill is off: add the details in Add words."}
+          <a href="#/add">Paste a list or upload a file</a></p>
+      </form>`;
+  }
+
+  /* An empty library: what happens after you add a word. */
+  function firstSteps() {
+    return html`
+      <ol class="first-steps">
+        <li><b>Add a word</b> you met today — in a book, a series, at work.</li>
+        <li><b>Learn it</b> once: the meaning, the Arabic, an example and the sound.</li>
+        <li><b>Recall it</b> on spaced days — 1, 3, 7, 14, 30, 60 — until it stays.</li>
+      </ol>
+      <p class="hint first-note">Free and open source. No account, no server: your words stay on this device.</p>`;
+  }
+
   function refreshResults() {
     const box = VS.$("#libResults");
     if (box) box.innerHTML = String(results());
   }
 
   VS.views.library = {
-    title: () => "Library",
-    crumbs: () => [{ label: "Library" }],
+    title: () => "Your words",
+    crumbs: () => [],
 
     start(p) { f = F.parse(p.query); limit = PAGE; if (F.active(f)) panelOpen = true; },
 
     render() {
       const s = VS.store.statsFor(VS.allWords());
       const on = F.active(f);
+      if (!s.total) {
+        return html`<div class="page view-enter">${addBox()}${firstSteps()}</div>`;
+      }
       return html`
         <div class="page view-enter">
-          <header class="page-head">
-            <div>
-              <h1>Library</h1>
-              <p class="hint">Every word you're learning, in one place.${VS.allTags().length ? " " + VS.plural(VS.allTags().length, "tag") + "." : ""}</p>
-            </div>
-            <dl class="head-stats">
-              <div><dt>Words</dt><dd>${s.total}</dd></div>
-              <div><dt>Learning</dt><dd>${s.learning}</dd></div>
-              <div><dt>Mastered</dt><dd>${s.mastered}</dd></div>
-              <div><dt>Due</dt><dd>${s.due}</dd></div>
+          ${addBox()}
+          ${backupNudge()}
+          ${VS.today.strip()}
+
+          <header class="lib-head">
+            <h1>Your words</h1>
+            <dl class="lib-stats">
+              <div><dt>words</dt><dd>${s.total}</dd></div>
+              <div><dt>learning</dt><dd>${s.learning}</dd></div>
+              <div><dt>mastered</dt><dd>${s.mastered}</dd></div>
             </dl>
           </header>
 
@@ -152,7 +202,6 @@
               </label>
               <button class="btn" type="button" data-action="lib-panel" aria-expanded="${panelOpen}" aria-controls="libPanel">
                 ${icon("settings", "icon-sm")} Filters${on ? html` <span class="pill">${on}</span>` : ""}</button>
-              <a class="btn btn-primary lib-add" href="#/add">${icon("plus", "icon-sm")} Add</a>
             </div>
             <div class="seg" role="group" aria-label="Status">
               ${Object.entries(F.STATUS).map(([v, l]) => html`
@@ -167,7 +216,29 @@
 
     mount(root) {
       const search = VS.$("#libSearch", root);
-      search.addEventListener("input", () => { f.q = search.value; limit = PAGE; syncAddress(); refreshResults(); });
+      if (search) search.addEventListener("input", () => { f.q = search.value; limit = PAGE; syncAddress(); refreshResults(); });
+      const add = VS.$("#quickWord", root);
+      VS.ui.watchKeyboard(add);
+      // The highlighter grows under exactly what you type (canvas measures the text).
+      const ctx = document.createElement("canvas").getContext("2d");
+      const mark = () => {
+        const cs = getComputedStyle(add);
+        ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+        const w = add.value ? ctx.measureText(add.value).width + 8 : 0;
+        add.style.setProperty("--mark-w", Math.min(w, add.clientWidth) + "px");
+        add.style.backgroundPosition = (parseFloat(cs.paddingLeft) - 4) + "px 0";
+      };
+      add.addEventListener("input", mark);
+      VS.$("[data-form='quick-add']", root).addEventListener("submit", (e) => {
+        e.preventDefault();
+        const w = VS.addWord({ word: add.value });
+        if (!w) return;
+        VS.toast(`“${w.word}” is in your library.`);
+        VS.app.render();
+        const again = VS.$("#quickWord");
+        if (again) again.focus();
+      });
+      if (!VS.allWords().length && matchMedia("(hover: hover)").matches) add.focus({ preventScroll: true });
     },
 
     actions: {
@@ -184,7 +255,7 @@
         VS.app.render();
       },
       "lib-delete"() {
-        const ids = words().filter((w) => w.custom).map((w) => w.id);
+        const ids = words().map((w) => w.id);
         if (!confirm(`Delete ${VS.plural(ids.length, "word")} from your library? Their progress and notes go too. This can't be undone.`)) return;
         VS.store.deleteUserWords(ids);
         VS.toast(VS.plural(ids.length, "word") + " deleted.");
@@ -193,9 +264,13 @@
     },
 
     keys(e) {
-      if (e.key === "/") { e.preventDefault(); VS.$("#libSearch").focus(); }
+      if (e.key === "/" && VS.$("#libSearch")) { e.preventDefault(); VS.$("#libSearch").focus(); }
+      else if (e.key === "n") { e.preventDefault(); VS.$("#quickWord").focus(); }   // n = new word
     },
   };
+
+  // A word just filled in by auto-fill: show its details in the list.
+  VS.autofill.onFill(() => { if (VS.app.current() === "library") refreshResults(); });
 
   // Selects and checkboxes in the filter panel (one listener for the app).
   document.addEventListener("change", (e) => {

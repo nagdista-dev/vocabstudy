@@ -63,7 +63,8 @@
     start(p) {
       const scope = VS.scope(p);
       if (s && s.timer) clearInterval(s.timer);
-      const words = scope ? VS.sessionWords(scope.words, PAIRS * BOARDS) : [];
+      // Pairs need both sides: a word still waiting for its Arabic sits this one out.
+      const words = scope ? VS.sessionWords(scope.words.filter((w) => w.arabic), PAIRS * BOARDS) : [];
       const boards = [];
       for (let i = 0; i + 2 <= words.length && boards.length < BOARDS; i += PAIRS) boards.push(words.slice(i, i + PAIRS));
       s = { scope, boards, board: 0, misses: 0, missed: new Set(), start: 0, elapsed: 0, timer: null };
@@ -73,7 +74,7 @@
     leave() { if (s && s.timer) clearInterval(s.timer); },
 
     render() {
-      if (!s.scope || !s.boards.length) return VS.ui.emptyActivity("#/", "You need at least two words to play.");
+      if (!s.scope || !s.boards.length) return VS.ui.emptyActivity("#/", "Match needs at least two words with their Arabic meaning.");
       if (s.board >= s.boards.length) return html`<div class="activity">${finish()}</div>`;
       return html`
         <div class="activity activity-wide">

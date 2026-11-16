@@ -85,8 +85,8 @@
     const sameType = VS.shuffle((pool || VS.allWords()).filter((w) => w.type === target.type));
     const any = VS.shuffle(VS.allWords());
     for (const w of sameType.concat(any)) {
-      const value = String(w[field]).toLowerCase();
-      if (w.id === target.id || seen.has(value)) continue;
+      const value = String(w[field] || "").toLowerCase();
+      if (w.id === target.id || !value || seen.has(value)) continue;     // never a blank answer
       seen.add(value);
       pick.push(w);
       if (pick.length === count) break;

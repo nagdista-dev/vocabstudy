@@ -30,7 +30,7 @@
 .import-step h2 .step-n { width: 30px; height: 30px; font-size: var(--text-sm); background: var(--brand); color: var(--on-brand); }
 
 .import-text {
-  width: 100%; min-height: 180px; resize: vertical;
+  width: 100%; min-height: 180px; max-height: 50vh; resize: none; field-sizing: content;
   padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md);
   background: var(--surface-2); color: var(--ink);
   font: 400 .9rem/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;

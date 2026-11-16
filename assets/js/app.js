@@ -1,7 +1,7 @@
 /* app.js — boots the app: routing, the app bar, settings and input.
    ------------------------------------------------------------------
    ROUTES (the part after # in the address bar)
-     #/                      home
+     #/                      home = the library: add a word, today's plan, your words
      #/recall                daily recall: the words due today
      #/new/cards             learn the next new words from your library
      #/today/quiz            practise the words you first studied today
@@ -9,7 +9,7 @@
      #/tricky/quiz           an activity over the words you keep missing
      #/pick/quiz?level=B2    an activity over a filtered list (core/filters.js)
                              modes: cards | quiz | spell | match | speak
-     #/words?tag=IELTS       the library, with its filters in the address
+     #/words?tag=IELTS       the library with its filters in the address
      #/add                   add words: type, paste a table, upload files
      #/data                  backup, restore (merge/replace), export words
      #/stats                 progress charts
@@ -41,7 +41,7 @@
   function parse(hash) {
     const [path, query = ""] = hash.replace(/^#\/?/, "").split("?");
     const parts = path.split("/").filter(Boolean);
-    if (parts[0] === "words") return { view: "library", query };
+    if (!parts.length || parts[0] === "words") return { view: "library", query };
     if (parts[0] === "add") return { view: "import" };
     if (parts[0] === "data") return { view: "data" };
     if (parts[0] === "stats") return { view: "stats" };
@@ -49,7 +49,7 @@
     if (parts[0] === "print" && PRINT_SCOPES.includes(parts[1])) return { view: "print", scope: parts[1], layout: parts[2], query };
     if (parts[0] === "recall") return { view: "recall", scope: "recall" };
     if (SCOPES.includes(parts[0]) && MODES.includes(parts[1])) return { view: parts[1], scope: parts[0], query };
-    return { view: "home" };     // also old links to "days", which became one library
+    return { view: "library", query: "" };
   }
 
   let current = null;     // { name, view, params }
@@ -58,7 +58,7 @@
 
   function go() {
     const params = parse(location.hash);
-    const view = VS.views[params.view] || VS.views.home;
+    const view = VS.views[params.view] || VS.views.library;
     if (current && current.view.leave) current.view.leave();
     VS.speech.stop();
     current = { name: params.view, view, params };
@@ -132,9 +132,8 @@
      on wide screens, a bottom tab bar on phones and tablets (where the
      thumb is). Activities hide the tab bar so nothing distracts. */
   const NAV = [
-    { id: "home", label: "Home", icon: "home", href: () => VS.homeHref + "#/", match: ["home"] },
+    { id: "home", label: "Words", icon: "book", href: () => "#/", match: ["library"] },
     { id: "recall", label: "Recall", icon: "review", href: () => "#/recall", match: ["recall"] },
-    { id: "library", label: "Library", icon: "book", href: () => "#/words", match: ["library"] },
     { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats"] },
     { id: "add", label: "Add words", icon: "plus", href: () => "#/add", match: ["import"] },
   ];
@@ -161,7 +160,7 @@
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
     crumbsEl.innerHTML = String(html`
-      ${crumbs.length ? html`<a href="${VS.homeHref}">Home</a>` : ""}
+      ${crumbs.length ? html`<a href="#/">Words</a>` : ""}
       ${crumbs.map((c) => html`<span aria-hidden="true">/</span>${c.href ? html`<a href="${c.href}">${c.label}</a>` : html`<span aria-current="page">${c.label}</span>`}`)}`);
   }
 
@@ -234,8 +233,6 @@
           <span class="hint">How many words from your library “Learn new words” brings each day.</span></div>
         ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>
           <span class="hint">Say words out loud and the app checks them. Your browser does the listening — Chrome and Edge use their online speech service.</span></div>` : ""}
-        <div class="setting"><b>Starter set</b><div class="seg">${choice("showSample", true, "Show")}${choice("showSample", false, "Hide")}</div>
-          <span class="hint">The 30 built-in words. Hide them once you have your own.</span></div>
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
         <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day, across all activities.</span></div>
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
@@ -265,7 +262,8 @@
           <a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
         </div>
         <button class="danger-link" type="button" data-action="reset-progress">Reset all progress</button>
-      </div>`;
+      </div>
+      <div class="sheet-foot"><button class="btn btn-primary" type="button" data-action="close-settings">Done</button></div>`;
   }
 
   /* ── Global actions (available on every screen) ─────────────────
@@ -289,7 +287,6 @@
       applySettings();
       redrawSettings();
       if (el.dataset.name === "rate") VS.speech.say("This is how words will sound.");
-      if (el.dataset.name === "showSample") setTimeout(() => location.reload(), 300);
     },
     install() {
       if (!installPrompt) return;

@@ -4,7 +4,7 @@
                   the rest (core/autofill.js). "More details" lets you
                   type any field yourself — your typing always wins.
    Paste a table  rows copied from Excel / Google Sheets / Notion
-   Upload files   .tsv / .csv / .txt tables, or VocabStudy .js word files
+   Upload files   .tsv / .csv / .txt tables (a CSV export reads back in)
 
    The library holds each word once: words already in it are marked
    "In your library" and skipped. Everything is saved on this device.
@@ -59,7 +59,7 @@
   function save(words) {
     const auto = VS.autofill.enabled();
     const result = VS.store.saveUserWords(words.map((w) => {
-      const missing = !w.arabic || !w.definition || !w.example || !w.ipa || !w.level || !w.type;
+      const missing = !w.arabic || !w.definition || !w.example || !w.ipa || !w.type;
       return auto && missing ? Object.assign({}, w, { auto: "todo" }) : w;
     }));
     const ids = result.added.map((w) => w.id);
@@ -67,6 +67,22 @@
     VS.autofill.fill(ids);
     return result;
   }
+
+  /**
+   * Add one word — the library's add box and the form here both use it.
+   * Returns the new word, or null (with a toast saying why).
+   */
+  VS.addWord = function (fields) {
+    const w = VS.importer.checkWord(fields);
+    if (!w.word) { VS.toast("Type a word first."); return null; }
+    if (VS.isArabicTyping(w.word)) { VS.toast("That's Arabic — switch your keyboard to English."); return null; }
+    const existing = VS.byId[VS.wordKey(w.word, w.sense)];
+    if (existing) { VS.toast(`“${existing.word}” is already in your library.`); return null; }
+    if (!VS.autofill.enabled() && !w.arabic) { VS.toast("Add the Arabic meaning (auto-fill is off)."); return null; }
+    const r = save([clean(Object.assign({}, w, { tags: fields.tags }))]);
+    VS.sfx.play("pop");
+    return r.added[0] || null;
+  };
 
   /* ── Tab 1: type a word ───────────────────────────────────────── */
   function field(name, label, opts) {
@@ -102,7 +118,7 @@
             ${field("arabic", "Arabic meaning", { ar: true, placeholder: "مثلاً: يستغل - يستفيد من" })}
             ${field("tags", "Tags", { placeholder: "IELTS, work", list: "tagList" })}
             ${field("type", "Type", { options: VS.importer.TYPES, empty: auto ? "Auto" : "—" })}
-            ${field("level", "Level", { options: VS.importer.LEVELS, empty: auto ? "Auto" : "—" })}
+            ${field("level", "Level (CEFR)", { options: VS.importer.LEVELS, empty: "—" })}
             ${field("definition", "Definition (English)", { wide: true, long: true, placeholder: "What it means, in simple English" })}
             ${field("example", "Example sentence", { wide: true, long: true, placeholder: "A sentence that uses the word" })}
             ${field("ipa", "Pronunciation (IPA)", { placeholder: "/ˈhæbɪt/" })}
@@ -127,7 +143,7 @@
             const waiting = VS.autofill.pending(w.id);
             return html`<li>
               <b>${w.word}</b>
-              <span class="hint">${w.type} · ${w.level}${w.tags.length ? " · #" + w.tags.join(" #") : ""}</span>
+              <span class="hint">${w.type}${w.level ? " · " + w.level : ""}${w.tags.length ? " · #" + w.tags.join(" #") : ""}</span>
               ${w.arabic ? html`<span lang="ar">${w.arabic}</span>`
                 : html`<span class="hint">${waiting ? (navigator.onLine ? "Filling in…" : "Fills in when you're online") : "No Arabic found — add it in the library"}</span>`}
             </li>`;
@@ -146,7 +162,7 @@
       <div class="row">
         <button class="btn btn-primary" type="button" data-action="import-read">Read the list</button>
         <button class="btn btn-quiet" type="button" data-action="import-sample">Show an example</button>
-        <a class="btn btn-quiet" href="data/sample/sample-import.tsv" download>Download a sample table</a>
+        <a class="btn btn-quiet" href="assets/sample-import.tsv" download>Download a sample table</a>
       </div>`;
   }
 
@@ -157,8 +173,8 @@
       <label class="drop" for="importFiles">
         ${icon("arrow-right", "icon-lg")}
         <b>Choose files</b>
-        <span class="hint">Tables (<code>.tsv</code>, <code>.csv</code>, <code>.txt</code>) or VocabStudy word files (<code>.js</code>). You can pick several at once.</span>
-        <input type="file" id="importFiles" multiple accept=".js,.tsv,.csv,.txt,text/plain,text/csv,text/javascript" hidden>
+        <span class="hint">Tables (<code>.csv</code>, <code>.tsv</code>, <code>.txt</code>) — including a VocabStudy CSV export. You can pick several at once.</span>
+        <input type="file" id="importFiles" multiple accept=".tsv,.csv,.txt,text/plain,text/csv" hidden>
       </label>
       ${st.files.length ? html`
         <div class="file-list">
@@ -209,7 +225,7 @@
                     <td class="c-status"><span class="row-status is-${cls}" title="${r.issues.map((i) => i.text).join(" · ")}">${label}</span></td>
                     <td class="c-word"><b>${r.word || "—"}</b>${r.sense ? html` <span class="sense">(${r.sense})</span>` : ""}
                       ${r.issues.length ? html`<span class="row-issues">${r.issues.map((i) => i.text).join(" · ")}</span>` : ""}</td>
-                    <td data-label="Type · level">${r.type || empty} · ${r.level || empty}</td>
+                    <td data-label="Type · level">${r.type || empty}${r.level ? " · " + r.level : ""}</td>
                     <td data-label="Definition">${r.definition || empty}</td>
                     <td data-label="Example">${r.example || empty}</td>
                     <td data-label="IPA" class="ipa">${r.ipa || empty}</td>
@@ -238,8 +254,7 @@
     const files = [];
     for (const file of list) {
       const text = await file.text();
-      const data = /\.js$/i.test(file.name) ? VS.importer.parseDataFile(text) : null;
-      files.push({ name: file.name, rows: mark(data ? data.rows : VS.importer.parse(text).rows) });
+      files.push({ name: file.name, rows: mark(VS.importer.parse(text).rows) });
     }
     return files;
   }
@@ -294,14 +309,7 @@
       "import-tab"(el) { st.tab = el.dataset.value; st.saved = ""; VS.app.render(); },
 
       "form-add"() {
-        const w = VS.importer.checkWord(st.form);
-        if (!w.word) { VS.toast("Type a word first."); return; }
-        if (VS.isArabicTyping(w.word)) { VS.toast("That's Arabic — switch your keyboard to English."); return; }
-        const existing = VS.byId[VS.wordKey(w.word, w.sense)];
-        if (existing) { VS.toast(`“${existing.word}” is already in your library.`); return; }
-        if (!VS.autofill.enabled() && !w.arabic) { VS.toast("Add the Arabic meaning (auto-fill is off)."); return; }
-        save([clean(Object.assign({}, w, { tags: st.form.tags }))]);
-        VS.sfx.play("pop");
+        if (!VS.addWord(st.form)) return;
         st.form = st.form.tags ? { tags: st.form.tags } : {};        // keep the tags for the next word
         VS.app.render();
         const first = VS.$("#addWord");

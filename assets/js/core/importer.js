@@ -6,7 +6,6 @@
    "term" or "word" all mean the headword, "category" or "pos" the type.
 
      VS.importer.parse(text) → { rows: [{ word, …, issues: [] }], columns, delimiter }
-     VS.importer.parseDataFile(text) → { rows } from a VocabStudy .js word file
      VS.importer.checkWord(word)    → the word cleaned, with its issues
 
    Only the word is required. Empty fields are left empty on purpose:
@@ -131,28 +130,5 @@
       return Object.assign(w, { line, issues });
   }
 
-  /**
-   * Read a VocabStudy word file — VS.addWords([ … ]) or the older
-   * VS.addDay("2026-11-02", [ … ]). Never runs the file: each
-   * { word: "…", … } row is read as data. Returns { rows } or null.
-   */
-  function parseDataFile(text) {
-    if (!/VS\.add(Words|Day)\(/.test(text)) return null;
-    const rows = [];
-    const rowRe = /\{\s*word\s*:[^{}]*\}/g;
-    let m, n = 0;
-    while ((m = rowRe.exec(text))) {
-      n++;
-      const w = {};
-      const pairRe = /(\w+)\s*:\s*("(?:[^"\\]|\\.)*")/g;
-      let pm;
-      while ((pm = pairRe.exec(m[0]))) {
-        try { w[pm[1]] = JSON.parse(pm[2]); } catch (e) { /* skip a broken value */ }
-      }
-      rows.push(checkWord(w, n));
-    }
-    return { rows };
-  }
-
-  VS.importer = { parse, parseDataFile, checkWord, FIELDS, LEVELS, TYPES };
+  VS.importer = { parse, checkWord, FIELDS, LEVELS, TYPES };
 })();

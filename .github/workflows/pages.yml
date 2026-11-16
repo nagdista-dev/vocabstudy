@@ -1,4 +1,4 @@
-# Builds the public website from the Starter set and publishes it to GitHub Pages.
+# Builds the public website (the app ships with no words) and publishes it to GitHub Pages.
 # Learners' own words live only in their browser, so they are never part of the site.
 name: Publish site
 
@@ -24,9 +24,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
       # build.py knows which files the app needs (SITE_FILES) and puts them in _site/
       - name: Check and build
         run: |

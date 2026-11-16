@@ -1,31 +1,29 @@
 # VocabStudy
 
 **A free, open-source app for Arabic speakers learning English vocabulary.**
-Type a word — the app fills in its Arabic meaning, definition, example and
-pronunciation, teaches it to you, and brings it back on spaced days (1, 3, 7,
-14, 30, 60 days later) until it stays.
+Tell it a word you want to remember — the app fills in its Arabic meaning,
+definition, example and pronunciation, teaches it to you, and brings it back
+on spaced days (1, 3, 7, 14, 30, 60 days later) until it stays. It ships with
+no words: your library is yours from the first one.
 
 **Open it: https://nagdista-dev.github.io/vocabstudy/** — then
 *Install app* / *Add to Home Screen*. No account, no ads, no server: your
 words and progress stay on your device, and it works offline.
 
-![Home: today's plan, word spotlight and daily goal](docs/screenshot-home.png)
-
 ## How it works
 
-1. **Add words to your library.** Type a word and press Enter — that's all.
-   Auto-fill adds the Arabic meaning, definition, example, IPA, type and level.
+1. **Add words to your library** — the home screen. Type a word and press
+   Enter: that's all. Auto-fill adds the Arabic meaning, definition, example,
+   IPA and type. (The CEFR level is yours to set: no free source knows it
+   reliably.)
    Or paste a list from Excel / Google Sheets / Notion, or upload `.csv` / `.tsv`
    files. Each word lives in your library once: duplicates are caught.
-2. **Follow today's plan** on the home screen:
+2. **Follow today's plan**, right above your words:
    **Recall** what's due → **Learn new words** (10 a day by default) →
    practise today's words with **Quiz, Spell, Match and Speak**.
 3. **Your library is the brain.** Search, filter and sort every word, tag them
    your way (IELTS, Work, Travel…), then practise, print or export exactly the
    list you're looking at.
-
-Not ready to add words yet? Try the built-in **Starter set**: 30 words Arabic
-speakers often mix up (borrow / lend, affect / effect, actually ≠ حالياً).
 
 ## Made for Arabic speakers
 
@@ -53,7 +51,7 @@ speakers often mix up (borrow / lend, affect / effect, actually ≠ حالياً
 - **Practise your mistakes** straight after a round. **Notes** on any word.
 
 **Your library, your way**
-- Filters: status, level, type, memory box, date added, tag, source, notes,
+- Filters: status, level, type, memory box, date added, tag, notes,
   tricky words, sound traps. Sorts: A–Z, newest, oldest, weakest, due soonest,
   most mistakes, level. The filters stay in the address, so lists are bookmarkable.
 - Practise, print, export, reset or delete any filtered list.
@@ -70,9 +68,7 @@ speakers often mix up (borrow / lend, affect / effect, actually ≠ حالياً
 - Break reminders, real study time, daily goal, streak, text size, accent colour.
 - Full keyboard control; bottom navigation on phones.
 
-<img src="docs/screenshot-cards-phone.png" alt="A study card on a phone" width="240"> <img src="docs/screenshot-quiz-phone.png" alt="A quiz question on a phone" width="240">
-
-Keyboard: `Space` flip / reveal / speak · `1`–`4` answer · `Enter` next · `/` search.
+Keyboard: `n` new word · `/` search · `Space` flip / reveal / speak · `1`–`4` answer · `Enter` next.
 
 ## Your data stays yours
 
@@ -94,13 +90,12 @@ No install needed: download the repo and open `index.html`. To change the
 code, rebuild after editing:
 
 ```bash
-python3 tools/build.py    # checks everything and writes index.html, data/words.js, sw.js
+python3 tools/build.py    # writes index.html and sw.js, then checks everything
 python3 tools/check.py    # data, missing files, unstyled classes, duplicated helpers
 ```
 
 ```text
-index.html, data/words.js, sw.js   generated — don't edit (tools/build.py)
-data/sample/              the Starter set and a sample import table
+index.html, sw.js         generated — don't edit (tools/build.py)
 assets/css/               tokens → base → components → screens → motion
 assets/js/core/           library, progress (spaced repetition), filters, auto-fill, speech, importer
 assets/fonts, assets/vendor  self-hosted fonts and PDF maker (tools/vendor.py)
@@ -120,7 +115,7 @@ docs/                     architecture, design, learning guide
 ## Updating the app
 
 ```bash
-# 1. change the code (assets/, data/sample/, tools/templates/)
+# 1. change the code (assets/, tools/templates/)
 python3 tools/build.py            # 2. rebuild + check
 open index.html                   # 3. try it (or: python3 -m http.server)
 git add -A && git commit -m "…"   # 4. save the change

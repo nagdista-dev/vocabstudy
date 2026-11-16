@@ -28,7 +28,7 @@
         ${EDIT_FIELDS.map(([k, label]) => html`
           <label class="form-field ${k === "definition" || k === "example" ? "is-wide" : ""}"><span>${label}</span>
             ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
-              : k === "level" ? html`<select name="level">${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
+              : k === "level" ? html`<select name="level"><option value="">—</option>${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
               : k === "tags" ? html`<input name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
               : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
           </label>`)}
@@ -103,13 +103,13 @@
     /** Suggestions for tag inputs: every tag already in the library. */
     tagList: () => html`<datalist id="tagList">${VS.allTags().map((t) => html`<option value="${t.tag}">`)}</datalist>`,
 
-    /** Breadcrumbs for activities: Library › Activity for a filtered list, else just the activity. */
+    /** Breadcrumbs for activities: Words › Your list › Activity for a filtered list. */
     crumbs(p, name) {
-      return p.scope === "pick" || p.scope === "all"
-        ? [{ label: "Library", href: "#/words" + (p.query ? "?" + p.query : "") }, { label: name }]
+      return p.scope === "pick" && p.query
+        ? [{ label: "Your list", href: "#/words?" + p.query }, { label: name }]
         : [{ label: name }];
     },
-    levelBadge: (w) => html`<span class="badge ${VS.levelGroup(w.level)}" title="CEFR level">${w.level}</span>`,
+    levelBadge: (w) => (w.level ? html`<span class="badge ${VS.levelGroup(w.level)}" title="CEFR level">${w.level}</span>` : ""),
 
     statusBadge(w) {
       const s = VS.store.status(w.id);
@@ -174,9 +174,10 @@
           <summary>
             <span class="word-row-main">
               <b>${VS.ui.headword(w)}</b>
-              <span class="word-row-meta">${w.type}${w.custom ? "" : " · Starter"}${w.tags.length ? " · " + w.tags.map((t) => "#" + t).join(" ") : ""}${VS.store.note(w.id) ? html` · ${icon("bulb", "icon-sm")}` : ""}</span>
+              <span class="word-row-meta">${w.type}${w.tags.length ? " · " + w.tags.map((t) => "#" + t).join(" ") : ""}${VS.store.note(w.id) ? html` · ${icon("bulb", "icon-sm")}` : ""}</span>
             </span>
-            <span class="word-row-ar" lang="ar">${w.arabic}</span>
+            ${w.arabic ? html`<span class="word-row-ar" lang="ar">${w.arabic}</span>`
+              : html`<span class="word-row-ar hint">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No meaning yet — edit to add it"}</span>`}
             <span class="word-row-badges">${VS.ui.statusBadge(w)}${VS.ui.levelBadge(w)}</span>
             ${icon("chevron-right", "icon-sm word-row-chev")}
           </summary>
@@ -196,9 +197,8 @@
                 : html`Next recall ${whenText(e.due)} · box ${e.box} of 6 · ${e.right} right, ${e.wrong} wrong`}</span>
               <span class="row">
                 ${s === "new" ? "" : html`<button class="btn btn-quiet" type="button" data-action="forget" data-id="${w.id}">${icon("review", "icon-sm")} Start over</button>`}
-                ${w.custom ? html`
-                  <button class="btn btn-quiet" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>
-                  <button class="btn btn-quiet danger" type="button" data-action="word-delete" data-id="${w.id}">Delete</button>` : ""}
+                                  <button class="btn btn-quiet" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>
+                  <button class="btn btn-quiet danger" type="button" data-action="word-delete" data-id="${w.id}">Delete</button>
               </span>
             </div>
           </div>

@@ -3,7 +3,7 @@
    ------------------------------------------------------------------
    • On install: saves every page, style, script, icon and the words, so
      the app opens with no connection at all.
-   • Pages and data/words.js: network first, cache as fallback — online
+   • Pages: network first, cache as fallback — online
      you always get the newest version; offline you get the last saved ones.
    • Styles, scripts, icons: cache first (their URLs carry ?v=version,
      so a new build means new URLs and a fresh download).
@@ -33,8 +33,7 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin !== location.origin) return;
 
-  const fresh = req.mode === "navigate" || url.pathname.endsWith("/data/words.js");
-  event.respondWith(fresh ? networkFirst(req) : cacheFirst(req));
+  event.respondWith(req.mode === "navigate" ? networkFirst(req) : cacheFirst(req));
 });
 
 async function networkFirst(req) {

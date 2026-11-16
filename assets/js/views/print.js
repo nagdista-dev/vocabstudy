@@ -106,7 +106,7 @@
             ${words.map((w, i) => html`
               <tr>
                 <td class="p-n">${i + 1}</td>
-                <td class="p-word">${word(w)}${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}<span class="p-meta">${w.type} · ${w.level}</span></td>
+                <td class="p-word">${word(w)}${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}<span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span></td>
                 ${meaning ? html`<td class="p-def">${has("definition") ? w.definition : ""}${has("example") ? html`<i>“${VS.ui.example(w)}”</i>` : ""}${note(w)}</td>` : ""}
                 ${has("arabic") ? html`<td class="p-ar" lang="ar">${w.arabic}</td>` : ""}
               </tr>`)}
@@ -211,7 +211,7 @@
           <div class="p-cards">
             ${page.map((w) => html`
               <div class="p-card p-front">
-                <span class="p-meta">${w.type} · ${w.level}</span>
+                <span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span>
                 <b class="p-w">${w.word}</b>
                 ${w.sense ? html`<span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}
                 ${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}

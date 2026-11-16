@@ -22,10 +22,12 @@ Then test the screens you changed at phone width (375px) and desktop width.
 
 ## Ground rules
 
-- **Edit sources, never generated files.** `index.html`, `data/words.js` and
-  `sw.js` are written by `tools/build.py`.
-- **Never commit personal word lists.** Learners keep their words in the app;
-  only the Starter set (`data/sample/`) belongs in the repository.
+- **Edit sources, never generated files.** `index.html` and `sw.js` are
+  written by `tools/build.py`.
+- **No words in the repository.** The app ships empty; learners build their
+  own library in the app, and it stays on their device.
+- **Local first.** No servers, no accounts, no CDN. Anything that touches the
+  network must be optional, say what it sends, and have a switch in Settings.
 - **One helper, one home.** Shared logic lives in `assets/js/core/`.
   `check.py` fails if a view re-implements escaping, shuffling or storage.
 - **Design tokens only.** Colours, sizes and fonts come from
@@ -38,9 +40,9 @@ Then test the screens you changed at phone width (375px) and desktop width.
 
 - New question types for the quiz (see `views/quiz.js → promptMarkup`)
 - New print layouts (see `views/print.js`)
-- Word sets for other language pairs (only `arabic` would change — a
-  `meaning` field is a good first refactor)
-- Translations of the interface
+- More sound traps for Arabic speakers (see `core/sound-traps.js`)
+- Other language pairs (only `arabic` would change — a `meaning` field is a
+  good first refactor)
 
 Read `docs/ARCHITECTURE.md` for how the app boots and routes, and
 `docs/LEARN.md` (Arabic) for a guided tour of the code.

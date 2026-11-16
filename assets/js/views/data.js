@@ -17,9 +17,7 @@
                    "added", "status", "box", "next_recall", "right", "wrong", "note"];
   const exportOpts = { which: "all" };
 
-  const wordsFor = (which) => (which === "mine" ? VS.allWords().filter((w) => w.custom)
-    : which === "studied" ? VS.allWords().filter((w) => VS.store.status(w.id) !== "new")
-    : VS.allWords());
+  const wordsFor = (which) => (which === "studied" ? VS.allWords().filter((w) => VS.store.status(w.id) !== "new") : VS.allWords());
 
   function rows(words) {
     return words.map((w) => {
@@ -61,7 +59,6 @@
 
     render() {
       const t = VS.store.totals();
-      const mine = VS.allWords().filter((w) => w.custom).length;
       const notes = Object.keys(VS.store.notesAll()).length;
       return html`
         <div class="page data-page view-enter">
@@ -75,7 +72,7 @@
             <div>
               <h2>Full backup</h2>
               <p class="muted">One file with everything: your recall schedule for ${VS.plural(t.started, "word")}, ${VS.plural(notes, "note")},
-                ${VS.plural(mine, "word")} you added, your history and settings. Keep it somewhere safe — or open it on another device.</p>
+                your ${VS.plural(VS.allWords().length, "word")}, your history and settings. Keep it somewhere safe — or open it on another device.</p>
               <p class="hint">${lastBackupText()}</p>
             </div>
             <div class="row">
@@ -102,7 +99,7 @@
               <h2>Export words</h2>
               <p class="muted">A spreadsheet of your words with your progress: status, memory box, next recall date, right and wrong answers and your notes.</p>
               <div class="seg" role="group" aria-label="Which words">
-                ${[["all", "All words"], ["studied", "Studied"], ["mine", "Added by me"]].map(([v, l]) =>
+                ${[["all", "All words"], ["studied", "Studied"]].map(([v, l]) =>
                   html`<button type="button" data-action="data-which" data-value="${v}" aria-pressed="${exportOpts.which === v}">${l}</button>`)}
               </div>
               <p class="hint">${VS.plural(wordsFor(exportOpts.which).length, "word")} · any filtered list can be exported from the <a href="#/words">Library</a> too</p>

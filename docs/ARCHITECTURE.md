@@ -3,19 +3,18 @@
 ## The big picture
 
 ```text
-data/sample/*.js ──build.py──▶ data/words.js   (the Starter set)
 tools/templates/page.html ──build.py──▶ index.html   (the whole app)
 tools/templates/sw.js ──build.py──▶ sw.js           (offline cache list)
 tools/vendor.py (by hand) ──▶ assets/fonts/, assets/vendor/   (fonts, PDF maker)
 
-In the browser:  core/vs.js ─▶ Starter words ─▶ core/* ─▶ views/* ─▶ app.js
-                 core/store.js adds the learner's own words from localStorage
+In the browser:  core/vs.js ─▶ core/* ─▶ views/* ─▶ app.js
+                 core/store.js loads the learner's words from localStorage
 ```
 
-There is one page and **one word library**. Every word — the Starter set and
-the learner's own — lives once in `VS.words`, identified by the word itself
-(`borrow`, `axe (tool)`). The learner's words are never part of the build:
-they are typed, pasted or uploaded in the app and saved on the device.
+There is one page and **one word library**, and it is the home screen. The app
+ships with no words: every word is the learner's, lives once in `VS.words`, and
+is identified by the word itself (`borrow`, `axe (tool)`). Words are typed,
+pasted or uploaded in the app and saved on the device — never in the build.
 
 **Local first.** The app has no server, no account and no CDN: fonts and the
 PDF maker ship with it. The only network calls are optional: auto-fill sends
@@ -39,10 +38,9 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | File | Defines |
 | --- | --- |
 | `core/vs.js` | `VS`, `VS.addWords`, `VS.wordKey`, `VS.allTags`, `VS.html`, `VS.shuffle`, dates, toast |
-| `data/words.js` | the Starter set: `VS.addWords([...], { source: "starter" })` |
 | `core/word-forms.js` | `VS.IRREGULAR`, `VS.STAND_INS` (brought ← bring, my ← your) |
 | `core/icons.js` | `VS.icon(name)`, `VS.brandMark` |
-| `core/store.js` | `VS.store` — library, progress, spaced repetition, settings, backup, migration |
+| `core/store.js` | `VS.store` — library, progress, spaced repetition, settings, backup |
 | `core/speech.js` | `VS.speech.say()` — browser voices |
 | `core/listen.js` | `VS.listen.hear()` — speech recognition for Speak |
 | `core/sfx.js` | `VS.sfx.play()` — synthesised sound effects (Web Audio) |
@@ -53,27 +51,26 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/importer.js` | `VS.importer` — parse pasted tables and word files |
 | `core/autofill.js` | `VS.autofill` — fills a new word's details in the background |
 | `views/shared.js` | `VS.ui.*` — word row, tags, note box, activity header, results, keyboard guard |
-| `views/*.js` | one screen each: home, cards, recall, quiz, spell, match, speak, library, stats, print, import, data |
+| `views/home.js` | `VS.today` — today's plan, shown at the top of the library |
+| `views/*.js` | one screen each: library (home), cards, recall, quiz, spell, match, speak, stats, print, import, data |
 | `app.js` | router, app bar, settings, click + keyboard handling, focus keeping, boot |
 
 ## Routes
 
 | Hash | Screen | Words |
 | --- | --- | --- |
-| `#/` | home: today's plan | — |
+| `#/` | home = the library: add a word, today's plan, your words | every word |
 | `#/recall` | recall | words due today |
-| `#/new/cards` | learn new words | the next *New words per day* from the library, oldest added first |
+| `#/new/cards` | learn new words | the next *New words per day*, oldest added first |
 | `#/today/quiz\|spell\|match\|speak` | practise today's words | words first studied today |
 | `#/all/<mode>` | activity | the whole library |
 | `#/tricky/<mode>` | activity | words missed 3+ times |
 | `#/pick/<mode>?filters` | activity | a filtered list from the library |
-| `#/words?filters` | library | filtered and sorted |
+| `#/words?filters` | the library with filters (same screen as `#/`) | filtered and sorted |
 | `#/add` | add words | — |
 | `#/data` | backup, restore, export | — |
 | `#/stats` | progress charts | history |
 | `#/print/<scope>[/layout][?filters]` | print / PDF | recall, tricky, all, today, new or pick |
-
-Old `#/day/…` links open home.
 
 ## Today's plan
 
@@ -123,17 +120,12 @@ learner gave are stored; `core/autofill.js` fills the empty ones later with
 progress and notes when the word's id changes. `deleteUserWords` /
 `resetWords` work on any list (the library's actions).
 
-**Migration.** Version 2 kept words per day (`userDays`) with ids like
-`2026-11-16:borrow`. `migrate()` in `core/store.js` turns every save and
-every restored backup into one library: ids lose the date, a word that was in
-two days keeps the stronger memory and both notes.
-
 ## Installable app (PWA)
 
 `manifest.webmanifest` names the app and its icons (`tools/build_icons.py`
 renders them from `assets/favicon.svg`). `tools/build.py` writes `sw.js` from
 `tools/templates/sw.js` with the exact list of files to keep offline, fonts
-and the PDF maker included. Pages and `data/words.js` load network-first;
+and the PDF maker included. Pages load network-first;
 versioned styles and scripts load cache-first. The service worker only runs
 over http(s); opened as a file the app works without it.
 
@@ -141,15 +133,15 @@ over http(s); opened as a file the app works without it.
 
 | Command | Does |
 | --- | --- |
-| `python3 tools/build.py` | check the Starter set → write `index.html`, `data/words.js`, `sw.js` |
-| `python3 tools/check.py` | data errors (incl. duplicate words), missing files, classes without CSS, duplicated helpers |
+| `python3 tools/build.py` | write `index.html` and `sw.js`, then run the checks |
+| `python3 tools/check.py` | missing files, classes without CSS, duplicated helpers |
 | `python3 tools/vendor.py` | download the fonts and the PDF maker into the project (run by hand, commit the result) |
 | `python3 tools/build_icons.py` | app icons from the brand mark |
 | `python3 tools/screenshots.py [names]` | phone / tablet / desktop screenshots of every screen |
 
 ## Conventions
 
-- **Edit sources, not outputs:** `assets/`, `data/sample/`, `tools/templates/`.
+- **Edit sources, not outputs:** `assets/`, `tools/templates/`.
 - **One helper, one home.** Escaping, shuffling, storage, dates and filters live in `core/`.
   `check.py` fails if a view re-implements them.
 - **New screen:** add `assets/js/views/name.js`, add it to `SCRIPTS` in

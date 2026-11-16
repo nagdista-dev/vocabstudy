@@ -1,23 +1,10 @@
-/* views/library.css — page headers, the step list (today's plan), the word
-   library: filters, rows, tags. */
+/* views/library.css — page headers, the word library: filters, rows, tags. */
 
 .page-head {
   display: flex; align-items: end; justify-content: space-between; gap: var(--s-5); flex-wrap: wrap;
 }
 .page-head h1 { font-size: var(--text-3xl); }
 .page-head h1 + .hint { margin-top: var(--s-1); }
-.head-stats { display: flex; gap: var(--s-2); }
-.head-stats div {
-  min-width: 92px; padding: var(--s-3) var(--s-4);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
-}
-.head-stats dt { font-size: var(--text-xs); color: var(--ink-3); }
-.head-stats dd { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
-
-.step-ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-md); background: var(--surface-2); color: var(--ink-2); }
-.step.is-next .step-ico { background: var(--brand-soft); color: var(--brand); }
-.step.is-done .step-ico { background: var(--good-soft); color: var(--good); }
-@media (max-width: 480px) { .step-ico { display: none; } }
 
 .recall-strip {
   display: flex; align-items: center; gap: var(--s-4);
@@ -28,25 +15,13 @@
 .recall-strip > span { display: grid; flex: 1; }
 .recall-strip:hover { border-color: var(--mark); }
 
-/* Steps: today's plan on home */
-.steps { list-style: none; padding: 0; display: grid; gap: var(--s-2); counter-reset: none; }
-.step {
-  display: flex; align-items: center; gap: var(--s-4);
-  padding: var(--s-4); background: var(--surface);
-  border: 1px solid var(--line); border-radius: var(--r-lg);
-}
+/* Numbered step headings (Add words: 2 Check, 3 Save) */
 .step-n {
   display: grid; place-items: center; flex: none;
   width: 36px; height: 36px; border-radius: 50%;
   background: var(--surface-2); color: var(--ink-2);
   font-family: var(--font-display); font-weight: 700;
 }
-.step-copy { display: grid; flex: 1; min-width: 0; }
-.step.is-next { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.step.is-next .step-n { background: var(--brand); color: var(--on-brand); }
-.step.is-done .step-n { background: var(--good-soft); color: var(--good); }
-.step.is-waiting { background: transparent; border-style: dashed; }
-.step.is-waiting .step-copy b { color: var(--ink-2); }
 
 /* The library: search, sort and filters, then the list and what to do with it. */
 .lib-tools { display: grid; gap: var(--s-3); margin: var(--s-5) 0 var(--s-4); }
@@ -80,7 +55,6 @@
 }
 .lib-more-menu .btn { justify-content: flex-start; }
 @media (max-width: 640px) {
-  .lib-add { display: none; }                        /* the tab bar already has "Add words" */
   .lib-search-row .field { flex-basis: 100%; }
   .lib-search-row .lib-sort { flex: 1; }
   .lib-sort select { width: 100%; }
@@ -118,9 +92,6 @@
 @media (max-width: 640px) { .word-edit { grid-template-columns: 1fr; } }
 
 @media (max-width: 760px) {
-  .head-stats { width: 100%; }
-  .head-stats div { flex: 1; min-width: 0; }
-  .step { gap: var(--s-3); padding: var(--s-3); }
   .word-row summary { grid-template-columns: minmax(0, 1fr) auto 16px; gap: var(--s-2) var(--s-3); }
   .word-row-ar { grid-column: 1 / -1; grid-row: 2; text-align: left; font-size: var(--text-sm); }
   .word-row-badges { grid-row: 1; grid-column: 2; }

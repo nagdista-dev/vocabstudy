@@ -23,10 +23,9 @@
      twice, and progress belongs to the word, not to when it was added.
 
      Each word: { id, word, sense, type, level, ipa, definition, example,
-                  arabic, tags: [], added: "YYYY-MM-DD", source, custom }
-       source  "starter" — the built-in Starter set (data/sample/)
-               "mine"    — added by the learner (saved by core/store.js)
-       custom  true for "mine": only your own words can be edited/deleted. */
+                  arabic, tags: [], added: "YYYY-MM-DD" }
+     Every word is the learner's own: the app ships with none. They are
+     saved by core/store.js and join VS.words at start-up. */
 
   /** The id of a word: lower case, single spaces, curly quotes straightened. */
   VS.wordKey = (word, sense) =>
@@ -35,12 +34,9 @@
 
   /**
    * Put words in the library. Returns { added: [...], skipped: [...] }:
-   * a word already in the library is skipped, never duplicated — except
-   * that your own version of a word replaces the Starter one.
+   * a word already in the library is skipped, never duplicated.
    */
-  VS.addWords = function (list, options) {
-    const o = options || {};
-    const source = o.source || "mine";
+  VS.addWords = function (list) {
     const out = { added: [], skipped: [] };
     (list || []).forEach((raw) => {
       if (!raw || !raw.word) return;
@@ -56,15 +52,11 @@
       w.example = w.example || "";
       w.ipa = w.ipa || "";
       w.arabic = w.arabic || "";
-      w.level = w.level || "B1";
+      w.level = w.level || "";                                         // only if you set it
       w.type = w.type || (/\s/.test(w.word) ? "Phrase" : "Noun");     // until auto-fill knows better
       w.tags = Array.isArray(w.tags) ? w.tags : VS.parseTags(w.tags);
-      w.added = w.added || o.added || VS.todayKey();
-      w.source = source;
-      w.custom = source === "mine";
-      const old = VS.byId[w.id];
-      if (old && !(w.custom && old.source === "starter")) { out.skipped.push(w); return; }
-      if (old) VS.words.splice(VS.words.indexOf(old), 1);      // your version wins over the Starter one
+      w.added = w.added || VS.todayKey();
+      if (VS.byId[w.id]) { out.skipped.push(w); return; }
       VS.words.push(w);
       VS.byId[w.id] = w;
       out.added.push(w);
@@ -124,7 +116,13 @@
   }
   VS.html = function (strings, ...values) {
     let out = strings[0];
-    values.forEach((v, i) => { out += piece(v) + strings[i + 1]; });
+    values.forEach((v, i) => {
+      // Inside an attribute (aria-pressed="${on}", data-value="${false}") a
+      // boolean is its text, "true" or "false". Elsewhere false renders
+      // nothing, so ${cond && html`…`} still works.
+      const inAttr = typeof v === "boolean" && /="$/.test(strings[i]);
+      out += (inAttr ? String(v) : piece(v)) + strings[i + 1];
+    });
     return new Raw(out);
   };
 

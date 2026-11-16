@@ -22,7 +22,7 @@
 (function () {
   "use strict";
 
-  const KEY = "vocabstudy.v2";
+  const KEY = "vocabstudy";
   const WAIT_DAYS = [0, 1, 3, 7, 14, 30, 60];
   const MASTERED_BOX = 4;
 
@@ -33,65 +33,19 @@
     done: {},                                      // "today:quiz" → date last finished
     notes: {},                                     // id → your own note / memory trick
     history: {},                                   // "2026-11-15" → [answered, right, seconds, newWords, mastered]
-    library: [],                                   // your own words, oldest first (the Starter set is built in)
+    library: [],                                   // your words, oldest first — the app ships with none
     lastBackup: "",                                // date of the last full backup download
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
                 accent: "blue", voice: "us", autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, speak: true,
-                quizTypes: ["meaning", "arabic", "english", "gap", "listen"], showSample: true },
+                quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 
   const unpack = (p) => (Array.isArray(p) ? p : [p.box || 0, p.due || "", p.right || 0, p.wrong || 0]);
 
-  /**
-   * Bring older saves and backups up to date. Version 2 grouped words in
-   * days ("userDays") and prefixed every id with the day: "2026-11-16:borrow".
-   * Now there is one library and the id is the word. A word that was in two
-   * days keeps the stronger memory and both notes, so nothing is lost.
-   */
-  function migrate(data) {
-    if (!data || typeof data !== "object") return data;
-    const key = (id) => String(id).replace(/^\d{4}-\d{2}-\d{2}:/, "").replace(/[’‘]/g, "'").replace(/\s+/g, " ");
-    if (data.words && typeof data.words === "object") {
-      const out = {};
-      Object.entries(data.words).forEach(([id, p]) => {
-        const k = key(id), a = unpack(p), b = out[k];
-        if (!b) out[k] = a;
-        else {
-          const strong = a[0] > b[0] || (a[0] === b[0] && a[1] > b[1]) ? a : b;
-          out[k] = [strong[0], strong[1], a[2] + b[2], a[3] + b[3]];
-        }
-      });
-      data.words = out;
-    }
-    if (data.notes && typeof data.notes === "object") {
-      const out = {};
-      Object.entries(data.notes).forEach(([id, n]) => {
-        const k = key(id);
-        out[k] = out[k] && out[k] !== n ? out[k] + " · " + n : n;
-      });
-      data.notes = out;
-    }
-    if (data.userDays && typeof data.userDays === "object") {
-      const library = Array.isArray(data.library) ? data.library : [];
-      const seen = new Set(library.map((w) => VS.wordKey(w.word, w.sense)));
-      Object.keys(data.userDays).sort().forEach((iso) => (data.userDays[iso] || []).forEach((w) => {
-        const k = VS.wordKey(w.word, w.sense);
-        if (!w.word || seen.has(k)) return;
-        seen.add(k);
-        library.push(Object.assign({}, w, { added: w.added || iso }));
-      }));
-      data.library = library;
-      delete data.userDays;
-    }
-    if (data.done) Object.keys(data.done).forEach((k) => { if (!/^today:/.test(k)) delete data.done[k]; });
-    if (data.best) Object.keys(data.best).forEach((k) => { if (k.includes(":")) delete data.best[k]; });
-    return data;
-  }
-
   function load() {
     try {
-      const saved = migrate(JSON.parse(localStorage.getItem(KEY) || "{}"));
+      const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
       return Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), saved, {
         settings: Object.assign({}, DEFAULTS.settings, saved.settings),
       });
@@ -283,11 +237,11 @@
     /** Was this step of today's plan finished today? ("learn", "quiz", "spell", "match", "speak") */
     doneToday: (mode) => state.done["today:" + mode] === VS.todayKey(),
 
-    /** Words never studied, in the order you added them: your own words before the Starter set. */
+    /** Words never studied, oldest added first: the library is a queue to learn from. */
     newWords() {
       return VS.allWords()
         .filter((w) => entry(w.id).box === 0)
-        .sort((a, b) => (a.custom === b.custom ? (a.added < b.added ? -1 : a.added > b.added ? 1 : 0) : a.custom ? -1 : 1));
+        .sort((a, b) => (a.added < b.added ? -1 : a.added > b.added ? 1 : 0));
     },
 
     /** The strength of a word's memory, for "weakest first": wrong answers pull it down. */
@@ -330,7 +284,7 @@
      */
     mergeJSON(text) {
       let data;
-      try { data = migrate(JSON.parse(text)); } catch (e) { return false; }
+      try { data = JSON.parse(text); } catch (e) { return false; }
       if (!data || data.app !== "vocabstudy" || typeof data.words !== "object") return false;
       Object.entries(data.words).forEach(([id, p]) => {
         const theirs = unpack(p);
@@ -362,12 +316,12 @@
     },
 
     /** Everything, as a JSON string — for Backup & export. */
-    exportJSON: () => JSON.stringify(Object.assign({ app: "vocabstudy", version: 3, exported: VS.todayKey() }, state)),
+    exportJSON: () => JSON.stringify(Object.assign({ app: "vocabstudy", version: 1, exported: VS.todayKey() }, state)),
 
     /** Replace progress with a backup. Returns false if the file isn't one. */
     importJSON(text) {
       let data;
-      try { data = migrate(JSON.parse(text)); } catch (e) { return false; }
+      try { data = JSON.parse(text); } catch (e) { return false; }
       if (!data || data.app !== "vocabstudy" || typeof data.words !== "object") return false;
       state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), data, {
         settings: Object.assign({}, DEFAULTS.settings, data.settings),
@@ -379,13 +333,12 @@
 
     /* ── Your words ────────────────────────────────────────────────
        state.library holds the words you added, as you typed them. They
-       join VS.words at start-up (bottom of this file). The Starter set is
-       built in, so it isn't stored. */
+       join VS.words at start-up (bottom of this file). */
     library: () => state.library,
 
     /** Add words to your library. Words already there are skipped → { added, skipped } */
     saveUserWords(words) {
-      const result = VS.addWords(words, { source: "mine" });
+      const result = VS.addWords(words);
       result.added.forEach((w) => state.library.push(plain(w)));
       if (result.added.length) save();
       return result;
@@ -429,9 +382,9 @@
       save();
     },
 
-    /** Delete your own words (Starter words can only be hidden, in Settings). */
+    /** Delete words from the library, with their progress and notes. */
     deleteUserWords(ids) {
-      const gone = new Set(ids.filter((id) => VS.byId[id] && VS.byId[id].custom));
+      const gone = new Set(ids.filter((id) => VS.byId[id]));
       if (!gone.size) return 0;
       state.library = state.library.filter((x) => !gone.has(VS.wordKey(x.word, x.sense)));
       gone.forEach((id) => { delete state.words[id]; delete state.notes[id]; });
@@ -465,9 +418,12 @@
     return out;
   }
 
-  // The Starter set can be hidden once you have your own words (Settings → Study).
-  if (state.settings.showSample === false) VS.removeWords(VS.words.filter((w) => w.source === "starter").map((w) => w.id));
+  // Your words join the library before any screen draws.
+  VS.addWords(state.library);
 
-  // Your own words join the library before any screen draws.
-  VS.addWords(state.library, { source: "mine" });
+  // Progress or notes without a word (a word deleted elsewhere, a merged
+  // backup) are dropped on the next save.
+  Object.keys(state.words).forEach((id) => { if (!VS.byId[id]) delete state.words[id]; });
+  Object.keys(state.notes).forEach((id) => { if (!VS.byId[id]) delete state.notes[id]; });
+  delete state.settings.showSample;
 })();

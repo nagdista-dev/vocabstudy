@@ -1,12 +1,12 @@
 /* core/autofill.js — you type the word, the app fills in the rest.
    ------------------------------------------------------------------
-   A new word needs its IPA, definition, example, type, level and Arabic
-   meaning. Typing all of that is what makes people stop adding words, so
+   A new word needs its IPA, definition, example, type and Arabic meaning.
+   (Its CEFR level is yours to set: no free source knows it reliably, and a
+   wrong level shown as fact would mislead.) Typing all of that is what makes people stop adding words, so
    the app does it:
 
      dictionaryapi.dev        IPA, definition, example, part of speech
      mymemory.translated.net  the Arabic meaning
-     estimateLevel()          a CEFR guess from the word itself (no network)
 
    Privacy: both services are free and need no account. Only the English
    word is sent — never your notes, progress or other words. Settings →
@@ -23,17 +23,6 @@
                  conjunction: "Conjunction", pronoun: "Pronoun", interjection: "Interjection", determiner: "Determiner" };
   const hasArabic = (s) => /[؀-ۿ]/.test(s || "");
 
-  /** A rough CEFR level when the learner gives none: short everyday words are
-      usually lower, long and multi-word ones higher. Editable like any field. */
-  function estimateLevel(word) {
-    const w = String(word || "").trim();
-    if (/\s/.test(w)) return "B2";                 // phrasal verbs and idioms
-    if (w.length <= 4) return "A2";
-    if (w.length <= 7) return "B1";
-    if (w.length <= 10) return "B2";
-    return "C1";
-  }
-
   async function getJSON(url) {
     const res = await fetch(url);
     if (res.status === 404) return { missing: true };
@@ -48,16 +37,17 @@
     const entries = data;
     const ipa = entries.map((e) => e.phonetic).find(Boolean) ||
       entries.flatMap((e) => e.phonetics || []).map((p) => p.text).find(Boolean) || "";
-    const meanings = entries.flatMap((e) => e.meanings || []);
-    // Prefer a sense that comes with an example: the app needs one for "fill the gap".
-    let best = null;
-    for (const m of meanings) {
-      for (const d of m.definitions || []) {
-        if (!best) best = { m, d };
-        if (d.example && new RegExp(VS.escapeRegExp(word.split(" ")[0].slice(0, 4)), "i").test(d.example)) { best = { m, d }; break; }
-      }
-      if (best && best.d.example) break;
-    }
+    // The main part of speech is the one with the most senses ("borrow" is
+    // a verb, though the dictionary lists a rare noun first). Within it,
+    // prefer a sense with an example: the app needs one for "fill the gap".
+    const byType = {};
+    entries.flatMap((e) => e.meanings || []).forEach((m) => {
+      (byType[m.partOfSpeech] = byType[m.partOfSpeech] || []).push(...(m.definitions || []));
+    });
+    const main = Object.keys(byType).sort((a, b) => byType[b].length - byType[a].length)[0];
+    const defs = main ? byType[main] : [];
+    const d = defs.find((x) => x.example) || defs[0];
+    const best = d ? { m: { partOfSpeech: main }, d } : null;
     const out = {};
     if (ipa) out.ipa = ipa.startsWith("/") ? ipa : "/" + ipa.replace(/^\[|\]$/g, "") + "/";
     if (best) {
@@ -69,11 +59,19 @@
     return out;
   }
 
-  /** The Arabic meaning, from a free translation memory. */
-  async function arabic(word) {
-    const data = await getJSON("https://api.mymemory.translated.net/get?langpair=en|ar&q=" + encodeURIComponent(word));
+  /**
+   * The Arabic meaning, from a free translation memory. A verb is asked as
+   * "to borrow" — alone, "borrow" often comes back as a noun. Long lists of
+   * synonyms are cut to three, written the app's way: «يستلف - ياخد سلف».
+   */
+  async function arabic(word, type) {
+    const q = (type === "Verb" || type === "Phrasal Verb") && !/^to\s/i.test(word) ? "to " + word : word;
+    const data = await getJSON("https://api.mymemory.translated.net/get?langpair=en|ar&q=" + encodeURIComponent(q));
     const text = data && data.responseData && data.responseData.translatedText;
-    return hasArabic(text) ? { arabic: String(text).replace(/[.。]+$/, "").trim() } : {};
+    if (!hasArabic(text)) return {};
+    const parts = [...new Set(String(text).replace(/[.。]+$/, "").split(/[,،;؛]/)
+      .map((t) => t.trim().replace(/^(أن|ان)\s+/, "")).filter(hasArabic))].slice(0, 3);
+    return parts.length ? { arabic: parts.join(" - ") } : {};
   }
 
   /**
@@ -83,11 +81,9 @@
   async function lookup(word) {
     const fields = {};
     let offline = false;
-    const tries = await Promise.allSettled([dictionary(word), arabic(word)]);
-    tries.forEach((t) => {
-      if (t.status === "fulfilled") Object.assign(fields, t.value);
-      else offline = true;
-    });
+    // The dictionary first: knowing the part of speech makes the translation better.
+    try { Object.assign(fields, await dictionary(word)); } catch (e) { offline = true; }
+    try { Object.assign(fields, await arabic(word, fields.type)); } catch (e) { offline = true; }
     return { fields, offline };
   }
 
@@ -100,11 +96,10 @@
     while (queue.length && running < 3) {
       const id = queue.shift();
       const w = VS.byId[id];
-      if (!w || !w.custom) continue;
+      if (!w) continue;
       running++;
       try {
         const { fields, offline } = await lookup(w.word);
-        fields.level = estimateLevel(w.word);        // used only if you left the level empty
         // Offline: keep it marked, and try again next time the app is online.
         VS.store.fillUserWord(id, fields, offline && !Object.keys(fields).length ? "todo" : "");
       } catch (e) {
@@ -119,7 +114,6 @@
 
   VS.autofill = {
     lookup,
-    estimateLevel,
     enabled,
     /** Called with a word id each time a word has been filled. */
     onFill(fn) { listeners.push(fn); },

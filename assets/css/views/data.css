@@ -13,7 +13,6 @@
   background: var(--brand-soft); color: var(--brand); align-self: start;
 }
 .data-foot a { color: var(--brand); }
-.backup-strip { margin-top: var(--s-5); background: var(--surface); border-color: var(--line); }
 
 @media (max-width: 760px) {
   .data-card { grid-template-columns: 44px minmax(0, 1fr); }
