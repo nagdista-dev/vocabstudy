@@ -45,6 +45,7 @@
       // The id survives edits to the definition/example, so progress is kept.
       const id = iso + ":" + (w.word + (w.sense ? " (" + w.sense + ")" : "")).toLowerCase();
       const word = Object.assign({ sense: "" }, w, { id, day: iso });
+      word.word = VS.naturalCase(word.word, word.example);
       // "Habit (N)": the sense only repeats the word type, which a badge already shows.
       if (/^(n|v|adj|adv|noun|verb|adjective|adverb)\.?$/i.test(word.sense)) word.sense = "";
       if (VS.byId[id]) return;                     // already in this day
@@ -57,6 +58,19 @@
   };
 
   VS.day = (iso) => VS.days.find((d) => d.iso === iso) || null;
+  /** Show a headword the way it is written in a sentence: "Get Used To" →
+      "get used to". Learners copy what they see, and Spell checks every
+      letter. "I", acronyms and words the example capitalises mid-sentence (Monday,
+      English) keep their capital. The id is lower case, so progress stays. */
+  VS.naturalCase = function (text, example) {
+    const ex = String(example || "");
+    return String(text || "").replace(/[A-Za-z’']+/g, (t) => {
+      if (t === "I" || !/^[A-Z][a-z’']*$/.test(t)) return t;        // I, TV, iPhone stay as written
+      const mid = new RegExp("[^.!?\\s]\\s+" + t + "\\b").test(ex);
+      return mid ? t : t.toLowerCase();
+    });
+  };
+
   VS.allWords = () => VS.days.flatMap((d) => d.words);
 
   /* ── HTML templating ─────────────────────────────────────────────

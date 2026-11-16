@@ -24,7 +24,7 @@
   /* Text — all pass WCAG AA on --surface and --paper */
   --ink:   #141b2d;        /* headings, body */
   --ink-2: #465066;        /* secondary text */
-  --ink-3: #66718a;        /* hints, meta */
+  --ink-3: #5d6880;        /* hints, meta (4.8:1 on quiet fills) */
 
   /* Brand: ink blue — actions, links, current place */
   --brand:      #2b48d6;
@@ -38,9 +38,9 @@
   --on-mark:   #4a3900;
 
   /* Feedback */
-  --good:      #11805b;
+  --good:      #0f744f;   /* ≥ 5:1 on --good-soft: the answer buttons */
   --good-soft: #dcf4e9;
-  --bad:       #c63737;
+  --bad:       #b3302f;   /* ≥ 5:1 on --bad-soft */
   --bad-soft:  #fce3e3;
 
   /* CEFR level badges — three calm steps, information only */

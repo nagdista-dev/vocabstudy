@@ -25,7 +25,6 @@
     const sample = VS.days.find((d) => d.sample);
     return html`
       <div class="today-main">
-        <p class="eyebrow">Welcome to VocabStudy</p>
         <h1>Learn your English words — and keep them.</h1>
         <ol class="welcome-steps">
           <li><b>Add your words</b> — type them, paste a table, or upload a file.</li>
@@ -95,7 +94,7 @@
   }
 
   function stats(t) {
-    const acc = t.today.answered ? Math.round((t.today.right / t.today.answered) * 100) + "%" : "—";
+    const acc = t.today.answered ? "· " + Math.round((t.today.right / t.today.answered) * 100) + "% right" : "";
     const tile = (tone, ico, label, value, small) => html`
       <div class="stat-tile tone-${tone}">
         <span class="stat-ico">${icon(ico, "icon-sm")}</span>
@@ -106,7 +105,7 @@
         ${tile("mark", "flame", "Streak", VS.plural(t.streak, "day"))}
         ${tile("good", "star", "Mastered", t.mastered, "/ " + t.words)}
         ${tile("brand", "clock", "Studied today", VS.formatDuration(t.today.seconds))}
-        ${tile("brand", "target", "Answers today", t.today.answered, "· " + acc + " right")}
+        ${tile("brand", "target", "Answers today", t.today.answered, acc)}
       </dl>`;
   }
 
@@ -276,13 +275,17 @@
 
     render() {
       const t = VS.store.totals();
+      // Before the first study session, home is only the welcome, the
+      // spotlight and the sets: numbers at zero and practice modes for words
+      // not yet met would compete with the one thing to do.
+      const fresh = !t.started;
       return html`
         <div class="page view-enter">
           <section class="today card">
             <div class="today-left">${todayPanel(t)}${isNewLearner(t) ? "" : goal(t)}</div>
             ${spotlight()}
           </section>
-          ${stats(t)}
+          ${fresh ? "" : stats(t)}
 
           ${backupNudge(t)}
           ${tricky()}
@@ -297,7 +300,7 @@
             ? monthGroups()
             : html`<div class="empty"><h2>No word sets yet</h2><p>Add a file to data/days/ and run python3 tools/build.py.</p></div>`}
 
-          <section aria-labelledby="all-title">
+          ${fresh ? "" : html`<section aria-labelledby="all-title">
             <div class="section-title"><h2 id="all-title">Practise everything</h2>
               <span class="hint">Mixed from all ${VS.plural(t.words, "word")}, weakest first</span></div>
             <div class="mode-grid">
@@ -307,16 +310,16 @@
                   <span><b>${m.name}</b><span class="hint">${m.text}</span></span>
                 </a>`)}
             </div>
-          </section>
+          </section>`}
 
-          <section class="how">
+          ${isNewLearner(t) ? "" : html`<section class="how">
             <h2>How recall works</h2>
             <ol>
               <li><b>Study</b> a day's cards once — meaning, example, sound.</li>
               <li><b>Practise</b> it the same day with Quiz, Spell and Match.</li>
               <li><b>Recall</b> it on later days. Each word you remember waits longer before it comes back: 1, 3, 7, 14, 30, then 60 days. Forget it, and it returns tomorrow.</li>
             </ol>
-          </section>
+          </section>`}
         </div>`;
     },
   };

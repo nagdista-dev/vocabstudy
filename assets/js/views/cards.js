@@ -114,7 +114,11 @@
 
     start(p) {
       const scope = VS.scope(p);
-      s = { scope, queue: scope ? VS.sessionWords(scope.words, VS.roundSize()) : [], index: 0, flipped: false,
+      // The first pass through a set meets every word in it ("Study the cards:
+      // meet each word"), however long the set. Round size applies after that.
+      const unseen = scope && scope.kind === "day" ? scope.words.filter((w) => VS.store.status(w.id) === "new") : [];
+      const queue = !scope ? [] : unseen.length ? VS.shuffle(unseen) : VS.sessionWords(scope.words, VS.roundSize());
+      s = { scope, queue, index: 0, flipped: false,
             known: new Set(), learning: new Set(), again: new Set() };
     },
 

@@ -17,19 +17,19 @@ Everything serves long, focused sessions:
 | --- | --- | --- |
 | `--paper` | `#f3f5f9` | page background |
 | `--surface` | `#ffffff` | cards |
-| `--ink` / `--ink-2` / `--ink-3` | `#141b2d` / `#465066` / `#66718a` | text, secondary, hints |
+| `--ink` / `--ink-2` / `--ink-3` | `#141b2d` / `#465066` / `#5d6880` | text, secondary, hints |
 | `--brand` | `#2b48d6` | actions, links, current step |
 | `--mark` | `#ffe066` | the highlighter: words being learned, due counts, rewards |
-| `--good` / `--bad` | `#11805b` / `#c63737` | right / wrong |
+| `--good` / `--bad` | `#0f744f` / `#b3302f` | right / wrong (≥ 5:1 on their soft fills) |
 | `--lvl-a/b/c` | teal / blue / violet | CEFR level badges |
 
 ## Type
 
 | Role | Font | Why |
 | --- | --- | --- |
-| Headwords, headings | Bricolage Grotesque | Characterful, very legible at large sizes |
-| Reading | IBM Plex Sans | Calm, open shapes for long reading |
-| Arabic | IBM Plex Sans Arabic | Same family as the English — the two match |
+| Words being learned, all body text | Atkinson Hyperlegible Next | Look-alike letters (l I 1, rn m, O 0) can't be confused |
+| Screen headings | Bricolage Grotesque | Characterful at large sizes; never the word being learned |
+| Arabic | IBM Plex Sans Arabic | Set a step larger than the English, which looks the same size |
 | IPA | Charis SIL | A dictionary face with full IPA coverage |
 
 Scale: 1.25 ratio from 16px (`--text-xs` … `--text-3xl`).
