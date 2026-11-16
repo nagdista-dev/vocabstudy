@@ -342,6 +342,16 @@ kbd {
   font-size: var(--text-sm); font-weight: 500; animation: view-in var(--slow) var(--ease);
   max-width: calc(100vw - 32px);
 }
+/* Phones: a card above the tab bar instead of a narrow pill over the title. */
+@media (max-width: 640px) {
+  .update-bar {
+    top: auto; bottom: calc(64px + env(safe-area-inset-bottom) + var(--s-3));
+    left: var(--gutter); right: var(--gutter); transform: none; max-width: none;
+    border-radius: var(--r-lg); padding: var(--s-3) var(--s-4); line-height: 1.4;
+  }
+  .update-bar span { flex: 1; }
+  .update-bar .btn { flex: none; white-space: nowrap; }
+}
 
 /* Break reminder (core/study-time.js) — calm, never blocks the screen. */
 .break-card {

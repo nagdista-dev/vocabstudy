@@ -3,7 +3,7 @@
    Everything lives in this browser, so this screen makes it easy to
    keep a copy, move to another device, or take your words elsewhere:
 
-     Full backup (.json)   progress, settings, notes, added words
+     Full backup (.json)   choose where to save: progress, settings, notes, words
      Restore               replace everything, or merge with this device
      Export words          CSV for Excel / Sheets, with your progress
      Copy as table         tab-separated, ready to paste into a sheet
@@ -38,6 +38,56 @@
     a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  /** The full backup, indented so it stays readable if opened by hand. */
+  function backupText() {
+    return JSON.stringify(JSON.parse(VS.store.exportJSON()), null, 2);
+  }
+
+  /**
+   * Save the backup where the learner chooses. Chrome and Edge open the
+   * system save dialog; browsers without it fall back to a normal download.
+   * Cancelling the dialog rejects with AbortError — the caller stays quiet.
+   */
+  async function saveBackup() {
+    const name = "backup-" + VS.todayKey() + ".json";
+    if (typeof window.showSaveFilePicker !== "function") {
+      download(name, backupText(), "application/json");
+      return "downloaded";
+    }
+    let handle;
+    try {
+      // Open the dialog first: building the JSON must not use up the click.
+      handle = await window.showSaveFilePicker({
+        suggestedName: name,
+        types: [{ description: "VocabStudy backup", accept: { "application/json": [".json"] } }],
+      });
+    } catch (err) {
+      // A page that cannot show the picker (a framed or restricted context)
+      // still gets its backup through a normal download.
+      if (err && err.name === "SecurityError") {
+        download(name, backupText(), "application/json");
+        return "downloaded";
+      }
+      throw err;
+    }
+    const text = backupText();
+    const writable = await handle.createWritable();
+    try {
+      await writable.write(text);
+      await writable.close();
+    } catch (err) {
+      try { await writable.abort(); } catch (ignore) {}
+      throw err;
+    }
+    return "saved";
+  }
+
+  function saveErrorText(err) {
+    if (err && err.name === "NotAllowedError") return "Saving was blocked. Try again, or choose a different folder.";
+    if (err && err.name === "QuotaExceededError") return "There isn't enough space to save the backup.";
+    return "Couldn't save the backup. Try again.";
   }
 
   /** Download any list of words as CSV — the library uses it for "Export these". */
@@ -76,7 +126,7 @@
               <p class="hint">${lastBackupText()}</p>
             </div>
             <div class="row">
-              <button class="btn btn-primary" type="button" data-action="data-backup">Download backup</button>
+              <button class="btn btn-primary" type="button" data-action="data-backup">Export backup</button>
             </div>
           </section>
 
@@ -131,11 +181,20 @@
     },
 
     actions: {
-      "data-backup"() {
-        download("vocabstudy-backup-" + VS.todayKey() + ".json", VS.store.exportJSON(), "application/json");
-        VS.store.markBackup();
-        VS.toast("Backup saved to your downloads.");
-        VS.app.render();
+      "data-backup"(el) {
+        const label = el.textContent;
+        el.disabled = true;
+        el.textContent = "Saving…";
+        saveBackup().then((how) => {
+          VS.store.markBackup();
+          VS.toast(how === "saved" ? "Backup saved." : "Backup saved to your downloads.");
+          VS.app.render();
+        }).catch((err) => {
+          el.disabled = false;
+          el.textContent = label;
+          if (err && err.name === "AbortError") return;     // the learner closed the save dialog
+          VS.toast(saveErrorText(err));
+        });
       },
       "data-which"(el) { exportOpts.which = el.dataset.value; VS.app.render(); },
       "data-csv"() { VS.exportCSV(wordsFor(exportOpts.which)); },

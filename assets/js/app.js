@@ -177,10 +177,11 @@
     const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (!hadController) return;                 // first install, nothing to announce
+      if (document.querySelector(".update-bar")) return;
       const bar = document.createElement("div");
       bar.className = "update-bar";
       bar.setAttribute("role", "status");
-      bar.innerHTML = String(html`<span>A new version of VocabStudy is ready.</span>
+      bar.innerHTML = String(html`<span>A new version is ready.</span>
         <button class="btn btn-primary" type="button" data-action="reload">Update now</button>`);
       document.body.appendChild(bar);
     });

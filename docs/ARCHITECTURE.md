@@ -75,7 +75,8 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 ## Today's plan
 
 1. **Recall** what's due. 2. **Learn new words** (cards over `new`).
-3. **Practise today's words** with Quiz → Spell → Match → Speak. When an
+3. **Practise today's words** with Quiz → Spell → Match (and Speak when it is
+turned on in Settings). When an
 activity ends it calls `VS.finishStep(scope, mode)`, which marks the step done
 for today (`store.markDone("today", mode)`) and returns the next step's link.
 

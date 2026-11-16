@@ -20,7 +20,8 @@ words and progress stay on your device, and it works offline.
    files. Each word lives in your library once: duplicates are caught.
 2. **Follow today's plan**, right above your words:
    **Recall** what's due → **Learn new words** (10 a day by default) →
-   practise today's words with **Quiz, Spell, Match and Speak**.
+   practise today's words with **Quiz, Spell and Match** — and **Speak**
+   when you turn it on in Settings.
 3. **Your library is the brain.** Search, filter and sort every word, tag them
    your way (IELTS, Work, Travel…), then practise, print or export exactly the
    list you're looking at.
@@ -47,7 +48,8 @@ words and progress stay on your device, and it works offline.
 - Study cards (English-first or Arabic-first), swipe on phones.
 - Quiz with 5 question types incl. **listening**; every answer shows the full word.
 - Spelling from sound with letter-by-letter feedback.
-- **Speak** with your browser's speech recognition.
+- **Speak** with your browser's speech recognition (off by default; turn it
+  on in Settings).
 - **Practise your mistakes** straight after a round. **Notes** on any word.
 
 **Your library, your way**
@@ -60,7 +62,7 @@ words and progress stay on your device, and it works offline.
 - **Download PDF** or print — 7 layouts: word sheet, compact list, fold-over
   self-test, fill-the-gap and matching worksheets, write-a-sentence, and
   double-sided cut-out cards.
-- **Backup & export**: one-file backup, restore by merge or replace, CSV.
+- **Backup & export**: one-file backup saved wherever you choose, restore by merge or replace, CSV.
 
 **Made for long study days**
 - Calm light design; **Atkinson Hyperlegible** so look-alike letters
@@ -81,8 +83,9 @@ Two things can use the internet, and both can be switched off in Settings:
 | Auto-fill (when you add a word) | only the English word | dictionaryapi.dev, mymemory.translated.net |
 | Speak (Chrome / Edge) | your voice, by the browser itself | the browser's speech service |
 
-**Backup & export** saves everything to one file; restore it on another
-device, or merge phone and laptop.
+**Backup & export** saves everything to one file — choose the folder and name
+in the save dialog. Restore it on another device, or merge phone and laptop.
+Browsers without a save dialog download the file instead.
 
 ## Run it yourself
 

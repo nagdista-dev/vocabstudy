@@ -37,7 +37,7 @@
     lastBackup: "",                                // date of the last full backup download
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
-                accent: "blue", voice: "us", autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, speak: true,
+                accent: "blue", voice: "us", autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, speak: false,
                 quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 

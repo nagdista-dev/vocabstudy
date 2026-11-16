@@ -5,7 +5,7 @@
 
      1. Recall           the words due today (spaced repetition)
      2. Learn new words  the next words you added (Settings → New words per day)
-     3. Practise today's words — Quiz, Spell, Match (and Speak where the browser listens)
+     3. Practise today's words — Quiz, Spell, Match (and Speak when it's on)
 
      VS.today.plan()   → { steps, next, learned, newLeft } — data only
      VS.today.strip()  → the strip's markup
