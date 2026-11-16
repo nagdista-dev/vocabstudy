@@ -114,20 +114,27 @@
               : html`<a class="btn btn-primary" href="#/add">${icon("plus")} Add words</a>`}</div>`}`;
   }
 
-  /* Progress lives in this browser: remind once a week to keep a copy. */
+  /* Progress lives in this browser: remind once a week to keep a copy.
+     Ignore hides the reminder for a week, so it never nags every visit. */
   function backupNudge() {
     const started = VS.store.totals().started;
     if (started < 20) return "";
     const last = VS.store.lastBackup();
     const days = last ? Math.round((new Date(VS.todayKey()) - new Date(last)) / 864e5) : Infinity;
     if (days < 7) return "";
+    const ignored = VS.store.backupNudgeIgnored();
+    const sinceIgnored = ignored ? Math.round((new Date(VS.todayKey()) - new Date(ignored)) / 864e5) : Infinity;
+    if (sinceIgnored < 7) return "";
     return html`
-      <a class="recall-strip" href="#/data">
-        ${icon("review")}
-        <span><b>${last ? "Your last backup was " + days + " days ago" : "You haven't backed up your progress yet"}</b>
-          <span class="hint">${VS.plural(started, "word")} of progress live only in this browser. One tap saves a copy.</span></span>
-        ${icon("arrow-right", "icon-sm")}
-      </a>`;
+      <div class="recall-strip">
+        <a class="recall-strip-main" href="#/data">
+          ${icon("review")}
+          <span><b>${last ? "Your last backup was " + days + " days ago" : "You haven't backed up your progress yet"}</b>
+            <span class="hint">${VS.plural(started, "word")} of progress live only in this browser. One tap saves a copy.</span></span>
+          ${icon("arrow-right", "icon-sm")}
+        </a>
+        <button class="btn btn-quiet recall-strip-ignore" type="button" data-action="backup-ignore" aria-label="Ignore backup reminder">Ignore</button>
+      </div>`;
   }
 
   function addBox() {
@@ -247,6 +254,11 @@
       "lib-clear"() { f = F.parse(""); limit = PAGE; syncAddress(); VS.app.render(); },
       "lib-more"() { limit += PAGE; refreshResults(); },
       "lib-export"() { VS.exportCSV(words(), query() ? "list" : "library"); },
+      "backup-ignore"() {
+        VS.store.ignoreBackupNudge();
+        VS.toast("Backup reminder hidden for a week.");
+        VS.app.render();
+      },
       "lib-reset"() {
         const ids = words().filter((w) => VS.store.status(w.id) !== "new").map((w) => w.id);
         if (!confirm(`Start ${VS.plural(ids.length, "word")} over? Their recall schedule goes back to new. Notes are kept.`)) return;

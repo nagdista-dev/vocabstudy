@@ -35,6 +35,7 @@
     history: {},                                   // "2026-11-15" → [answered, right, seconds, newWords, mastered]
     library: [],                                   // your words, oldest first — the app ships with none
     lastBackup: "",                                // date of the last full backup download
+    backupNudgeIgnored: "",                        // date the learner hid the weekly backup reminder
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
                 accent: "blue", voice: "us", autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, speak: false,
@@ -276,6 +277,8 @@
     notesAll: () => state.notes,
     lastBackup: () => state.lastBackup,
     markBackup() { state.lastBackup = VS.todayKey(); save(); },
+    backupNudgeIgnored: () => state.backupNudgeIgnored,
+    ignoreBackupNudge() { state.backupNudgeIgnored = VS.todayKey(); save(); },
 
     /**
      * Merge a backup into this device: for every word keep the stronger memory

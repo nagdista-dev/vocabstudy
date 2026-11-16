@@ -7,13 +7,22 @@
 .page-head h1 + .hint { margin-top: var(--s-1); }
 
 .recall-strip {
-  display: flex; align-items: center; gap: var(--s-4);
-  margin-top: var(--s-5); padding: var(--s-4) var(--s-5);
+  display: flex; align-items: center; gap: var(--s-3);
+  margin-top: var(--s-5); padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
   border-radius: var(--r-lg); background: var(--mark-soft); color: var(--ink);
-  text-decoration: none; border: 1px solid color-mix(in srgb, var(--mark) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mark) 70%, transparent);
 }
-.recall-strip > span { display: grid; flex: 1; }
+.recall-strip-main {
+  display: flex; align-items: center; gap: var(--s-4);
+  flex: 1; min-width: 0; color: inherit; text-decoration: none;
+}
+.recall-strip-main > span { display: grid; }
+.recall-strip-ignore { flex: none; margin-inline-start: auto; }
 .recall-strip:hover { border-color: var(--mark); }
+@media (max-width: 560px) {
+  .recall-strip { flex-wrap: wrap; padding: var(--s-4); }
+  .recall-strip-main { flex: 1 1 100%; gap: var(--s-3); }
+}
 
 /* Numbered step headings (Add words: 2 Check, 3 Save) */
 .step-n {
