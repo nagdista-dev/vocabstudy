@@ -5,8 +5,9 @@
     python3 tools/check.py --data-only  # just the word files (build.py runs this)
 
 ERRORS stop the build: a broken file, a missing field, a bad level.
+ERRORS also include the same word twice: the library holds each word once
+(give two meanings different senses: "axe (tool)", "axe (cut jobs)").
 WARNINGS are worth a look but don't stop anything:
-  • the same word in two days (fine if intended — it is practised twice)
   • an example sentence that doesn't contain its word ("Fill the gap"
     and the highlighted example then skip it)
 """
@@ -31,7 +32,6 @@ OPTIONAL = ["ipa", "definition"]                                   # a warning w
 LEVELS = {"A1", "A2", "B1", "B2", "C1", "C2"}
 TYPES = {"Noun", "Verb", "Adjective", "Adverb", "Phrase", "Phrasal Verb", "Idiom",
          "Interjection", "Conjunction", "Determiner", "Preposition", "Pronoun"}
-ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ROW = re.compile(r"^\s*\{(.*)\},?\s*$")
 PAIR = re.compile(r'(\w+):\s*("(?:[^"\\]|\\.)*")')
 
@@ -50,7 +50,7 @@ for (const f of ["assets/js/core/vs.js", "assets/js/core/word-forms.js", "assets
 const dir = process.argv[2];
 for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".js")).sort())
   vm.runInContext(fs.readFileSync(path.join(dir, f), "utf8"), ctx);
-const missing = ctx.VS.allWords().filter((w) => !ctx.VS.findInExample(w, true)).map((w) => w.day + " | " + w.word);
+const missing = ctx.VS.allWords().filter((w) => !ctx.VS.findInExample(w, true)).map((w) => w.word);
 console.log(JSON.stringify(missing));
 """
 
@@ -70,17 +70,14 @@ def check_data(errors: list[str], warnings: list[str]) -> int:
     total = 0
     files = sorted(DATA.glob("*.js"))
     if not files:
-        errors.append("data/days/ has no word files")
+        errors.append(f"{DATA.relative_to(ROOT)}/ has no word files")
     for f in files:
         name = f"{DATA.relative_to(ROOT)}/{f.name}"
-        if not ISO.match(f.stem):
-            errors.append(f"{name}: file name must be YYYY-MM-DD.js")
-            continue
         text = f.read_text(encoding="utf-8")
-        if f'VS.addDay("{f.stem}"' not in text:
-            errors.append(f'{name}: must call VS.addDay("{f.stem}", [...])')
+        if "VS.addWords([" not in text:
+            errors.append(f'{name}: must call VS.addWords([...], {{ source: "starter" }})')
         if not text.rstrip().endswith(("]);", "});")):
-            errors.append(f"{name}: must end with ]);")
+            errors.append(f"{name}: must end with ]); or }});")
         for n, line in enumerate(text.splitlines(), 1):
             m = ROW.match(line)
             if not m:
@@ -105,24 +102,21 @@ def check_data(errors: list[str], warnings: list[str]) -> int:
             if w.get("arabic") and not re.search(r"[؀-ۿ]", w["arabic"]):
                 errors.append(f"{where}: arabic has no Arabic letters")
             key = (w.get("word", "").lower(), w.get("sense", "").lower())
-            seen[key].append(f.stem)
+            seen[key].append(f"{name}:{n}")
     missing = examples_without_word()
     if missing is None:
         warnings.append("node not found — skipped the 'example contains the word' check")
-    for item in missing or []:
-        day, word = item.split(" | ", 1)
-        warnings.append(f"{DATA.relative_to(ROOT)}/{day}.js ({word}): example doesn't contain the word")
-    for (word, sense), days in seen.items():
-        if len(days) > 1:
-            same_day = len(set(days)) < len(days)
-            target = errors if same_day else warnings
-            target.append(f"'{word}{' (' + sense + ')' if sense else ''}' appears in {', '.join(days)}"
-                          + (" — twice in one day (give each a different sense)" if same_day else ""))
+    for word in missing or []:
+        warnings.append(f"{DATA.relative_to(ROOT)}/ ({word}): example doesn't contain the word")
+    for (word, sense), where in seen.items():
+        if len(where) > 1:
+            errors.append(f"'{word}{' (' + sense + ')' if sense else ''}' is in the library twice: {', '.join(where)}"
+                          " — give each meaning its own sense")
     return total
 
 
 def check_pages(errors: list[str]) -> None:
-    days = sorted(DATA.glob("*.js"))
+    sources = sorted(DATA.glob("*.js"))
     if not (ROOT / "index.html").exists():
         errors.append("index.html is missing — run python3 tools/build.py")
     sw = ROOT / "sw.js"
@@ -139,8 +133,8 @@ def check_pages(errors: list[str]) -> None:
         if not (ROOT / icon["src"]).exists():
             errors.append(f"manifest.webmanifest: missing icon {icon['src']}")
     bundle = ROOT / "data" / "words.js"
-    if bundle.exists() and days and bundle.stat().st_mtime < max(d.stat().st_mtime for d in days):
-        errors.append("data/words.js is older than a day file — run python3 tools/build.py")
+    if bundle.exists() and sources and bundle.stat().st_mtime < max(d.stat().st_mtime for d in sources):
+        errors.append("data/words.js is older than data/sample/ — run python3 tools/build.py")
     for page in [ROOT / "index.html"]:
         if not page.exists():
             continue
@@ -189,7 +183,7 @@ def main(argv: list[str]) -> int:
     for e in errors:
         print(f"  ERROR    {e}")
     status = "FAILED" if errors else "OK"
-    print(f"check {status}: {total} words in {len(list(DATA.glob('*.js')))} day(s), "
+    print(f"check {status}: {total} Starter words, "
           f"{len(errors)} error(s), {len(warnings)} warning(s)")
     return 1 if errors else 0
 

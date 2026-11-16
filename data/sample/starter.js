@@ -1,10 +1,10 @@
 /* Starter set — 30 words Arabic speakers often mix up or misuse.
-   This is the sample that ships with VocabStudy, so a new learner can try
-   every feature at once. Your own sets go in data/days/ (kept private:
-   that folder is never uploaded) or are added in the app with "Add words".
+   It ships with VocabStudy, so a new learner can try every feature at
+   once; Settings → Starter set hides it. Learners add their own words in
+   the app (Add words) — they stay on their device, never in this repo.
    Each word: word, sense (optional), type, level (CEFR A1–C2), ipa,
    definition, example, arabic. Then run: python3 tools/build.py */
-VS.addDay("2026-01-01", [
+VS.addWords([
   { word: "Actually", type: "Adverb", level: "B1", ipa: "/ˈæktʃuəli/", definition: "In fact; used to say what is really true, often to correct someone.", example: "I actually prefer tea to coffee.", arabic: "في الحقيقة - فعلاً (مش «حالياً»)" },
   { word: "Currently", type: "Adverb", level: "B1", ipa: "/ˈkʌrəntli/", definition: "At the present time.", example: "I am currently working from home.", arabic: "حالياً - في الوقت الحالي" },
   { word: "Eventually", type: "Adverb", level: "B1", ipa: "/ɪˈventʃuəli/", definition: "In the end, after a long time or many problems.", example: "I eventually found my keys under the sofa.", arabic: "في النهاية - بعد وقت طويل" },
@@ -35,4 +35,4 @@ VS.addDay("2026-01-01", [
   { word: "Although", type: "Conjunction", level: "B1", ipa: "/ɔːlˈðəʊ/", definition: "Despite the fact that.", example: "I went for a run although it was raining.", arabic: "بالرغم من إن" },
   { word: "Habit", type: "Noun", level: "B1", ipa: "/ˈhæbɪt/", definition: "Something you do often, almost without thinking.", example: "I have a habit of checking my phone too often.", arabic: "عادة" },
   { word: "Deadline", type: "Noun", level: "B2", ipa: "/ˈdedlaɪn/", definition: "The time by which something must be finished.", example: "I finished the report just before the deadline.", arabic: "آخر ميعاد للتسليم" },
-], { title: "Starter set" });
+], { source: "starter", added: "2026-01-01" });

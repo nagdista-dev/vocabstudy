@@ -11,53 +11,84 @@
   "use strict";
 
   const VS = (window.VS = {
-    days: [],      // [{ iso, date, label, words: [...] }] sorted newest first
+    words: [],     // the library: every word once, in the order it was added
     byId: {},      // word id → word
     views: {},     // screen name → view object (see views/*.js)
   });
 
-  /* ── Data ─────────────────────────────────────────────────────── */
+  /* ── The word library ───────────────────────────────────────────
+     There are no "days" or sets: every word lives once in one library.
+     A word's id is the word itself (plus its sense when it has two
+     meanings): "borrow", "axe (tool)". So the same word can't be added
+     twice, and progress belongs to the word, not to when it was added.
 
-  /** Called by every data/days/*.js file — and by sets added in the app
-      (`custom: true`, saved in this browser by core/store.js). Adding to a
-      date that already exists merges the words; duplicates are skipped. */
-  VS.addDay = function (iso, words, options) {
-    const date = new Date(iso + "T12:00:00");
-    let day = VS.day(iso);
-    if (!day) {
-      day = {
-        iso,
-        date,
-        label: date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
-        weekday: date.toLocaleDateString("en-GB", { weekday: "long" }),
-        words: [],
-        custom: false,     // true when every word came from the in-app importer
-        built: false,      // true when the day has its own days/*.html page
-      };
-      VS.days.push(day);
-      VS.days.sort((a, b) => (a.iso < b.iso ? 1 : -1));
-    }
-    if (options && options.title) { day.label = options.title; day.weekday = "Sample set"; day.sample = true; }
-    const custom = !!(options && options.custom);
-    if (!custom) day.built = true;
-    day.custom = !day.built;
-    words.forEach((w) => {
-      // The id survives edits to the definition/example, so progress is kept.
-      const id = iso + ":" + (w.word + (w.sense ? " (" + w.sense + ")" : "")).toLowerCase();
-      const word = Object.assign({ sense: "" }, w, { id, day: iso });
-      word.word = VS.naturalCase(word.word, word.example);
+     Each word: { id, word, sense, type, level, ipa, definition, example,
+                  arabic, tags: [], added: "YYYY-MM-DD", source, custom }
+       source  "starter" — the built-in Starter set (data/sample/)
+               "mine"    — added by the learner (saved by core/store.js)
+       custom  true for "mine": only your own words can be edited/deleted. */
+
+  /** The id of a word: lower case, single spaces, curly quotes straightened. */
+  VS.wordKey = (word, sense) =>
+    (String(word || "").trim() + (sense ? " (" + String(sense).trim() + ")" : ""))
+      .toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, " ");
+
+  /**
+   * Put words in the library. Returns { added: [...], skipped: [...] }:
+   * a word already in the library is skipped, never duplicated — except
+   * that your own version of a word replaces the Starter one.
+   */
+  VS.addWords = function (list, options) {
+    const o = options || {};
+    const source = o.source || "mine";
+    const out = { added: [], skipped: [] };
+    (list || []).forEach((raw) => {
+      if (!raw || !raw.word) return;
+      const w = Object.assign({ sense: "" }, raw);
+      // Type and level get display defaults below; remember whether they were
+      // really given, so the store saves only those and auto-fill can fill the rest.
+      Object.defineProperty(w, "given", { value: { type: !!raw.type, level: !!raw.level }, enumerable: false });
       // "Habit (N)": the sense only repeats the word type, which a badge already shows.
-      if (/^(n|v|adj|adv|noun|verb|adjective|adverb)\.?$/i.test(word.sense)) word.sense = "";
-      if (VS.byId[id]) return;                     // already in this day
-      word.custom = custom;
-      word.definition = word.definition || "";
-      word.ipa = word.ipa || "";
-      day.words.push(word);
-      VS.byId[id] = word;
+      if (/^(n|v|adj|adv|noun|verb|adjective|adverb)\.?$/i.test(w.sense)) w.sense = "";
+      w.word = VS.naturalCase(String(w.word).trim(), w.example);
+      w.id = VS.wordKey(w.word, w.sense);
+      w.definition = w.definition || "";
+      w.example = w.example || "";
+      w.ipa = w.ipa || "";
+      w.arabic = w.arabic || "";
+      w.level = w.level || "B1";
+      w.type = w.type || (/\s/.test(w.word) ? "Phrase" : "Noun");     // until auto-fill knows better
+      w.tags = Array.isArray(w.tags) ? w.tags : VS.parseTags(w.tags);
+      w.added = w.added || o.added || VS.todayKey();
+      w.source = source;
+      w.custom = source === "mine";
+      const old = VS.byId[w.id];
+      if (old && !(w.custom && old.source === "starter")) { out.skipped.push(w); return; }
+      if (old) VS.words.splice(VS.words.indexOf(old), 1);      // your version wins over the Starter one
+      VS.words.push(w);
+      VS.byId[w.id] = w;
+      out.added.push(w);
     });
+    return out;
   };
 
-  VS.day = (iso) => VS.days.find((d) => d.iso === iso) || null;
+  /** Take words out of the library (the store deletes them from storage). */
+  VS.removeWords = function (ids) {
+    const gone = new Set(ids);
+    VS.words = VS.words.filter((w) => !gone.has(w.id));
+    ids.forEach((id) => delete VS.byId[id]);
+  };
+
+  /** "IELTS, work;travel" → ["IELTS", "work", "travel"] — tags group words your way. */
+  VS.parseTags = (text) => [...new Set(String(text || "").split(/[,;،#]+/).map((t) => t.trim()).filter(Boolean))].slice(0, 12);
+
+  /** Every tag in the library, most used first → [{ tag, count }] */
+  VS.allTags = function () {
+    const n = {};
+    VS.words.forEach((w) => w.tags.forEach((t) => { n[t] = (n[t] || 0) + 1; }));
+    return Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b)).map((tag) => ({ tag, count: n[tag] }));
+  };
+
   /** Show a headword the way it is written in a sentence: "Get Used To" →
       "get used to". Learners copy what they see, and Spell checks every
       letter. "I", acronyms and words the example capitalises mid-sentence (Monday,
@@ -71,7 +102,7 @@
     });
   };
 
-  VS.allWords = () => VS.days.flatMap((d) => d.words);
+  VS.allWords = () => VS.words;
 
   /* ── HTML templating ─────────────────────────────────────────────
      html`<p>${text}</p>` escapes every value, so word data can never

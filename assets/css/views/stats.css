@@ -1,4 +1,4 @@
-/* views/stats.css — the progress screen and the library's extras.
+/* views/stats.css — the progress screen.
    Charts: one series in brand blue, thin bars with a 4px rounded top,
    2px gaps, a recessive baseline, and a hover/focus tooltip. */
 
@@ -62,8 +62,6 @@
 .chart-table td + td { text-align: right; font-variant-numeric: tabular-nums; }
 .stats-note { margin-top: var(--s-4); }
 
-.library-actions { margin: var(--s-5) 0 var(--s-4); }
-.word-count { margin: calc(var(--s-2) * -1) 0 var(--s-3); }
 
 @media (max-width: 900px) {
   .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }

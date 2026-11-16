@@ -15,9 +15,7 @@
   margin-inline: auto;
   padding: var(--s-5) var(--gutter) calc(var(--s-8) + 72px);
 }
-.stack   { display: grid; gap: var(--s-4); }
 .row     { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
-.spacer  { flex: 1; }
 .muted   { color: var(--ink-2); }
 .hint    { color: var(--ink-3); font-size: var(--text-sm); }
 .section-title {
@@ -164,7 +162,6 @@
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-1);
 }
-.card-pad { padding: var(--s-5); }
 
 /* ── Small parts ───────────────────────────────────────────────── */
 .badge {
@@ -347,3 +344,31 @@ kbd {
 .break-card p { color: var(--ink-2); font-size: var(--text-sm); }
 .break-card .row { margin-top: var(--s-2); }
 @media (max-width: 640px) { .break-card { right: 16px; bottom: 96px; } }
+
+/* Sound traps (core/sound-traps.js): what an Arabic speaker should listen for.
+   Quiet ink, never a colour of its own — it's advice, not right/wrong. */
+.traps { list-style: none; padding: 0; display: grid; gap: var(--s-1); max-width: 52ch; }
+.traps li { display: flex; gap: var(--s-2); align-items: baseline; font-size: var(--text-sm); color: var(--ink-2); line-height: 1.45; text-align: start; }
+.traps li .icon { flex: none; color: var(--ink-3); transform: translateY(2px); }
+.traps b { color: var(--ink); font-weight: 600; }
+.flash-traps { justify-self: center; padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface-2); }
+
+/* The Arabic-keyboard note (VS.ui.watchKeyboard): advice, not an error. */
+.kb-warn {
+  display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2);
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
+  background: var(--mark-soft); color: var(--on-mark); font-size: var(--text-sm); font-weight: 500;
+}
+.kb-warn[hidden] { display: none; }
+
+/* Form fields and checkboxes — used by Add words, the library filters, print and settings. */
+.form-field { display: grid; gap: 6px; font-size: var(--text-sm); color: var(--ink-2); font-weight: 500; }
+.form-field input, .form-field select, .form-field textarea {
+  width: 100%; min-height: var(--tap); padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+  color: var(--ink); font: inherit; font-size: var(--text-md); font-weight: 400;
+}
+.form-field textarea { resize: vertical; line-height: 1.5; }
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.check { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 34px; font-size: var(--text-sm); cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--brand); }

@@ -15,7 +15,7 @@
 (function () {
   "use strict";
   const { html, icon } = VS;
-  const BOX_LABELS = ["New", "1 day", "3 days", "1 week", "2 weeks", "1 month", "2 months"];
+  const BOX_LABELS = VS.filters.BOXES;   // one list of box names (core/filters.js)
 
   /** The last n calendar days (oldest first), each with that day's history row or zeros. */
   function lastDays(n) {
@@ -92,7 +92,7 @@
 
       return html`
         <div class="page view-enter">
-          <header class="day-head"><div><h1>Your progress</h1><p class="hint">Since ${longDate(history[0].date)}</p></div></header>
+          <header class="page-head"><div><h1>Your progress</h1><p class="hint">Since ${longDate(history[0].date)}</p></div></header>
 
           <dl class="stat-tiles">
             <div class="card"><dt>${icon("clock", "icon-sm")} Total study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>

@@ -36,13 +36,13 @@
 
   function finish() {
     clearInterval(s.timer);
-    const key = "match:" + (s.scope.day ? s.scope.day.iso : "recall");
+    const key = "match";
     const best = VS.store.setBest(key, s.elapsed);
-    if (s.scope.day) VS.store.markDone(s.scope.day.iso, "match");
+    const next = VS.finishStep(s.scope, "match");
     const missed = [...s.missed].map((id) => VS.byId[id]);
     return VS.ui.summary({
       title: best ? "New best time" : "All pairs matched",
-      message: best ? "Faster than ever on this set." : "Best time on this set: " + VS.formatTime(VS.store.best(key)) + ".",
+      message: best ? "Your fastest time yet." : "Your best time: " + VS.formatTime(VS.store.best(key)) + ".",
       stats: [
         { value: VS.formatTime(s.elapsed), label: "time" },
         { value: s.boards.flat().length, label: "pairs", tone: "good" },
@@ -50,7 +50,7 @@
       ],
       words: missed,
       actions: [
-        { href: s.scope.back, label: "Back to the set", primary: true },
+        next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
         { action: "restart", label: "Play again" },
       ],
     });

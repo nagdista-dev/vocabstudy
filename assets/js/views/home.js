@@ -1,7 +1,13 @@
 /* views/home.js — the hub (index.html).
    The question a learner has when they open the app is "what should I do
-   today?". So the first thing on screen answers it: words due for recall,
-   then the day sets with their progress. */
+   today?". So home is today's plan, in the order that builds memory:
+
+     1. Recall          the words due today (spaced repetition)
+     2. Learn new words the next words from your library (Settings → New words per day)
+     3. Practise today's words — Quiz, Spell, Match (and Speak where the browser can listen)
+
+   Below it: your numbers, words you keep missing, the week ahead and a
+   summary of your library. Every word lives in one library (#/words). */
 (function () {
   "use strict";
   const { html, icon } = VS;
@@ -12,59 +18,112 @@
     { mode: "spell", icon: "spell", name: "Spell", text: "Hear it, type it" },
     { mode: "match", icon: "match", name: "Match", text: "Beat the clock" },
   ];
+  const PRACTICE = {
+    quiz: { icon: "quiz", name: "Quiz", text: "Meaning, Arabic and fill the gap." },
+    spell: { icon: "spell", name: "Spell", text: "Hear each word and type it." },
+    match: { icon: "match", name: "Match", text: "Pair English with Arabic against the clock." },
+    speak: { icon: "mic", name: "Speak", text: "Say each word out loud; the app listens." },
+  };
 
   /* A first visit: no words of their own and nothing studied yet. */
   const isNewLearner = (t) => !t.started && !VS.allWords().some((w) => w.custom);
 
   function welcome() {
-    const sample = VS.days.find((d) => d.sample);
+    const starter = VS.allWords().some((w) => w.source === "starter");
     return html`
       <div class="today-main">
         <h1>Learn your English words — and keep them.</h1>
         <ol class="welcome-steps">
-          <li><b>Add your words</b> — type them, paste a table, or upload a file.</li>
-          <li><b>Study</b> them once: meaning, Arabic, example and sound.</li>
+          <li><b>Type a word</b> — the app fills in the meaning, Arabic, example and sound.</li>
+          <li><b>Learn</b> a few each day, in short rounds.</li>
           <li><b>Recall</b> them on spaced days, so they stay for good.</li>
         </ol>
         <div class="row">
           <a class="btn btn-primary btn-lg" href="#/add">${icon("plus")} Add your first words</a>
-          ${sample ? html`<a class="btn btn-lg" href="${VS.dayHref(sample.iso)}">Try the Starter set</a>` : ""}
+          ${starter ? html`<a class="btn btn-lg" href="#/new/cards">Try the Starter words</a>` : ""}
         </div>
-        <p class="hint">Free, no account. Your words and progress stay on this device.</p>
+        <p class="hint">Free and open source. No account, no server: your words and progress stay on this device.</p>
       </div>`;
   }
 
-  function todayPanel(t) {
+  /* Today's plan as data: each step knows if it's done, open, or waiting. */
+  function plan(t) {
+    const perDay = VS.newPerDay();
+    const newLeft = VS.store.newWords().length;
+    const learned = t.learnedToday.length;
+    const learnDone = learned >= perDay || (learned > 0 && VS.store.doneToday("learn")) || (!newLeft && learned > 0);
+    const steps = [{
+      key: "recall", icon: "review", name: "Recall",
+      href: "#/recall", done: !t.due && t.started > 0, open: t.due > 0,
+      text: t.due ? VS.plural(t.due, "word") + " due — bring them back from memory."
+        : t.started ? "Nothing due. Your next words come back on their day." : "Words come back here after you learn them.",
+    }, {
+      key: "learn", icon: "cards", name: "Learn new words",
+      href: "#/new/cards", done: learnDone, open: newLeft > 0,
+      text: learnDone ? VS.plural(learned, "new word") + " learned today." + (newLeft ? " Want more? Learn " + Math.min(perDay, newLeft) + " more." : "")
+        : newLeft ? "The next " + VS.plural(Math.min(perDay, newLeft), "word") + " from your library."
+        : "Every word in your library is started. Add more words to keep learning.",
+      again: learnDone && newLeft ? "Learn more" : "",
+    }];
+    VS.todaySteps().forEach((mode) => {
+      const p = PRACTICE[mode];
+      steps.push({
+        key: mode, icon: p.icon, name: p.name + " today's words", href: "#/today/" + mode,
+        done: learned > 0 && VS.store.doneToday(mode), open: learned > 0,
+        text: learned ? p.text : "Opens after you learn today's new words.",
+      });
+    });
+    const next = steps.find((s) => s.open && !s.done);
+    return { steps, next, learned, newLeft };
+  }
+
+  function todayPanel(t, p) {
     if (isNewLearner(t)) return welcome();
-    if (!t.started) {
-      const newest = VS.days[0];
-      return html`
-        <div class="today-main">
-          <h1>Start with your newest word set.</h1>
-          <p class="muted">Study the cards once. From tomorrow, the words you studied come back here for recall, spaced out so they stick.</p>
-          ${newest ? html`<a class="btn btn-primary btn-lg" href="${VS.dayHref(newest.iso)}">${icon("cards")} Study ${newest.label}</a>` : ""}
-        </div>`;
+    const n = p.next;
+    let title, line;
+    if (!n) {
+      title = html`You're done for today.`;
+      const next = VS.store.nextReview();
+      line = next ? html`Next recall: ${VS.plural(next.count, "word")} ${VS.ui.whenText(next.date)}. Rest is part of remembering.`
+        : p.newLeft ? "Every step is done. You can learn a few more words, or come back tomorrow." : "Add new words to your library to keep going.";
+    } else if (n.key === "recall") {
+      title = html`<span class="today-count">${t.due}</span> ${t.due === 1 ? "word is" : "words are"} ready for recall.`;
+      line = "See the meaning, bring the English word back from memory, then check yourself. A few minutes now saves relearning later.";
+    } else if (n.key === "learn") {
+      const k = Math.min(VS.newPerDay(), p.newLeft);
+      title = html`Learn <span class="today-count">${k}</span> new ${k === 1 ? "word" : "words"} today.`;
+      line = "Meet each word once: meaning, Arabic, example and sound. They come back for recall tomorrow.";
+    } else {
+      title = html`Make today's ${p.learned === 1 ? "word" : VS.plural(p.learned, "word")} stick.`;
+      line = "Practise them now, in a few different ways, before they fade.";
     }
-    if (t.due) {
-      return html`
-        <div class="today-main">
-          <h1><span class="today-count">${t.due}</span> ${t.due === 1 ? "word is" : "words are"} ready for recall.</h1>
-          <p class="muted">See the meaning, bring the English word back from memory, then check yourself. A few minutes now saves relearning later.</p>
-          <div class="row">
-            <a class="btn btn-primary btn-lg" href="#/recall">${icon("review")} Start recall</a>
-            <a class="btn btn-lg btn-quiet" href="#/print/recall">${icon("print", "icon-sm")} Print them</a>
-          </div>
-        </div>`;
-    }
-    const next = VS.store.nextReview();
     return html`
       <div class="today-main">
-        <h1>You're all caught up.</h1>
-        <p class="muted">${next
-          ? html`Next recall: ${VS.plural(next.count, "word")} ${VS.ui.whenText(next.date)}. Meanwhile, study a new set or practise one you know.`
-          : "Study a new set to start your recall schedule."}</p>
-        ${VS.days[0] ? html`<a class="btn btn-primary btn-lg" href="${VS.dayHref(VS.days[0].iso)}">${icon("cards")} Open ${VS.days[0].label}</a>` : ""}
+        <h1>${title}</h1>
+        <p class="muted">${line}</p>
+        ${n ? html`<a class="btn btn-primary btn-lg" href="${n.href}">${icon(n.icon)} ${n.key === "recall" ? "Start recall" : n.name}</a>`
+          : p.newLeft ? html`<a class="btn btn-lg" href="#/new/cards">${icon("cards")} Learn more words</a>`
+          : html`<a class="btn btn-primary btn-lg" href="#/add">${icon("plus")} Add words</a>`}
       </div>`;
+  }
+
+  function planList(p) {
+    return html`
+      <section aria-labelledby="plan-title">
+        <div class="section-title"><h2 id="plan-title">Today's plan</h2>
+          <span class="hint">${p.next ? "Next: " + p.next.name : "All done for today"}</span></div>
+        <ol class="steps">
+          ${p.steps.map((s, i) => html`
+            <li class="step ${p.next === s ? "is-next" : ""} ${s.done ? "is-done" : ""} ${!s.open && !s.done ? "is-waiting" : ""}">
+              <span class="step-n" aria-hidden="true">${s.done ? icon("check", "icon-sm") : i + 1}</span>
+              <span class="step-ico" aria-hidden="true">${icon(s.icon)}</span>
+              <span class="step-copy"><b>${s.name}</b><span class="hint">${s.text}</span></span>
+              ${s.open || s.again
+                ? html`<a class="btn ${p.next === s ? "btn-primary" : ""}" href="${s.href}">${s.again || (s.done ? "Again" : "Start")}</a>`
+                : html`<span class="sr-only">${s.done ? "Done" : "Not available yet"}</span>`}
+            </li>`)}
+        </ol>
+      </section>`;
   }
 
   /* Today's goal: answers given today against Settings → Daily goal. */
@@ -129,71 +188,10 @@
         <p class="spotlight-ar" lang="ar">${w.arabic}</p>
         <p class="spotlight-ex">“${VS.ui.example(w)}”</p>
         <div class="row spotlight-foot">
-          <a class="btn btn-quiet" href="${VS.dayHref(w.day)}">${VS.day(w.day).label}</a>
+          <a class="btn btn-quiet" href="#/words?q=${encodeURIComponent(w.word)}">Open in library</a>
           <button class="btn" type="button" data-action="spotlight-next">Next word ${icon("arrow-right", "icon-sm")}</button>
         </div>
       </aside>`;
-  }
-
-  /* The set's CEFR spread as small badges: A2 ×3, B1 ×12 … */
-  function levelMix(day) {
-    const n = {};
-    day.words.forEach((w) => { n[w.level] = (n[w.level] || 0) + 1; });
-    return Object.keys(n).sort().map((l) => html`<span class="badge ${VS.levelGroup(l)}">${l} <small>${n[l]}</small></span>`);
-  }
-
-  function dayCard(day) {
-    const s = VS.store.dayStats(day);
-    const state = s.started === 0 ? "Not started" : s.mastered === s.total ? "Mastered" : s.percent + "% mastered";
-    const seg = (n) => (s.total ? (n / s.total) * 100 : 0).toFixed(2) + "%";
-    return html`
-      <a class="day-card card" href="${VS.dayHref(day.iso)}">
-        <span class="day-card-top">
-          ${VS.ui.ring(s.percent, null, 48)}
-          <span class="day-card-title">
-            <b class="day-card-date">${day.label}</b>
-            <span class="hint">${day.weekday} · ${VS.plural(s.total, "word")}</span>
-          </span>
-          ${s.due ? html`<span class="badge is-due">${s.due} due</span>` : ""}
-        </span>
-        <span class="day-levels">${levelMix(day)}</span>
-        <span class="mix-bar" aria-hidden="true">
-          <i class="is-mastered" style="width:${seg(s.mastered)}"></i>
-          <i class="is-learning" style="width:${seg(s.learning)}"></i>
-        </span>
-        <span class="day-card-foot">
-          <span class="hint">${state}</span>
-          ${icon("arrow-right", "icon-sm")}
-        </span>
-      </a>`;
-  }
-
-  /* Days grouped by month, newest first. With a year of daily sets the
-     page stays short: the latest two months are open, older ones fold. */
-  function monthGroups() {
-    const months = [];
-    VS.days.forEach((d) => {
-      const key = d.iso.slice(0, 7);
-      let m = months[months.length - 1];
-      if (!m || m.key !== key) months.push((m = { key, days: [] }));
-      m.days.push(d);
-    });
-    return months.map((m, i) => {
-      const label = m.days.every((d) => d.sample) ? "Getting started"
-        : m.days[0].date.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-      const words = m.days.reduce((n, d) => n + d.words.length, 0);
-      const due = m.days.reduce((n, d) => n + VS.store.dayStats(d).due, 0);
-      return html`
-        <details class="month" ${i < 2 ? VS.raw("open") : ""}>
-          <summary>
-            <h3>${label}</h3>
-            <span class="hint">${VS.plural(m.days.length, "day")} · ${VS.plural(words, "word")}</span>
-            ${due ? html`<span class="badge is-due">${due} due</span>` : ""}
-            ${icon("chevron-right", "icon-sm month-chev")}
-          </summary>
-          <div class="day-grid">${m.days.map(dayCard)}</div>
-        </details>`;
-    });
   }
 
   /* Next 7 days of recall, as small bars: plan your week at a glance. */
@@ -248,8 +246,38 @@
         <div class="row">
           <a class="btn btn-primary" href="#/tricky/quiz">${icon("quiz", "icon-sm")} Quiz them</a>
           <a class="btn" href="#/tricky/spell">${icon("spell", "icon-sm")} Spell them</a>
-          <a class="btn" href="#/tricky/cards">${icon("cards", "icon-sm")} Cards</a>
+          <a class="btn" href="#/words?tricky=1">${icon("book", "icon-sm")} See them</a>
         </div>
+      </section>`;
+  }
+
+  /* The library at a glance: how much is new, learning and mastered, and your tags. */
+  function librarySummary() {
+    const s = VS.store.statsFor(VS.allWords());
+    const seg = (n) => (s.total ? (n / s.total) * 100 : 0).toFixed(2) + "%";
+    const tags = VS.allTags().slice(0, 8);
+    const link = (q, label, n) => html`<a class="lib-count" href="#/words${q ? "?" + q : ""}"><b>${n}</b><span>${label}</span></a>`;
+    return html`
+      <section class="library-card card" aria-labelledby="lib-title">
+        <div class="section-title">
+          <h2 id="lib-title">Your library</h2>
+          <span class="row">
+            <a class="btn btn-quiet" href="#/add">${icon("plus", "icon-sm")} Add words</a>
+            <a class="btn" href="#/words">${icon("book", "icon-sm")} Open library</a>
+          </span>
+        </div>
+        <span class="mix-bar" aria-hidden="true">
+          <i class="is-mastered" style="width:${seg(s.mastered)}"></i>
+          <i class="is-learning" style="width:${seg(s.learning)}"></i>
+        </span>
+        <div class="lib-counts">
+          ${link("", "words", s.total)}
+          ${link("status=new", "new", s.new)}
+          ${link("status=learning", "learning", s.learning)}
+          ${link("status=mastered", "mastered", s.mastered)}
+          ${link("status=due", "due today", s.due)}
+        </div>
+        ${tags.length ? html`<p class="row lib-tags">${tags.map((x) => html`<a class="tag" href="#/words?tag=${encodeURIComponent(x.tag)}">#${x.tag} <small>${x.count}</small></a>`)}</p>` : ""}
       </section>`;
   }
 
@@ -267,34 +295,27 @@
 
     render() {
       const t = VS.store.totals();
-      // Before the first study session, home is only the welcome, the
-      // spotlight and the sets: numbers at zero and practice modes for words
-      // not yet met would compete with the one thing to do.
+      const p = plan(t);
       const fresh = !t.started;
+      const newcomer = isNewLearner(t);
       return html`
         <div class="page view-enter">
           <section class="today card">
-            <div class="today-left">${todayPanel(t)}${isNewLearner(t) ? "" : goal(t)}</div>
+            <div class="today-left">${todayPanel(t, p)}${newcomer ? "" : goal(t)}</div>
             ${spotlight()}
           </section>
           ${fresh ? "" : stats(t)}
 
           ${backupNudge(t)}
+          ${newcomer ? "" : planList(p)}
           ${tricky()}
           ${forecast()}
-
-          <div class="section-title">
-            <h2>Your word sets</h2>
-            <span class="row"><span class="hint">${VS.plural(VS.days.length, "day")} · ${VS.plural(t.words, "word")}</span>
-              <a class="btn btn-quiet" href="#/add">${icon("plus", "icon-sm")} Add words</a></span>
-          </div>
-          ${VS.days.length
-            ? monthGroups()
-            : html`<div class="empty"><h2>No word sets yet</h2><p>Add a file to data/days/ and run python3 tools/build.py.</p></div>`}
+          ${VS.allWords().length ? librarySummary() : html`<div class="empty"><h2>Your library is empty</h2>
+            <p>Add the words you want to learn — they stay on this device.</p><a class="btn btn-primary" href="#/add">${icon("plus")} Add words</a></div>`}
 
           ${fresh ? "" : html`<section aria-labelledby="all-title">
-            <div class="section-title"><h2 id="all-title">Practise everything</h2>
-              <span class="hint">Mixed from all ${VS.plural(t.words, "word")}, weakest first</span></div>
+            <div class="section-title"><h2 id="all-title">Practise your whole library</h2>
+              <span class="hint">${VS.plural(t.words, "word")}, weakest first</span></div>
             <div class="mode-grid">
               ${MODES.map((m) => html`
                 <a class="mode card" href="#/all/${m.mode}">
@@ -304,12 +325,12 @@
             </div>
           </section>`}
 
-          ${isNewLearner(t) ? "" : html`<section class="how">
-            <h2>How recall works</h2>
+          ${newcomer ? "" : html`<section class="how">
+            <h2>How it works</h2>
             <ol>
-              <li><b>Study</b> a day's cards once — meaning, example, sound.</li>
-              <li><b>Practise</b> it the same day with Quiz, Spell and Match.</li>
-              <li><b>Recall</b> it on later days. Each word you remember waits longer before it comes back: 1, 3, 7, 14, 30, then 60 days. Forget it, and it returns tomorrow.</li>
+              <li><b>Learn</b> a few new words from your library each day — meaning, example, sound.</li>
+              <li><b>Practise</b> them the same day with Quiz, Spell, Match and Speak.</li>
+              <li><b>Recall</b> them on later days. Each word you remember waits longer before it comes back: 1, 3, 7, 14, 30, then 60 days. Forget it, and it returns tomorrow.</li>
             </ol>
           </section>`}
         </div>`;

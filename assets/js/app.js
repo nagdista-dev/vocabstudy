@@ -2,16 +2,18 @@
    ------------------------------------------------------------------
    ROUTES (the part after # in the address bar)
      #/                      home
-     #/recall                daily recall across every day
-     #/all/quiz              an activity over every word (cards | quiz | spell | match)
+     #/recall                daily recall: the words due today
+     #/new/cards             learn the next new words from your library
+     #/today/quiz            practise the words you first studied today
+     #/all/quiz              an activity over the whole library
      #/tricky/quiz           an activity over the words you keep missing
-     #/words                 the library: every word, searchable
-     #/add                   add words: paste a table, preview, save
+     #/pick/quiz?level=B2    an activity over a filtered list (core/filters.js)
+                             modes: cards | quiz | spell | match | speak
+     #/words?tag=IELTS       the library, with its filters in the address
+     #/add                   add words: type, paste a table, upload files
      #/data                  backup, restore (merge/replace), export words
      #/stats                 progress charts
-     #/print/day/ISO         print or save as PDF (also /print/recall, /tricky, /all)
-     #/day/2026-11-02        one day: learning path + word list
-     #/day/2026-11-02/quiz   an activity: cards | quiz | spell | match | recall
+     #/print/pick?level=B2   print or save as PDF (also /print/recall, /tricky, /all, /today, /new)
 
    A VIEW is an object in VS.views with:
      render(params) → markup (required)
@@ -29,33 +31,29 @@
   "use strict";
   const { html, icon } = VS;
 
-  const MODES = ["cards", "quiz", "spell", "match", "recall"];
+  const MODES = ["cards", "quiz", "spell", "match", "speak"];
+  const SCOPES = ["new", "today", "all", "tricky", "pick"];
+  const PRINT_SCOPES = ["recall", "tricky", "all", "today", "new", "pick"];
 
   VS.homeHref = "index.html";
-  VS.dayHref = (iso) => "#/day/" + iso;
 
   /* ── Routing ──────────────────────────────────────────────────── */
   function parse(hash) {
-    const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-    if (parts[0] === "words") return { view: "library" };
+    const [path, query = ""] = hash.replace(/^#\/?/, "").split("?");
+    const parts = path.split("/").filter(Boolean);
+    if (parts[0] === "words") return { view: "library", query };
     if (parts[0] === "add") return { view: "import" };
     if (parts[0] === "data") return { view: "data" };
     if (parts[0] === "stats") return { view: "stats" };
-    if (parts[0] === "print") {
-      // An optional last part picks the layout: #/print/day/2026-11-02/test
-      if (parts[1] === "day" && parts[2]) return { view: "print", scope: "day", iso: parts[2], layout: parts[3] };
-      if (["recall", "tricky", "all"].includes(parts[1])) return { view: "print", scope: parts[1], layout: parts[2] };
-    }
+    // An optional last part picks the layout: #/print/pick/test?level=B2
+    if (parts[0] === "print" && PRINT_SCOPES.includes(parts[1])) return { view: "print", scope: parts[1], layout: parts[2], query };
     if (parts[0] === "recall") return { view: "recall", scope: "recall" };
-    if ((parts[0] === "all" || parts[0] === "tricky") && MODES.includes(parts[1])) return { view: parts[1], scope: parts[0] };
-    if (parts[0] === "day" && parts[1]) {
-      if (MODES.includes(parts[2])) return { view: parts[2], scope: "day", iso: parts[1] };
-      return { view: "day", iso: parts[1] };
-    }
-    return { view: "home" };
+    if (SCOPES.includes(parts[0]) && MODES.includes(parts[1])) return { view: parts[1], scope: parts[0], query };
+    return { view: "home" };     // also old links to "days", which became one library
   }
 
   let current = null;     // { name, view, params }
+  let entering = false;   // true for the first render of a screen: only then does it fade in
   const viewRoot = VS.$("#view");
 
   function go() {
@@ -67,6 +65,7 @@
     if (view.start) view.start(params);
     window.scrollTo({ top: 0 });
     viewRoot.focus({ preventScroll: true });     // screen readers start at the new screen…
+    entering = true;
     render();                                    // …unless the view focuses something itself in mount()
   }
 
@@ -94,6 +93,11 @@
     const { view, params } = current;
     const focused = focusKey(viewRoot);
     viewRoot.innerHTML = String(view.render(params));
+    // A filter, an answer or a setting re-renders the same screen: it must
+    // not fade in again (that reads as a flicker), so the entrance runs once.
+    const page = viewRoot.firstElementChild;
+    if (!entering && page) page.classList.remove("view-enter");
+    entering = false;
     renderBar();
     const title = view.title ? view.title(params) : "";
     // "(12) …" in the tab title: due words stay visible even in a background tab.
@@ -134,7 +138,7 @@
     { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats"] },
     { id: "add", label: "Add words", icon: "plus", href: () => "#/add", match: ["import"] },
   ];
-  const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall"];
+  const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak"];
 
   function navMarkup(due, cls) {
     return NAV.filter((n) => cls === "tab" || n.id !== "home").map((n) => {
@@ -157,7 +161,7 @@
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
     crumbsEl.innerHTML = String(html`
-      ${crumbs.length ? html`<a href="${VS.homeHref}">All sets</a>` : ""}
+      ${crumbs.length ? html`<a href="${VS.homeHref}">Home</a>` : ""}
       ${crumbs.map((c) => html`<span aria-hidden="true">/</span>${c.href ? html`<a href="${c.href}">${c.label}</a>` : html`<span aria-current="page">${c.label}</span>`}`)}`);
   }
 
@@ -224,6 +228,12 @@
           <span class="hint">Arabic first makes you produce the English word — harder, and it sticks better.</span></div>
         <div class="setting"><b>Quiz questions</b>
           <div class="checks">${QUIZ_TYPES.map(([v, l]) => html`<label class="check"><input type="checkbox" data-quiz-type value="${v}" ${(st.quizTypes || []).includes(v) ? VS.raw("checked") : ""}><span>${l}</span></label>`)}</div></div>
+        <div class="setting"><b>Auto-fill new words</b><div class="seg">${choice("autofill", true, "On")}${choice("autofill", false, "Off")}</div>
+          <span class="hint">Fills in the Arabic, definition, example and pronunciation from free online dictionaries. Only the English word is sent. Off: nothing ever leaves this device.</span></div>
+        <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
+          <span class="hint">How many words from your library “Learn new words” brings each day.</span></div>
+        ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>
+          <span class="hint">Say words out loud and the app checks them. Your browser does the listening — Chrome and Edge use their online speech service.</span></div>` : ""}
         <div class="setting"><b>Starter set</b><div class="seg">${choice("showSample", true, "Show")}${choice("showSample", false, "Hide")}</div>
           <span class="hint">The 30 built-in words. Hide them once you have your own.</span></div>
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
@@ -346,6 +356,7 @@
   fill("settingsBtn", icon("settings"));
   applySettings();
   VS.store.onChange(() => current && renderBar());
+  VS.autofill.resume();                          // words added offline get filled now
   window.addEventListener("hashchange", go);
   go();
 })();

@@ -17,7 +17,7 @@
 
   /* Edit / delete your own words (global actions, so they work in every list). */
   const EDIT_FIELDS = [["word", "Word"], ["sense", "Sense"], ["arabic", "Arabic"], ["type", "Type"], ["level", "Level"],
-                       ["ipa", "IPA"], ["definition", "Definition"], ["example", "Example"]];
+                       ["ipa", "IPA"], ["tags", "Tags"], ["definition", "Definition"], ["example", "Example"]];
   VS.actions = VS.actions || {};
   VS.actions["word-edit"] = (el) => {
     const w = VS.byId[el.dataset.id];
@@ -29,8 +29,10 @@
           <label class="form-field ${k === "definition" || k === "example" ? "is-wide" : ""}"><span>${label}</span>
             ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
               : k === "level" ? html`<select name="level">${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
+              : k === "tags" ? html`<input name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
               : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
           </label>`)}
+        ${VS.ui.tagList()}
         <div class="row is-wide">
           <button class="btn btn-primary" type="button" data-action="word-save" data-id="${w.id}">Save changes</button>
           <button class="btn btn-quiet" type="button" data-action="word-cancel">Cancel</button>
@@ -41,25 +43,71 @@
     const form = el.closest("form");
     const changes = {};
     EDIT_FIELDS.forEach(([k]) => { changes[k] = form.elements[k].value.trim(); });
+    changes.tags = VS.parseTags(changes.tags);
     if (!changes.word || !changes.arabic) { VS.toast("The word and its Arabic meaning are needed."); return; }
-    VS.store.editUserWord(el.dataset.id, changes);
+    const result = VS.store.editUserWord(el.dataset.id, changes);
+    if (result.error === "duplicate") { VS.toast("“" + result.word.word + "” is already in your library."); return; }
     location.reload();                 // rebuild every list with the new version
   };
   VS.actions["word-cancel"] = () => VS.app.render();
   VS.actions["word-delete"] = (el) => {
     const w = VS.byId[el.dataset.id];
-    if (!w || !confirm(`Delete “${w.word}” from your words? This can't be undone.`)) return;
-    VS.store.deleteUserWord(w.id);
+    if (!w || !confirm(`Delete “${w.word}” from your library? Its progress and note go too. This can't be undone.`)) return;
+    VS.store.deleteUserWords([w.id]);
     location.reload();
   };
+
+  /* Arabic keyboard left on: the most common "mistake" that isn't one. */
+  const ARABIC = /[؀-ۿ]/;
+  VS.isArabicTyping = (text) => ARABIC.test(text || "");
 
   VS.ui = {
     whenText,
 
-    /** Breadcrumbs for activities: Day › Activity, or just the activity. */
+    /**
+     * Watch an English input: Arabic letters show a calm note under it
+     * ("Your keyboard is in Arabic") instead of letting the answer fail.
+     * Returns a function that tells whether the current text is Arabic.
+     */
+    watchKeyboard(input) {
+      if (!input) return () => false;
+      input.setAttribute("lang", "en");
+      let note = input.closest("label, form, .field-wrap");
+      note = note && note.parentElement && note.parentElement.querySelector(".kb-warn");
+      if (!note) {
+        note = document.createElement("p");
+        note.className = "kb-warn";
+        note.setAttribute("role", "status");
+        (input.closest("label") || input).insertAdjacentElement("afterend", note);
+      }
+      const update = () => {
+        const on = ARABIC.test(input.value);
+        note.textContent = on ? "Your keyboard is in Arabic — switch it to English to type this word." : "";
+        note.hidden = !on;
+      };
+      input.addEventListener("input", update);
+      update();
+      return () => ARABIC.test(input.value);
+    },
+
+    /** "2026-11-16" → "today" / "yesterday" / "16 Nov" / "16 Nov 2025" */
+    dateText(iso) {
+      if (!iso) return "";
+      if (iso === VS.todayKey()) return "today";
+      if (iso === VS.yesterdayKey()) return "yesterday";
+      const d = new Date(iso + "T12:00:00");
+      const sameYear = d.getFullYear() === new Date().getFullYear();
+      return d.toLocaleDateString("en-GB", sameYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" });
+    },
+
+    /** Suggestions for tag inputs: every tag already in the library. */
+    tagList: () => html`<datalist id="tagList">${VS.allTags().map((t) => html`<option value="${t.tag}">`)}</datalist>`,
+
+    /** Breadcrumbs for activities: Library › Activity for a filtered list, else just the activity. */
     crumbs(p, name) {
-      const day = p.iso && VS.day(p.iso);
-      return day ? [{ label: day.label, href: "#/day/" + day.iso }, { label: name }] : [{ label: name }];
+      return p.scope === "pick" || p.scope === "all"
+        ? [{ label: "Library", href: "#/words" + (p.query ? "?" + p.query : "") }, { label: name }]
+        : [{ label: name }];
     },
     levelBadge: (w) => html`<span class="badge ${VS.levelGroup(w.level)}" title="CEFR level">${w.level}</span>`,
 
@@ -74,6 +122,14 @@
     /** Headword + optional sense in brackets, e.g. Axe (tool) — the sense tells two meanings apart. */
     headword: (w, cls) =>
       html`<span class="${cls || ""}">${w.word}</span>${w.sense ? html` <span class="sense">(${w.sense.toLowerCase()})</span>` : ""}`,
+
+    /** Pronunciation tips for Arabic speakers (core/sound-traps.js): P/B, V/F, silent letters… */
+    soundTraps(w, cls) {
+      const tips = VS.soundTraps(w);
+      if (!tips.length) return "";
+      return html`<ul class="traps ${cls || ""}" aria-label="Pronunciation tips">
+        ${tips.map((t) => html`<li>${icon("volume", "icon-sm")}<span><b>${t.title}.</b> ${t.text}</span></li>`)}</ul>`;
+    },
 
     /** The example sentence with the word highlighted when we can find it. */
     example(w) {
@@ -106,8 +162,11 @@
         </label>`;
     },
 
-    /** One expandable row in a word list. `showDay` adds which set it comes from. */
-    wordRow(w, showDay) {
+    /** Tags as small chips that open the library filtered by that tag. */
+    tags: (w) => w.tags.map((t) => html`<a class="tag" href="#/words?tag=${encodeURIComponent(t)}">#${t}</a>`),
+
+    /** One expandable row in a word list. */
+    wordRow(w) {
       const s = VS.store.status(w.id);
       const e = VS.store.word(w.id);
       return html`
@@ -115,7 +174,7 @@
           <summary>
             <span class="word-row-main">
               <b>${VS.ui.headword(w)}</b>
-              <span class="word-row-meta">${w.type}${showDay ? html` · ${VS.day(w.day).label}` : ""}${VS.store.note(w.id) ? html` · ${icon("bulb", "icon-sm")}` : ""}</span>
+              <span class="word-row-meta">${w.type}${w.custom ? "" : " · Starter"}${w.tags.length ? " · " + w.tags.map((t) => "#" + t).join(" ") : ""}${VS.store.note(w.id) ? html` · ${icon("bulb", "icon-sm")}` : ""}</span>
             </span>
             <span class="word-row-ar" lang="ar">${w.arabic}</span>
             <span class="word-row-badges">${VS.ui.statusBadge(w)}${VS.ui.levelBadge(w)}</span>
@@ -126,12 +185,14 @@
               ${VS.ui.speakButton(w.word)}
               <span class="ipa">${w.ipa}</span>
             </div>
+            ${VS.ui.soundTraps(w)}
             <p>${w.definition}</p>
             <p class="word-row-example">“${VS.ui.example(w)}”</p>
+            ${w.tags.length ? html`<p class="row word-row-tags">${VS.ui.tags(w)}</p>` : ""}
             ${VS.ui.noteBox(w)}
             <div class="row word-row-foot">
               <span class="hint">${s === "new"
-                ? "Not studied yet"
+                ? "Added " + VS.ui.dateText(w.added) + " · not studied yet"
                 : html`Next recall ${whenText(e.due)} · box ${e.box} of 6 · ${e.right} right, ${e.wrong} wrong`}</span>
               <span class="row">
                 ${s === "new" ? "" : html`<button class="btn btn-quiet" type="button" data-action="forget" data-id="${w.id}">${icon("review", "icon-sm")} Start over</button>`}
@@ -207,13 +268,13 @@
     },
 
     /** Shown when an activity has no words to work with. */
-    emptyActivity(back, text) {
+    emptyActivity(back, text, label) {
       return html`
         <div class="activity">
           <div class="empty">
             <h2>Nothing to practise here yet</h2>
             <p>${text}</p>
-            <a class="btn btn-primary" href="${back}">Go back</a>
+            <a class="btn btn-primary" href="${back}">${label || "Go back"}</a>
           </div>
         </div>`;
     },

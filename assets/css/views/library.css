@@ -1,20 +1,19 @@
-/* views/day.css — one word set: header, recall strip, learning path, word list. */
+/* views/library.css — page headers, the step list (today's plan), the word
+   library: filters, rows, tags. */
 
-.day-head {
+.page-head {
   display: flex; align-items: end; justify-content: space-between; gap: var(--s-5); flex-wrap: wrap;
 }
-.day-head h1 { font-size: var(--text-3xl); }
-.day-head h1 + .hint { margin-top: var(--s-1); }
-.day-stats { display: flex; gap: var(--s-2); }
-.day-stats div {
+.page-head h1 { font-size: var(--text-3xl); }
+.page-head h1 + .hint { margin-top: var(--s-1); }
+.head-stats { display: flex; gap: var(--s-2); }
+.head-stats div {
   min-width: 92px; padding: var(--s-3) var(--s-4);
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
 }
-.day-stats dt { font-size: var(--text-xs); color: var(--ink-3); }
-.day-stats dd { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.head-stats dt { font-size: var(--text-xs); color: var(--ink-3); }
+.head-stats dd { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.day-tools { margin-top: var(--s-3); }
-.day-title { gap: var(--s-4); flex-wrap: nowrap; }
 .step-ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-md); background: var(--surface-2); color: var(--ink-2); }
 .step.is-next .step-ico { background: var(--brand-soft); color: var(--brand); }
 .step.is-done .step-ico { background: var(--good-soft); color: var(--good); }
@@ -29,7 +28,7 @@
 .recall-strip > span { display: grid; flex: 1; }
 .recall-strip:hover { border-color: var(--mark); }
 
-/* Learning path */
+/* Steps: today's plan on home */
 .steps { list-style: none; padding: 0; display: grid; gap: var(--s-2); counter-reset: none; }
 .step {
   display: flex; align-items: center; gap: var(--s-4);
@@ -46,11 +45,47 @@
 .step.is-next { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
 .step.is-next .step-n { background: var(--brand); color: var(--on-brand); }
 .step.is-done .step-n { background: var(--good-soft); color: var(--good); }
+.step.is-waiting { background: transparent; border-style: dashed; }
+.step.is-waiting .step-copy b { color: var(--ink-2); }
 
-/* Word list */
-.word-tools { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-bottom: var(--s-4); }
-.word-tools .field { flex: 1 1 260px; }
-.word-tools .seg { flex: 0 1 auto; max-width: 100%; }
+/* The library: search, sort and filters, then the list and what to do with it. */
+.lib-tools { display: grid; gap: var(--s-3); margin: var(--s-5) 0 var(--s-4); }
+.lib-search-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.lib-search-row .field { flex: 1 1 280px; }
+.lib-sort select {
+  min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); font-weight: 500;
+}
+.pill {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--r-pill);
+  background: var(--brand); color: var(--on-brand); font-size: .72rem; font-weight: 700;
+}
+.lib-panel { display: grid; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); }
+.lib-panel[hidden] { display: none; }
+.lib-panel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-3); }
+.lib-toggles { gap: var(--s-2) var(--s-4); }
+.lib-toggles .btn { margin-inline-start: auto; }
+.lib-bar { display: grid; gap: var(--s-2); margin-bottom: var(--s-3); }
+.lib-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.lib-actions .btn { min-height: 38px; }
+.lib-more { position: relative; }
+.lib-more > summary { list-style: none; }
+.lib-more > summary::-webkit-details-marker { display: none; }
+.lib-more > summary .icon { transform: rotate(90deg); transition: transform var(--fast); }
+.lib-more[open] > summary .icon { transform: rotate(-90deg); }
+.lib-more-menu {
+  position: absolute; z-index: 10; inset-inline-start: 0; top: calc(100% + 4px); min-width: 210px;
+  display: grid; padding: var(--s-1); border-radius: var(--r-md);
+  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2);
+}
+.lib-more-menu .btn { justify-content: flex-start; }
+@media (max-width: 640px) {
+  .lib-add { display: none; }                        /* the tab bar already has "Add words" */
+  .lib-search-row .field { flex-basis: 100%; }
+  .lib-search-row .lib-sort { flex: 1; }
+  .lib-sort select { width: 100%; }
+  .lib-more-menu { inset-inline-start: auto; inset-inline-end: 0; }
+}
 .word-list { display: grid; gap: var(--s-2); }
 
 .word-row { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
@@ -65,6 +100,7 @@
 .word-row-main { display: grid; min-width: 0; }
 .word-row-main b { font-weight: 600; overflow-wrap: anywhere; }
 .word-row-meta { font-size: var(--text-xs); color: var(--ink-3); }
+.word-row-meta .icon { display: inline; vertical-align: -3px; width: 13px; height: 13px; }
 .sense { font-weight: 400; color: var(--ink-3); }
 .word-row-ar { text-align: right; color: var(--ink-2); font-size: 1.02rem; }
 .word-row-badges { display: flex; gap: 6px; justify-content: end; }
@@ -82,11 +118,21 @@
 @media (max-width: 640px) { .word-edit { grid-template-columns: 1fr; } }
 
 @media (max-width: 760px) {
-  .day-stats { width: 100%; }
-  .day-stats div { flex: 1; min-width: 0; }
+  .head-stats { width: 100%; }
+  .head-stats div { flex: 1; min-width: 0; }
   .step { gap: var(--s-3); padding: var(--s-3); }
   .word-row summary { grid-template-columns: minmax(0, 1fr) auto 16px; gap: var(--s-2) var(--s-3); }
   .word-row-ar { grid-column: 1 / -1; grid-row: 2; text-align: left; font-size: var(--text-sm); }
   .word-row-badges { grid-row: 1; grid-column: 2; }
   .word-row-chev { grid-row: 1; grid-column: 3; }
 }
+
+/* Tags: your own groups of words. A tag chip opens the library filtered by it. */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 var(--s-2);
+  border-radius: var(--r-pill); background: var(--surface-2); color: var(--ink-2);
+  font-size: var(--text-xs); font-weight: 600; text-decoration: none;
+}
+.tag:hover { background: var(--brand-soft); color: var(--brand); }
+.tag small { font-weight: 500; opacity: .75; }
+.word-row-tags { gap: 6px; }

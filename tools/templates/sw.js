@@ -4,15 +4,14 @@
    • On install: saves every page, style, script, icon and the words, so
      the app opens with no connection at all.
    • Pages and data/words.js: network first, cache as fallback — online
-     you always get the newest days; offline you get the last saved ones.
+     you always get the newest version; offline you get the last saved ones.
    • Styles, scripts, icons: cache first (their URLs carry ?v=version,
      so a new build means new URLs and a fresh download).
-   • Google Fonts and the PDF maker (cdnjs): saved the first time they
-     load, then served offline.
+   • Fonts and the PDF maker are part of the app (assets/fonts, assets/vendor):
+     precached like everything else. The app talks to no other server.
    A new build changes CACHE, and the old cache is deleted on activate.
    ------------------------------------------------------------------ */
 const CACHE = "vocabstudy-{{VERSION}}";
-const FONTS = "vocabstudy-runtime";     // Google Fonts + the PDF maker, saved on first use
 const PRECACHE = {{PRECACHE}};
 
 self.addEventListener("install", (event) => {
@@ -22,7 +21,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== FONTS).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -32,10 +31,6 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com" || url.hostname === "cdnjs.cloudflare.com") {
-    event.respondWith(staleWhileRevalidate(req, FONTS));
-    return;
-  }
   if (url.origin !== location.origin) return;
 
   const fresh = req.mode === "navigate" || url.pathname.endsWith("/data/words.js");
@@ -61,9 +56,3 @@ async function cacheFirst(req) {
   return res;
 }
 
-async function staleWhileRevalidate(req, name) {
-  const cache = await caches.open(name);
-  const hit = await cache.match(req);
-  const update = fetch(req).then((res) => { if (res.ok) cache.put(req, res.clone()); return res; }).catch(() => hit);
-  return hit || update;
-}

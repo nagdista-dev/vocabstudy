@@ -8,7 +8,10 @@ Everything serves long, focused sessions:
 - **Light only.** A bright, calm page keeps attention up; no dark mode to maintain.
 - **One accent for action** (ink blue), **one for memory** (highlighter yellow).
 - **Green / red only for right / wrong.** Never decoration.
-- **Motion answers the learner** and finishes in under a second. Nothing loops.
+- **Motion answers the learner** and finishes in under a second. Nothing loops —
+  except the mic while it is listening (Speak), which is a live status.
+- **Local first.** Fonts ship with the app (`assets/fonts`, `tools/vendor.py`);
+  no font server, no CDN.
 - **Breaks are built in** (Settings → Break reminder, default every 50 minutes).
 
 ## Tokens (`assets/css/tokens.css`)
@@ -34,6 +37,11 @@ Everything serves long, focused sessions:
 
 Scale: 1.25 ratio from 16px (`--text-xs` … `--text-3xl`).
 Settings → Text size multiplies everything (`--text-scale`).
+
+## Sound traps and the keyboard note
+
+Advice, not errors: `.traps` is quiet ink on a soft fill (never red/green);
+`.kb-warn` ("Your keyboard is in Arabic") uses the highlighter's soft yellow.
 
 ## The signature
 

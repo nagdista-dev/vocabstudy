@@ -12,18 +12,20 @@
   "use strict";
   const { html, icon } = VS;
 
-  const COLUMNS = ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic",
-                   "set", "status", "box", "next_recall", "right", "wrong", "note"];
+  // The columns read back by Add words (word … tags), then your progress.
+  const COLUMNS = ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "tags",
+                   "added", "status", "box", "next_recall", "right", "wrong", "note"];
   const exportOpts = { which: "all" };
 
-  function rowsFor(which) {
-    const words = which === "mine" ? VS.allWords().filter((w) => w.custom)
-      : which === "studied" ? VS.allWords().filter((w) => VS.store.status(w.id) !== "new")
-      : VS.allWords();
+  const wordsFor = (which) => (which === "mine" ? VS.allWords().filter((w) => w.custom)
+    : which === "studied" ? VS.allWords().filter((w) => VS.store.status(w.id) !== "new")
+    : VS.allWords());
+
+  function rows(words) {
     return words.map((w) => {
       const e = VS.store.word(w.id);
-      return [w.word, w.sense, w.type, w.level, w.ipa, w.definition, w.example, w.arabic,
-              w.day, VS.store.status(w.id), e.box, e.due, e.right, e.wrong, VS.store.note(w.id)];
+      return [w.word, w.sense, w.type, w.level, w.ipa, w.definition, w.example, w.arabic, w.tags.join(", "),
+              w.added, VS.store.status(w.id), e.box, e.due, e.right, e.wrong, VS.store.note(w.id)];
     });
   }
 
@@ -39,6 +41,12 @@
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
+
+  /** Download any list of words as CSV — the library uses it for "Export these". */
+  VS.exportCSV = function (words, name) {
+    const lines = [COLUMNS.join(",")].concat(rows(words).map((r) => r.map(csvCell).join(",")));
+    download("vocabstudy-" + (name || "words") + "-" + VS.todayKey() + ".csv", lines.join("\r\n"), "text/csv");
+  };
 
   function lastBackupText() {
     const last = VS.store.lastBackup();
@@ -57,7 +65,7 @@
       const notes = Object.keys(VS.store.notesAll()).length;
       return html`
         <div class="page data-page view-enter">
-          <header class="day-head"><div>
+          <header class="page-head"><div>
             <h1>Backup &amp; export</h1>
             <p class="hint">Everything is saved in this browser only.</p>
           </div></header>
@@ -97,7 +105,7 @@
                 ${[["all", "All words"], ["studied", "Studied"], ["mine", "Added by me"]].map(([v, l]) =>
                   html`<button type="button" data-action="data-which" data-value="${v}" aria-pressed="${exportOpts.which === v}">${l}</button>`)}
               </div>
-              <p class="hint">${VS.plural(rowsFor(exportOpts.which).length, "word")}</p>
+              <p class="hint">${VS.plural(wordsFor(exportOpts.which).length, "word")} · any filtered list can be exported from the <a href="#/words">Library</a> too</p>
             </div>
             <div class="row">
               <button class="btn btn-primary" type="button" data-action="data-csv">Download CSV (Excel)</button>
@@ -105,8 +113,8 @@
             </div>
           </section>
 
-          <p class="hint data-foot">Words you added can also be downloaded as data files from <a href="#/add">Add words</a>.
-            Print sheets and PDFs are in each set and in the <a href="#/words">Library</a>.</p>
+          <p class="hint data-foot">A CSV export can be added back with <a href="#/add">Add words</a> → Upload files.
+            Print sheets and PDFs are in the <a href="#/words">Library</a>.</p>
         </div>`;
     },
 
@@ -133,12 +141,9 @@
         VS.app.render();
       },
       "data-which"(el) { exportOpts.which = el.dataset.value; VS.app.render(); },
-      "data-csv"() {
-        const lines = [COLUMNS.join(",")].concat(rowsFor(exportOpts.which).map((r) => r.map(csvCell).join(",")));
-        download("vocabstudy-words-" + VS.todayKey() + ".csv", lines.join("\r\n"), "text/csv");
-      },
+      "data-csv"() { VS.exportCSV(wordsFor(exportOpts.which)); },
       "data-copy"() {
-        const lines = [COLUMNS.join("\t")].concat(rowsFor(exportOpts.which).map((r) => r.map(tsvCell).join("\t")));
+        const lines = [COLUMNS.join("\t")].concat(rows(wordsFor(exportOpts.which)).map((r) => r.map(tsvCell).join("\t")));
         navigator.clipboard.writeText(lines.join("\n"))
           .then(() => VS.toast("Copied — paste it into Google Sheets or Excel."))
           .catch(() => VS.toast("Copying isn't allowed here — use Download CSV."));

@@ -32,7 +32,7 @@
   }
 
   function finish() {
-    if (s.scope.day) VS.store.markDone(s.scope.day.iso, "spell");
+    const next = VS.finishStep(s.scope, "spell");
     if (!s.wrong.length) setTimeout(VS.ui.celebrate, 150);
     return VS.ui.summary({
       title: s.wrong.length ? "Spelling done" : "Every word spelled right",
@@ -43,7 +43,7 @@
       ],
       words: s.wrong,
       actions: [
-        s.scope.day ? { href: s.scope.back + "/match", label: "Next: Match", primary: true } : { href: s.scope.back, label: "Done", primary: true },
+        next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
         s.wrong.length ? { action: "retry", label: "Practise the " + VS.plural(s.wrong.length, "mistake") } : null,
         { action: "restart", label: "Spell again" },
       ],
@@ -96,6 +96,7 @@
                       <p class="spell-line"><span class="hint">You wrote</span><span class="spell-typed">${s.typed}</span></p>
                       <p class="spell-line"><span class="hint">Correct</span><span class="spell-diff" aria-label="Correct spelling: ${answer}">${diff(s.typed, answer)}</span></p>
                       <p class="spell-legend hint"><span class="ch-ok">green</span> = you had it · <span class="ch-bad">red</span> = missed or wrong · <span class="ipa">${w.ipa}</span></p>`}
+                  ${VS.ui.soundTraps(w)}
                   <p class="feedback-example">“${VS.ui.example(w)}”</p>
                 </div>`
               : ""}
@@ -114,6 +115,7 @@
       if (!s || s.index >= s.words.length) return;
       const input = VS.$("#spellInput");
       const form = VS.$("[data-form='spell']");
+      VS.ui.watchKeyboard(input);
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); s.checked ? VS.views.spell.actions.next() : VS.views.spell.actions.check(); });
       if (!s.checked) {
         input.focus();
@@ -129,6 +131,8 @@
         const w = s.words[s.index];
         s.typed = VS.$("#spellInput").value.trim();
         if (!s.typed) { VS.toast("Type the word first — or use Hint."); return; }
+        // Arabic letters mean the keyboard is in Arabic, not that you misspelled.
+        if (VS.isArabicTyping(s.typed)) { VS.toast("Your keyboard is in Arabic — switch it to English."); return; }
         s.checked = true;
         const ok = VS.normalise(s.typed) === VS.normalise(VS.spellingOf(w));
         // A word you needed hints for still counts as a miss for the schedule.

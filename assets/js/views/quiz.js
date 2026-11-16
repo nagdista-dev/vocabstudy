@@ -77,7 +77,7 @@
 
   function finish() {
     const mode = "quiz";
-    if (s.scope.day) VS.store.markDone(s.scope.day.iso, mode);
+    const next = VS.finishStep(s.scope, mode);
     const total = s.questions.length;
     const pct = Math.round((s.right / total) * 100);
     if (pct === 100) setTimeout(VS.ui.celebrate, 150);
@@ -93,7 +93,7 @@
       ],
       words: s.wrong,
       actions: [
-        s.scope.day ? { href: s.scope.back + "/spell", label: "Next: Spell", primary: true } : { href: s.scope.back, label: "Done", primary: true },
+        next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
         s.wrong.length ? { action: "retry", label: "Practise the " + VS.plural(s.wrong.length, "mistake") } : null,
         { action: "restart", label: "New quiz" },
       ],

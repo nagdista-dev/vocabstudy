@@ -5,8 +5,9 @@
    offline with nothing to install. css/views/print.css hides the app
    and the controls when printing.
 
-   WHICH WORDS   one or more days · due today · tricky · still learning ·
-                 everything — then level / type filters, order and a limit.
+   WHICH WORDS   a filtered list from the library · due today · tricky ·
+                 still learning · today's words · new words · everything —
+                 then level / type filters, order and a limit.
    LAYOUTS (each trains something different)
      sheet     every detail in a table           read and review
      compact   word — meaning, in columns        a fast review list
@@ -35,7 +36,7 @@
 
   // Options persist while the app is open, so you can tweak and re-print.
   const opts = {
-    source: "days", days: new Set(), level: "all", type: "all", order: "file", limit: "all",
+    source: "all", query: "", level: "all", type: "all", order: "file", limit: "all",
     layout: "sheet", direction: "en", size: "normal", nameLine: true, answers: true,
     show: new Set(["ipa", "definition", "example", "arabic", "notes"]),
   };
@@ -47,11 +48,8 @@
     const key = JSON.stringify(p);
     if (key === lastRoute) return;
     lastRoute = key;
-    opts.days = new Set();
-    if (p.scope === "day" && VS.day(p.iso)) { opts.source = "days"; opts.days.add(p.iso); }
-    else if (p.scope === "recall") opts.source = "due";
-    else if (p.scope === "tricky") opts.source = "tricky";
-    else opts.source = "all";
+    opts.query = p.scope === "pick" ? p.query || "" : "";
+    opts.source = { pick: "pick", recall: "due", tricky: "tricky", today: "today", new: "new" }[p.scope] || "all";
     if (p.layout && LAYOUTS.some((l) => l[0] === p.layout)) opts.layout = p.layout;
   }
 
@@ -62,29 +60,25 @@
       case "due": words = VS.store.dueWords(); break;
       case "tricky": words = VS.store.trickyWords(); break;
       case "learning": words = VS.allWords().filter((w) => VS.store.status(w.id) === "learning"); break;
-      case "all": words = VS.allWords(); break;
-      default: words = VS.days.filter((d) => opts.days.has(d.iso)).slice().reverse().flatMap((d) => d.words);
+      case "pick": words = VS.filters.apply(VS.allWords(), VS.filters.parse(opts.query)); break;
+      case "today": words = VS.scope({ scope: "today" }).words; break;
+      case "new": words = VS.scope({ scope: "new" }).words; break;
+      default: words = VS.allWords();
     }
     words = words.filter((w) =>
       (opts.level === "all" || w.level.charAt(0) === opts.level) &&
       (opts.type === "all" || w.type === opts.type));
     if (opts.order === "az") words = words.slice().sort((a, b) => a.word.localeCompare(b.word));
     if (opts.order === "random") words = VS.shuffle(words);
-    if (opts.order === "weakest") {
-      const weak = (w) => { const e = VS.store.word(w.id); return e.box * 2 - e.wrong + (e.box ? 0 : 50); };
-      words = words.slice().sort((a, b) => weak(a) - weak(b));
-    }
+    if (opts.order === "weakest") words = words.slice().sort((a, b) => VS.store.strength(a.id) - VS.store.strength(b.id));
     if (opts.limit !== "all") words = words.slice(0, Number(opts.limit));
     return words;
   }
 
   function sourceLabel() {
-    if (opts.source === "days") {
-      const days = VS.days.filter((d) => opts.days.has(d.iso));
-      if (days.length === 1) return days[0].label + " · " + days[0].weekday;
-      return days.length ? VS.plural(days.length, "day") + " · " + days[days.length - 1].label + " – " + days[0].label : "No day chosen";
-    }
-    return { due: "Due for recall", tricky: "Tricky words", learning: "Still learning", all: "All words" }[opts.source];
+    if (opts.source === "pick") return VS.filters.describe(VS.filters.parse(opts.query)) || "Library";
+    return { due: "Due for recall", tricky: "Tricky words", learning: "Still learning", today: "Today's words",
+             new: "New words", all: "Whole library" }[opts.source];
   }
 
   /* ── Small pieces shared by layouts ─────────────────────────── */
@@ -263,15 +257,13 @@
         <h1>Download PDF or print</h1>
 
         <fieldset><legend>Words</legend>
-          ${seg("source", [["days", "Days"], ["due", "Due today"], ["tricky", "Tricky"], ["learning", "Learning"], ["all", "All"]])}
-          ${opts.source === "days" ? html`
-            <div class="day-checks">${VS.days.map((d) => check("days", d.iso, html`${d.label} <span class="hint">${d.words.length}</span>`, opts.days.has(d.iso)))}</div>
-            <div class="row"><button class="btn btn-quiet" type="button" data-action="print-days" data-value="all">Select all</button>
-              <button class="btn btn-quiet" type="button" data-action="print-days" data-value="none">Clear</button></div>` : ""}
+          ${seg("source", (opts.query ? [["pick", "My list"]] : []).concat([["all", "All"], ["due", "Due today"], ["learning", "Learning"],
+            ["tricky", "Tricky"], ["today", "Today's"], ["new", "New"]]))}
+          ${opts.source === "pick" ? html`<p class="hint">From the library: ${sourceLabel()} · <a href="#/words?${opts.query}">change the list</a></p>` : ""}
           <div class="ctl-grid">
             <label><span>Level</span>${select("level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]])}</label>
             <label><span>Type</span>${select("type", [["all", "All types"]].concat(types.map((t) => [t, t])))}</label>
-            <label><span>Order</span>${select("order", [["file", "As in the set"], ["az", "A–Z"], ["random", "Random"], ["weakest", "Weakest first"]])}</label>
+            <label><span>Order</span>${select("order", [["file", "As listed"], ["az", "A–Z"], ["random", "Random"], ["weakest", "Weakest first"]])}</label>
             <label><span>How many</span>${select("limit", [["all", "All"], ["10", "10"], ["20", "20"], ["30", "30"], ["50", "50"]])}</label>
           </div>
         </fieldset>
@@ -304,10 +296,10 @@
 
   /* ── Download as a PDF file (no print dialog) ─────────────────────
      html2pdf.js (html2canvas + jsPDF, MIT) draws the paper preview into an
-     A4 PDF exactly as you see it — Arabic included. It loads only the
-     first time you press the button; the service worker then keeps it
-     for offline use. Page breaks follow the same rules as printing. */
-  const PDF_LIB = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+     A4 PDF exactly as you see it — Arabic included. It ships with the app
+     (assets/vendor/, see tools/vendor.py) and loads only the first time
+     you press the button. Page breaks follow the same rules as printing. */
+  const PDF_LIB = "assets/vendor/html2pdf.bundle.min.js";
   let pdfLib = null;
   function loadPdfLib() {
     if (window.html2pdf) return Promise.resolve(window.html2pdf);
@@ -315,9 +307,8 @@
       pdfLib = new Promise((resolve, reject) => {
         const s = document.createElement("script");
         s.src = PDF_LIB;
-        s.crossOrigin = "anonymous";
         s.onload = () => resolve(window.html2pdf);
-        s.onerror = () => { pdfLib = null; reject(new Error("offline")); };
+        s.onerror = () => { pdfLib = null; reject(new Error("missing")); };
         document.head.appendChild(s);
       });
     }
@@ -326,7 +317,7 @@
 
   function fileName(words) {
     const layout = LAYOUTS.find((l) => l[0] === opts.layout)[1].toLowerCase().replace(/\W+/g, "-");
-    const src = opts.source === "days" && opts.days.size === 1 ? [...opts.days][0] : opts.source;
+    const src = opts.source;
     return `vocabstudy-${layout}-${src}-${words.length}w.pdf`;
   }
 
@@ -374,9 +365,7 @@
       }).from(doc).save();
       VS.toast("PDF saved to your downloads.");
     } catch (e) {
-      VS.toast(e.message === "offline"
-        ? "Couldn't load the PDF maker — check your connection, or use Print → Save as PDF."
-        : "Couldn't make the PDF. Try Print → Save as PDF.");
+      VS.toast("Couldn't make the PDF. Try Print → Save as PDF.");
     } finally {
       VS.app.render();                                 // restore the untouched preview and button
     }
@@ -417,7 +406,7 @@
               ${opts.nameLine ? html`<div class="p-name"><span>Name</span><span>Date</span><span>Score</span></div>` : ""}
               ${words.length
                 ? LAYOUT[opts.layout](words)
-                : html`<p class="p-empty-note">No words match these options. Choose a day or loosen a filter.</p>`}
+                : html`<p class="p-empty-note">No words match these options. Choose other words or loosen a filter.</p>`}
             </article>
           </div>
         </div>`;
@@ -429,10 +418,6 @@
 
     actions: {
       "print-opt"(el) { opts[el.dataset.name] = el.dataset.value; VS.app.render(); },
-      "print-days"(el) {
-        opts.days = el.dataset.value === "all" ? new Set(VS.days.map((d) => d.iso)) : new Set();
-        VS.app.render();
-      },
       "print-now"() { window.print(); },
       "pdf-download"(el) { downloadPdf(el); },
     },

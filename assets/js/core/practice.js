@@ -7,20 +7,59 @@
 (function () {
   "use strict";
 
-  /** Resolve a scope from the route: one day's words, or today's recall list. */
+  /**
+   * Which words an activity works on, from the route: #/<scope>/<mode>?filters
+     recall   words due today                    #/recall
+     new      the next new words to learn        #/new/cards
+     today    words you first studied today      #/today/quiz
+     tricky   words you keep missing             #/tricky/spell
+     all      the whole library                  #/all/match
+     pick     a filtered list from the library   #/pick/quiz?status=learning&tag=IELTS
+   */
   VS.scope = function (params) {
-    if (params.scope === "recall") {
-      return { kind: "recall", title: "Daily recall", back: "#/", words: VS.store.dueWords() };
+    const home = "#/";
+    switch (params.scope) {
+      case "recall": return { kind: "recall", title: "Daily recall", back: home, words: VS.store.dueWords() };
+      case "tricky": return { kind: "tricky", title: "Tricky words", back: home, words: VS.store.trickyWords() };
+      case "all": return { kind: "all", title: "Whole library", back: "#/words", words: VS.allWords() };
+      case "new": return { kind: "new", title: "New words", back: home, words: VS.store.newWords().slice(0, VS.newPerDay()) };
+      case "today": {
+        const ids = VS.store.totals().learnedToday;
+        return { kind: "today", title: "Today's words", back: home, words: ids.map((id) => VS.byId[id]) };
+      }
+      case "pick": {
+        const f = VS.filters.parse(params.query);
+        const q = VS.filters.query(f);
+        return { kind: "pick", title: VS.filters.describe(f) || "Whole library", back: "#/words" + (q ? "?" + q : ""),
+                 query: q, words: VS.filters.apply(VS.allWords(), f) };
+      }
     }
-    if (params.scope === "tricky") {
-      return { kind: "tricky", title: "Tricky words", back: "#/", words: VS.store.trickyWords() };
+    return null;
+  };
+
+  /** New words per day (Settings → Study). */
+  VS.newPerDay = () => VS.store.settings().newPerDay || 10;
+
+  /* Today's plan, in order: learn the new words with cards, then practise
+     today's words. Speak joins only where the browser can listen. */
+  VS.todaySteps = () => ["quiz", "spell", "match"].concat(VS.listen && VS.listen.supported ? ["speak"] : []);
+  const STEP_NAMES = { quiz: "Quiz", spell: "Spell", match: "Match", speak: "Speak" };
+
+  /**
+   * Called when an activity ends: remembers today's plan steps, and returns
+   * the next step as { href, label } (or null when there is none).
+   */
+  VS.finishStep = function (scope, mode) {
+    if (!scope) return null;
+    if (scope.kind === "new" && mode === "cards") {
+      VS.store.markDone("today", "learn");
+      return { href: "#/today/quiz", label: "Next: Quiz" };
     }
-    if (params.scope === "all") {
-      return { kind: "all", title: "All sets", back: "#/", words: VS.allWords() };
-    }
-    const day = VS.day(params.iso);
-    if (!day) return null;
-    return { kind: "day", day, title: day.label, back: "#/day/" + day.iso, words: day.words };
+    if (scope.kind !== "today") return null;
+    VS.store.markDone("today", mode);
+    const steps = VS.todaySteps();
+    const next = steps[steps.indexOf(mode) + 1];
+    return next ? { href: "#/today/" + next, label: "Next: " + STEP_NAMES[next] } : null;
   };
 
   /** How many items a round has (Settings → Round size). */

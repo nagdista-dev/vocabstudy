@@ -1,81 +1,150 @@
-/* views/import.js — "Add words": three ways to bring words into the app.
+/* views/import.js — "Add words": every word goes into your one library.
    ------------------------------------------------------------------
-   Type a word    one word at a time, in a simple form
+   Type a word    the fast way: type it, press Enter. The app fills in
+                  the rest (core/autofill.js). "More details" lets you
+                  type any field yourself — your typing always wins.
    Paste a table  rows copied from Excel / Google Sheets / Notion
-   Upload files   .js sets (VocabStudy's own format — one set per file,
-                  dated by the file) or .tsv / .csv / .txt tables
+   Upload files   .tsv / .csv / .txt tables, or VocabStudy .js word files
 
-   Pasted and uploaded words go through a check (ready / check / can't use)
-   with an optional dictionary fill for empty definitions and IPA, then
-   are saved on this device. Nothing leaves the device unless you
-   download it. core/importer.js does the reading; core/store.js keeps them.
+   The library holds each word once: words already in it are marked
+   "In your library" and skipped. Everything is saved on this device.
+   core/importer.js reads tables; core/store.js keeps the words.
    ------------------------------------------------------------------ */
 (function () {
   "use strict";
   const { html, icon } = VS;
 
-  const TEMPLATE = ["word\tdefinition\texample\ttype\tlevel\tipa\tarabic",
-    "Habit\tSomething you do often, almost without thinking.\tI have a habit of reading before bed.\tNoun\tB1\t/ˈhæbɪt/\tعادة"].join("\n");
+  const TEMPLATE = ["word\tdefinition\texample\ttype\tlevel\tipa\tarabic\ttags",
+    "Habit\tSomething you do often, almost without thinking.\tI have a habit of reading before bed.\tNoun\tB1\t/ˈhæbɪt/\tعادة\tdaily life"].join("\n");
+  const DETAILS = ["arabic", "type", "level", "tags", "definition", "example", "ipa", "sense"];
 
   const st = {
     tab: "type",                  // type | paste | files
-    text: "", date: VS.todayKey(), parsed: null, busy: "", saved: "",
-    files: [],                    // [{ name, iso, rows }] from uploaded .js sets
+    text: "", parsed: null, saved: "",
+    files: [],                    // [{ name, rows }]
     form: {},                     // the one-word form
+    recent: [],                   // ids added on this screen, newest first
   };
 
-  const ready = (rows) => rows.filter((r) => !r.issues.some((i) => i.kind === "error"));
-  const usable = () => (st.parsed ? ready(st.parsed.rows) : []);
-  const clean = (r) => ({ word: r.word, sense: r.sense, type: r.type, level: r.level, ipa: r.ipa,
-                          definition: r.definition, example: r.example, arabic: r.arabic });
+  /* A row can be saved when it has a word, isn't in the library already,
+     and isn't repeated earlier in the same table. */
+  function mark(rows) {
+    const seen = new Set();
+    rows.forEach((r) => {
+      r.issues = r.issues.filter((i) => i.kind !== "dup");
+      if (!r.word) return;
+      const id = VS.wordKey(r.word, r.sense);
+      if (VS.byId[id]) r.issues.push({ kind: "dup", text: "already in your library" });
+      else if (seen.has(id)) r.issues.push({ kind: "dup", text: "repeated in this list" });
+      seen.add(id);
+    });
+    return rows;
+  }
+  const savable = (rows) => rows.filter((r) => !r.issues.some((i) => i.kind === "error" || i.kind === "dup"));
+  const clean = (r) => {
+    const w = {};
+    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic"].forEach((k) => { if (r[k]) w[k] = r[k]; });
+    w.tags = VS.parseTags(r.tags);
+    return w;
+  };
 
   function statusOf(r) {
     if (r.issues.some((i) => i.kind === "error")) return ["bad", "Can't use"];
+    if (r.issues.some((i) => i.kind === "dup")) return ["dup", "In library"];
     if (r.issues.some((i) => i.kind === "warn")) return ["warn", "Check"];
     return ["ok", "Ready"];
   }
 
-  /* ── Tab 1: type one word ─────────────────────────────────────── */
+  /** Save words, then let auto-fill complete them in the background. */
+  function save(words) {
+    const auto = VS.autofill.enabled();
+    const result = VS.store.saveUserWords(words.map((w) => {
+      const missing = !w.arabic || !w.definition || !w.example || !w.ipa || !w.level || !w.type;
+      return auto && missing ? Object.assign({}, w, { auto: "todo" }) : w;
+    }));
+    const ids = result.added.map((w) => w.id);
+    st.recent = ids.slice().reverse().concat(st.recent.filter((id) => !ids.includes(id))).slice(0, 12);
+    VS.autofill.fill(ids);
+    return result;
+  }
+
+  /* ── Tab 1: type a word ───────────────────────────────────────── */
   function field(name, label, opts) {
     const o = opts || {};
-    const value = st.form[name] || o.value || "";
+    const value = st.form[name] || "";
     const control = o.options
-      ? html`<select data-form-field="${name}">${o.options.map((v) => html`<option ${v === value ? VS.raw("selected") : ""}>${v}</option>`)}</select>`
+      ? html`<select data-form-field="${name}"><option value="">${o.empty}</option>${o.options.map((v) => html`<option ${v === value ? VS.raw("selected") : ""}>${v}</option>`)}</select>`
       : o.long
         ? html`<textarea data-form-field="${name}" rows="2" placeholder="${o.placeholder || ""}">${value}</textarea>`
-        : html`<input data-form-field="${name}" value="${value}" placeholder="${o.placeholder || ""}" ${o.ar ? VS.raw('lang="ar" dir="rtl"') : ""} autocomplete="off"/>`;
-    return html`<label class="form-field ${o.wide ? "is-wide" : ""}"><span>${label}${o.required ? html` <b class="req">*</b>` : ""}</span>${control}</label>`;
+        : html`<input data-form-field="${name}" value="${value}" placeholder="${o.placeholder || ""}" ${o.ar ? VS.raw('lang="ar" dir="rtl"') : ""} ${o.list ? VS.raw('list="' + o.list + '"') : ""} autocomplete="off"/>`;
+    return html`<label class="form-field ${o.wide ? "is-wide" : ""}"><span>${label}</span>${control}</label>`;
   }
 
   function typeTab() {
+    const auto = VS.autofill.enabled();
+    const filled = DETAILS.some((k) => st.form[k]);
     return html`
-      <form class="word-form" data-form="one-word" autocomplete="off">
-        ${field("word", "English word or phrase", { required: true, placeholder: "e.g. Take advantage of" })}
-        ${field("arabic", "Arabic meaning", { required: true, ar: true, placeholder: "مثلاً: يستغل - يستفيد من" })}
-        ${field("type", "Type", { options: VS.importer.TYPES, value: "Noun" })}
-        ${field("level", "Level", { options: VS.importer.LEVELS, value: "B1" })}
-        ${field("definition", "Definition (English)", { wide: true, long: true, placeholder: "What it means, in simple English" })}
-        ${field("example", "Example sentence", { wide: true, long: true, placeholder: "A sentence that uses the word" })}
-        ${field("ipa", "Pronunciation (IPA)", { placeholder: "/ˈhæbɪt/" })}
-        ${field("sense", "Sense (optional)", { placeholder: "e.g. tool — if the word has two meanings" })}
-        <div class="form-actions is-wide">
-          <label class="import-date"><span>Add to the set of</span><input type="date" data-form-field="date" value="${st.form.date || st.date}"/></label>
-          <button class="btn" type="button" data-action="form-fill">${icon("bulb", "icon-sm")} Fill definition &amp; IPA</button>
-          <button class="btn btn-primary btn-lg" type="submit">${icon("plus", "icon-sm")} Add word</button>
+      <form class="add-form" data-form="one-word" autocomplete="off">
+        <div class="add-line">
+          <label class="field field-xl">
+            <span class="sr-only">English word or phrase</span>
+            <input data-form-field="word" id="addWord" value="${st.form.word || ""}" placeholder="Type an English word or phrase"
+                   spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
+          </label>
+          <button class="btn btn-primary btn-lg" type="submit">${icon("plus", "icon-sm")} Add</button>
         </div>
-        <p class="hint is-wide">Only the word and its Arabic meaning are needed. “Fill” looks up the rest in a free online dictionary.</p>
+        <p class="hint">${auto
+          ? "Press Enter. The app fills in the Arabic meaning, definition, example, pronunciation and level — only the word is sent online."
+          : html`Auto-fill is off (Settings), so nothing leaves this device. Add the details below.`}</p>
+        <details class="add-more" ${!auto || filled ? VS.raw("open") : ""}>
+          <summary>${icon("chevron-right", "icon-sm")} More details ${auto ? html`<span class="hint">— optional, your text is kept</span>` : ""}</summary>
+          <div class="word-form">
+            ${field("arabic", "Arabic meaning", { ar: true, placeholder: "مثلاً: يستغل - يستفيد من" })}
+            ${field("tags", "Tags", { placeholder: "IELTS, work", list: "tagList" })}
+            ${field("type", "Type", { options: VS.importer.TYPES, empty: auto ? "Auto" : "—" })}
+            ${field("level", "Level", { options: VS.importer.LEVELS, empty: auto ? "Auto" : "—" })}
+            ${field("definition", "Definition (English)", { wide: true, long: true, placeholder: "What it means, in simple English" })}
+            ${field("example", "Example sentence", { wide: true, long: true, placeholder: "A sentence that uses the word" })}
+            ${field("ipa", "Pronunciation (IPA)", { placeholder: "/ˈhæbɪt/" })}
+            ${field("sense", "Sense", { placeholder: "e.g. tool — only if the word has two meanings" })}
+          </div>
+          ${VS.ui.tagList()}
+        </details>
       </form>`;
+  }
+
+  /* Words added on this screen, with auto-fill's progress. */
+  function recent() {
+    const words = st.recent.map((id) => VS.byId[id]).filter(Boolean);
+    if (!words.length) return html`<div id="recentBox"></div>`;
+    return html`
+      <section class="card import-step" id="recentBox" aria-labelledby="recent-title">
+        <div class="section-title"><h2 id="recent-title">Just added</h2>
+          <span class="row"><a class="btn btn-quiet" href="#/words?added=today&sort=newest">See in library</a>
+          <a class="btn" href="#/new/cards">${icon("cards", "icon-sm")} Learn them</a></span></div>
+        <ul class="recent-list" aria-live="polite">
+          ${words.map((w) => {
+            const waiting = VS.autofill.pending(w.id);
+            return html`<li>
+              <b>${w.word}</b>
+              <span class="hint">${w.type} · ${w.level}${w.tags.length ? " · #" + w.tags.join(" #") : ""}</span>
+              ${w.arabic ? html`<span lang="ar">${w.arabic}</span>`
+                : html`<span class="hint">${waiting ? (navigator.onLine ? "Filling in…" : "Fills in when you're online") : "No Arabic found — add it in the library"}</span>`}
+            </li>`;
+          })}
+        </ul>
+      </section>`;
   }
 
   /* ── Tab 2: paste a table ──────────────────────────────────────── */
   function pasteTab() {
     return html`
       <p class="muted">Copy rows from Excel, Google Sheets or Notion — with the header row — and paste them here.
-        Columns can be in any order: <b>word</b>, <b>definition</b>, <b>example</b>, <b>type</b>, <b>level</b>, <b>ipa</b>, <b>arabic</b>.
-        Only the word is required; empty cells are fine.</p>
+        Columns can be in any order: <b>word</b>, <b>arabic</b>, <b>definition</b>, <b>example</b>, <b>type</b>, <b>level</b>, <b>ipa</b>, <b>tags</b>.
+        Only the word is required — a list of words, one per line, works too.</p>
       <textarea id="importText" class="import-text" rows="8" spellcheck="false" placeholder="${TEMPLATE}">${st.text}</textarea>
       <div class="row">
-        <button class="btn btn-primary" type="button" data-action="import-read">Read the table</button>
+        <button class="btn btn-primary" type="button" data-action="import-read">Read the list</button>
         <button class="btn btn-quiet" type="button" data-action="import-sample">Show an example</button>
         <a class="btn btn-quiet" href="data/sample/sample-import.tsv" download>Download a sample table</a>
       </div>`;
@@ -83,29 +152,29 @@
 
   /* ── Tab 3: upload files ───────────────────────────────────────── */
   function filesTab() {
+    const rows = st.files.flatMap((f) => f.rows);
     return html`
       <label class="drop" for="importFiles">
         ${icon("arrow-right", "icon-lg")}
         <b>Choose files</b>
-        <span class="hint">VocabStudy sets (<code>.js</code>, one set per file) or tables (<code>.tsv</code>, <code>.csv</code>, <code>.txt</code>). You can pick several at once.</span>
+        <span class="hint">Tables (<code>.tsv</code>, <code>.csv</code>, <code>.txt</code>) or VocabStudy word files (<code>.js</code>). You can pick several at once.</span>
         <input type="file" id="importFiles" multiple accept=".js,.tsv,.csv,.txt,text/plain,text/csv,text/javascript" hidden>
       </label>
       ${st.files.length ? html`
         <div class="file-list">
           ${st.files.map((f) => {
-            const ok = ready(f.rows).length;
-            const warn = f.rows.filter((r) => statusOf(r)[0] === "warn").length;
+            const ok = savable(f.rows).length;
+            const dup = f.rows.filter((r) => statusOf(r)[0] === "dup").length;
             return html`<div class="file-row">
-              <span class="file-name"><b>${f.name}</b><span class="hint">${f.iso ? "Set of " + f.iso : "No date in the file — uses the date below"}</span></span>
-              <span class="badge is-known">${ok} words</span>
-              ${warn ? html`<span class="badge is-learning">${warn} to check</span>` : ""}
+              <span class="file-name"><b>${f.name}</b><span class="hint">${VS.plural(f.rows.length, "row")}</span></span>
+              <span class="badge is-known">${ok} new</span>
+              ${dup ? html`<span class="badge">${dup} already in library</span>` : ""}
             </div>`;
           })}
         </div>
-        <label class="import-date"><span>Date for files without one</span><input type="date" id="filesDate" value="${st.date}"/></label>
         <div class="row">
-          <button class="btn btn-primary btn-lg" type="button" data-action="files-save">${icon("check", "icon-sm")}
-            Save ${VS.plural(st.files.reduce((n, f) => n + ready(f.rows).length, 0), "word")} in ${VS.plural(new Set(st.files.map((f) => f.iso || st.date)).size, "set")}</button>
+          <button class="btn btn-primary btn-lg" type="button" data-action="files-save" ${savable(rows).length ? "" : VS.raw("disabled")}>${icon("check", "icon-sm")}
+            Add ${VS.plural(savable(rows).length, "word")} to your library</button>
           <button class="btn btn-quiet" type="button" data-action="files-clear">Clear</button>
         </div>` : ""}
       ${st.saved && st.tab === "files" ? html`<p class="import-done" role="status">${icon("check", "icon-sm")} ${st.saved}</p>` : ""}`;
@@ -114,44 +183,37 @@
   /* ── Check + save (paste) ──────────────────────────────────────── */
   function preview() {
     if (!st.parsed || st.tab !== "paste") return "";
-    const rows = st.parsed.rows;
-    if (!rows.length) return html`<div class="empty"><h2>No rows found</h2><p>Paste at least one line under the header.</p></div>`;
-    const readyN = rows.filter((r) => statusOf(r)[0] === "ok").length;
-    const check = rows.filter((r) => statusOf(r)[0] === "warn").length;
-    const bad = rows.length - readyN - check;
-    const missing = rows.filter((r) => !r.definition || !r.ipa).length;
-    const existing = VS.day(st.date);
+    const rows = mark(st.parsed.rows);
+    if (!rows.length) return html`<div class="empty"><h2>No rows found</h2><p>Paste at least one word.</p></div>`;
+    const count = (k) => rows.filter((r) => statusOf(r)[0] === k).length;
+    const n = savable(rows).length;
     return html`
       <section class="card import-step" id="importCheck">
         <h2><span class="step-n">2</span> Check</h2>
         <p class="import-summary">
-          <span class="badge is-known">${readyN} ready</span>
-          ${check ? html`<span class="badge is-learning">${check} to check</span>` : ""}
-          ${bad ? html`<span class="badge is-bad">${bad} can't be used</span>` : ""}
+          <span class="badge is-known">${count("ok")} ready</span>
+          ${count("warn") ? html`<span class="badge is-learning">${count("warn")} to check</span>` : ""}
+          ${count("dup") ? html`<span class="badge">${count("dup")} already in library</span>` : ""}
+          ${count("bad") ? html`<span class="badge is-bad">${count("bad")} can't be used</span>` : ""}
           <span class="hint">${st.parsed.hasHeader ? "Columns read from your header row." : "No header row: columns read in the standard order."}</span>
         </p>
-        ${missing ? html`
-          <div class="import-fill">
-            <span>${VS.plural(missing, "word")} ${missing === 1 ? "has" : "have"} no definition or IPA.</span>
-            <button class="btn" type="button" data-action="import-fill" ${st.busy ? VS.raw("disabled") : ""}>${icon("bulb", "icon-sm")} ${st.busy || "Fill them from the dictionary"}</button>
-            <span class="hint">Online, free (dictionaryapi.dev). Only the English words are sent.</span>
-          </div>` : ""}
         <div class="import-table-wrap">
           <table class="import-table">
             <thead><tr><th></th><th>Word</th><th>Type · Level</th><th>Definition</th><th>Example</th><th>IPA</th><th>Arabic</th></tr></thead>
             <tbody>
               ${rows.map((r) => {
                 const [cls, label] = statusOf(r);
+                const empty = html`<span class="hint">${VS.autofill.enabled() ? "auto" : "—"}</span>`;
                 return html`
                   <tr class="is-${cls}">
                     <td class="c-status"><span class="row-status is-${cls}" title="${r.issues.map((i) => i.text).join(" · ")}">${label}</span></td>
                     <td class="c-word"><b>${r.word || "—"}</b>${r.sense ? html` <span class="sense">(${r.sense})</span>` : ""}
                       ${r.issues.length ? html`<span class="row-issues">${r.issues.map((i) => i.text).join(" · ")}</span>` : ""}</td>
-                    <td data-label="Type · level">${r.type} · ${r.level}</td>
-                    <td data-label="Definition">${r.definition || html`<span class="hint">—</span>`}</td>
-                    <td data-label="Example">${r.example || html`<span class="hint">—</span>`}</td>
-                    <td data-label="IPA" class="ipa">${r.ipa || html`<span class="hint">—</span>`}</td>
-                    <td data-label="Arabic" lang="ar">${r.arabic || html`<span class="hint">—</span>`}</td>
+                    <td data-label="Type · level">${r.type || empty} · ${r.level || empty}</td>
+                    <td data-label="Definition">${r.definition || empty}</td>
+                    <td data-label="Example">${r.example || empty}</td>
+                    <td data-label="IPA" class="ipa">${r.ipa || empty}</td>
+                    <td data-label="Arabic" lang="ar">${r.arabic || empty}</td>
                   </tr>`;
               })}
             </tbody>
@@ -161,44 +223,15 @@
 
       <section class="card import-step">
         <h2><span class="step-n">3</span> Save</h2>
-        <label class="import-date"><span>Study date of this set</span>
-          <input type="date" id="importDate" value="${st.date}"/></label>
-        ${existing ? html`<p class="hint">${existing.label} already has ${VS.plural(existing.words.length, "word")} — new words are added to it, duplicates skipped.</p>` : ""}
+        <label class="form-field"><span>Tags for all of them (optional)</span>
+          <input id="pasteTags" value="${st.pasteTags || ""}" placeholder="IELTS, work" list="tagList" autocomplete="off"></label>
+        ${VS.ui.tagList()}
         <div class="row">
-          <button class="btn btn-primary btn-lg" type="button" data-action="import-save" ${usable().length ? "" : VS.raw("disabled")}>
-            ${icon("check", "icon-sm")} Save ${VS.plural(usable().length, "word")}</button>
+          <button class="btn btn-primary btn-lg" type="button" data-action="import-save" ${n ? "" : VS.raw("disabled")}>
+            ${icon("check", "icon-sm")} Add ${VS.plural(n, "word")} to your library</button>
         </div>
         ${st.saved ? html`<p class="import-done" role="status">${icon("check", "icon-sm")} ${st.saved}</p>` : ""}
       </section>`;
-  }
-
-  /* ── Your sets on this device ─────────────────────────────────── */
-  function mySets() {
-    const sets = Object.entries(VS.store.userDays());
-    if (!sets.length) return "";
-    return html`
-      <section class="import-mine">
-        <div class="section-title"><h2>Your sets on this device</h2>
-          <span class="hint">${VS.plural(sets.reduce((n, [, w]) => n + w.length, 0), "word")}</span></div>
-        <div class="word-list">
-          ${sets.sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([iso, words]) => html`
-            <div class="mine-row card">
-              <a href="${VS.dayHref(iso)}"><b>${VS.day(iso) ? VS.day(iso).label : iso}</b> <span class="hint">${VS.plural(words.length, "word")}</span></a>
-              <span class="row">
-                <button class="btn btn-quiet" type="button" data-action="import-export" data-iso="${iso}">Download .js</button>
-                <button class="btn btn-quiet danger" type="button" data-action="import-delete" data-iso="${iso}">Delete set</button>
-              </span>
-            </div>`)}
-        </div>
-      </section>`;
-  }
-
-  function download(name, text) {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([text], { type: "text/javascript" }));
-    a.download = name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
   async function readFiles(list) {
@@ -206,17 +239,12 @@
     for (const file of list) {
       const text = await file.text();
       const data = /\.js$/i.test(file.name) ? VS.importer.parseDataFile(text) : null;
-      if (data) files.push({ name: file.name, iso: data.iso, rows: data.rows });
-      else {
-        const parsed = VS.importer.parse(text);
-        const iso = (/(\d{4}-\d{2}-\d{2})/.exec(file.name) || [])[1] || "";
-        files.push({ name: file.name, iso, rows: parsed.rows });
-      }
+      files.push({ name: file.name, rows: mark(data ? data.rows : VS.importer.parse(text).rows) });
     }
     return files;
   }
 
-  const TABS = [["type", "Type a word"], ["paste", "Paste a table"], ["files", "Upload files"]];
+  const TABS = [["type", "Type a word"], ["paste", "Paste a list"], ["files", "Upload files"]];
 
   VS.views.import = {
     title: () => "Add words",
@@ -225,9 +253,9 @@
     render() {
       return html`
         <div class="page import-page view-enter">
-          <header class="day-head"><div>
+          <header class="page-head"><div>
             <h1>Add words</h1>
-            <p class="hint">Your words stay on this device.</p>
+            <p class="hint">Into your library — ${VS.plural(VS.allWords().length, "word")} so far. Everything stays on this device.</p>
           </div></header>
 
           <section class="card import-step">
@@ -237,18 +265,15 @@
             ${st.tab === "type" ? typeTab() : st.tab === "paste" ? pasteTab() : filesTab()}
           </section>
 
-          ${preview()}
-          ${mySets()}
+          ${st.tab === "type" ? recent() : preview()}
         </div>`;
     },
 
     mount(root) {
       const text = VS.$("#importText", root);
       if (text) text.addEventListener("input", () => { st.text = text.value; });
-      const date = VS.$("#importDate", root);
-      if (date) date.addEventListener("change", () => { st.date = date.value || VS.todayKey(); st.saved = ""; VS.app.render(); });
-      const filesDate = VS.$("#filesDate", root);
-      if (filesDate) filesDate.addEventListener("change", () => { st.date = filesDate.value || VS.todayKey(); });
+      const tags = VS.$("#pasteTags", root);
+      if (tags) tags.addEventListener("input", () => { st.pasteTags = tags.value; });
       const files = VS.$("#importFiles", root);
       if (files) files.addEventListener("change", async () => {
         st.files = await readFiles([...files.files]);
@@ -256,35 +281,30 @@
         VS.app.render();
       });
       VS.$$("[data-form-field]", root).forEach((el) => {
-        if (st.form[el.dataset.formField] == null) st.form[el.dataset.formField] = el.value;   // selects start on a default
         el.addEventListener("input", () => { st.form[el.dataset.formField] = el.value; });
       });
+      VS.ui.watchKeyboard(VS.$("#addWord", root));
       const form = VS.$("[data-form='one-word']", root);
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); VS.views.import.actions["form-add"](); });
+      const first = VS.$("#addWord", root);
+      if (first && matchMedia("(hover: hover)").matches) first.focus({ preventScroll: true });
     },
 
     actions: {
       "import-tab"(el) { st.tab = el.dataset.value; st.saved = ""; VS.app.render(); },
 
-      async "form-fill"(el) {
-        if (!st.form.word) { VS.toast("Type the word first."); return; }
-        el.disabled = true;
-        const w = VS.importer.checkWord(st.form);
-        const filled = await VS.importer.fillFromDictionary([w]);
-        ["definition", "ipa"].forEach((k) => { if (!st.form[k] && w[k]) st.form[k] = w[k]; });
-        VS.toast(filled ? "Filled from the dictionary." : "Nothing found — you may be offline, or it's a phrase.");
-        VS.app.render();
-      },
       "form-add"() {
         const w = VS.importer.checkWord(st.form);
-        if (!w.word || !w.arabic) { VS.toast("The word and its Arabic meaning are needed."); return; }
-        const iso = st.form.date || st.date;
-        VS.store.saveUserWords(iso, [clean(w)]);
+        if (!w.word) { VS.toast("Type a word first."); return; }
+        if (VS.isArabicTyping(w.word)) { VS.toast("That's Arabic — switch your keyboard to English."); return; }
+        const existing = VS.byId[VS.wordKey(w.word, w.sense)];
+        if (existing) { VS.toast(`“${existing.word}” is already in your library.`); return; }
+        if (!VS.autofill.enabled() && !w.arabic) { VS.toast("Add the Arabic meaning (auto-fill is off)."); return; }
+        save([clean(Object.assign({}, w, { tags: st.form.tags }))]);
         VS.sfx.play("pop");
-        VS.toast(`“${w.word}” added to ${VS.day(iso).label}.`);
-        st.form = { date: iso, type: w.type, level: w.level };       // keep the set, type and level for the next word
+        st.form = st.form.tags ? { tags: st.form.tags } : {};        // keep the tags for the next word
         VS.app.render();
-        const first = VS.$("[data-form-field='word']");
+        const first = VS.$("#addWord");
         if (first) first.focus();
       },
 
@@ -300,47 +320,32 @@
         st.parsed = VS.importer.parse(st.text);
         VS.app.render();
       },
-      async "import-fill"() {
-        st.busy = "Looking up…";
-        VS.app.render();
-        const filled = await VS.importer.fillFromDictionary(st.parsed.rows, (done, total) => {
-          st.busy = `Looking up ${done} / ${total}…`;
-          const b = VS.$("[data-action='import-fill']");
-          if (b) b.lastChild.textContent = " " + st.busy;
-        });
-        st.busy = "";
-        VS.toast(filled ? `Filled ${VS.plural(filled, "word")}.` : "Nothing found — you may be offline.");
-        VS.app.render();
-      },
       "import-save"() {
-        VS.store.saveUserWords(st.date, usable().map(clean));
-        st.saved = `Saved to ${VS.day(st.date).label}.`;
+        const tags = VS.parseTags(st.pasteTags);
+        const words = savable(mark(st.parsed.rows)).map(clean).map((w) => Object.assign(w, { tags: [...new Set(w.tags.concat(tags))] }));
+        const r = save(words);
+        st.saved = `Added ${VS.plural(r.added.length, "word")} to your library.` + (VS.autofill.enabled() ? " Missing details are filling in." : "");
+        st.parsed = null;
+        st.text = "";
         VS.sfx.play("done");
         VS.app.render();
       },
 
       "files-save"() {
-        let words = 0;
-        st.files.forEach((f) => {
-          const rows = ready(f.rows).map(clean);
-          if (rows.length) { VS.store.saveUserWords(f.iso || st.date, rows); words += rows.length; }
-        });
-        st.saved = `Saved ${VS.plural(words, "word")}.`;
+        const r = save(savable(st.files.flatMap((f) => f.rows)).map(clean));
+        st.saved = `Added ${VS.plural(r.added.length, "word")} to your library.`;
         st.files = [];
         VS.sfx.play("done");
         VS.app.render();
       },
       "files-clear"() { st.files = []; VS.app.render(); },
-
-      "import-export"(el) {
-        download(el.dataset.iso + ".js", VS.importer.toDataFile(el.dataset.iso, VS.store.userDays()[el.dataset.iso]));
-      },
-      "import-delete"(el) {
-        const iso = el.dataset.iso;
-        if (!confirm("Delete the set of " + iso + " from this device? Your progress on its words is kept if you add them again.")) return;
-        VS.store.deleteUserDay(iso);
-        location.reload();          // rebuild the word lists without it
-      },
     },
   };
+
+  // Each filled word updates "Just added" while you're on this screen.
+  // Only the list is redrawn, so typing the next word isn't interrupted.
+  VS.autofill.onFill(() => {
+    const box = VS.app.current() === "import" && st.tab === "type" && VS.$("#recentBox");
+    if (box) box.outerHTML = String(recent());
+  });
 })();

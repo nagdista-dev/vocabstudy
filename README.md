@@ -1,31 +1,41 @@
 # VocabStudy
 
-**A free app for Arabic speakers learning English vocabulary — words you
-add yourself, remembered for good.** Add your words, study them once, then
-**recall** them on spaced days (1, 3, 7, 14, 30, 60 days later) so they move
-into long-term memory.
+**A free, open-source app for Arabic speakers learning English vocabulary.**
+Type a word — the app fills in its Arabic meaning, definition, example and
+pronunciation, teaches it to you, and brings it back on spaced days (1, 3, 7,
+14, 30, 60 days later) until it stays.
 
 **Open it: https://nagdista-dev.github.io/vocabstudy/** — then
-*Install app* / *Add to Home Screen*. No account, no ads, works offline.
-Your words and progress stay on your device.
+*Install app* / *Add to Home Screen*. No account, no ads, no server: your
+words and progress stay on your device, and it works offline.
 
-![Home: words due for recall, word spotlight and daily goal](docs/screenshot-home.png)
+![Home: today's plan, word spotlight and daily goal](docs/screenshot-home.png)
 
 ## How it works
 
-1. **Add your words** (+ Add words) — three ways:
-   - **Type a word**: only the English word and its Arabic meaning are needed;
-     *Fill* looks up the definition and IPA in a free dictionary.
-   - **Paste a table** from Excel, Google Sheets or Notion — columns are
-     recognised automatically and every row is checked.
-     Try [`data/sample/sample-import.tsv`](data/sample/sample-import.tsv).
-   - **Upload files**: `.tsv` / `.csv` tables, or VocabStudy `.js` sets.
-2. **Study** each set once: **Cards → Quiz → Spell → Match**.
-3. **Recall** every day: the home screen shows what's due, and the tab title
-   too: `(12) VocabStudy`.
+1. **Add words to your library.** Type a word and press Enter — that's all.
+   Auto-fill adds the Arabic meaning, definition, example, IPA, type and level.
+   Or paste a list from Excel / Google Sheets / Notion, or upload `.csv` / `.tsv`
+   files. Each word lives in your library once: duplicates are caught.
+2. **Follow today's plan** on the home screen:
+   **Recall** what's due → **Learn new words** (10 a day by default) →
+   practise today's words with **Quiz, Spell, Match and Speak**.
+3. **Your library is the brain.** Search, filter and sort every word, tag them
+   your way (IELTS, Work, Travel…), then practise, print or export exactly the
+   list you're looking at.
 
-Not ready to add words yet? Open the built-in **Starter set**: 30 words
-Arabic speakers often mix up (borrow / lend, affect / effect, actually ≠ حالياً).
+Not ready to add words yet? Try the built-in **Starter set**: 30 words Arabic
+speakers often mix up (borrow / lend, affect / effect, actually ≠ حالياً).
+
+## Made for Arabic speakers
+
+- **Sound traps** on every word that has one: P (not B), V (not F), silent
+  letters (know, listen, island), -ed endings, TH, the extra vowel before
+  "st" — and the classics (comfortable, Wednesday, vegetable).
+- **Speak**: say the word out loud and the app tells you what it heard.
+- **Arabic keyboard warning**: typed «ش» instead of "a"? You get a calm
+  "switch your keyboard to English", not a wrong answer.
+- Arabic meaning on every card, sized for easy reading, right to left.
 
 ## Features
 
@@ -39,37 +49,44 @@ Arabic speakers often mix up (borrow / lend, affect / effect, actually ≠ حا�
 - Study cards (English-first or Arabic-first), swipe on phones.
 - Quiz with 5 question types incl. **listening**; every answer shows the full word.
 - Spelling from sound with letter-by-letter feedback.
-- **Practise your mistakes** straight after a round.
-- **Notes** on any word: your own memory trick.
+- **Speak** with your browser's speech recognition.
+- **Practise your mistakes** straight after a round. **Notes** on any word.
 
-**Made for long study days**
-- Calm light design; **Atkinson Hyperlegible** so look-alike letters
-  (l I 1, rn m) are never confused; Arabic sized for easy reading.
-- Break reminders, real study time, daily goal, streak.
-- Responsive animation and soft sound effects (both optional).
-- Full keyboard control; bottom navigation on phones.
-
-**Your words, your way**
-- **Library**: search everything (English, Arabic, your notes), sort by weakest.
+**Your library, your way**
+- Filters: status, level, type, memory box, date added, tag, source, notes,
+  tricky words, sound traps. Sorts: A–Z, newest, oldest, weakest, due soonest,
+  most mistakes, level. The filters stay in the address, so lists are bookmarkable.
+- Practise, print, export, reset or delete any filtered list.
 - **Edit or delete** any word you added; editing keeps its progress.
 - **Progress** charts: study time, answers, mastered words, memory strength.
 - **Download PDF** or print — 7 layouts: word sheet, compact list, fold-over
   self-test, fill-the-gap and matching worksheets, write-a-sentence, and
-  double-sided cut-out cards. Pick days, filters, order and fields.
-- **Backup & export**: one-file backup, restore by merge or replace,
-  CSV for Excel, copy as table.
-- Settings: US/UK voice, speed, card direction, quiz types, round size,
-  daily goal, break reminder, accent colour, text size.
+  double-sided cut-out cards.
+- **Backup & export**: one-file backup, restore by merge or replace, CSV.
+
+**Made for long study days**
+- Calm light design; **Atkinson Hyperlegible** so look-alike letters
+  (l I 1, rn m) are never confused.
+- Break reminders, real study time, daily goal, streak, text size, accent colour.
+- Full keyboard control; bottom navigation on phones.
 
 <img src="docs/screenshot-cards-phone.png" alt="A study card on a phone" width="240"> <img src="docs/screenshot-quiz-phone.png" alt="A quiz question on a phone" width="240">
 
-Keyboard: `Space` flip / reveal · `1`–`4` answer · `Enter` next · `/` search.
+Keyboard: `Space` flip / reveal / speak · `1`–`4` answer · `Enter` next · `/` search.
 
-## Your data
+## Your data stays yours
 
-Everything lives in your browser (localStorage) — nothing is sent anywhere.
-About 20,000 words fit. **Backup & export** saves it all to one file;
-restore it on another device, or merge phone and laptop.
+Everything lives in your browser (localStorage). The app has no server and
+loads nothing from anyone else — fonts and the PDF maker ship with it.
+Two things can use the internet, and both can be switched off in Settings:
+
+| Feature | What is sent | Where |
+| --- | --- | --- |
+| Auto-fill (when you add a word) | only the English word | dictionaryapi.dev, mymemory.translated.net |
+| Speak (Chrome / Edge) | your voice, by the browser itself | the browser's speech service |
+
+**Backup & export** saves everything to one file; restore it on another
+device, or merge phone and laptop.
 
 ## Run it yourself
 
@@ -85,7 +102,8 @@ python3 tools/check.py    # data, missing files, unstyled classes, duplicated he
 index.html, data/words.js, sw.js   generated — don't edit (tools/build.py)
 data/sample/              the Starter set and a sample import table
 assets/css/               tokens → base → components → screens → motion
-assets/js/core/           data, progress (spaced repetition), speech, sounds, importer
+assets/js/core/           library, progress (spaced repetition), filters, auto-fill, speech, importer
+assets/fonts, assets/vendor  self-hosted fonts and PDF maker (tools/vendor.py)
 assets/js/views/          one file per screen
 assets/js/app.js          routing, navigation, settings, keyboard
 tools/                    build · check · build_icons · screenshots · templates

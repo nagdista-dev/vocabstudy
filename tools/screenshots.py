@@ -2,7 +2,7 @@
 """Screenshot every screen at phone, tablet and desktop width — a responsive check.
 
     python3 tools/screenshots.py            # all screens × all widths
-    python3 tools/screenshots.py quiz day   # only screens whose name contains these
+    python3 tools/screenshots.py quiz add   # only screens whose name contains these
 
 Writes PNGs to tools/.screenshots/ (safe to delete). Open them side by side
 and look for text that wraps badly, buttons off screen or cramped layouts.
@@ -23,22 +23,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = Path(__file__).resolve().parent / ".screenshots"
 WIDTHS = {"phone": (375, 812), "tablet": (768, 1024), "desktop": (1280, 900)}
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build import data_dir  # noqa: E402  — same word source as the build
-
-DAY = sorted(data_dir().glob("*.js"))[-1].stem
 SCREENS = {
     "home": "index.html",
-    "day": f"index.html#/day/{DAY}",
-    "cards": f"index.html#/day/{DAY}/cards",
-    "quiz": f"index.html#/day/{DAY}/quiz",
-    "spell": f"index.html#/day/{DAY}/spell",
-    "match": f"index.html#/day/{DAY}/match",
     "library": "index.html#/words",
+    "cards": "index.html#/all/cards",
+    "quiz": "index.html#/all/quiz",
+    "spell": "index.html#/all/spell",
+    "match": "index.html#/all/match",
+    "speak": "index.html#/all/speak",
     "stats": "index.html#/stats",
     "add": "index.html#/add",
     "data": "index.html#/data",
-    "print": f"index.html#/print/day/{DAY}",
+    "print": "index.html#/print/all",
 }
 
 

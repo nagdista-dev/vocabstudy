@@ -34,7 +34,7 @@
     return html`
       <article class="recall card">
         <div class="row recall-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>
-          <span class="hint recall-from">from ${VS.day(w.day).label}</span></div>
+          ${w.tags.length ? html`<span class="hint recall-from">#${w.tags.join(" #")}</span>` : ""}</div>
         ${s.style[s.index] === "gap"
           ? html`<p class="q-label">Which word fits the sentence?</p>
                  <p class="recall-gap">${gapText(w)}</p>
@@ -68,7 +68,6 @@
     const counts = { again: 0, good: 0, easy: 0 };
     s.results.forEach((g) => counts[g]++);
     const forgot = [...s.results].filter(([, g]) => g === "again").map(([id]) => VS.byId[id]);
-    if (s.scope.day) VS.store.markDone(s.scope.day.iso, "recall");
     if (!counts.again && s.results.size >= 5) setTimeout(VS.ui.celebrate, 150);
     const next = VS.store.nextReview();
     return VS.ui.summary({
@@ -101,19 +100,28 @@
     },
 
     render() {
-      if (!s.scope) return VS.ui.emptyActivity("#/", "This set was not found.");
+      if (!s.scope) return VS.ui.emptyActivity("#/", "This list was not found.");
       if (!s.queue.length) {
         const next = VS.store.nextReview();
-        const base = s.scope.day ? "#/day/" + s.scope.day.iso : "#/all";
+        // Nothing studied yet: the useful next step is learning, not practising.
+        if (!next && VS.store.newWords().length) {
+          return html`<div class="activity"><div class="empty">
+            <h2>Nothing to recall yet</h2>
+            <p>Words come back here after you learn them. Start with today's new words.</p>
+            <div class="row empty-actions">
+              <a class="btn btn-primary" href="#/new/cards">${icon("cards", "icon-sm")} Learn new words</a>
+              <a class="btn btn-quiet" href="${s.scope.back}">Go back</a>
+            </div></div></div>`;
+        }
         return html`<div class="activity"><div class="empty">
           <h2>Nothing to recall right now</h2>
           <p>${next
             ? html`Your next recall is <b>${VS.ui.whenText(next.date)}</b>: ${VS.plural(next.count, "word")}.`
-            : "Study a set first — its words come back here on their recall days."}</p>
+            : "Add words to your library — they come back here on their recall days."}</p>
           <p class="hint">Want to keep going? Practise without changing your schedule:</p>
           <div class="row empty-actions">
-            <a class="btn btn-primary" href="${base}/quiz">${icon("quiz", "icon-sm")} Quiz</a>
-            <a class="btn" href="${base}/spell">${icon("spell", "icon-sm")} Spell</a>
+            <a class="btn btn-primary" href="#/all/quiz">${icon("quiz", "icon-sm")} Quiz</a>
+            <a class="btn" href="#/all/spell">${icon("spell", "icon-sm")} Spell</a>
             <a class="btn btn-quiet" href="${s.scope.back}">Go back</a>
           </div></div></div>`;
       }
@@ -136,6 +144,7 @@
 
     mount() {
       const input = VS.$("#recallInput");
+      VS.ui.watchKeyboard(input);
       if (input && matchMedia("(hover: hover)").matches) input.focus();
       const form = VS.$("[data-form='reveal']");
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); VS.views.recall.actions.reveal(); });
@@ -147,6 +156,7 @@
         const w = s.queue[s.index];
         const input = VS.$("#recallInput");
         s.typed = input ? input.value.trim() : "";
+        if (VS.isArabicTyping(s.typed)) s.typed = "";      // Arabic keyboard: judge from memory only, not the typing
         s.verdict = s.typed ? (VS.normalise(s.typed) === VS.normalise(w.word) ? "right" : "wrong") : "";
         s.revealed = true;
         VS.sfx.play(s.verdict === "wrong" ? "wrong" : "flip");

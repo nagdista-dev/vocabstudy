@@ -1,6 +1,5 @@
 # Builds the public website from the Starter set and publishes it to GitHub Pages.
-# Personal word sets (data/days/*.js) are not in the repository, so they are
-# never part of the public site.
+# Learners' own words live only in their browser, so they are never part of the site.
 name: Publish site
 
 on:

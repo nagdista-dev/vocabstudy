@@ -72,7 +72,7 @@
 .progress > i { transform-origin: left; }
 
 /* 7. Lists and grids settle in quickly, in order. */
-.day-card, .mode, .step { animation: card-in 320ms var(--ease) both; }
-.day-card:nth-child(2), .mode:nth-child(2), .step:nth-child(2) { animation-delay: 40ms; }
-.day-card:nth-child(3), .mode:nth-child(3), .step:nth-child(3) { animation-delay: 80ms; }
-.day-card:nth-child(n+4), .mode:nth-child(4), .step:nth-child(4) { animation-delay: 120ms; }
+.mode, .step { animation: card-in 320ms var(--ease) both; }
+.mode:nth-child(2), .step:nth-child(2) { animation-delay: 40ms; }
+.mode:nth-child(3), .step:nth-child(3) { animation-delay: 80ms; }
+.mode:nth-child(4), .step:nth-child(4) { animation-delay: 120ms; }

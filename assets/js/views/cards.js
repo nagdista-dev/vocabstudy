@@ -23,6 +23,7 @@
         <p class="flash-word"><span class="mark">${w.word}</span></p>
         ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
         <div class="row flash-sound">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
+        ${VS.ui.soundTraps(w, "flash-traps")}
         <div class="flash-example"><p>“${VS.ui.example(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}</div>
       </div>`;
   }
@@ -40,6 +41,7 @@
           <p class="flash-word"><span class="mark">${w.word}</span></p>
           ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
           <div class="row flash-sound">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
+          ${VS.ui.soundTraps(w, "flash-traps")}
           <p class="flash-tip">${icon("flip", "icon-sm")} Tap to see the meaning · swipe to answer</p>
         </div>
         <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
@@ -87,7 +89,7 @@
   }
 
   function finish() {
-    VS.store.markDone(s.scope.day ? s.scope.day.iso : "recall", "cards");
+    const next = VS.finishStep(s.scope, "cards");
     const total = s.known.size + s.learning.size;
     const learning = [...s.learning].map((id) => VS.byId[id]);
     return VS.ui.summary({
@@ -102,8 +104,9 @@
       ],
       words: learning,
       actions: [
-        { href: s.scope.back + (s.scope.day ? "/quiz" : ""), label: s.scope.day ? "Next: Quiz" : "Done", primary: true },
-        { action: "restart", label: "Another round" },
+        next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
+        // After learning new words, a new round brings the next ones from the library.
+        { action: "restart", label: s.scope.kind === "new" ? "Learn more words" : "Another round" },
       ],
     });
   }
@@ -114,16 +117,19 @@
 
     start(p) {
       const scope = VS.scope(p);
-      // The first pass through a set meets every word in it ("Study the cards:
-      // meet each word"), however long the set. Round size applies after that.
-      const unseen = scope && scope.kind === "day" ? scope.words.filter((w) => VS.store.status(w.id) === "new") : [];
-      const queue = !scope ? [] : unseen.length ? VS.shuffle(unseen) : VS.sessionWords(scope.words, VS.roundSize());
+      // "Learn new words" meets every word in today's batch; other lists
+      // take a round (Settings → Round size), weakest words first.
+      const queue = !scope ? [] : scope.kind === "new" ? scope.words.slice() : VS.sessionWords(scope.words, VS.roundSize());
       s = { scope, queue, index: 0, flipped: false,
             known: new Set(), learning: new Set(), again: new Set() };
     },
 
     render(p) {
-      if (!s.scope || !s.queue.length) return VS.ui.emptyActivity("#/", "This set has no words yet.");
+      if (!s.scope || !s.queue.length) {
+        return s.scope && s.scope.kind === "new"
+          ? VS.ui.emptyActivity("#/add", "You've started every word in your library. Add more words to keep learning.", "Add words")
+          : VS.ui.emptyActivity("#/", "There are no words in this list.");
+      }
       if (s.index >= s.queue.length) return html`<div class="activity">${finish()}</div>`;
       const w = s.queue[s.index];
       return html`
