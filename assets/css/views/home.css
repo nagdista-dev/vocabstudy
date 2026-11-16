@@ -25,6 +25,15 @@
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-1);
 }
 .today-copy h2 { font-size: var(--text-xl); }
+/* Daily goal: one quiet line and a thin bar, under the plan's first sentence. */
+.today-goal { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(60px, 240px); justify-content: start; align-items: center; gap: var(--s-3); }
+.today-goal-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.today-goal-label b { color: var(--ink); }
+.today-goal-label svg { color: var(--ink-3); }
+.today-goal-track { height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.today-goal-track i { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width 420ms var(--ease); }
+.today-goal.is-done .today-goal-label, .today-goal.is-done .today-goal-label b, .today-goal.is-done .today-goal-label svg { color: var(--good); }
+.today-goal.is-done .today-goal-track i { background: var(--good); }
 .today-steps { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; }
 .today-steps a, .today-steps span {
   display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 var(--s-3);
@@ -57,6 +66,7 @@
 @media (max-width: 420px) {
   .quick-add .field-xl input, .add-form .field-xl input { font-size: 1.2rem; }
   .quick-label { font-size: var(--text-lg); }
+  .today-goal { grid-template-columns: 1fr; gap: 6px; }
 }
 @media (max-width: 640px) {
   .today-strip { grid-template-columns: 1fr; padding: var(--s-4); }

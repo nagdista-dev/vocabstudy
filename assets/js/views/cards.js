@@ -105,8 +105,10 @@
       words: learning,
       actions: [
         next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
-        // After learning new words, a new round brings the next ones from the library.
-        { action: "restart", label: s.scope.kind === "new" ? "Learn more words" : "Another round" },
+        // After learning new words, offer another round only while today's allowance has words left.
+        s.scope.kind === "new"
+          ? (VS.newLeftToday() > 0 && VS.store.newWords().length ? { action: "restart", label: "Learn more words" } : null)
+          : { action: "restart", label: "Another round" },
       ],
     });
   }
@@ -126,9 +128,12 @@
 
     render(p) {
       if (!s.scope || !s.queue.length) {
-        return s.scope && s.scope.kind === "new"
-          ? VS.ui.emptyActivity("#/add", "You've started every word in your library. Add more words to keep learning.", "Add words")
-          : VS.ui.emptyActivity("#/", "There are no words in this list.");
+        if (s.scope && s.scope.kind === "new") {
+          return VS.store.newWords().length
+            ? VS.ui.emptyActivity("#/", "You've finished today's new words. The rest are waiting for tomorrow.", "Back to today")
+            : VS.ui.emptyActivity("#/add", "You've started every word in your library. Add more words to keep learning.", "Add words");
+        }
+        return VS.ui.emptyActivity("#/", "There are no words in this list.");
       }
       if (s.index >= s.queue.length) return html`<div class="activity">${finish()}</div>`;
       const w = s.queue[s.index];

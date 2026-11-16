@@ -231,11 +231,11 @@
         <div class="setting"><b>Auto-fill new words</b><div class="seg">${choice("autofill", true, "On")}${choice("autofill", false, "Off")}</div>
           <span class="hint">Fills in the Arabic, definition, example and pronunciation from free online dictionaries. Only the English word is sent. Off: nothing ever leaves this device.</span></div>
         <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
-          <span class="hint">How many words from your library “Learn new words” brings each day.</span></div>
+          <span class="hint">How many new words “Learn” brings each day. The rest wait for tomorrow.</span></div>
         ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>
           <span class="hint">Say words out loud and the app checks them. Your browser does the listening — Chrome and Edge use their online speech service.</span></div>` : ""}
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
-        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day, across all activities.</span></div>
+        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day, across all activities. Progress shows on today's plan.</span></div>
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
 
         <h3 class="sheet-group">Look</h3>
@@ -332,6 +332,13 @@
 
   // Close the settings sheet when the backdrop is clicked.
   VS.$("#settings")?.addEventListener("click", (e) => { if (e.target.id === "settings") e.target.close(); });
+
+  // Today's plan depends on settings (daily goal, new words per day): redraw just the strip.
+  VS.$("#settings")?.addEventListener("close", () => {
+    if (!current || current.name !== "library") return;
+    const strip = VS.$(".today-strip");
+    if (strip) strip.outerHTML = String(VS.today.strip());
+  });
 
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey || VS.$("#settings")?.open) return;

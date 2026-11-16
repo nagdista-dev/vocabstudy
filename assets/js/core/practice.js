@@ -22,7 +22,7 @@
       case "recall": return { kind: "recall", title: "Daily recall", back: home, words: VS.store.dueWords() };
       case "tricky": return { kind: "tricky", title: "Tricky words", back: home, words: VS.store.trickyWords() };
       case "all": return { kind: "all", title: "Whole library", back: "#/words", words: VS.allWords() };
-      case "new": return { kind: "new", title: "New words", back: home, words: VS.store.newWords().slice(0, VS.newPerDay()) };
+      case "new": return { kind: "new", title: "New words", back: home, words: VS.store.newWords().slice(0, VS.newLeftToday()) };
       case "today": {
         const ids = VS.store.totals().learnedToday;
         return { kind: "today", title: "Today's words", back: home, words: ids.map((id) => VS.byId[id]) };
@@ -39,6 +39,9 @@
 
   /** New words per day (Settings → Study). */
   VS.newPerDay = () => VS.store.settings().newPerDay || 10;
+
+  /** New words still allowed today — a daily cap, not a per-session batch. */
+  VS.newLeftToday = () => Math.max(0, VS.newPerDay() - VS.store.totals().newToday);
 
   /* Today's plan, in order: learn the new words with cards, then practise
      today's words. Speak joins only where the browser can listen. */

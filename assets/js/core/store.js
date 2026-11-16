@@ -230,6 +230,8 @@
         due: all.filter((w) => isDue(entry(w.id))).length,
         streak: live ? state.streak.count : 0,
         today,
+        // New words met today, even ones later deleted — the daily cap counts them.
+        newToday: (today.learned || []).length,
         // Words first studied today that are still in the library (Practise today's words).
         learnedToday: (today.learned || []).filter((id) => VS.byId[id]),
       };

@@ -61,7 +61,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | --- | --- | --- |
 | `#/` | home = the library: add a word, today's plan, your words | every word |
 | `#/recall` | recall | words due today |
-| `#/new/cards` | learn new words | the next *New words per day*, oldest added first |
+| `#/new/cards` | learn new words | the rest of today's *New words per day*, oldest added first |
 | `#/today/quiz\|spell\|match\|speak` | practise today's words | words first studied today |
 | `#/all/<mode>` | activity | the whole library |
 | `#/tricky/<mode>` | activity | words missed 3+ times |
@@ -74,11 +74,15 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 
 ## Today's plan
 
-1. **Recall** what's due. 2. **Learn new words** (cards over `new`).
+1. **Recall** what's due. 2. **Learn new words** (cards over `new`), capped at
+*New words per day*: words first met today count toward it, so stopping halfway
+keeps the rest for today and the plan never overstates what's left.
 3. **Practise today's words** with Quiz → Spell → Match (and Speak when it is
 turned on in Settings). When an
 activity ends it calls `VS.finishStep(scope, mode)`, which marks the step done
 for today (`store.markDone("today", mode)`) and returns the next step's link.
+The strip also shows *Daily goal* progress: answers today against the goal in
+Settings (hidden when the goal is off).
 
 ## A view
 
