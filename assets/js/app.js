@@ -155,7 +155,7 @@
     const due = VS.store.totals().due;
     const crumbsEl = VS.$("#crumbs");
     if (!crumbsEl) return;
-    document.body.dataset.mode = ACTIVITIES.includes(current.name) ? "activity" : "browse";
+    document.body.dataset.mode = ACTIVITIES.includes(current.name) || current.name === "print" ? "activity" : "browse";
     const barNav = VS.$("#barNav"), tabBar = VS.$("#tabBar");
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);

@@ -43,12 +43,17 @@
 .print-go { display: grid; gap: var(--s-2); position: sticky; bottom: calc(var(--s-5) * -1); background: var(--surface); padding-bottom: var(--s-1); }
 
 /* ── The paper ───────────────────────────────────────────────────── */
+/* The preview is a real A4 sheet: 210mm wide with the same 12mm margins
+   the PDF uses, so the line breaks on screen match the downloaded file.
+   On narrow screens JS scales this whole sheet down to fit. */
+.print-preview { min-width: 0; overflow: hidden; }
 .print-doc {
+  width: 210mm; max-width: none; margin-inline: auto;
   background: #fff; color: #111;
-  padding: 14mm; border-radius: var(--r-md);
+  padding: 12mm; border-radius: var(--r-md);
   box-shadow: var(--shadow-2); border: 1px solid var(--line);
-  font-size: 10.5pt; line-height: 1.45;
-  overflow-x: auto;
+  font-size: 10pt; line-height: 1.45;
+  transform-origin: top left;
 }
 .print-doc.size-small { font-size: 9pt; }
 .print-doc.size-large { font-size: 12.5pt; }
@@ -82,15 +87,19 @@
 .p-sheet .p-ar, .p-ar-h { width: 22%; text-align: right; }
 
 .p-test .p-prompt { width: 30%; }
-.p-test .p-line { width: 28%; background: linear-gradient(transparent calc(100% - 10px), #bbb calc(100% - 10px), #bbb calc(100% - 9px), transparent calc(100% - 9px)); }
+.p-test .p-line { width: 28%; }
+/* One clean writing rule. (A CSS gradient filled the cell as a grey band
+   when html2canvas drew the PDF, so the rule is a real border instead.) */
+.p-answer-rule { display: block; height: 1.15em; margin-top: .15em; border-bottom: 1px solid #b9b9b9; }
 .p-test .p-fold { width: 0; padding: 0; border-left: 1.5px dashed #888; }
 .p-test .p-answer { width: 30%; padding-inline-start: 10px; }
 .p-test .p-tick { width: 2.4em; }
 .p-test .p-tick span { display: block; width: 14px; height: 14px; border: 1.2px solid #888; border-radius: 3px; margin: 2px auto 0; }
 
-/* Compact list: two columns, one line per word */
-.p-compact { columns: 2; column-gap: 10mm; padding-inline-start: 1.6em; }
-.p-compact li { break-inside: avoid; padding: 3px 0; border-bottom: 1px solid #eee; }
+/* Compact list: two columns, one line per word. Tighter than the table
+   layouts so a typical 25–30 word list still fits on one A4 page. */
+.p-compact { columns: 2; column-gap: 10mm; padding-inline-start: 1.6em; line-height: 1.3; }
+.p-compact li { break-inside: avoid; padding: 2px 0; border-bottom: 1px solid #eee; }
 .p-compact .ipa { color: #555; font-size: .85em; }
 .p-compact .p-ar { display: block; text-align: right; }
 
@@ -98,9 +107,10 @@
 .p-bank { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 8px 10px; margin-bottom: 12px; border: 1.2px solid #999; border-radius: 6px; }
 .p-bank b { width: 100%; font-size: .8em; color: #555; }
 .p-bank span { font-family: var(--font-word); }
-.p-gaps { display: grid; gap: 10px; padding-inline-start: 1.6em; }
+.p-gaps { display: grid; gap: 7px; padding-inline-start: 1.6em; }
 .p-gaps li { break-inside: avoid; }
 .p-blank { display: inline-block; width: 30mm; border-bottom: 1.2px solid #444; margin: 0 4px; }
+.p-blank.is-tight { margin-inline-end: 0; }   /* "Eventually, …" not "____ ," */
 .p-hint-ar { color: #666; font-size: .95em; }
 
 /* Matching: words (numbers) | meanings (letters) */
@@ -108,29 +118,43 @@
 .p-match .p-meta { line-height: 1.3; }
 .p-match ol { display: grid; gap: 5px; padding-inline-start: 1.8em; }
 .p-box { display: inline-block; width: 18px; height: 18px; border: 1.2px solid #777; border-radius: 3px; vertical-align: middle; margin-inline-end: 8px; }
-.p-match .p-ar { display: block; }
+/* Keep the Arabic meaning and its English definition on the same left
+   edge as the letter (a., b.), instead of floating Arabic to the far right. */
+.p-match .p-ar { display: block; text-align: left; }
 
-/* Write a sentence */
-.p-write { display: grid; gap: 14px; padding-inline-start: 1.6em; }
+/* Write a sentence: two ruled lines per word, tight enough to keep the
+   sheet to a sensible number of pages. */
+.p-write { display: grid; gap: 10px; padding-inline-start: 1.6em; }
 .p-write li { break-inside: avoid; }
 .p-write-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.p-write-head .p-ar { margin-inline-start: auto; }
-.p-rule { display: block; height: 9mm; border-bottom: 1px solid #aaa; }
+.p-write-head .p-ar { margin-left: auto; }   /* the Arabic meaning sits at the right edge */
+.p-rule { display: block; height: 8mm; border-bottom: 1px solid #aaa; }
 
-/* Answer key: starts a new page when printed */
-.p-key { margin-top: 18px; padding-top: 10px; border-top: 2px solid #111; }
+/* Answer key: flows after the last question on a fold line. A learner can
+   fold the paper there to hide the answers; no extra blank page. */
+.p-answers { margin-top: 16px; break-inside: avoid; }
+.p-fold-hint {
+  border-top: 1.5px dashed #999; padding-top: 4px; margin-bottom: 8px;
+  color: #666; font-size: .82em;
+}
+.p-key { margin-top: 0; padding-top: 0; border-top: 0; }
 .p-key h3 { font-size: 1em; margin-bottom: 6px; }
 .p-key ol { columns: 4; padding-inline-start: 1.6em; font-size: .9em; }
 
 /* Cut-out cards: 2 × 4 per A4 page */
 .p-cards {
   display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 64mm;
-  border-top: 1px dashed #999; border-left: 1px dashed #999; margin-bottom: 14mm;
+  margin-bottom: 14mm;
 }
 .p-card {
   display: grid; align-content: center; justify-items: center; gap: 4px; text-align: center;
   padding: 8mm; border-right: 1px dashed #999; border-bottom: 1px dashed #999;
 }
+/* The cutting grid is drawn by the cells, not the container, and the top
+   row has no top border: a border exactly on the page break gets left
+   behind as a stray dashed line above the footer. The paper edge is the
+   top cut line. */
+.p-card:nth-child(odd) { border-left: 1px dashed #999; }
 .p-front .p-w { font-size: 20pt; line-height: 1.1; }
 .p-back .p-ar { font-size: 15pt; }
 .p-back .p-def { font-size: .95em; }
@@ -139,7 +163,6 @@
 /* Download PDF: render the preview exactly like paper (A4 text width = 186mm) */
 .print-doc.pdf-render {
   width: 186mm; max-width: none; padding: 0; border: 0; border-radius: 0; box-shadow: none; overflow: visible;
-  font-size: 10pt;
 }
 .print-doc.pdf-render .no-print { display: none !important; }
 .print-doc.pdf-render .ar-word { display: inline-block; margin-inline-start: .28em; }
@@ -147,7 +170,6 @@
 .print-doc.pdf-render.layout-cards .p-head, .print-doc.pdf-render.layout-cards .p-name { display: none; }
 .print-doc.pdf-render .p-cards { margin: 0; grid-auto-rows: 66mm; break-after: page; page-break-after: always; }
 .print-doc.pdf-render .p-cards:last-child { break-after: auto; page-break-after: auto; }
-.print-doc.pdf-render .p-key { break-before: page; page-break-before: always; border-top: 0; }
 
 /* ── Smaller screens: options above, preview below ───────────────── */
 @media (max-width: 960px) {
@@ -156,13 +178,7 @@
   .print-go { position: static; }
 }
 @media (max-width: 640px) {
-  .print-doc { padding: 16px; font-size: 9.5pt; }
-  .p-cards { grid-auto-rows: auto; }
-  .p-card { padding: 16px 8px; min-height: 120px; }
-  .p-front .p-w { font-size: 15pt; }
-  .p-compact { columns: 1; }
-  .p-match { grid-template-columns: 1fr; gap: 12px; }
-  .p-key ol { columns: 2; }
+  .print-controls h1 { font-size: var(--text-base); }
 }
 
 /* ── Printing ───────────────────────────────────────────────────── */
@@ -172,10 +188,16 @@
   body { background: #fff; }
   .app-bar, .no-print, .toast, .break-card, .confetti, .skip-link { display: none !important; }
   .print-page { display: block; padding: 0; max-width: none; }
-  .print-doc { padding: 0; border: 0; box-shadow: none; border-radius: 0; overflow: visible; }
+  .print-preview { height: auto !important; overflow: visible; }
+  .print-doc {
+    width: auto; padding: 0; border: 0; box-shadow: none; border-radius: 0;
+    overflow: visible; transform: none !important;
+  }
   .view-enter { animation: none; }
   .p-table thead { display: table-header-group; }      /* repeat headers on every page */
-  .p-key { break-before: page; border-top: 0; }
+  /* A hair less cell padding than the screen so a 25–30 word table fills
+     its pages instead of leaving one orphan row on a third sheet. */
+  .p-table td { padding: 5px 6px; }
   /* Cards: no header on paper, so every sheet holds exactly 4 rows and the
      mirrored back page lines up with its front when printed double-sided. */
   .layout-cards .p-head, .layout-cards .p-name { display: none; }

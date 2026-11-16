@@ -42,6 +42,7 @@
   };
   let lastRoute = "";
   let listening = false;
+  let watching = false;
 
   /** Set the starting source from the route the learner came from. */
   function fromRoute(p) {
@@ -89,9 +90,12 @@
   function answerKey(title, rows) {
     if (!opts.answers) return "";
     return html`
-      <section class="p-key">
-        <h3>${title}</h3>
-        <ol>${rows.map((r) => html`<li>${r}</li>`)}</ol>
+      <section class="p-answers">
+        <p class="p-fold-hint">Fold along the dashed line to hide the answers.</p>
+        <section class="p-key">
+          <h3>${title}</h3>
+          <ol>${rows.map((r) => html`<li>${r}</li>`)}</ol>
+        </section>
       </section>`;
   }
 
@@ -137,7 +141,7 @@
                 <tr>
                   <td class="p-n">${i + 1}</td>
                   <td class="p-prompt">${en ? html`${word(w)}<span class="p-meta">${w.type}</span>` : html`${ar}${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}`}</td>
-                  <td class="p-line"></td>
+                  <td class="p-line"><span class="p-answer-rule"></span></td>
                   <td class="p-fold" aria-hidden="true"></td>
                   <td class="p-answer">${en ? ar : word(w)}</td>
                   <td class="p-tick"><span></span></td>
@@ -150,11 +154,12 @@
     gap(words) {
       const items = words.map((w) => ({ w, hit: VS.findInExample(w) })).filter((x) => x.hit);
       const skipped = words.length - items.length;
+      const tight = (t) => /^[,.;:!?]/.test(t.trimStart());
       return html`
         <p class="p-howto">Write the right word in each gap. Change its form if the sentence needs it (past tense, plural…).</p>
         <div class="p-bank"><b>Word bank</b>${VS.shuffle(items).map((x) => html`<span>${x.w.word}</span>`)}</div>
         <ol class="p-gaps">
-          ${items.map((x) => html`<li>${x.hit.before}<span class="p-blank"></span>${x.hit.after}${has("arabic") ? html` <span class="p-ar p-hint-ar" lang="ar">(${x.w.arabic})</span>` : ""}</li>`)}
+          ${items.map((x) => html`<li>${x.hit.before.trimEnd()}<span class="p-blank${tight(x.hit.after) ? " is-tight" : ""}"></span>${x.hit.after.trimStart()}${has("arabic") ? html` <span class="p-ar p-hint-ar" lang="ar">(${x.w.arabic})</span>` : ""}</li>`)}
         </ol>
         ${skipped ? html`<p class="p-meta no-print">${VS.plural(skipped, "word")} left out: the example doesn't contain the word.</p>` : ""}
         ${answerKey("Answers", items.map((x) => x.hit.answer))}`;
@@ -167,7 +172,7 @@
       const body = groups.map((g, gi) => {
         const right = VS.shuffle(g);
         const letter = (w) => String.fromCharCode(97 + right.indexOf(w));
-        g.forEach((w, i) => keys.push(html`${gi * MATCH_GROUP + i + 1} → ${letter(w)}`));
+        g.forEach((w) => keys.push(letter(w)));
         return html`
           <div class="p-match">
             <ol start="${gi * MATCH_GROUP + 1}">${g.map((w) => html`<li><span class="p-box"></span>${word(w)}</li>`)}</ol>
@@ -205,17 +210,20 @@
         for (let r = 0; r < page.length; r += 2) out.push(page[r + 1] || null, page[r]);
         return out;
       };
+      // Fill the last row with empty cells so every card keeps its dashed
+      // cutting lines, even when the list doesn't divide by 8.
+      const padded = (page) => page.length % 2 ? page.concat(null) : page;
       return html`
         <p class="p-howto no-print">Print double-sided and choose “flip on long edge”. Cut along the dashed lines.</p>
         ${pages.map((page) => html`
           <div class="p-cards">
-            ${page.map((w) => html`
+            ${padded(page).map((w) => w ? html`
               <div class="p-card p-front">
                 <span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span>
                 <b class="p-w">${w.word}</b>
                 ${w.sense ? html`<span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}
                 ${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}
-              </div>`)}
+              </div>` : html`<div class="p-card p-empty"></div>`)}
           </div>
           <div class="p-cards p-backs">
             ${mirrored(page).map((w) => w
@@ -345,29 +353,148 @@
     });
   }
 
+  /**
+   * Stamp the parts a raster PDF cannot draw itself: a running title on
+   * pages 2+, a page number in the bottom margin, and the file's metadata.
+   * These are real PDF text (not part of the image), so they stay sharp.
+   */
+  function stampPages(pdf, info) {
+    const total = pdf.internal.getNumberOfPages();
+    const width = pdf.internal.pageSize.getWidth();
+    const height = pdf.internal.pageSize.getHeight();
+    const cards = info.layout === "cards";
+    for (let i = 1; i <= total; i++) {
+      pdf.setPage(i);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(115);
+      if (i > 1 || cards) {
+        pdf.text(info.title, 12, 7.2);
+        pdf.text(info.subtitle, width - 12, 7.2, { align: "right" });
+        pdf.setDrawColor(185);
+        pdf.setLineWidth(0.2);
+        pdf.line(12, 9.3, width - 12, 9.3);
+      }
+      pdf.setTextColor(130);
+      if (cards) {
+        pdf.text("Print double-sided (flip on long edge), then cut along the dashed lines.",
+          width / 2, height - 5.5, { align: "center" });
+      } else {
+        pdf.text("VocabStudy", 12, height - 5.5);
+      }
+      pdf.text("Page " + i + " of " + total, width - 12, height - 5.5, { align: "right" });
+    }
+    pdf.setTextColor(0);
+  }
+
   async function downloadPdf(button) {
     const doc = VS.$(".print-doc");
     if (!doc) return;
+    const words = pickWords();
+    const name = LAYOUTS.find((l) => l[0] === opts.layout)[1];
+    const label = sourceLabel();
+    const filename = fileName(words);
+
+    // Ask where to save before doing the work, exactly like a backup. The
+    // picker must open inside the click (user activation); opening it after
+    // a slow render would be blocked. No picker → a normal download below.
+    let handle = null;
+    if (typeof window.showSaveFilePicker === "function") {
+      try {
+        handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: "PDF document", accept: { "application/pdf": [".pdf"] } }],
+        });
+      } catch (err) {
+        if (err && err.name === "AbortError") return;   // the learner cancelled
+        handle = null;                                  // restricted → download
+      }
+    }
+
     button.disabled = true;
+    button.setAttribute("aria-busy", "true");
     button.textContent = "Preparing PDF…";
+    let wrap = null;
     try {
       const html2pdf = await loadPdfLib();
       await document.fonts.ready;
-      doc.classList.add("pdf-render");                 // paper styles, A4 width, no shadow
-      boxArabicWords(doc);
-      await html2pdf().set({
+      // Draw a full-size copy off to the left. The visible preview may be
+      // scaled down to fit a phone; changing it would make the screen jump
+      // and zoom while the file is being made.
+      wrap = document.createElement("div");
+      Object.assign(wrap.style, {
+        position: "fixed", left: "-100000px", top: "0", width: "186mm",
+        pointerEvents: "none", zIndex: "0",
+      });
+      const copy = doc.cloneNode(true);
+      copy.setAttribute("aria-hidden", "true");
+      copy.style.transform = "none";                    // no phone downscaling
+      copy.classList.add("pdf-render");                 // paper styles, A4 width, no shadow
+      wrap.appendChild(copy);
+      document.body.appendChild(wrap);
+      boxArabicWords(copy);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      // Keep the canvas below the memory limit of phone browsers (a huge
+      // canvas is the other reason a PDF can come out completely white).
+      // Desktop browsers can afford a much larger canvas, so the text in
+      // the downloaded file stays crisp when it is printed.
+      const w = copy.offsetWidth || 703;
+      const h = copy.offsetHeight || 1000;
+      const cap = window.matchMedia("(pointer: coarse)").matches ? 14e6 : 42e6;
+      const scale = Math.max(0.5, Math.min(3, Math.sqrt(cap / (w * h))));
+      const worker = html2pdf().set({
         margin: [12, 12, 12, 12],
-        filename: fileName(pickWords()),
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        filename,
+        image: { type: "jpeg", quality: 0.96 },
+        html2canvas: { scale, useCORS: true, backgroundColor: "#ffffff", scrollX: 0, scrollY: 0 },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "li", ".p-card", ".p-match", ".p-bank", ".p-head", ".p-name"] },
-      }).from(doc).save();
-      VS.toast("PDF saved to your downloads.");
+        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "li", ".p-card", ".p-match", ".p-bank", ".p-head", ".p-name", ".p-answers", ".p-key"] },
+      }).from(copy).toPdf();
+      const pdf = await worker.get("pdf");
+      stampPages(pdf, {
+        title: name,
+        subtitle: label + " · " + VS.plural(words.length, "word"),
+        layout: opts.layout,
+      });
+      pdf.setProperties({
+        title: name + " — " + label,
+        subject: VS.plural(words.length, "word") + " for vocabulary practice",
+        author: "VocabStudy",
+        creator: "VocabStudy",
+      });
+      if (handle) {
+        const writable = await handle.createWritable();
+        try {
+          await writable.write(pdf.output("blob"));
+          await writable.close();
+        } catch (err) {
+          try { await writable.abort(); } catch (ignore) {}
+          throw err;
+        }
+        VS.toast("PDF saved.");
+      } else {
+        pdf.save(filename);
+        VS.toast("PDF saved to your downloads.");
+      }
     } catch (e) {
       VS.toast("Couldn't make the PDF. Try Print → Save as PDF.");
     } finally {
+      if (wrap) wrap.remove();
       VS.app.render();                                 // restore the untouched preview and button
+    }
+  }
+
+  /** Show the A4 sheet at its real width, scaled down when the screen is narrower. */
+  function fitPreview() {
+    const wrap = VS.$(".print-preview");
+    const doc = VS.$(".print-doc");
+    if (!wrap || !doc) return;
+    doc.style.transform = "";
+    wrap.style.height = "";
+    const scale = Math.min(1, wrap.clientWidth / doc.offsetWidth);
+    if (scale < 0.995) {
+      doc.style.transform = "scale(" + scale + ")";
+      wrap.style.height = Math.ceil(doc.offsetHeight * scale) + "px";
     }
   }
 
@@ -414,6 +541,12 @@
 
     mount() {
       if (!listening) { document.addEventListener("change", onChange); listening = true; }
+      if (!watching) {
+        watching = true;
+        window.addEventListener("resize", () => { if (VS.app.current() === "print") fitPreview(); });
+      }
+      requestAnimationFrame(fitPreview);
+      if (document.fonts) document.fonts.ready.then(fitPreview);
     },
 
     actions: {
