@@ -110,7 +110,7 @@
         <div class="add-line">
           <label class="field field-xl">
             <span class="sr-only">English word or phrase</span>
-            <input data-form-field="word" id="addWord" value="${st.form.word || ""}" placeholder="Type a word or phrase" aria-label="English word or phrase"
+            <input data-form-field="word" id="addWord" value="${st.form.word || ""}" placeholder="Word or phrase" aria-label="English word or phrase"
                    spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
           </label>
           <button class="btn btn-primary btn-lg" type="submit" aria-label="Add this word">${icon("plus", "icon-sm")}<span class="add-label">Add</span></button>
@@ -137,23 +137,40 @@
       </form>`;
   }
 
-  /* Words added on this screen, with auto-fill's progress. */
+  /* The newest words, so this screen shows your shelf even in a fresh
+     session — not only the words added since the last reload. */
   function recent() {
-    const words = st.recent.map((id) => VS.byId[id]).filter(Boolean);
-    if (!words.length) return html`<div id="recentBox"></div>`;
+    const seen = new Set();
+    const words = [];
+    const push = (w) => { if (w && !seen.has(w.id)) { seen.add(w.id); words.push(w); } };
+    st.recent.map((id) => VS.byId[id]).forEach(push);
+    if (words.length < 6) VS.allWords().slice().reverse().forEach(push);
+    if (!words.length) return html`
+      <section class="card import-next import-side" id="recentBox" aria-labelledby="next-title">
+        <h2 id="next-title">What happens after your first word</h2>
+        <ol class="import-next-list">
+          <li><span class="import-next-when">Today</span><p>The meaning, Arabic and example fill in for you.</p></li>
+          <li><span class="import-next-when">Tomorrow</span><p>It comes back in Recall — say how well you remembered it.</p></li>
+          <li><span class="import-next-when">Then</span><p>3 days, 1 week, 2 weeks. Each return makes it harder to forget.</p></li>
+        </ol>
+      </section>`;
     return html`
-      <section class="card import-step" id="recentBox" aria-labelledby="recent-title">
-        <div class="section-title"><h2 id="recent-title">Just added</h2>
-          <span class="row"><a class="btn btn-quiet" href="#/words?added=today&sort=newest">See in library</a>
-          <a class="btn" href="#/new/cards">${icon("cards", "icon-sm")} Learn them</a></span></div>
+      <section class="card import-step import-side" id="recentBox" aria-labelledby="recent-title">
+        <div class="section-title"><h2 id="recent-title">${st.recent.length ? "Just added" : "Latest words"}</h2>
+          <span class="row">
+            <a class="btn btn-quiet" href="#/words?sort=newest">See all</a>
+            <a class="btn btn-tonal" href="#/new/cards">${icon("cards", "icon-sm")} Learn</a>
+          </span></div>
         <ul class="recent-list" aria-live="polite">
-          ${words.map((w) => {
+          ${words.slice(0, 6).map((w) => {
             const waiting = VS.autofill.pending(w.id);
+            const s = VS.store.status(w.id);
             return html`<li>
-              <b>${w.word}</b>
-              <span class="hint">${w.type}${w.level ? " · " + w.level : ""}${w.tags.length ? " · #" + w.tags.join(" #") : ""}</span>
-              ${w.arabic ? html`<span lang="ar">${w.arabic}</span>`
-                : html`<span class="hint">${waiting ? (navigator.onLine ? "Filling in…" : "Fills in when you're online") : "No Arabic found — add it in the library"}</span>`}
+              <a class="recent-row ${w.word.length > 14 ? "is-long" : ""}" href="#/words?q=${encodeURIComponent(w.word)}">
+                <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b>${w.word}</b></span>
+                <span class="recent-ar" lang="ar">${w.arabic || (waiting ? "…" : "—")}</span>
+                <span class="recent-meta">${[w.type, w.level, waiting ? "filling in…" : s === "new" ? "new" : s].filter(Boolean).join(" · ")}</span>
+              </a>
             </li>`;
           })}
         </ul>
@@ -339,7 +356,7 @@
     const count = (k) => rows.filter((r) => statusOf(r)[0] === k).length;
     const n = savable(rows).length;
     return html`
-      <section class="card import-step" id="importCheck">
+      <section class="card import-step import-side" id="importCheck">
         <h2><span class="step-n">2</span> Check</h2>
         <p class="import-summary">
           <span class="badge is-known">${count("ok")} ready</span>
@@ -408,13 +425,13 @@
 
     render() {
       return html`
-        <div class="page import-page view-enter">
+        <div class="page import-page ${st.tab === "type" ? "is-type" : ""} view-enter">
           <header class="page-head"><div>
             <h1>Add words</h1>
             <p class="hint">Into your library — ${VS.plural(VS.allWords().length, "word")} so far. Everything stays on this device.</p>
           </div></header>
 
-          <section class="card import-step">
+          <section class="card import-step import-main">
             <div class="seg import-tabs" role="tablist" aria-label="How to add words">
               ${TABS.map(([v, l, short]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}"><span class="tab-long">${l}</span><span class="tab-short">${short}</span></button>`)}
             </div>

@@ -10,10 +10,13 @@
 }
 .print-controls {
   position: sticky; top: calc(var(--bar-h) + var(--s-3));
-  max-height: calc(100dvh - var(--bar-h) - var(--s-6)); overflow-y: auto;
-  display: grid; gap: var(--s-4); padding: var(--s-5);
+  max-height: calc(100dvh - var(--bar-h) - var(--s-6));
+  display: flex; flex-direction: column; padding: 0; overflow: hidden;
 }
-.print-controls h1 { font-size: var(--text-lg); }
+/* Options scroll, the two actions stay in reach at the bottom of the card. */
+.print-options { display: grid; gap: var(--s-4); padding: var(--s-5); overflow-y: auto; min-height: 0; }
+.print-controls h1 { font-size: var(--text-xl); letter-spacing: -.015em; }
+.print-lead { margin-top: calc(var(--s-2) * -1); }
 .print-controls fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--s-3); min-width: 0; }
 .print-controls legend { font-weight: 700; font-size: var(--text-sm); margin-bottom: var(--s-2); padding: 0; }
 .print-controls .seg { flex-wrap: wrap; }
@@ -40,7 +43,11 @@
 .layout-opt:hover { border-color: var(--line-strong); }
 .layout-opt[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-soft); }
 .layout-opt[aria-pressed="true"] b { color: var(--brand); }
-.print-go { display: grid; gap: var(--s-2); position: sticky; bottom: calc(var(--s-5) * -1); background: var(--surface); padding-bottom: var(--s-1); }
+.print-go {
+  display: grid; gap: var(--s-2); flex: none;
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  background: var(--surface); border-top: 1px solid var(--line);
+}
 
 /* ── The paper ───────────────────────────────────────────────────── */
 /* The preview is a real A4 sheet: 210mm wide with the same 12mm margins
@@ -174,11 +181,27 @@
 /* ── Smaller screens: options above, preview below ───────────────── */
 @media (max-width: 960px) {
   .print-page { grid-template-columns: 1fr; }
-  .print-controls { position: static; max-height: none; }
+  .print-controls { position: static; max-height: none; overflow: visible; }
+  .print-options { overflow: visible; }
   .print-go { position: static; }
 }
 @media (max-width: 640px) {
-  .print-controls h1 { font-size: var(--text-base); }
+  .print-controls h1 { font-size: var(--text-xl); }
+  .print-page { padding-top: var(--s-4); padding-bottom: calc(78px + var(--s-4)); }
+  /* Keep the action in reach while the learner scrolls the options. The
+     paper preview can be long, but Download PDF never leaves the screen. */
+  .print-go {
+    position: fixed; z-index: 17; left: 0; right: 0;
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    display: flex; align-items: center; gap: var(--s-2);
+    padding: 8px var(--gutter) calc(8px + env(safe-area-inset-bottom) / 2);
+    background: var(--surface); border-top: 1px solid var(--line);
+    box-shadow: 0 -8px 24px -20px rgb(20 27 45 / .45);
+  }
+  .print-go .btn { margin: 0; }
+  .print-go .btn-primary { flex: 1 1 auto; min-width: 0; }
+  .print-go [data-action="print-now"] { flex: 0 0 54px; width: 54px; padding: 0; }
+  .print-now-label, .print-go .hint { display: none; }
 }
 
 /* ── Printing ───────────────────────────────────────────────────── */

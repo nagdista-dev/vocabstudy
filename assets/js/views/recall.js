@@ -223,8 +223,10 @@
       const w = s.queue[s.index];
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: s.scope.kind === "quick" ? "Quick 5" : "Recall", index: s.index, total: s.queue.length, combo: s.combo, undo: !!s.undo })}
-          ${prompt(w)}
+          ${VS.ui.activityHead({ back: s.scope.back, title: s.scope.kind === "quick" ? "Quick 5" : "Recall", sub: s.scope.kind === "quick" ? "The 10 words that matter most" : s.scope.title, index: s.index, total: s.queue.length, combo: s.combo, undo: !!s.undo })}
+          <div class="activity-stage stage-center">
+            ${prompt(w)}
+          </div>
           <div class="action-bar">
             ${s.revealed
               ? gradeBar()

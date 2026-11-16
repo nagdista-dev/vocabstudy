@@ -7,18 +7,36 @@
   width: 100%;
   max-width: var(--content-max);
   margin-inline: auto;
-  padding: var(--s-6) var(--gutter) var(--s-8);
+  padding: var(--s-6) var(--gutter) var(--s-6);
 }
 @media (max-width: 640px) {
-  .page { padding-top: var(--s-5); padding-bottom: var(--s-7); }
-  .page-head h1 { font-size: 1.75rem; }
+  .page { padding-top: var(--s-4); padding-bottom: var(--s-6); }
+  .page-head h1 { font-size: var(--text-2xl); }
   .page-head { gap: var(--s-3); }
 }
 .activity {
   width: 100%;
   max-width: var(--activity-max);
   margin-inline: auto;
-  padding: var(--s-5) var(--gutter) calc(var(--s-8) + 72px);
+  min-height: calc(100dvh - var(--bar-h) - env(safe-area-inset-top));
+  display: flex; flex-direction: column;
+  padding: var(--s-5) var(--gutter) var(--s-6);
+}
+/* The stage holds one task. It starts just below the header, so a growing
+   answer panel (quiz feedback, spelling diff) opens downward instead of
+   shifting the question around. */
+.activity-stage { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); align-content: start; min-width: 0; }
+@media (max-width: 1023px) {
+  /* Study and recall are one card with no feedback below: on a tall phone
+     it sits in the middle of the paper instead of clinging to the header. */
+  .activity-stage.stage-center { align-content: safe center; }
+}
+@media (max-width: 1023px) {
+  body[data-mode="activity"] .activity {
+    min-height: 100dvh;
+    padding-top: calc(var(--s-3) + env(safe-area-inset-top));
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
 }
 .row     { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
 .muted   { color: var(--ink-2); }
@@ -28,16 +46,23 @@
   margin: var(--s-7) 0 var(--s-4);
 }
 .section-title h2 { font-size: var(--text-lg); }
-@media (max-width: 560px) { .section-title { flex-wrap: wrap; } .section-title > .row { width: 100%; justify-content: space-between; } }
+/* Inside a card the section title is the card's heading, not a new page
+   section: it starts at the card's padding, not 48px below it. */
+.card > .section-title:first-child { margin-top: 0; }
+.card > .section-title { margin-bottom: var(--s-3); }
+@media (max-width: 560px) {
+  .section-title { flex-wrap: wrap; margin: var(--s-5) 0 var(--s-3); }
+  .section-title > .row { width: 100%; justify-content: space-between; }
+}
 
-/* ── App bar ───────────────────────────────────────────────────── */
+/* ── App bar ─────────────────────────────────────────────────────
+   Opaque paper, one hairline. Translucent chrome let scrolled headings
+   ghost through the bar, which read as a rendering fault. */
 .app-bar {
   position: sticky; top: 0; z-index: 20;
   height: calc(var(--bar-h) + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);   /* installed iPhone: keep the bar under the clock */
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(12px);
-  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  background: var(--paper);
   border-bottom: 1px solid var(--line);
 }
 .app-bar-inner {
@@ -50,7 +75,7 @@
 .brand {
   display: inline-flex; align-items: center; gap: var(--s-2);
   font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
-  color: var(--ink); text-decoration: none; white-space: nowrap; letter-spacing: -.01em;
+  color: var(--ink); text-decoration: none; white-space: nowrap; letter-spacing: -.015em;
 }
 .brand-mark { width: 30px; height: 30px; flex: none; }
 .crumbs {
@@ -69,20 +94,24 @@
   .crumbs { display: none; }
   .bar-actions { gap: 0; }
 }
-/* Top-bar navigation: icon + label on wide screens */
+/* An activity is a focused task, not a place to browse: the phone shows its
+   own header with one exit, so the app bar would only repeat it. */
+@media (max-width: 1023px) {
+  body[data-mode="activity"] .app-bar { display: none; }
+}
+/* Top-bar navigation: icon + label + count, all in flow (no overlap). */
 .bar-nav { display: flex; align-items: center; gap: 2px; }
 .bar-link {
-  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 var(--s-3);
+  display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 var(--s-3);
   border-radius: var(--r-md); color: var(--ink-2); text-decoration: none; font-size: var(--text-sm); font-weight: 500;
   transition: background var(--fast), color var(--fast);
 }
 .bar-link:hover { background: var(--surface-2); color: var(--ink); }
 .bar-link[aria-current="page"] { color: var(--brand); background: var(--brand-soft); }
 .bar-ico { position: relative; display: inline-grid; }
-.bar-ico .count, .tab-ico .count {
-  position: absolute; top: -7px; inset-inline-end: -10px;
-  min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
-  background: var(--bad); color: #fff; font: 700 .68rem/18px var(--font-body); text-align: center;
+.bar-link .count {
+  min-width: 19px; height: 19px; padding: 0 6px; border-radius: var(--r-pill);
+  background: var(--mark); color: var(--on-mark); font: 700 .72rem/19px var(--font-body); text-align: center;
 }
 
 /* Bottom tab bar: phones and tablets only, hidden during activities */
@@ -92,29 +121,31 @@
   .tab-bar {
     position: fixed; z-index: 18; left: 0; right: 0; bottom: 0;
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;          /* as many columns as links */
-    padding: 2px 6px calc(2px + env(safe-area-inset-bottom));
-    background: color-mix(in srgb, var(--surface) 96%, transparent);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    padding: 3px 6px calc(3px + env(safe-area-inset-bottom));
+    background: var(--surface);
     border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 18px -18px rgb(20 27 45 / .35);
   }
   body[data-mode="activity"] .tab-bar { display: none; }
-  body[data-mode="browse"] main { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  body[data-mode="browse"] main { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
   .tab-link {
     display: grid; justify-items: center; align-content: center; gap: 1px;
-    min-height: 54px; padding: 4px 2px; border-radius: var(--r-md);
-    color: var(--ink-3); text-decoration: none; font-size: .72rem; font-weight: 600;
+    min-height: 54px; padding: 3px 2px; border-radius: var(--r-md);
+    color: var(--ink-3); text-decoration: none; font-size: var(--text-2xs); font-weight: 600;
     letter-spacing: .005em; transition: color var(--fast);
   }
   .tab-link .icon { width: 22px; height: 22px; }
   .tab-link[aria-current="page"] { color: var(--brand); }
   .tab-link[aria-current="page"] .tab-ico { background: var(--brand-soft); }
-  .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 28px; border-radius: var(--r-pill); }
+  .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 27px; border-radius: var(--r-pill); }
   .tab-ico .count {
-    top: -4px; inset-inline-end: -8px; min-width: 17px; height: 17px; padding: 0 4px;
-    border: 2px solid var(--surface); font-size: .62rem; line-height: 13px;
+    position: absolute; z-index: 1;
+    top: -5px; inset-inline-end: -9px; min-width: 18px; height: 18px; padding: 0 5px;
+    background: var(--mark); color: var(--on-mark);
+    border: 2px solid var(--surface); font-size: .68rem; line-height: 14px;
   }
-  .toast { bottom: calc(80px + env(safe-area-inset-bottom)); }
-  .break-card { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .break-card { bottom: calc(72px + env(safe-area-inset-bottom)); }
 }
 .bar-actions { margin-inline-start: auto; display: flex; align-items: center; gap: var(--s-1); }
 
@@ -255,20 +286,42 @@
 
 .field {
   display: flex; align-items: center; gap: var(--s-2);
-  min-height: var(--tap); padding: 0 var(--s-3);
+  min-height: 46px; padding: 0 var(--s-3);
   border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
   color: var(--ink-3);
 }
 .field:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.field input { flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: none; height: var(--tap); color: var(--ink); }
+.field input { flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: none; height: 46px; color: var(--ink); }
 /* A field never grows past its container, whatever the text size: an input's natural width must not widen the page. */
 .field { min-width: 0; max-width: 100%; }
 
-/* Activity header: back, title, step counter and progress */
-.activity-head { display: grid; gap: var(--s-3); margin-bottom: var(--s-5); }
-.activity-head .row { flex-wrap: nowrap; }
-.activity-head h1 { font-size: var(--text-lg); }
+/* Activity header: one exit, a short title with its scope, step counter and
+   a clear progress line. The title never repeats the scope with a dot. */
+.activity-head { display: grid; gap: 10px; margin-bottom: var(--s-5); }
+.activity-head .row { flex-wrap: nowrap; gap: 10px; }
+.activity-head h1 { font-size: var(--text-lg); line-height: 1.2; }
+.activity-title { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.activity-sub {
+  color: var(--ink-3); font-size: var(--text-xs); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .activity-head .count { margin-inline-start: auto; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.activity-head .progress { height: 4px; }
+@media (max-width: 1023px) {
+  /* The activity header stays with you while the task scrolls: the way out,
+     the count and the progress bar never leave the screen. */
+  body[data-mode="activity"] .activity-head {
+    position: sticky; top: 0; z-index: 12;
+    background: var(--paper);
+    margin-inline: calc(var(--gutter) * -1);
+    padding: var(--s-2) var(--gutter) var(--s-2);
+    margin-bottom: var(--s-3);
+  }
+}
+@media (max-width: 640px) {
+  .activity-head { gap: 8px; }
+  .activity-head .combo-word { display: none; }
+}
 
 /* Sticky answer bar: on phones the main action sits under the thumb */
 .action-bar {
@@ -278,17 +331,17 @@
 @media (max-width: 640px) {
   .action-bar {
     position: fixed; z-index: 15; left: 0; right: 0; bottom: 0; margin: 0;
-    padding: var(--s-3) var(--gutter) calc(var(--s-3) + env(safe-area-inset-bottom));
-    background: color-mix(in srgb, var(--paper) 92%, transparent);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+    background: var(--paper);
     border-top: 1px solid var(--line);
+    box-shadow: 0 -8px 24px -22px rgb(20 27 45 / .5);
   }
   .action-bar .btn { padding: 0 var(--s-3); white-space: nowrap; }
   .action-bar .btn .icon { display: none; }
 }
 
 .empty {
-  text-align: center; padding: var(--s-7) var(--s-5);
+  text-align: center; padding: var(--s-6) var(--s-5);
   border: 1px dashed var(--line-strong); border-radius: var(--r-lg); color: var(--ink-2);
 }
 .empty h2 { font-size: var(--text-lg); color: var(--ink); margin-bottom: var(--s-2); }
@@ -296,6 +349,11 @@
 .empty p + p { margin-top: var(--s-2); }
 .empty-actions { justify-content: center; }
 .empty-actions .btn { margin-top: var(--s-3); }
+@media (max-width: 640px) {
+  .empty { padding: var(--s-5) var(--s-4); }
+  .empty-actions { gap: var(--s-2); }
+  .empty-actions .btn { flex: 1 1 auto; }
+}
 
 /* ── Overlays ──────────────────────────────────────────────────── */
 .toast {
@@ -307,7 +365,7 @@
   max-width: calc(100vw - 32px);
 }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
-@media (max-width: 640px) { .toast { bottom: 96px; } }
+@media (max-width: 640px) { .toast { bottom: calc(72px + env(safe-area-inset-bottom)); } }
 
 .sheet {
   /* base.css zeroes every margin; a modal <dialog> needs margin:auto to centre. */
@@ -318,6 +376,14 @@
   max-height: calc(100dvh - 32px); overflow-y: auto;
 }
 .sheet::backdrop { background: rgb(10 14 25 / .45); }
+/* On a phone a sheet rises from the thumb, where every native sheet lives. */
+@media (max-width: 640px) {
+  .sheet {
+    width: 100%; max-width: none; max-height: 90dvh;
+    margin: auto 0 0; border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
 /* The header stays pinned while the settings scroll, so Close is always in reach. */
 .sheet-head {
   position: sticky; top: 0; z-index: 2; display: flex; align-items: center;
@@ -331,6 +397,12 @@
 .sheet-head h2 { font-size: var(--text-lg); }
 .sheet-head .icon-btn { margin-inline-start: auto; }
 .sheet-body { padding: var(--s-4) var(--s-5) var(--s-5); display: grid; gap: var(--s-5); }
+@media (max-width: 640px) {
+  .sheet-head { padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); }
+  .sheet-body { padding: var(--s-3) var(--s-4) var(--s-5); gap: var(--s-4); }
+  .sheet-foot { padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom)); }
+  .sheet-foot .btn { flex: 1; }
+}
 .setting { display: grid; gap: var(--s-2); }
 .setting > b { font-size: var(--text-sm); }
 .setting .seg { width: fit-content; max-width: 100%; }
@@ -346,9 +418,17 @@ kbd {
 .sheet-group { font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; letter-spacing: .02em;
   padding-top: var(--s-3); border-top: 1px solid var(--line); margin-bottom: calc(var(--s-2) * -1); }
 .sheet-body > .sheet-group:first-child { border-top: 0; padding-top: 0; }
-.swatches button { display: inline-flex; align-items: center; gap: 6px; }
-.swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-.sw-blue { background: #2b48d6; } .sw-teal { background: #0b7a75; } .sw-violet { background: #6a3fc4; } .sw-rose { background: #b8325f; }
+/* Six accents, all visible: a grid, not a scroller that hides the last two
+   options. Two columns on a phone, three once the sheet is wide enough. */
+.seg.swatches {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-1); overflow: visible;
+}
+@media (min-width: 520px) { .seg.swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.swatches button { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding-inline: var(--s-2); }
+.swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+.sw-blue { background: #2b48d6; } .sw-teal { background: #0a6f6a; } .sw-violet { background: #6a3fc4; } .sw-rose { background: #b8325f; }
+.sw-plum { background: #8a2f6b; } .sw-cocoa { background: #7a4a2b; }
 .danger-link { color: var(--bad); font-weight: 600; font-size: var(--text-sm); justify-self: start; padding: var(--s-2) 0; }
 
 /* ── Entrance: one quiet fade when a screen changes ────────────── */
@@ -385,7 +465,7 @@ kbd {
 .break-card[hidden] { display: none; }
 .break-card p { color: var(--ink-2); font-size: var(--text-sm); }
 .break-card .row { margin-top: var(--s-2); }
-@media (max-width: 640px) { .break-card { right: 16px; bottom: 96px; } }
+@media (max-width: 640px) { .break-card { right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); } }
 
 /* Sound traps (core/sound-traps.js): what an Arabic speaker should listen for.
    Quiet ink, never a colour of its own — it's advice, not right/wrong. */

@@ -114,66 +114,60 @@
         <div class="page data-page view-enter">
           <header class="page-head"><div>
             <h1>Backup &amp; export</h1>
-            <p class="hint">Everything is saved in this browser only.</p>
+            <p class="hint">${VS.plural(VS.allWords().length, "word")} · ${VS.plural(notes, "note")} · ${t.started} studied. ${lastBackupText()}</p>
           </div></header>
 
-          <section class="card data-card">
-            <div class="data-ico">${icon("review")}</div>
-            <div>
-              <h2>Full backup</h2>
-              <p class="muted">One file with everything: your recall schedule for ${VS.plural(t.started, "word")}, ${VS.plural(notes, "note")},
-                your ${VS.plural(VS.allWords().length, "word")}, your history and settings. Keep it somewhere safe — or open it on another device.</p>
-              <p class="hint">${lastBackupText()}</p>
-            </div>
-            <div class="row">
+          <section class="card file-card" aria-labelledby="backup-title">
+            <div class="file-head">
+              <span class="file-type" aria-hidden="true">JSON</span>
+              <div class="file-copy">
+                <h2 id="backup-title">Full backup</h2>
+                <p class="file-name">vocabstudy-backup-${VS.todayKey()}.json</p>
+              </div>
               <button class="btn btn-primary" type="button" data-action="data-backup">Export backup</button>
             </div>
+            <p class="file-meta">Recall schedule, notes, history and settings — one file, opened on any device.</p>
           </section>
 
-          <section class="card data-card">
-            <div class="data-ico">${icon("qr")}</div>
-            <div>
-              <h2>Move to another device</h2>
-              <p class="muted">Phone and laptop each keep their own copy. Bring them together through the camera:
-                one shows a moving QR code, the other reads it. No internet, no account.</p>
-            </div>
-            <div class="row">
-              <a class="btn btn-primary" href="#/transfer">${icon("qr", "icon-sm")} Move with a QR code</a>
-            </div>
-          </section>
-
-          <section class="card data-card">
-            <div class="data-ico">${icon("arrow-right")}</div>
-            <div>
-              <h2>Restore a backup</h2>
-              <p class="muted"><b>Merge</b> keeps the stronger memory of each word from both this device and the file —
-                use it to combine phone and laptop. <b>Replace</b> makes this device exactly like the file.</p>
-            </div>
-            <div class="row">
-              <label class="btn btn-primary">Merge with this device<input type="file" accept=".json,application/json" data-restore="merge" hidden></label>
-              <label class="btn">Replace everything<input type="file" accept=".json,application/json" data-restore="replace" hidden></label>
-            </div>
-          </section>
-
-          <section class="card data-card">
-            <div class="data-ico">${icon("book")}</div>
-            <div>
-              <h2>Export words</h2>
-              <p class="muted">A spreadsheet of your words with your progress: status, memory box, next recall date, right and wrong answers and your notes.</p>
-              <div class="seg" role="group" aria-label="Which words">
-                ${[["all", "All words"], ["studied", "Studied"]].map(([v, l]) =>
-                  html`<button type="button" data-action="data-which" data-value="${v}" aria-pressed="${exportOpts.which === v}">${l}</button>`)}
+          <section class="card data-list" aria-label="Move and export">
+            <div class="data-row">
+              <div class="data-row-head">
+                <h2>Move to another device</h2>
+                <p>Show a moving QR code here, read it on the other device. No internet, no account.</p>
               </div>
-              <p class="hint">${VS.plural(wordsFor(exportOpts.which).length, "word")} · any filtered list can be exported from the <a href="#/words">Library</a> too</p>
+              <a class="btn" href="#/transfer">${icon("qr", "icon-sm")} Open QR transfer</a>
             </div>
-            <div class="row">
-              <button class="btn btn-primary" type="button" data-action="data-csv">Download CSV (Excel)</button>
-              <button class="btn" type="button" data-action="data-copy">Copy as table</button>
+
+            <div class="data-row">
+              <div class="data-row-head">
+                <h2>Restore a backup</h2>
+                <p><b>Merge</b> keeps the stronger memory of each word from both; <b>Replace</b> makes this device exactly like the file.</p>
+              </div>
+              <div class="row data-actions">
+                <label class="btn">Merge with this device<input type="file" accept=".json,application/json" data-restore="merge" hidden></label>
+                <label class="btn">Replace everything<input type="file" accept=".json,application/json" data-restore="replace" hidden></label>
+              </div>
+            </div>
+
+            <div class="data-row">
+              <div class="data-row-head">
+                <h2>Export words</h2>
+                <p>A spreadsheet with status, memory box, next recall, right and wrong answers, and your notes.</p>
+              </div>
+              <div class="row data-actions">
+                <div class="seg" role="group" aria-label="Which words">
+                  ${[["all", "All words"], ["studied", "Studied"]].map(([v, l]) =>
+                    html`<button type="button" data-action="data-which" data-value="${v}" aria-pressed="${exportOpts.which === v}">${l}</button>`)}
+                </div>
+                <button class="btn" type="button" data-action="data-csv">Download CSV</button>
+                <button class="btn btn-quiet" type="button" data-action="data-copy">Copy as table</button>
+              </div>
+              <p class="hint data-count">${VS.plural(wordsFor(exportOpts.which).length, "word")} · any filtered list can be exported from the <a href="#/words">library</a> too</p>
             </div>
           </section>
 
           <p class="hint data-foot">A CSV export can be added back with <a href="#/add">Add words</a> → Upload files.
-            Print sheets and PDFs are in the <a href="#/words">Library</a>.</p>
+            Print sheets and PDFs are in the <a href="#/print/all">library print screen</a>.</p>
         </div>`;
     },
 

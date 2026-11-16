@@ -145,8 +145,10 @@
       const w = s.queue[s.index];
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Study · " + s.scope.title, index: s.index, total: s.queue.length, undo: !!s.undo })}
-          ${card(w)}
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Study", sub: s.scope.title, index: s.index, total: s.queue.length, undo: !!s.undo })}
+          <div class="activity-stage stage-center">
+            ${card(w)}
+          </div>
           <div class="action-bar">
             <button class="btn btn-lg btn-bad" type="button" data-action="grade" data-grade="again">
               ${icon("arrow-left", "icon-sm")} Still learning <kbd>1</kbd></button>

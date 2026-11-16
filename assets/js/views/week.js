@@ -33,7 +33,7 @@
             <li class="${[done ? "is-done" : "", d.today ? "is-today" : "", d.future ? "is-future" : ""].join(" ")}"
                 title="${day}: ${done ? VS.plural(d.row.answered, "answer") : d.future ? "still to come" : "no study"}">
               <span class="wk-dot">${done ? icon("check", "icon-sm") : ""}</span>
-              <small>${d.today ? "Today" : day}</small>
+              <small>${d.today ? html`<span class="today-long">Today</span><span class="today-short">Now</span>` : day}</small>
             </li>`;
         })}
       </ol>`;

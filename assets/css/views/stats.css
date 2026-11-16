@@ -3,14 +3,14 @@
    2px gaps, a recessive baseline, and a hover/focus tooltip. */
 
 .stat-tiles {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3);
-  margin-top: var(--s-5);
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: var(--s-5); overflow: hidden;
 }
-.stat-tiles > div { padding: var(--s-4); display: grid; gap: 2px; }
+.stat-tiles > div { padding: var(--s-4) var(--s-5); display: grid; gap: 2px; min-width: 0; }
+.stat-tiles > div + div { border-inline-start: 1px solid var(--line); }
 .stat-tiles dt { display: flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: var(--text-sm); }
 .stat-tiles dd { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
 .stat-tiles small { font-family: var(--font-body); font-size: var(--text-sm); font-weight: 400; color: var(--ink-3); }
-.stat-dot { margin-inline-end: 4px; color: var(--line-strong); }
 
 .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-5); }
 .chart { padding: var(--s-5); display: grid; gap: var(--s-4); margin: 0; }
@@ -66,12 +66,12 @@
 
 /* Recall forecast: 7 bars, today highlighted */
 .fc-bars {
-  list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s-2);
+  list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s-1);
   padding: var(--s-4) var(--s-5);
 }
 .fc-bars li { display: grid; justify-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
 .fc-bars b { font-size: var(--text-sm); min-height: 1.2em; }
-.fc-bars small { color: var(--ink-3); font-size: var(--text-xs); }
+.fc-bars small { color: var(--ink-3); font-size: var(--text-2xs); white-space: nowrap; }
 .fc-bar { display: flex; align-items: end; width: 100%; max-width: 44px; height: 72px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
 .fc-bar i { display: block; width: 100%; background: var(--brand); border-radius: 6px 6px 0 0; transform-origin: bottom; animation: rise 600ms var(--ease) both; }
 .fc-bars .is-today .fc-bar i { background: var(--mark); }
@@ -82,13 +82,16 @@
 
 @media (max-width: 900px) {
   .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-tiles > div + div { border-inline-start: 0; }
+  .stat-tiles > div:nth-child(even) { border-inline-start: 1px solid var(--line); }
+  .stat-tiles > div:nth-child(n + 3) { border-top: 1px solid var(--line); }
   .chart-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .bar-col small { font-size: .72rem; }
+  .stat-tiles > div { padding: 13px var(--s-4); }
   .stat-tiles dd { font-size: var(--text-lg); }
-  .stat-tiles small { display: block; margin-top: 2px; }
-  .stat-dot { display: none; }
+  .stat-tiles small { display: block; margin-top: 2px; font-size: var(--text-xs); }
 }
 
 /* ── Your week (Saturday → Friday) ─────────────────────────────── */
@@ -100,7 +103,17 @@
 
 .wk-days { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--s-1); }
 .wk-days li { display: grid; justify-items: center; gap: var(--s-1); }
-.wk-days small { font-size: var(--text-xs); color: var(--ink-3); white-space: nowrap; }
+.wk-days small { font-size: var(--text-2xs); color: var(--ink-3); white-space: nowrap; }
+/* Seven columns and "Today" collide on a 320px phone with Larger text;
+   "Now" says the same thing in three letters. */
+.today-long { display: inline; }
+.today-short { display: none; }
+@media (max-width: 360px) {
+  .today-long { display: none; }
+  .today-short { display: inline; }
+  .wk-days { gap: 2px; }
+  .fc-bars { padding-inline: var(--s-3); gap: 4px; }
+}
 .wk-dot { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line-strong); color: var(--on-brand); }
 .wk-days .is-done .wk-dot { background: var(--brand); border-color: var(--brand); }
 .wk-days .is-future .wk-dot { border-style: dashed; border-color: var(--line); }

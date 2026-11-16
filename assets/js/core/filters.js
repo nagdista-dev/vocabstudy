@@ -26,7 +26,7 @@
   const STATUS = { all: "All", new: "New", learning: "Learning", mastered: "Mastered", due: "Due today", started: "Started" };
   const ADDED = { all: "Any time", today: "Today", week: "This week", month: "This month", older: "Older" };
   const SORTS = {
-    az: "A–Z", za: "Z–A", newest: "Newest added", oldest: "Oldest added",
+    az: "A–Z", za: "Z–A", newest: "Newest", oldest: "Oldest",
     weakest: "Weakest first", due: "Due soonest", missed: "Most mistakes", level: "Level", common: "Most common first",
   };
   const BOXES = ["New", "1 day", "3 days", "1 week", "2 weeks", "1 month", "2 months"];

@@ -170,7 +170,8 @@
   }
 
   /* Progress lives in this browser: remind once a week to keep a copy.
-     Ignore hides the reminder for a week, so it never nags every visit. */
+     Ignore hides the reminder for a week, so it never nags every visit.
+     A slim utility row, not a second hero. */
   function backupNudge() {
     const started = VS.store.totals().started;
     if (started < 20) return "";
@@ -181,15 +182,60 @@
     const sinceIgnored = ignored ? Math.round((new Date(VS.todayKey()) - new Date(ignored)) / 864e5) : Infinity;
     if (sinceIgnored < 7) return "";
     return html`
-      <div class="recall-strip">
-        <a class="recall-strip-main" href="#/data">
-          ${icon("review")}
-          <span><b>${last ? "Your last backup was " + days + " days ago" : "You haven't backed up your progress yet"}</b>
-            <span class="hint">${VS.plural(started, "word")} of progress live only in this browser. One tap saves a copy.</span></span>
-          ${icon("arrow-right", "icon-sm")}
+      <div class="backup-row">
+        <a class="backup-main" href="#/data">
+          <span class="backup-ico">${icon("review", "icon-sm")}</span>
+          <span class="backup-copy">
+            <b>Back up your words</b>
+            <span class="hint">${started} ${started === 1 ? "word" : "words"} · ${last ? days + " days ago" : "never backed up"}</span>
+          </span>
+          ${icon("arrow-right", "icon-sm backup-arrow")}
         </a>
-        <button class="btn btn-quiet recall-strip-ignore" type="button" data-action="backup-ignore" aria-label="Ignore backup reminder">Ignore</button>
+        <button class="icon-btn backup-dismiss" type="button" data-action="backup-ignore" aria-label="Hide backup reminder for a week">${icon("x", "icon-sm")}</button>
       </div>`;
+  }
+
+  /* Desktop rail: the week at a glance, Quick 5, and the numbers that keep
+     a learner going. Hidden on phones, where the hero already carries them. */
+  function rail() {
+    const week = VS.week.summary();
+    const max = Math.max(1, ...week.days.map((d) => (d.row ? d.row.answered : 0)));
+    const hist = VS.store.history();
+    const answered = hist.reduce((n, r) => n + r.answered, 0);
+    const right = hist.reduce((n, r) => n + r.right, 0);
+    const t = VS.store.totals();
+    const quickReady = VS.store.quickWords(10).length >= 2;
+    return html`
+      <aside class="home-rail" aria-label="Your week and progress">
+        <section class="rail-card">
+          <div class="rail-head"><h2>This week</h2><a href="#/week">Open ${icon("arrow-right", "icon-sm")}</a></div>
+          <ol class="rail-days" aria-label="Answers each day this week">
+            ${week.days.map((d) => {
+              const n = d.row ? d.row.answered : 0;
+              const day = new Date(d.date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "narrow" });
+              return html`<li class="${d.today ? "is-today" : ""} ${d.future ? "is-future" : ""}" title="${n} answers">
+                <span class="rail-bar"><i style="height:${n ? Math.max(8, Math.round((n / max) * 100)) : 0}%"></i></span>
+                <small>${d.today ? "Today" : day}</small>
+              </li>`;
+            })}
+          </ol>
+          <p class="rail-note"><b>${week.answers}</b> answers · <b>${week.studied}</b> ${week.studied === 1 ? "day" : "days"} studied</p>
+        </section>
+        ${quickReady ? html`
+          <a class="rail-quick" href="#/quick">
+            <span class="rail-quick-ico">${icon("bolt")}</span>
+            <span class="rail-quick-copy"><b>Quick 5</b><small>Five minutes. The 10 words that matter most.</small></span>
+            ${icon("arrow-right", "icon-sm")}
+          </a>` : ""}
+        <section class="rail-card">
+          <div class="rail-head"><h2>Your progress</h2><a href="#/stats">Details</a></div>
+          <dl class="rail-stats">
+            <div><dt>Streak</dt><dd>${t.streak} ${t.streak === 1 ? "day" : "days"}</dd></div>
+            <div><dt>Mastered</dt><dd>${t.mastered} / ${t.words}</dd></div>
+            <div><dt>Accuracy</dt><dd>${answered ? Math.round((right / answered) * 100) + "%" : "—"}</dd></div>
+          </dl>
+        </section>
+      </aside>`;
   }
 
   /* One line to add a word. With an empty library the form gets a label
@@ -260,7 +306,6 @@
         return html`
           <div class="page home-page view-enter">
             <section class="home-empty">
-              <p class="today-kicker">Your vocabulary, remembered</p>
               <h1>Start with <mark class="mark">one word</mark>.</h1>
               <p class="home-empty-copy">Type a word you met today. VocabStudy adds the meaning, Arabic, example and sound — then brings it back on the days you're about to forget it.</p>
             </section>
@@ -270,40 +315,56 @@
       }
       return html`
         <div class="page home-page view-enter">
-          ${VS.today.strip()}
-          ${weekReady()}
-          ${addBox(true)}
-          ${backupNudge()}
+          <div class="home-grid">
+            <div class="home-main">
+              ${VS.today.strip()}
+              ${weekReady()}
+              ${addBox(true)}
+              ${backupNudge()}
 
-          <header class="lib-head">
-            <h1>Your words</h1>
-            <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
-          </header>
+              <header class="lib-head">
+                <h1>Your words</h1>
+                <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
+              </header>
 
-          <div class="lib-tools">
-            <div class="lib-search-row">
-              <label class="field">
-                ${icon("search", "icon-sm")}
-                <span class="sr-only">Search the library</span>
-                <input type="search" id="libSearch" value="${f.q}" placeholder="${narrow() ? "Search words or Arabic" : "Search words, Arabic, tags, notes"}" autocomplete="off"
-                       aria-label="Search English, Arabic, definitions, examples, tags and your notes"/>
-              </label>
-              <button class="btn lib-filter-btn" type="button" data-action="lib-panel" aria-expanded="${panelOpen}" aria-controls="libPanel" aria-label="Filters">
-                ${icon("settings", "icon-sm")}<span class="lib-filter-label">Filters</span><span class="pill" data-filter-pill ${on ? "" : VS.raw("hidden")}>${on}</span>
-              </button>
+              <div class="lib-tools">
+                <div class="lib-search-row">
+                  <label class="field">
+                    ${icon("search", "icon-sm")}
+                    <span class="sr-only">Search the library</span>
+                    <input type="search" id="libSearch" value="${f.q}" placeholder="${narrow() ? "Search words" : "Search your words"}" autocomplete="off"
+                           aria-label="Search English, Arabic, definitions, examples, tags and your notes"/>
+                  </label>
+                  <button class="btn lib-filter-btn" type="button" data-action="lib-panel" aria-expanded="${panelOpen}" aria-controls="libPanel" aria-label="Filters">
+                    ${icon("settings", "icon-sm")}<span class="lib-filter-label">Filters</span><span class="pill" data-filter-pill ${on ? "" : VS.raw("hidden")}>${on}</span>
+                  </button>
+                </div>
+                ${statusChips(s)}
+                ${panel()}
+              </div>
+
+              <div id="libResults">${results()}</div>
             </div>
-            ${statusChips(s)}
-            ${panel()}
+            ${rail()}
           </div>
-
-          <div id="libResults">${results()}</div>
         </div>`;
     },
 
     mount(root) {
       if (stepsRO) { stepsRO.disconnect(); stepsRO = null; }
       const search = VS.$("#libSearch", root);
-      if (search) search.addEventListener("input", () => { f.q = search.value; limit = PAGE; syncAddress(); refreshResults(); });
+      if (search) {
+        search.addEventListener("input", () => { f.q = search.value; limit = PAGE; syncAddress(); refreshResults(); });
+        // Searching on a phone: bring the search row and its results up under
+        // the app bar. The hero stays for browsing, but it must not sit between
+        // the learner and a list that is updating as they type.
+        search.addEventListener("focus", () => {
+          if (!matchMedia("(max-width: 1023px)").matches) return;
+          const tools = VS.$(".lib-tools", root);
+          if (!tools || tools.getBoundingClientRect().top < innerHeight * 0.4) return;
+          tools.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        });
+      }
       const add = VS.$("#quickWord", root);
       if (add) {
         VS.ui.watchKeyboard(add);
@@ -359,6 +420,19 @@
           stepsRO = new ResizeObserver(updateSteps);
           stepsRO.observe(steps);
         }
+      }
+      /* Same affordance for the status chips: the edge fades while there is
+         another state off-screen, and clears once you reach "Due". */
+      const chips = VS.$(".chip-row", root);
+      if (chips) {
+        const updateChips = () => {
+          const over = chips.scrollWidth > chips.clientWidth + 1;
+          chips.classList.toggle("is-overflow", over);
+          chips.classList.toggle("is-end", !over || chips.scrollLeft + chips.clientWidth >= chips.scrollWidth - 2);
+        };
+        updateChips();
+        chips.addEventListener("scroll", updateChips, { passive: true });
+        requestAnimationFrame(updateChips);
       }
 
       const panel = VS.$("#libPanel", root);

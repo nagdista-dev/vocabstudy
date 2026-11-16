@@ -110,7 +110,8 @@
       const done = s.result && s.result.ok;
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Use it · " + s.scope.title, index: s.index, total: s.words.length })}
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Use it", sub: s.scope.title, index: s.index, total: s.words.length })}
+          <div class="activity-stage stage-center">
           <section class="write card">
             <div class="write-word">
               <p class="write-headword"><span class="mark">${w.word}</span></p>
@@ -136,6 +137,7 @@
             ${VS.grammar.enabled() && !done ? html`<p class="hint write-privacy">Grammar is checked online by LanguageTool — only this sentence is sent. (Settings → Grammar check)</p>` : ""}
             ${feedback()}
           </section>
+          </div>
           <div class="action-bar">
             ${done
               ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="writeNext">

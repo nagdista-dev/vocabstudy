@@ -62,7 +62,8 @@
     const isAr = q.field === "arabic";
     return html`
       <button class="option ${state}" type="button" data-action="pick" data-id="${o.id}" ${s.picked ? "disabled" : ""}>
-        <kbd>${i + 1}</kbd><span ${isAr ? VS.raw('lang="ar"') : ""}>${value}${!isAr && o.sense ? html` <small>(${o.sense.toLowerCase()})</small>` : ""}</span>
+        <kbd class="opt-key"><span class="opt-letter">${"ABCD"[i]}</span><span class="opt-num">${i + 1}</span></kbd>
+        <span class="opt-label" ${isAr ? VS.raw('lang="ar"') : ""}>${value}${!isAr && o.sense ? html` <small>(${o.sense.toLowerCase()})</small>` : ""}</span>
         ${state === "is-right" ? icon("check", "icon-sm") : state === "is-wrong" ? icon("x", "icon-sm") : ""}
       </button>`;
   }
@@ -110,7 +111,7 @@
       words: s.wrong,
       actions: [
         next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
-        s.wrong.length ? { action: "retry", label: "Practise the " + VS.plural(s.wrong.length, "mistake") } : null,
+        s.wrong.length ? { action: "retry", label: "Practise these" } : null,
         { action: "restart", label: "New quiz" },
       ],
     });
@@ -141,10 +142,12 @@
       const q = s.questions[s.index];
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Quiz · " + s.scope.title, index: s.index, total: s.questions.length, combo: s.combo })}
-          <section class="question card">${promptMarkup(q)}</section>
-          <div class="options" role="group" aria-label="Answers">${q.options.map((o, i) => optionMarkup(q, o, i))}</div>
-          ${s.picked ? feedback(q) : ""}
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Quiz", sub: s.scope.title, index: s.index, total: s.questions.length, combo: s.combo })}
+          <div class="activity-stage">
+            <section class="question card">${promptMarkup(q)}</section>
+            <div class="options ${s.picked ? "is-resolved" : ""}" role="group" aria-label="Answers">${q.options.map((o, i) => optionMarkup(q, o, i))}</div>
+            ${s.picked ? feedback(q) : ""}
+          </div>
           ${s.picked ? html`<div class="action-bar"><button class="btn btn-lg btn-primary" type="button" data-action="next" id="nextBtn">
             ${s.index + 1 < s.questions.length ? "Next question" : "See results"} <kbd>Enter</kbd></button></div>` : ""}
         </div>`;
@@ -155,9 +158,9 @@
       if (q && q.type === "listen" && !s.picked) VS.speech.say(q.w.word);
       const next = VS.$("#nextBtn");
       if (next) next.focus({ preventScroll: true });
-      // On small screens the explanation sits below the answers: bring it into view.
-      const fb = VS.$(".feedback");
-      if (fb && innerWidth <= 640) fb.scrollIntoView({ behavior: "smooth", block: "center" });
+      // No auto-scroll: the prompt, the marked answer and the start of the
+      // explanation stay in view. Phones hide the other options once answered
+      // (see activities.css), so the feedback is never below a wall of rows.
     },
 
     actions: {

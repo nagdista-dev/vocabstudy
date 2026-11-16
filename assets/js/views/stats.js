@@ -85,7 +85,7 @@
               <li class="${i === 0 ? "is-today" : ""}" title="${d.count} on ${day.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}">
                 <b>${d.count || ""}</b>
                 <span class="fc-bar"><i style="height:${Math.round((d.count / max) * 100)}%"></i></span>
-                <small>${i === 0 ? "Today" : day.toLocaleDateString("en-GB", { weekday: "short" })}</small>
+                <small>${i === 0 ? html`<span class="today-long">Today</span><span class="today-short">Now</span>` : day.toLocaleDateString("en-GB", { weekday: "short" })}</small>
               </li>`;
           })}
         </ol>
@@ -121,15 +121,15 @@
             <div class="section-title"><h2 id="sw-title">This week</h2>
               <a class="btn btn-quiet" href="#/week">Open your week ${icon("arrow-right", "icon-sm")}</a></div>
             ${VS.ui.weekStrip(VS.week.summary())}
-            <p class="hint">Saturday to Friday. The full report is ready every Thursday.</p>
+            <p class="hint">Weeks run Saturday to Friday. The full report opens on Thursday.</p>
           </section>
           ${VS.ui.milestone()}
 
-          <dl class="stat-tiles">
-            <div class="card"><dt>${icon("clock", "icon-sm")} Study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>
-            <div class="card"><dt>${icon("flame", "icon-sm")} Days studied</dt><dd>${history.length} <small><span class="stat-dot" aria-hidden="true">·</span>streak ${t.streak}</small></dd></div>
-            <div class="card"><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${answered ? Math.round((right / answered) * 100) + "%" : "—"} <small><span class="stat-dot" aria-hidden="true">·</span>${answered.toLocaleString("en-GB")} answers</small></dd></div>
-            <div class="card"><dt>${icon("star", "icon-sm")} Mastered</dt><dd>${t.mastered} <small>/ ${t.words}</small></dd></div>
+          <dl class="stat-tiles card">
+            <div><dt>${icon("clock", "icon-sm")} Study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>
+            <div><dt>${icon("flame", "icon-sm")} Days studied</dt><dd>${history.length} <small>${t.streak}-day streak</small></dd></div>
+            <div><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${answered ? Math.round((right / answered) * 100) + "%" : "—"} <small>${answered.toLocaleString("en-GB")} answers</small></dd></div>
+            <div><dt>${icon("star", "icon-sm")} Mastered</dt><dd>${t.mastered} <small>of ${t.words}</small></dd></div>
           </dl>
 
           ${forecast()}

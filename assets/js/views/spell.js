@@ -21,7 +21,7 @@
       words: s.wrong,
       actions: [
         next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
-        s.wrong.length ? { action: "retry", label: "Practise the " + VS.plural(s.wrong.length, "mistake") } : null,
+        s.wrong.length ? { action: "retry", label: "Practise these" } : null,
         { action: "restart", label: "Spell again" },
       ],
     });
@@ -46,7 +46,8 @@
       const ok = s.checked && VS.normalise(s.typed) === VS.normalise(answer);
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Spell · " + s.scope.title, index: s.index, total: s.words.length, combo: s.combo })}
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Spell", sub: s.scope.title, index: s.index, total: s.words.length, combo: s.combo })}
+          <div class="activity-stage stage-center">
           <section class="spell card">
             <div class="spell-listen">
               <button class="speak-btn speak-xl" type="button" data-action="speak" data-say="${answer}" aria-label="Play the word">${icon("volume", "icon-lg")}</button>
@@ -60,7 +61,7 @@
               <label class="field field-xl ${s.checked ? (ok ? "is-right" : "is-wrong") : ""}">
                 <span class="sr-only">Type the word you hear</span>
                 <input id="spellInput" type="text" value="${s.typed}" ${s.checked ? "readonly" : ""}
-                       spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="Type what you hear"/>
+                       spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="Type the word"/>
               </label>
             </form>
 
@@ -78,6 +79,7 @@
                 </div>`
               : ""}
           </section>
+          </div>
           <div class="action-bar">
             ${s.checked
               ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="nextBtn">Next word <kbd>Enter</kbd></button>`

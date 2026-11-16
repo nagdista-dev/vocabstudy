@@ -33,9 +33,9 @@
 }
 
 /* ── Library controls ───────────────────────────────────────────
-   Search + icon-only filters on one row, status as a single scrollable
-   row of counted chips. The list starts one short step below. */
-.lib-tools { display: grid; gap: 10px; margin: var(--s-4) 0 var(--s-3); }
+   Search + an icon-only filter button on one row, status as a single
+   scrollable row of counted chips. The list starts one short step below. */
+.lib-tools { display: grid; gap: var(--s-2); margin: 10px 0 var(--s-3); scroll-margin-top: calc(var(--bar-h) + 10px); }
 .lib-search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-2); align-items: stretch; }
 .lib-search-row .field { min-height: 46px; }
 .lib-search-row input { font-size: 1rem; }
@@ -48,13 +48,18 @@
 .pill[hidden] { display: none; }
 
 /* Status: a chip is a state, so the chosen one is ink, not another blue action. */
-.chip-row { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
+.chip-row { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; padding: 1px; }
 .chip-row::-webkit-scrollbar { display: none; }
+.chip-row.is-overflow {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent);
+          mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent);
+}
+.chip-row.is-end { -webkit-mask-image: none; mask-image: none; }
 .chip {
-  display: inline-flex; align-items: center; gap: 6px; flex: none;
-  min-height: 42px; padding: 0 13px; border: 1px solid var(--line); border-radius: var(--r-pill);
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-pill);
   background: var(--surface); color: var(--ink-2);
-  font-size: .8rem; font-weight: 600; white-space: nowrap;
+  font-size: var(--text-xs); font-weight: 600; white-space: nowrap;
   transition: background var(--fast), border-color var(--fast), color var(--fast);
 }
 .chip-n { color: var(--ink-3); font-size: .72rem; font-variant-numeric: tabular-nums; }
@@ -74,18 +79,21 @@
 @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } }
 @keyframes fade-in { from { opacity: 0; } }
 .filter-body { padding: var(--s-4) var(--s-5) var(--s-5); gap: var(--s-5); }
-.lib-panel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+/* Two columns while the labels fit; one column at 320 with Larger text, where
+   "Any memory" was being clipped inside a 136px select. The minimum is in rem,
+   so it grows with Settings → Text size. */
+.lib-panel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: var(--s-3); }
 .filter-sheet .lib-panel-grid { gap: 10px var(--s-3); }
-.lib-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); }
+.lib-toggles { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0 var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); }
 .lib-toggles .check { min-height: 42px; }
 .filter-foot { justify-content: space-between; gap: var(--s-2); }
 .filter-foot .btn-primary { white-space: nowrap; }
 
 /* ── Results: count, Practise / More ──────────────────────────── */
-.lib-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.lib-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: var(--s-2); }
 .lib-count { display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--ink); }
-.lib-count b { font-size: .95rem; font-weight: 700; }
-.lib-desc { font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.lib-count b { font-size: var(--text-sm); font-weight: 700; }
+.lib-desc { font-size: var(--text-2xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .lib-actions { display: flex; align-items: center; gap: 4px; flex: none; }
 .lib-actions .btn { min-height: 40px; padding: 0 12px; }
 .lib-actions .lib-more-btn { padding: 0 10px; }
@@ -107,30 +115,47 @@
 .lib-more-menu .icon { color: var(--ink-3); }
 
 /* ── Word rows ──────────────────────────────────────────────────
-   Desktop: word + meta on the left, Arabic on the right, badges, chevron.
-   Phone: two lines (word + Arabic, then one quiet meta line), status in
-   that meta line and a small dot at the start. ~64px per word. */
-.word-list { display: grid; gap: 8px; }
+   One grouped card with hairline dividers reads faster than 24 floating
+   cards. Phone: two lines (word + Arabic, then one quiet meta line).
+   Desktop: word + meta on the left, Arabic on the right, badges, chevron. */
+.word-list {
+  display: grid; gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.word-list > .btn {
+  border: 0; border-top: 1px solid var(--line); border-radius: 0;
+  min-height: 50px; background: var(--surface);
+}
+.word-list > .btn:hover { background: var(--surface-2); }
 
-.word-row { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
-.word-row[open] { border-color: var(--line-strong); box-shadow: var(--shadow-1); }
+.word-row { background: var(--surface); border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.word-row:first-child { border-top: 0; }
+.word-row[open] { border-color: var(--line); box-shadow: none; }
 .word-row summary {
   display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto 20px;
   grid-template-areas: "word ar badges chev" "meta ar badges chev";
   align-items: center; column-gap: var(--s-4); row-gap: 0;
-  min-height: 56px; padding: var(--s-2) var(--s-4);
+  min-height: 58px; padding: 9px var(--s-4);
   cursor: pointer; list-style: none;
+  transition: background var(--fast);
 }
 .word-row summary::-webkit-details-marker { display: none; }
+@media (hover: hover) { .word-row summary:hover { background: #fbfcfe; } }
 .word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
 .word-row-word b { font-weight: 600; overflow-wrap: anywhere; }
 .word-row-dot { display: none; }
 .word-row-meta {
   grid-area: meta; min-width: 0;
-  font-size: max(var(--text-xs), 12.5px); color: var(--ink-3);
+  font-size: var(--text-2xs); color: var(--ink-3);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .word-row-meta .icon { display: inline; vertical-align: -3px; width: 13px; height: 13px; }
+/* The dot travels with the item it separates, so a wrapped phone line starts
+   with "· #Work" instead of ending in a bare dot. */
+.word-row-freq::before, .word-row-tagline::before, .word-row-note::before { content: " \00b7\00a0"; color: var(--ink-3); }
 .word-row-state, .word-row-sep { display: none; }
 .word-row-ar { grid-area: ar; text-align: end; color: var(--ink-2); font-size: 1.02rem; overflow-wrap: anywhere; }
 .word-row-ar.hint { font-size: var(--text-sm); }
@@ -141,6 +166,7 @@
   display: grid; gap: var(--s-3);
   padding: var(--s-4);
   border-top: 1px solid var(--line);
+  background: #fcfdff;
 }
 .word-row-example { color: var(--ink-2); font-style: italic; }
 .word-row-foot { justify-content: space-between; gap: var(--s-2); }
@@ -151,30 +177,47 @@
   .word-row summary {
     grid-template-columns: minmax(0, 1fr) auto 16px;
     grid-template-areas: "word ar chev" "meta meta chev";
-    min-height: 60px; padding: 9px 14px; column-gap: 10px;
-  }
-  .word-row-word { gap: 7px; }
-  .word-row-word b { font-size: 1.02rem; line-height: 1.35; }
+    min-height: 58px; padding: 8px 14px; column-gap: 10px;
+  }  .word-row-word { gap: 7px; }
+  .word-row-word b { font-size: 1rem; line-height: 1.35; }
   .word-row-dot {
     display: block; flex: none; width: 7px; height: 7px; border-radius: 50%;
     background: var(--line-strong); align-self: flex-start; margin-top: .48em;
   }
-  .word-row[data-status="learning"] .word-row-dot {
-    background: var(--mark); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-mark) 28%, transparent);
-  }
+  .word-row[data-status="learning"] .word-row-dot { background: var(--mark); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-mark) 28%, transparent); }
   .word-row[data-status="mastered"] .word-row-dot { background: var(--good); }
   .word-row-ar { max-width: 44vw; font-size: .98rem; line-height: 1.45; }
-  .word-row-ar.hint { font-size: 12.5px; }
+  .word-row-ar.hint { font-size: var(--text-2xs); }
   .word-row-badges { display: none; }
   .word-row-state, .word-row-sep { display: inline; }
   .word-row-state { font-weight: 600; }
   .word-row-state[data-s="learning"] { color: var(--on-mark); }
   .word-row-state[data-s="mastered"] { color: var(--good); }
   .word-row-sep { margin-inline: 3px; color: var(--line-strong); }
-  .word-row-meta { font-size: max(.78rem, 12.5px); line-height: 1.35; }
-  .word-row-body { padding: 12px 14px 14px; }
-  .word-row-body > p { font-size: 15.5px; }
+  /* On a phone the meta line carries status, type, level and frequency.
+     Tags move to the expanded row: they made the collapsed line end in "#…",
+     and they are not what you scan a word list for. Frequency stays whole
+     ("Top 12,000"), so at Larger text it moves to a second line intact. */
+  .word-row-meta {
+    font-size: var(--text-2xs); line-height: 1.35;
+    white-space: normal; overflow: visible; text-overflow: clip;
+  }
+  .word-row-freq { white-space: nowrap; }
+  .word-row-tagline { display: none; }
+  .word-row-body { padding: 14px 14px 16px; }
+  .word-row-body > p { font-size: 1rem; }
   .word-row-chev { align-self: center; }
+}
+/* A word too long for the two-column phone row gets the full width; its
+   Arabic and meta move underneath instead of squeezing both sides. */
+@media (max-width: 420px) {
+  .word-row.is-long summary {
+    grid-template-columns: minmax(0, 1fr) 16px;
+    grid-template-areas: "word chev" "ar chev" "meta chev";
+    align-items: start; row-gap: 1px; padding-block: 10px;
+  }
+  .word-row.is-long .word-row-ar { max-width: none; text-align: left; }
+  .word-row.is-long .word-row-chev { align-self: center; }
 }
 @media (max-width: 640px) {
   .lib-filter-label { display: none; }
@@ -214,7 +257,6 @@
 @media (max-width: 640px) {
   .word-edit { grid-template-columns: 1fr; }
 }
-
 /* Tags: your own groups of words. A tag chip opens the library filtered by it. */
 .tag {
   display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 var(--s-2);

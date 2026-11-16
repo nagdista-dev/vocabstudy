@@ -9,95 +9,141 @@
 <meta property="og:title" content="VocabStudy — الكلمة اللي بتقابلها، متضيعش منك">
 <meta property="og:description" content="ببلاش، من غير حساب، شغال من غير نت، وفاهم الغلط اللي العرب بيقعوا فيه في الإنجليزي.">
 <meta property="og:image" content="assets/icons/icon-512.png">
+<meta property="og:locale" content="ar_EG">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/fonts.css">
 <link rel="stylesheet" href="assets/css/tokens.css">
 <link rel="stylesheet" href="assets/css/about.css">
 </head>
 <body>
+<a class="skip-link" href="#main">روح للمحتوى</a>
 <!-- The introduction for people who haven't tried the app yet, in Egyptian
      Arabic. The app itself stays in English on purpose: every screen is practice. -->
 <header class="top">
-  <a class="brand" href="index.html" lang="en" dir="ltr">
-    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--brand)"/><path d="M6 21.5h20" stroke="var(--mark)" stroke-width="5" stroke-linecap="round"/><path d="M9.5 8.5 16 23l6.5-14.5" fill="none" stroke="var(--on-brand)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    VocabStudy
-  </a>
-  <a class="btn btn-small" href="index.html">افتح التطبيق</a>
+  <div class="top-inner">
+    <a class="brand" href="index.html" lang="en" dir="ltr">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--brand)"/><path d="M6 21.5h20" stroke="var(--mark)" stroke-width="5" stroke-linecap="round"/><path d="M9.5 8.5 16 23l6.5-14.5" fill="none" stroke="var(--on-brand)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      VocabStudy
+    </a>
+    <nav class="top-nav" aria-label="أقسام الصفحة">
+      <a href="#how">بيشتغل إزاي</a>
+      <a href="#privacy">الخصوصية</a>
+      <a href="#faq">أسئلة</a>
+    </nav>
+    <a class="btn btn-primary btn-small" href="index.html">افتح التطبيق</a>
+  </div>
 </header>
 
-<main>
+<main id="main">
   <section class="hero">
-    <h1>الكلمة اللي بتقابلها، <mark>متضيعش منك</mark>.</h1>
-    <p class="lead">سمعت كلمة في مسلسل. قريتها في بوست. لقيتها في إيميل الشغل. وبعد يومين؟ راحت.
-      VocabStudy معمول عشان ده بالظبط: بتكتب الكلمة وخلاص، وهو يجيب معناها بالعربي وتعريفها ومثال عليها ونطقها.
-      وبعدين يرجّعهالك في اليوم اللي كنت هتنساها فيه. لحد ما تثبت.</p>
-    <div class="cta">
-      <a class="btn btn-primary" href="index.html">ابدأ دلوقتي، ببلاش</a>
-      <a class="btn" href="#how">بيشتغل إزاي؟</a>
+    <div class="hero-copy">
+      <h1>الكلمة اللي بتقابلها، <mark>متضيعش منك</mark>.</h1>
+      <p class="lead">سمعت كلمة في مسلسل. قريتها في بوست. لقيتها في إيميل الشغل. وبعد يومين؟ راحت.
+        VocabStudy معمول عشان ده بالظبط: بتكتب الكلمة وخلاص، وهو يجيب معناها بالعربي وتعريفها ومثال عليها ونطقها.
+        وبعدين يرجّعهالك في اليوم اللي كنت هتنساها فيه. لحد ما تثبت.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="index.html">ابدأ دلوقتي، ببلاش</a>
+        <a class="btn btn-quiet" href="#how">بيشتغل إزاي؟</a>
+      </div>
+      <p class="fine">من غير حساب ولا إعلانات ولا اشتراك. كلماتك على جهازك إنت.</p>
     </div>
-    <p class="fine">من غير حساب ولا إعلانات ولا اشتراك. كلماتك على جهازك إنت.</p>
 
-    <figure class="specimen typing" aria-label="مثال: بتكتب الكلمة في التطبيق">
-      <span class="field" lang="en" dir="ltr"><span class="typed">resilient</span></span>
-      <figcaption>بتكتب الكلمة، والهايلايتر الأصفر بيعلّم تحتها. دي كلمة هتفتكرها.</figcaption>
+    <figure class="preview">
+      <div class="app-mini" lang="en" dir="ltr" aria-hidden="true">
+        <div class="mini-bar">
+          <span class="mini-mark"></span><b>VocabStudy</b><span class="mini-gear"></span>
+        </div>
+        <div class="mini-page">
+          <div class="mini-hero">
+            <div class="mini-top"><span class="mini-streak">12-day streak</span><span class="mini-goal">Goal <b>49</b> / 150</span></div>
+            <p class="mini-head"><mark>9 words</mark> to recall.</p>
+            <p class="mini-line">Bring each one back from memory before it fades.</p>
+            <span class="mini-cta">Start recall <i>→</i></span>
+            <div class="mini-chips"><span>Quiz</span><span>Spell</span><span>Match</span></div>
+          </div>
+          <div class="mini-add"><span>Add a word or phrase</span><b>+</b></div>
+          <div class="mini-row"><span class="mini-dot"></span><b>resilient</b><span class="mini-ar" lang="ar" dir="rtl">صامد، مرن</span></div>
+          <div class="mini-row"><span class="mini-dot"></span><b>wander</b><span class="mini-ar" lang="ar" dir="rtl">يتجول، يهيم</span></div>
+        </div>
+      </div>
+      <figcaption>أول شاشة في التطبيق: كلمة واحدة، ومعاها كل اللي محتاجه عشان تثبت.</figcaption>
     </figure>
   </section>
 
   <section id="how" class="block">
-    <h2>بيشتغل إزاي؟</h2>
+    <div class="section-head">
+      <h2>بيشتغل إزاي؟</h2>
+      <p class="sub">تلات خطوات قصيرة، وبعدها كل حاجة بتتظبط لوحدها.</p>
+    </div>
+
     <ol class="steps">
       <li>
+        <span class="step-n" aria-hidden="true">1</span>
         <h3>بتضيف الكلمة من أي حتة</h3>
-        <p>اكتبها في التطبيق. أو علّم عليها في أي موقع ودوس <b><span lang="en">Share</span> ← <span lang="en">VocabStudy</span></b> من الموبايل،
+        <p>اكتبها في التطبيق. أو علّم عليها في أي موقع ودوس <b><span lang="en">Share</span> ثم <span lang="en">VocabStudy</span></b> من الموبايل،
           أو الزرار اللي بتحطه في المفضلة على الكمبيوتر. عندك فقرة كاملة؟ الزقها، والمس الكلمات اللي مش فاهمها.
           وكل كلمة بتتحفظ مع الجملة اللي شفتها فيها.</p>
       </li>
       <li>
+        <span class="step-n" aria-hidden="true">2</span>
         <h3>بتتعلمها مرة واحدة، بس صح</h3>
         <p>معناها بالعربي، وتعريف بالإنجليزي، ومثال حقيقي، وصوت بني آدم بينطقها، أمريكاني أو بريطاني على مزاجك.
           والمقطع اللي عليه الضغط مرسوم قدامك.</p>
       </li>
       <li>
+        <span class="step-n" aria-hidden="true">3</span>
         <h3>وبتفتكرها في الأيام الصح</h3>
         <p>التطبيق مش هيوريك المعنى ويسألك «عارفها؟». إنت اللي بتطلّع الكلمة من دماغك، وده اللي بيثبّتها.
-          وكل ما تفتكرها، معادها الجاي يبعد شوية:</p>
-        <ol class="ruler" aria-label="مواعيد المراجعة بالأيام" dir="ltr">
-          <li><b>1</b><span>day</span></li><li><b>3</b><span>days</span></li><li><b>7</b><span>days</span></li>
-          <li><b>14</b><span>days</span></li><li><b>30</b><span>days</span></li><li><b>60</b><span>days</span></li>
-        </ol>
-        <p class="note">ولو فضلت فاكرها بعد أسبوعين، يبقى خلاص، دخلت الذاكرة الطويلة.</p>
+          وكل ما تفتكرها، معادها الجاي يبعد شوية.</p>
       </li>
     </ol>
+
+    <div class="ruler-card">
+      <div class="ruler-copy">
+        <b>مواعيد المراجعة</b>
+        <span>كل ما تفتكرها، المسافة بين المراجعة واللي بعدها تكبر. ولو فضلت فاكرها بعد أسبوعين، دخلت الذاكرة الطويلة.</span>
+      </div>
+      <ol class="ruler" aria-label="مواعيد المراجعة بالأيام" dir="ltr">
+        <li><b>1</b><span>day</span></li><li><b>3</b><span>days</span></li><li><b>7</b><span>days</span></li>
+        <li><b>14</b><span>days</span></li><li><b>30</b><span>days</span></li><li><b>60</b><span>days</span></li>
+      </ol>
+    </div>
   </section>
 
   <section class="block teacher">
-    <h2>مدرّس فاهم الغلط اللي العرب بيقعوا فيه</h2>
-    <p>القاموس هيقولك <span lang="en">depend</span> يعني إيه. المدرّس بقى هيقولك هتغلط فيها إزاي:
-      إحنا بنقول «يعتمد على»، فتلاقي نفسك كاتب <span lang="en">depend <s>of</s></span>.</p>
-    <p>في التطبيق أكتر من مية غلطة من النوع ده، مكتوبين بإيد مدرّس. حروف الجر.
-      والكلمات اللي ليها معنى واحد عندنا، زي <span lang="en">borrow</span> و<span lang="en">lend</span>، أو <span lang="en">say</span> و<span lang="en">tell</span>.
-      والكلمات اللي شكلها بيخدع: <span lang="en">actually</span> مش معناها «حاليًا». والكلمات اللي مبتتجمعش، فمفيش حاجة اسمها <span lang="en">an <s>advice</s></span>.</p>
+    <div class="teacher-copy">
+      <h2>مدرّس فاهم الغلط اللي العرب بيقعوا فيه</h2>
+      <p>القاموس هيقولك <span lang="en">depend</span> يعني إيه. المدرّس بقى هيقولك هتغلط فيها إزاي:
+        إحنا بنقول «يعتمد على»، فتلاقي نفسك كاتب <span lang="en">depend <s>of</s></span>.</p>
+      <p>في التطبيق أكتر من مية غلطة من النوع ده، مكتوبين بإيد مدرّس. حروف الجر.
+        والكلمات اللي ليها معنى واحد عندنا، زي <span lang="en">borrow</span> و<span lang="en">lend</span>، أو <span lang="en">say</span> و<span lang="en">tell</span>.
+        والكلمات اللي شكلها بيخدع: <span lang="en">actually</span> مش معناها «حاليًا». والكلمات اللي مبتتجمعش، فمفيش حاجة اسمها <span lang="en">an <s>advice</s></span>.</p>
 
-    <figure class="specimen trap" lang="en" dir="ltr" aria-label="Example of a usage trap in the app">
-      <p class="kind">Preposition</p>
-      <p class="wrong"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><span>It depends of the weather.</span></p>
-      <p class="right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span>It depends on the weather.</span></p>
-    </figure>
+      <h3>وبعدين تكتب جملتك إنت، وهو يصححهالك</h3>
+      <p>في خطوة <b lang="en">Use it</b> بتكتب جملة عن حياتك بالكلمة. والتطبيق بيقراها زي ما المدرّس بيقرا الكشكول،
+        على جهازك ومن غير نت. استخدمت الكلمة؟ الجملة كاملة؟ مش ناقلها من المثال؟ وفيها غلطة من غلطات العرب في أي حتة فيها؟
+        ولو النت معاك، بيبصّ كمان على الجرامر كله: «<span lang="en">She don't</span>»، «<span lang="en">I didn't went</span>».</p>
+    </div>
 
-    <h3>وبعدين تكتب جملتك إنت، وهو يصححهالك</h3>
-    <p>في خطوة <b lang="en">Use it</b> بتكتب جملة عن حياتك بالكلمة. والتطبيق بيقراها زي ما المدرّس بيقرا الكشكول،
-      على جهازك ومن غير نت. استخدمت الكلمة؟ الجملة كاملة؟ مش ناقلها من المثال؟ وفيها غلطة من غلطات العرب في أي حتة فيها؟
-      ولو النت معاك، بيبصّ كمان على الجرامر كله: «<span lang="en">She don't</span>»، «<span lang="en">I didn't went</span>».</p>
-
-    <figure class="specimen check" lang="en" dir="ltr" aria-label="Example of a sentence being checked">
-      <p class="mine">my plans <u>depends of</u> my boss</p>
-      <p class="fix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span><b>depend on</b> — never of, from or at.</span></p>
-    </figure>
-    <p>والجملة اللي كتبتها بترجعلك في المراجعة. وبصراحة، مفيش حاجة بتفكّرك بالكلمة قد جملة إنت اللي كاتبها عن نفسك. صح؟</p>
+    <div class="teacher-demo">
+      <figure class="specimen trap" lang="en" dir="ltr" aria-label="Example of a usage trap in the app">
+        <p class="kind">Preposition</p>
+        <p class="wrong"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><span>It depends of the weather.</span></p>
+        <p class="right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span>It depends on the weather.</span></p>
+      </figure>
+      <figure class="specimen check" lang="en" dir="ltr" aria-label="Example of a sentence being checked">
+        <p class="mine">my plans <u>depends of</u> my boss</p>
+        <p class="fix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span><b>depend on</b> — never of, from or at.</span></p>
+      </figure>
+      <p class="demo-note">وبعد ما تصحح، الجملة اللي كتبتها بترجعلك في المراجعة. مفيش حاجة بتفكّرك بالكلمة قد جملة إنت كاتبها عن نفسك.</p>
+    </div>
   </section>
 
   <section class="block">
-    <h2>وحاجات صغيرة بتفرق</h2>
+    <div class="section-head">
+      <h2>وحاجات صغيرة بتفرق</h2>
+      <p class="sub">تاني يوم مش هتفتكر إنك شفتها، هتفتكر إنك عشتها.</p>
+    </div>
     <dl class="features">
       <div><dt>الكلمة دي تستاهل وقتك؟</dt>
         <dd>جنب كل كلمة هتعرف هي من أشهر ١٠٠٠ كلمة في الإنجليزي ولا كلمة نادرة. عشان وقتك يروح للي هينفعك الأول.
@@ -112,55 +158,73 @@
     </dl>
   </section>
 
-  <section class="block privacy">
-    <h2>كلماتك على جهازك إنت</h2>
-    <p>مفيش حسابات ولا سيرفرات ولا إعلانات. كل كلمة وكل خطوة بتتحفظ في المتصفح عندك وبس.
-      فيه كام حاجة بتستخدم النت، كلها خدمات ببلاش، وتقدر تقفلها:</p>
-    <ul>
-      <li><b>الملء التلقائي</b>: بيبعت الكلمة الإنجليزي لوحدها لقواميس ببلاش، عشان يجيب معناها ومثالها ونطقها والكلام اللي بيمشي معاها.</li>
-      <li><b>تصحيح الجرامر</b>: في <span lang="en">Use it</span>، لما تدوس Check، جملتك بس بتروح لـ LanguageTool يراجع الجرامر والإملا.</li>
-      <li><b>أمثلة زيادة</b>: لو دوست <span lang="en">More examples</span>، الكلمة بتروح لـ Tatoeba يجيبلك جمل حقيقية.</li>
-      <li><b>الصوت المتسجّل</b>: بينزّل تسجيل نطق الكلمة من القاموس. ومن غير نت؟ صوت جهازك هو اللي بينطق.</li>
-    </ul>
-    <p>وكل فترة اعمل نسخة احتياطية، هي ملف واحد. أو انقل بياناتك لجهاز تاني بالـ QR.</p>
+  <section id="privacy" class="block privacy">
+    <div class="privacy-lead">
+      <h2>كلماتك على جهازك إنت</h2>
+      <p>مفيش حسابات ولا سيرفرات ولا إعلانات. كل كلمة وكل خطوة بتتحفظ في المتصفح عندك وبس.
+        تقدر تسيب التطبيق سنة وترجع، وهتلاقي كل حاجة زي ما هي.</p>
+      <p class="backup-line"><span>وكل فترة اعمل نسخة احتياطية — ملف واحد فيه كل حاجة.</span>
+        <a href="index.html#/data">افتح Backup &amp; export</a></p>
+    </div>
+    <div class="privacy-online">
+      <h3>النت بيتستخدم في أربع حاجات بس</h3>
+      <ul class="online-list">
+        <li><b>الملء التلقائي</b><span>بيبعت الكلمة الإنجليزي لوحدها لقواميس ببلاش، عشان يجيب معناها ومثالها ونطقها والكلام اللي بيمشي معاها.</span></li>
+        <li><b>تصحيح الجرامر</b><span>في <span lang="en">Use it</span>، لما تدوس Check، جملتك بس بتروح لـ LanguageTool يراجع الجرامر والإملا.</span></li>
+        <li><b>أمثلة زيادة</b><span>لو دوست <span lang="en">More examples</span>، الكلمة بتروح لـ Tatoeba يجيبلك جمل حقيقية.</span></li>
+        <li><b>الصوت المتسجّل</b><span>بينزّل تسجيل نطق الكلمة من القاموس. ومن غير نت؟ صوت جهازك هو اللي بينطق.</span></li>
+      </ul>
+      <p class="privacy-note">كلها خدمات ببلاش، وتقدر تقفلها من الإعدادات.</p>
+    </div>
   </section>
 
   <section class="block">
-    <h2>نزّله على جهازك</h2>
+    <div class="section-head">
+      <h2>نزّله على جهازك</h2>
+      <p class="sub">بيشتغل في المتصفح على طول، وبيكون أحسن لما تحطه على الشاشة الرئيسية.</p>
+    </div>
     <dl class="install">
-      <div><dt>أندرويد</dt><dd>افتحه من Chrome، ومن القايمة ⋮ اختار <b lang="en">Install app</b>. بعدها هتلاقي VocabStudy في قايمة الـ Share.</dd></div>
-      <div><dt>آيفون وآيباد</dt><dd>افتحه من Safari، وبعدين <b><span lang="en">Share</span> ← <span lang="en">Add to Home Screen</span></b>.
+      <div><dt>أندرويد <span class="plat" lang="en" dir="ltr">Android</span></dt><dd>افتحه من Chrome، ومن القايمة ⋮ اختار <b lang="en">Install app</b>. بعدها هتلاقي VocabStudy في قايمة الـ Share.</dd></div>
+      <div><dt>آيفون وآيباد <span class="plat" lang="en" dir="ltr">iPhone</span></dt><dd>افتحه من Safari، وبعدين <b><span lang="en">Share</span> ثم <span lang="en">Add to Home Screen</span></b>.
         ونزّله بجد، متكسلش: الآيفون ممكن يمسح بيانات المواقع اللي مش متثبتة لو فضلت أسبوع من غير ما تفتحها.</dd></div>
-      <div><dt>الكمبيوتر</dt><dd>من Chrome أو Edge دوس على أيقونة التثبيت اللي في شريط العنوان. ومن صفحة <b lang="en">Add words</b> اسحب زرار <b lang="en">Add to VocabStudy</b> لشريط المفضلة.</dd></div>
+      <div><dt>الكمبيوتر <span class="plat" lang="en" dir="ltr">Desktop</span></dt><dd>من Chrome أو Edge دوس على أيقونة التثبيت اللي في شريط العنوان. ومن صفحة <b lang="en">Add words</b> اسحب زرار <b lang="en">Add to VocabStudy</b> لشريط المفضلة.</dd></div>
     </dl>
   </section>
 
-  <section class="block faq">
-    <h2>أسئلة بتتسأل كتير</h2>
-    <details><summary>ليه التطبيق نفسه بالإنجليزي؟</summary>
-      <p>قاصدين ده. كل زرار وكل جملة فيه تمرين صغير على الإنجليزي. والعربي موجود في المكان اللي بيعلّمك فيه: معنى الكلمة، وشرح الغلطات.
-        والجمل قصيرة وسهلة، يعني لو مستواك A2 هتمشي معاه عادي.</p></details>
-    <details><summary>هو ببلاش بجد؟</summary>
-      <p>أيوه، كله، وطول العمر. مفيش اشتراك ولا إعلانات ولا حاجة بفلوس. والكود نفسه منشور، أي حد يقدر يقراه ويساعد فيه.</p></details>
-    <details><summary>فيه قوايم كلمات جاهزة؟</summary>
-      <p>لأ، وده مقصود. التطبيق بيبدأ فاضي، عشان أحسن كلمة تتعلمها هي الكلمة اللي إنت قابلتها ومحتاجها.
-        ولو عندك قايمة على Excel أو Google Sheets، الزقها مرة واحدة وخلاص.</p></details>
-    <details><summary>ينفع لمستوايا؟</summary>
-      <p>هو معمول للي مستواه من A2 لحد C1 تقريبًا. طالب، موظف، أو حد بيجهز لـ IELTS أو لشغل برّه.</p></details>
-    <details><summary>ممكن كلماتي تضيع؟</summary>
-      <p>هي محفوظة في المتصفح. لو مسحت بيانات المتصفح هتروح، عشان كده التطبيق بيفكّرك كل أسبوع تعمل نسخة احتياطية.
-        وتقدر تنقلها لجهاز تاني في أي وقت.</p></details>
+  <section id="faq" class="block faq">
+    <div class="section-head">
+      <h2>أسئلة بتتسأل كتير</h2>
+    </div>
+    <div class="faq-list">
+      <details><summary>ليه التطبيق نفسه بالإنجليزي؟</summary>
+        <p>قاصدين ده. كل زرار وكل جملة فيه تمرين صغير على الإنجليزي. والعربي موجود في المكان اللي بيعلّمك فيه: معنى الكلمة، وشرح الغلطات.
+          والجمل قصيرة وسهلة، يعني لو مستواك A2 هتمشي معاه عادي.</p></details>
+      <details><summary>هو ببلاش بجد؟</summary>
+        <p>أيوه، كله، وطول العمر. مفيش اشتراك ولا إعلانات ولا حاجة بفلوس. والكود نفسه منشور، أي حد يقدر يقراه ويساعد فيه.</p></details>
+      <details><summary>فيه قوايم كلمات جاهزة؟</summary>
+        <p>لأ، وده مقصود. التطبيق بيبدأ فاضي، عشان أحسن كلمة تتعلمها هي الكلمة اللي إنت قابلتها ومحتاجها.
+          ولو عندك قايمة على Excel أو Google Sheets، الزقها مرة واحدة وخلاص.</p></details>
+      <details><summary>ينفع لمستوايا؟</summary>
+        <p>هو معمول للي مستواه من A2 لحد C1 تقريبًا. طالب، موظف، أو حد بيجهز لـ IELTS أو لشغل برّه.</p></details>
+      <details><summary>ممكن كلماتي تضيع؟</summary>
+        <p>هي محفوظة في المتصفح. لو مسحت بيانات المتصفح هتروح، عشان كده التطبيق بيفكّرك كل أسبوع تعمل نسخة احتياطية.
+          وتقدر تنقلها لجهاز تاني في أي وقت.</p></details>
+    </div>
   </section>
 
   <section class="final">
-    <h2>ابدأ بكلمة واحدة قابلتها النهارده.</h2>
+    <div>
+      <h2>ابدأ بكلمة واحدة <mark>قابلتها النهارده</mark>.</h2>
+      <p>مش محتاج خطة ولا كورس. الكلمة اللي شفتها دلوقتي هي أول كلمة في مكتبتك.</p>
+    </div>
     <a class="btn btn-primary" href="index.html">افتح VocabStudy</a>
   </section>
 </main>
 
 <footer class="foot">
-  <p>VocabStudy مفتوح المصدر (رخصة MIT): <a href="https://github.com/nagdista-dev/vocabstudy" lang="en" dir="ltr">github.com/nagdista-dev/vocabstudy</a></p>
-  <p>أرقام شيوع الكلمات جاية من <a href="https://github.com/rspeer/wordfreq" lang="en">wordfreq</a> (CC BY-SA 4.0).</p>
+  <p>VocabStudy مفتوح المصدر (رخصة MIT):</p>
+  <p><a href="https://github.com/nagdista-dev/vocabstudy" lang="en" dir="ltr">github.com/nagdista-dev/vocabstudy</a></p>
+  <p>أرقام شيوع الكلمات جاية من <a href="https://github.com/rspeer/wordfreq" lang="en">wordfreq</a> <span class="nowrap" lang="en" dir="ltr">(CC BY-SA 4.0)</span>.</p>
 </footer>
 </body>
 </html>

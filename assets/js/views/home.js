@@ -80,7 +80,8 @@
     };
   }
 
-  /* Daily goal: answers across every activity, against Settings → Daily goal. */
+  /* Daily goal: answers across every activity, against Settings → Daily goal.
+     On the dark hero it is one quiet line with a short track. */
   function goal(t) {
     const target = VS.store.settings().dailyGoal || 0;
     if (!target || !t.words) return "";
@@ -89,11 +90,11 @@
     const pct = Math.min(100, Math.round((done / target) * 100));
     return html`
       <div class="today-goal ${reached ? "is-done" : ""}">
-        <p class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span>Daily goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}</p>
-        <div class="today-goal-track" role="progressbar" aria-label="Daily goal: ${done} of ${target} answers"
+        <span class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span><span class="today-goal-extra">Daily </span>Goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}</span>
+        <span class="today-goal-track" role="progressbar" aria-label="Daily goal: ${done} of ${target} answers"
              aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(done, target)}">
           <i style="width:${pct}%"></i>
-        </div>
+        </span>
       </div>`;
   }
 
@@ -103,13 +104,15 @@
     const keys = ["learn", "quiz", "spell", "match", "write", "speak"];
     const items = p.steps.filter((s) => keys.includes(s.key) &&
       (!p.next || s.key !== p.next.key) && (s.open || (s.done && s.key !== "learn")));
-    if (!items.length) return "";
+    const quick = p.t.started >= 3 && VS.store.quickWords(10).length >= 2;
+    if (!items.length && !quick) return "";
     return html`
       <ol class="today-steps" aria-label="More ways to practise today's words">
         ${items.map((s) => html`
           <li class="${s.done ? "is-done" : ""}">
             <a href="${s.href}">${icon(s.done ? "check" : s.icon, "icon-sm")}<span>${s.name}</span>${s.count ? html`<b>${s.count}</b>` : ""}</a>
           </li>`)}
+        ${quick ? html`<li class="is-quick"><a href="#/quick">${icon("bolt", "icon-sm")}<span>Quick 5</span></a></li>` : ""}
       </ol>`;
   }
 
@@ -120,20 +123,22 @@
     const cta = p.next && (p.next.key === "recall" ? "Start recall"
       : p.next.key === "learn" ? "Learn new words"
       : "Start " + p.next.name.toLowerCase());
+    const goalMarkup = goal(p.t);
     return html`
-      <section class="today-strip" aria-labelledby="today-title">
-        <div class="today-top">
-          <span class="today-kicker">Today</span>
-          ${streak ? html`<span class="today-streak" title="${streak} days in a row">${icon("flame", "icon-sm")} ${streak}-day streak</span>` : ""}
-        </div>
+      <section class="today-hero ${p.next ? "" : "is-done"}" aria-labelledby="today-title">
+        ${streak || goalMarkup ? html`
+          <div class="today-top">
+            ${streak ? html`<span class="today-streak" title="${streak} days in a row">${icon("flame", "icon-sm")} ${streak}-day streak</span>` : html`<span></span>`}
+            ${goalMarkup}
+          </div>` : ""}
         <div class="today-copy">
           <h2 id="today-title">${h.markup}</h2>
-          <p class="hint">${h.line}</p>
+          <p class="today-line">${h.line}</p>
         </div>
-        ${p.next ? html`<a class="btn btn-primary btn-lg btn-block today-cta" href="${p.next.href}">${icon(p.next.icon, "icon-sm")} ${cta}</a>` : ""}
-        ${goal(p.t)}
+        ${p.next ? html`<a class="today-cta" href="${p.next.href}">
+          <span>${cta}</span><span class="today-cta-ico">${icon("arrow-right", "icon-sm")}</span>
+        </a>` : ""}
         ${shortcuts(p)}
-        ${p.t.started >= 3 ? html`<a class="today-quick" href="#/quick">${icon("bolt", "icon-sm")}<span>Only five minutes? <b>Quick 5</b> — the 10 words that matter most</span></a>` : ""}
       </section>`;
   }
 

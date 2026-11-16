@@ -78,7 +78,8 @@
       if (s.board >= s.boards.length) return html`<div class="activity">${finish()}</div>`;
       return html`
         <div class="activity activity-wide">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Match · " + s.scope.title, index: s.board, total: s.boards.length })}
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Match", sub: s.scope.title, index: s.board, total: s.boards.length })}
+          <div class="activity-stage">
           <div class="match-bar">
             <span>${icon("clock", "icon-sm")} <b id="matchClock">${VS.formatTime(s.start ? Date.now() - s.start : 0)}</b></span>
             <span class="hint">${s.matched.size} / ${s.en.length} pairs · ${VS.plural(s.misses, "miss", "misses")}</span>
@@ -87,6 +88,7 @@
           <div class="match-grid">
             <div class="match-col">${s.en.map((w) => tile(w, "en"))}</div>
             <div class="match-col">${s.ar.map((w) => tile(w, "ar"))}</div>
+          </div>
           </div>
         </div>`;
     },

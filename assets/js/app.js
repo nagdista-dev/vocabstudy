@@ -139,10 +139,10 @@
      on wide screens, a bottom tab bar on phones and tablets (where the
      thumb is). Activities hide the tab bar so nothing distracts. */
   const NAV = [
-    { id: "home", label: "Words", icon: "book", href: () => "#/", match: ["library"] },
+    { id: "home", label: "Today", icon: "home", href: () => "#/", match: ["library"] },
     { id: "recall", label: "Recall", icon: "review", href: () => "#/recall", match: ["recall"] },
     { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats", "week"] },
-    { id: "add", label: "Add words", icon: "plus", href: () => "#/add", match: ["import"] },
+    { id: "add", label: "Add", icon: "plus", href: () => "#/add", match: ["import"] },
   ];
   const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak", "write"];
 
@@ -152,7 +152,7 @@
       const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>` : "";
       return html`<a class="${cls}-link" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
         ${n.id === "recall" ? VS.raw(`aria-label="Recall — ${due ? due + " words due" : "nothing due"}"`) : ""}>
-        <span class="${cls}-ico">${icon(n.icon)}${count}</span><span class="${cls}-label">${n.label}</span></a>`;
+        <span class="${cls}-ico">${icon(n.icon)}${cls === "tab" ? count : ""}</span><span class="${cls}-label">${n.label}</span>${cls === "bar" ? count : ""}</a>`;
     });
   }
 
@@ -172,7 +172,7 @@
     appBadge(due);
     const crumbsEl = VS.$("#crumbs");
     if (!crumbsEl) return;
-    document.body.dataset.mode = ACTIVITIES.includes(current.name) || current.name === "print" ? "activity" : "browse";
+    document.body.dataset.mode = ACTIVITIES.includes(current.name) ? "activity" : "browse";
     const barNav = VS.$("#barNav"), tabBar = VS.$("#tabBar");
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
@@ -261,7 +261,7 @@
 
         <h3 class="sheet-group">Look</h3>
         <div class="setting"><b>Accent colour</b><div class="seg swatches">
-          ${[["blue", "Ink blue"], ["teal", "Teal"], ["violet", "Violet"], ["rose", "Rose"]].map(([v, l]) =>
+          ${[["blue", "Ink blue"], ["teal", "Teal"], ["violet", "Violet"], ["rose", "Rose"], ["plum", "Plum"], ["cocoa", "Cocoa"]].map(([v, l]) =>
             html`<button type="button" data-action="setting" data-name="accent" data-value="${v}" aria-pressed="${st.accent === v}"><i class="swatch sw-${v}"></i>${l}</button>`)}
         </div></div>
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
@@ -399,7 +399,7 @@
     if (href) el.href = href;
   };
   fill("brandLink", html`${VS.brandMark}<span>VocabStudy</span>`, VS.homeHref);
-  fill("settingsBtn", icon("settings"));
+  fill("settingsBtn", icon("gear"));
   applySettings();
   VS.store.onChange(() => current && renderBar());
   VS.autofill.resume();                          // words added offline get filled now

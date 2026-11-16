@@ -386,7 +386,7 @@
       const e = VS.store.word(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
       return html`
-        <details class="word-row" data-status="${s}" data-id="${w.id}">
+        <details class="word-row ${w.word.length > 14 ? "is-long" : ""}" data-status="${s}" data-id="${w.id}">
           <summary>
             <span class="word-row-word">
               <i class="word-row-dot" aria-hidden="true"></i>
@@ -396,7 +396,10 @@
               : html`<span class="word-row-ar hint">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No meaning yet"}</span>`}
             <span class="word-row-meta">
               <span class="word-row-state" data-s="${s}">${state}</span><span class="word-row-sep" aria-hidden="true">·</span>
-              ${w.type}${w.level ? " · " + w.level : ""}${VS.frequency.band(w) ? " · " + VS.frequency.band(w).label : ""}${w.tags.length ? " · " + w.tags.map((t) => "#" + t).join(" ") : ""}${VS.store.note(w.id) ? html` · ${icon("bulb", "icon-sm")}` : ""}
+              <span>${w.type}${w.level ? " · " + w.level : ""}</span>
+              ${VS.frequency.band(w) ? html`<span class="word-row-freq">${VS.frequency.band(w).label}</span>` : ""}
+              ${w.tags.length ? html`<span class="word-row-tagline">${w.tags.map((t) => "#" + t).join(" ")}</span>` : ""}
+              ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
             </span>
             <span class="word-row-badges">${VS.ui.statusBadge(w)}${VS.ui.levelBadge(w)}</span>
             ${icon("chevron-right", "icon-sm word-row-chev")}
@@ -458,9 +461,10 @@
         ch === " " ? html`<span class="ch-space"> </span>` : html`<span class="${hit.has(i) ? "ch-ok" : "ch-bad"}">${ch}</span>`);
     },
 
-    /** Top of every activity: back link, title, counter and progress bar.
-        `undo`: show "Undo" — takes back the last answer (a mis-tap on a phone). */
-    activityHead({ back, title, index, total, combo, undo }) {
+    /** Top of every activity: one exit, a short title with its scope, and
+        the round's progress. `undo`: show "Undo" — takes back a mis-tap.
+        `sub`: the quiet scope line ("Whole library", "Due today"). */
+    activityHead({ back, title, sub, index, total, combo, undo }) {
       const bump = combo !== VS.ui.lastCombo;   // pulse only when the streak just changed
       if (bump && combo >= 3) setTimeout(() => VS.sfx.play("combo", combo), 160);
       VS.ui.lastCombo = combo;
@@ -469,8 +473,11 @@
         <header class="activity-head">
           <div class="row">
             <a class="icon-btn" href="${back}" aria-label="Leave this activity">${icon("x")}</a>
-            <h1>${title}</h1>
-            ${combo >= 2 ? html`<span class="combo ${bump ? "bump" : ""}" title="Right answers in a row">${icon("flame", "icon-sm")} ${combo} in a row</span>` : ""}
+            <div class="activity-title">
+              <h1>${title}</h1>
+              ${sub ? html`<p class="activity-sub">${sub}</p>` : ""}
+            </div>
+            ${combo >= 2 ? html`<span class="combo ${bump ? "bump" : ""}" title="Right answers in a row">${icon("flame", "icon-sm")} <b>${combo}</b><span class="combo-word"> in a row</span></span>` : ""}
             ${undo ? html`<button class="btn btn-quiet btn-undo" type="button" data-action="undo" title="Take back the last answer (U)" aria-label="Undo the last answer">${icon("undo", "icon-sm")}<span>Undo</span></button>` : ""}
             <span class="count" aria-live="polite">${Math.min(index + 1, total)} / ${total}</span>
           </div>
@@ -501,6 +508,12 @@
     /** End-of-session screen. `stats` = [{ value, label, tone }], `words` = mistakes to show. */
     summary({ title, message, stats, words, actions }) {
       VS.sfx.play("done");
+      // Results are a new screen. Start at the top even if the smooth scroll
+      // from the last answer is still running (it would otherwise leave the
+      // summary 40–50px down the page).
+      requestAnimationFrame(() => {
+        if (document.querySelector(".summary")) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      });
       // A milestone reached in this session (100, 500, 1000… mastered) is celebrated once.
       const reached = VS.milestones.claim();
       if (reached) setTimeout(VS.ui.celebrate, 250);
@@ -517,10 +530,6 @@
           <div class="summary-stats">
             ${stats.map((s) => html`<div class="summary-stat ${s.tone ? "is-" + s.tone : ""}"><b>${s.value}</b><span>${s.label}</span></div>`)}
           </div>
-          ${words && words.length
-            ? html`<h2 class="summary-sub">Words to look at again</h2>
-                   <div class="word-list">${words.map(VS.ui.wordRow)}</div>`
-            : ""}
           <div class="summary-actions">
             ${actions.filter(Boolean).map((a) =>
               a.href
@@ -528,6 +537,10 @@
                 : html`<button class="btn btn-lg ${a.primary ? "btn-primary" : ""}" type="button" data-action="${a.action}">${a.label}</button>`
             )}
           </div>
+          ${words && words.length
+            ? html`<h2 class="summary-sub">Words to look at again</h2>
+                   <div class="word-list">${words.map(VS.ui.wordRow)}</div>`
+            : ""}
         </section>`;
     },
 

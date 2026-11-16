@@ -1,6 +1,15 @@
 /* views/import.css — the "Add words" screen: paste → check → save. */
 
 .import-page { display: grid; gap: var(--s-5); }
+/* Desktop "Type a word": the form and the shelf sit side by side instead of
+   stretching one input across the whole page. Other tabs keep the full width
+   their table or text preview needs. */
+@media (min-width: 1024px) {
+  .import-page.is-type { grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }
+  .import-page.is-type > .page-head { grid-column: 1 / -1; }
+  .import-page.is-type > .import-main { grid-column: 1; grid-row: 2; }
+  .import-page.is-type > .import-side { grid-column: 2; grid-row: 2; }
+}
 .import-tabs { width: fit-content; max-width: 100%; }
 .import-tabs .tab-short { display: none; }
 /* Phones: all three ways stay visible — equal columns, short one-line labels. */
@@ -87,17 +96,44 @@
 .add-more[open] > summary .icon { transform: rotate(90deg); }
 .add-more .word-form { margin-top: var(--s-3); }
 
-/* Just added: auto-fill fills these in while you watch. */
-.recent-list { list-style: none; padding: 0; display: grid; gap: var(--s-1); }
-.recent-list li {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--s-3);
-  padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface-2);
+/* Latest words: the shelf under the form, so the screen is never empty. */
+.recent-list { list-style: none; padding: 0; display: grid; }
+.recent-list li { border-top: 1px solid var(--line); }
+.recent-list li:first-child { border-top: 0; }
+.recent-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline;
+  gap: 1px 12px; min-height: 54px; padding: 9px 2px;
+  color: inherit; text-decoration: none;
 }
-.recent-list [lang="ar"] { text-align: end; }
+.recent-row:hover .recent-word b { color: var(--brand); }
+.recent-word { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.recent-word b { font-weight: 600; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
+.recent-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); align-self: center; }
+.recent-dot[data-s="learning"] { background: var(--mark); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-mark) 28%, transparent); }
+.recent-dot[data-s="mastered"] { background: var(--good); }
+.recent-ar { color: var(--ink-2); font-size: .98rem; text-align: end; max-width: 42vw; overflow-wrap: anywhere; }
+.recent-meta {
+  grid-column: 1 / -1; font-size: var(--text-2xs); color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Long words take the full phone row: the Arabic meaning moves under the
+   word and the meta line follows, instead of fragmenting both columns. */
 @media (max-width: 640px) {
-  .recent-list li { grid-template-columns: minmax(0, 1fr) auto; }
-  .recent-list li > :last-child { grid-column: 1 / -1; }
+  .recent-row.is-long { grid-template-columns: minmax(0, 1fr); row-gap: 2px; }
+  .recent-row.is-long .recent-ar { grid-column: 1; grid-row: 2; max-width: none; text-align: left; }
+  .recent-row.is-long .recent-meta { grid-row: 3; }
 }
+
+/* Empty library: one quiet explanation of the method instead of dead paper. */
+.import-next { padding: var(--s-4) var(--s-5) var(--s-3); }
+.import-next h2 { font-size: var(--text-md); }
+.import-next-list { list-style: none; padding: 0; display: grid; margin-top: var(--s-2); }
+.import-next-list li {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr);
+  gap: var(--s-3); padding: 10px 0; border-top: 1px solid var(--line);
+}
+.import-next-when { color: var(--ink-3); font-size: var(--text-xs); font-weight: 700; padding-top: 1px; }
+.import-next-list p { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.45; }
 
 #importCheck { scroll-margin-top: calc(var(--bar-h) + var(--s-3)); }
 

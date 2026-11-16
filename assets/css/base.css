@@ -12,9 +12,7 @@ html {
 
 body {
   min-height: 100dvh;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 55%, var(--paper)) 0, var(--paper) 420px) no-repeat,
-    var(--paper);
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-md);
@@ -48,7 +46,7 @@ a { color: var(--brand); text-underline-offset: 3px; }
   direction: rtl;
   unicode-bidi: isolate;
 }
-.ipa { font-family: var(--font-ipa); color: var(--ink-2); letter-spacing: .01em; }
+.ipa { font-family: var(--font-ipa); color: var(--ink-2); letter-spacing: .01em; overflow-wrap: anywhere; }
 
 /* One visible focus style for every interactive element. */
 :focus-visible {

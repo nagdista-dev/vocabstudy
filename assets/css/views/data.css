@@ -1,38 +1,88 @@
-/* views/data.css — Backup & export. Three cards: icon | text | actions. */
+/* views/data.css — Backup & export. A real file, then a short list of
+   jobs, not four identical icon cards. */
 
 .data-page { display: grid; gap: var(--s-4); }
-.data-card {
-  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: var(--s-4);
-  padding: var(--s-5);
+
+/* The file itself: type badge, name, one button. */
+.file-card { padding: var(--s-4) var(--s-5) var(--s-5); display: grid; gap: var(--s-3); }
+.file-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-4); }
+.file-type {
+  display: grid; place-items: center; width: 46px; height: 54px; flex: none;
+  border-radius: 6px 12px 12px 6px; background: var(--mark-soft); color: var(--on-mark);
+  font-family: var(--font-display); font-size: var(--text-2xs); font-weight: 700; letter-spacing: .05em;
+  border-inline-start: 4px solid var(--mark);
 }
-.data-card h2 { font-size: var(--text-lg); margin-bottom: var(--s-1); }
-.data-card .seg { width: fit-content; max-width: 100%; margin-top: var(--s-3); }
-.data-card .hint { margin-top: var(--s-2); }
-.data-ico {
-  display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-md);
-  background: var(--brand-soft); color: var(--brand); align-self: start;
+.file-copy { display: grid; gap: 1px; min-width: 0; }
+.file-copy h2 { font-size: var(--text-lg); }
+.file-name {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: var(--text-xs); color: var(--ink-3); line-height: 1.35;
+  overflow-wrap: anywhere;   /* the full date matters; a clipped filename doesn't */
 }
+.file-meta { color: var(--ink-2); font-size: var(--text-sm); }
+
+/* The other jobs: one grouped list with hairlines, like a settings page. */
+.data-list { padding: 0 var(--s-5); }
+.data-row { display: grid; gap: var(--s-3); padding: var(--s-5) 0; border-top: 1px solid var(--line); }
+.data-row:first-child { border-top: 0; }
+.data-row-head { display: grid; gap: 2px; }
+.data-row h2 { font-size: var(--text-md); }
+.data-row p { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; max-width: 58ch; }
+.data-actions { gap: var(--s-2); }
+.data-actions .seg { width: fit-content; max-width: 100%; }
+.data-row > .btn { justify-self: start; }
+.data-count { font-size: var(--text-xs) !important; }
+.data-foot { margin-top: 0; }
 .data-foot a { color: var(--brand); }
 
-@media (max-width: 760px) {
-  .data-card { grid-template-columns: 44px minmax(0, 1fr); }
-  .data-card > .row { grid-column: 1 / -1; }
-  .data-card > .row .btn { flex: 1 1 auto; }
+/* Wide screens: text on the left, its actions on the right, like a
+   settings page. The hint under "Export words" still spans the row. */
+@media (min-width: 900px) {
+  .data-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center; column-gap: var(--s-7);
+  }
+  .data-row-head { grid-column: 1; }
+  .data-row > .btn,
+  .data-row > .data-actions { grid-column: 2; grid-row: 1; justify-self: end; }
+  .data-row > .data-count { grid-column: 1 / -1; }
+}
+
+@media (max-width: 640px) {
+  .file-card { padding: var(--s-4); }
+  .file-head { grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); }
+  .file-head > .btn { grid-column: 1 / -1; width: 100%; }
+  .file-type { width: 40px; height: 48px; }
+  .data-list { padding: 0 var(--s-4); }
+  .data-row { padding: var(--s-4) 0; }
+  .data-actions .btn { flex: 1 1 auto; }
+  .data-actions .seg { width: 100%; }
 }
 
 /* ── Move to another device (QR) ──────────────────────────────── */
 .transfer-page { max-width: var(--activity-max); }
-.transfer-card { padding: clamp(20px, 4vw, 32px); }
-.transfer-choose { display: grid; gap: var(--s-3); }
-@media (min-width: 560px) { .transfer-choose { grid-template-columns: 1fr 1fr; } }
+.transfer-card { padding: var(--s-2) var(--s-5) var(--s-5); }
+.transfer-choose { display: grid; }
 .transfer-pick {
-  display: grid; gap: var(--s-2); justify-items: start; text-align: start; padding: var(--s-5);
-  font: inherit; color: var(--ink); cursor: pointer; border: 1px solid var(--line); background: var(--surface);
+  display: grid; grid-template-columns: 46px minmax(0, 1fr); grid-template-areas: "ico title" "ico text";
+  align-items: center; gap: 1px var(--s-4); justify-items: start; text-align: start;
+  padding: var(--s-4) 0; min-height: 76px;
+  font: inherit; color: var(--ink); cursor: pointer; background: none; border: 0;
+  border-top: 1px solid var(--line); border-radius: 0;
 }
-.transfer-pick .icon { color: var(--brand); }
-.transfer-pick b { font-size: var(--text-lg); }
-.transfer-pick:hover { border-color: var(--brand); }
-.transfer-steps { margin: var(--s-5) 0 var(--s-3); padding-inline-start: 1.3em; display: grid; gap: var(--s-1); color: var(--ink-2); }
+.transfer-pick:first-child { border-top: 0; }
+.transfer-pick .icon {
+  grid-area: ico; width: 44px; height: 44px; padding: 11px; border-radius: 50%;
+  background: var(--brand-soft); color: var(--brand);
+}
+.transfer-pick b { grid-area: title; font-size: var(--text-md); }
+.transfer-pick .hint { grid-area: text; line-height: 1.4; }
+.transfer-pick:hover b { color: var(--brand); }
+.transfer-steps {
+  margin: var(--s-3) 0 var(--s-3); padding: var(--s-4) var(--s-4) var(--s-4) 2.2em;
+  display: grid; gap: var(--s-2); color: var(--ink-2); background: var(--surface-2); border-radius: var(--r-md);
+}
+.transfer-steps li::marker { color: var(--ink-3); font-weight: 700; }
 .transfer-send, .transfer-receive, .transfer-ready { display: grid; gap: var(--s-3); justify-items: center; text-align: center; }
 .qr-frame { width: 100%; display: grid; place-items: center; }
 .qr-frame canvas { border-radius: var(--r-md); box-shadow: var(--shadow-2); image-rendering: pixelated; }

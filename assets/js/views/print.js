@@ -262,7 +262,9 @@
     }[layout];
     return html`
       <aside class="print-controls card no-print" aria-label="Print options">
-        <h1>Download PDF or print</h1>
+        <div class="print-options">
+        <h1>Print &amp; PDF</h1>
+        <p class="print-lead hint">Choose a layout, then download the PDF or print. Everything is made on this device.</p>
 
         <fieldset><legend>Words</legend>
           ${seg("source", (opts.query ? [["pick", "My list"]] : []).concat([["all", "All"], ["due", "Due today"], ["learning", "Learning"],
@@ -293,10 +295,11 @@
           </div>
           <div class="setting"><b>Text size</b>${seg("size", [["small", "Small"], ["normal", "Normal"], ["large", "Large"]])}</div>
         </fieldset>
+        </div>
 
         <div class="print-go">
           <button class="btn btn-primary btn-lg btn-block" type="button" data-action="pdf-download" ${words.length ? "" : VS.raw("disabled")}>${icon("arrow-right", "icon-sm")} Download PDF</button>
-          <button class="btn btn-block" type="button" data-action="print-now" ${words.length ? "" : VS.raw("disabled")}>${icon("print", "icon-sm")} Print</button>
+          <button class="btn btn-block" type="button" data-action="print-now" aria-label="Print" ${words.length ? "" : VS.raw("disabled")}>${icon("print", "icon-sm")} <span class="print-now-label">Print</span></button>
           <p class="hint">${VS.plural(words.length, "word")} · A4${layout === "cards" ? " · print double-sided, flip on long edge" : ""}.</p>
         </div>
       </aside>`;

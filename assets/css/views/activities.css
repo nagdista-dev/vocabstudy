@@ -10,7 +10,7 @@
   perspective: 1400px; cursor: pointer; border-radius: var(--r-lg);
 }
 .flash-face {
-  grid-area: 1 / 1;
+  grid-area: 1 / 1; min-width: 0;
   display: grid; align-content: center; justify-items: center; gap: var(--s-3);
   padding: var(--s-6) var(--s-5); text-align: center;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
@@ -31,32 +31,32 @@
 .flash-sound { justify-content: center; }
 .flash-sound .ipa { font-size: 1.15rem; }
 .flash-tip { display: flex; align-items: center; gap: 6px; margin-top: var(--s-4); color: var(--ink-3); font-size: var(--text-sm); }
-.flash-ar { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.3rem); font-weight: 600; line-height: 1.5; }
-.flash-def { font-size: var(--text-lg); max-width: 42ch; }
+.flash-ar { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.3rem); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.flash-def { font-size: var(--text-lg); max-width: 42ch; overflow-wrap: anywhere; }
 .flash-example {
   display: flex; align-items: center; gap: var(--s-3); text-align: start;
   max-width: 52ch; padding: var(--s-3) var(--s-4);
   background: var(--surface-2); border-radius: var(--r-md); color: var(--ink-2);
 }
-.flash-example p { flex: 1; }
+.flash-example p { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .flash-word-small { color: var(--ink-3); font-size: var(--text-sm); }
 
 /* ── Recall ────────────────────────────────────────────────────── */
-.recall { display: grid; gap: var(--s-3); padding: clamp(20px, 4vw, 36px); }
+.recall { display: grid; min-width: 0; gap: var(--s-3); padding: clamp(20px, 4vw, 36px); }
 .recall-badges { gap: var(--s-2); }
-.recall-from { margin-inline-start: auto; }
-.recall-ar { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.3rem); font-weight: 600; line-height: 1.5; margin-top: var(--s-2); }
-.recall-gap { font-size: var(--text-xl); font-weight: 500; line-height: 1.4; }
+.recall-from { margin-inline-start: auto; overflow-wrap: anywhere; }
+.recall-ar { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.3rem); font-weight: 600; line-height: 1.5; margin-top: var(--s-2); overflow-wrap: anywhere; }
+.recall-gap { font-size: var(--text-xl); font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
 .recall-ar-sm { font-size: 1.25rem; color: var(--ink-2); margin-top: 0; }
-.recall-def { font-size: var(--text-lg); color: var(--ink-2); }
+.recall-def { font-size: var(--text-lg); color: var(--ink-2); overflow-wrap: anywhere; }
 .recall-form { margin-top: var(--s-3); }
 .recall-form .field input { font-size: 1.1rem; }
 .recall-answer {
   display: grid; gap: var(--s-2); margin-top: var(--s-3); padding-top: var(--s-4);
   border-top: 1px dashed var(--line-strong);
 }
-.recall-word { font-family: var(--font-word); font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.8rem); font-weight: 700; line-height: 1.15; }
-.recall-example { color: var(--ink-2); font-style: italic; }
+.recall-word { font-family: var(--font-word); font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.8rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.recall-example { color: var(--ink-2); font-style: italic; overflow-wrap: anywhere; }
 .verdict { font-weight: 600; font-size: var(--text-sm); }
 .verdict.is-right { color: var(--good); }
 .verdict.is-wrong { color: var(--bad); }
@@ -64,30 +64,33 @@
 /* ── Quiz ──────────────────────────────────────────────────────── */
 .question { padding: clamp(20px, 4vw, 32px); display: grid; gap: var(--s-3); }
 .q-label { color: var(--ink-3); font-size: var(--text-sm); font-weight: 500; }
-.q-def, .q-sentence { font-size: var(--text-xl); font-weight: 500; line-height: 1.4; }
-.q-ar { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.2rem); font-weight: 600; }
-.q-word { font-family: var(--font-word); font-size: var(--text-2xl); font-weight: 700; }
+.q-def, .q-sentence { font-size: var(--text-xl); font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
+.q-ar { font-size: clamp(1.6rem, 1.2rem + 2vw, 2.2rem); font-weight: 600; overflow-wrap: anywhere; }
+.q-word { font-family: var(--font-word); font-size: var(--text-2xl); font-weight: 700; overflow-wrap: anywhere; }
 .q-word-row { gap: var(--s-3); }
 .gap {
   display: inline-block; min-width: 4ch; height: 1.1em; vertical-align: -.18em; padding: 0 .2em;
   border-bottom: 3px solid var(--brand);
 }
 
-.options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-top: var(--s-4); }
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: var(--s-2); }
 .option {
-  display: flex; align-items: center; gap: var(--s-3); text-align: start;
-  min-height: 60px; padding: var(--s-3) var(--s-4);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center;
+  gap: var(--s-3); text-align: start;
+  min-height: 62px; padding: 11px var(--s-4);
   background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-md);
   font-size: 1.02rem; font-weight: 500;
   transition: border-color var(--fast), background var(--fast), transform var(--fast);
 }
 .option:hover:not(:disabled) { border-color: var(--brand); transform: translateY(-1px); }
-.option > span { flex: 1; overflow-wrap: anywhere; }
+.option .opt-label { min-width: 0; overflow-wrap: anywhere; }
 .option small { color: var(--ink-3); font-weight: 400; }
-.option kbd {
-  display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 7px;
-  background: var(--surface-2); color: var(--ink-3); font: 600 .78rem var(--font-body);
+.option kbd.opt-key {
+  display: grid; place-items: center; flex: none; width: 27px; height: 27px; border-radius: 7px;
+  background: var(--surface-2); color: var(--ink-2);
+  font: 700 .78rem/1 var(--font-body); letter-spacing: 0;
 }
+.opt-letter { display: none; }
 .option:disabled { cursor: default; }
 .option:disabled:not(.is-right):not(.is-wrong) { opacity: .55; }
 .option.is-right { border-color: var(--good); background: var(--good-soft); color: var(--good); }
@@ -106,15 +109,18 @@
 .feedback-title { font-weight: 700; }
 .feedback.is-right .feedback-title { color: var(--good); }
 .feedback.is-wrong .feedback-title { color: var(--bad); }
-.feedback-word { font-family: var(--font-word); font-size: var(--text-lg); font-weight: 700; }
+.feedback-word { font-family: var(--font-word); font-size: var(--text-lg); font-weight: 700; overflow-wrap: anywhere; }
 .feedback-ar { font-size: 1.15rem; }
 .feedback-example { color: var(--ink-2); font-style: italic; }
 
+@media (max-width: 1023px) {
+  .activity-stage { padding-bottom: var(--s-5); }
+}
 /* ── Spell ─────────────────────────────────────────────────────── */
 .spell { display: grid; gap: var(--s-3); padding: clamp(20px, 4vw, 36px); justify-items: center; text-align: center; }
 .spell-listen { display: flex; align-items: center; gap: var(--s-3); }
 .speak-xl { width: 76px; height: 76px; }
-.spell-ar { font-size: clamp(1.5rem, 1.2rem + 1.6vw, 2rem); font-weight: 600; }
+.spell-ar { font-size: clamp(1.5rem, 1.2rem + 1.6vw, 2rem); font-weight: 600; overflow-wrap: anywhere; }
 .spell-hint b { font-family: var(--font-word); letter-spacing: .12em; }
 .spell form { width: 100%; max-width: 440px; }
 .field-xl input { height: 60px; font-size: 1.5rem; text-align: center; letter-spacing: .06em; font-family: var(--font-word); }
@@ -124,8 +130,10 @@
 .spell-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s-2) var(--s-3); }
 .spell-line .hint { min-width: 72px; }
 .spell-diff { font-family: var(--font-word); font-size: 1.4rem; letter-spacing: .08em; }
-.spell-typed { font-family: var(--font-word); font-size: 1.15rem; color: var(--ink-2); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 60%, transparent); }
-.spell-diff { font-size: 1.6rem; font-weight: 700; letter-spacing: .06em; }
+.spell-typed { font-family: var(--font-word); font-size: 1.15rem; color: var(--ink-2); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 60%, transparent); overflow-wrap: anywhere; }
+/* One span per letter has no break opportunity between the spans: a 22-letter
+   word would push the whole card past the screen. Let it break when needed. */
+.spell-diff { font-size: 1.6rem; font-weight: 700; letter-spacing: .06em; overflow-wrap: anywhere; }
 .ch-ok { color: var(--good); }
 .ch-bad { color: var(--bad); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
 .ch-space { display: inline-block; width: .45em; }
@@ -159,7 +167,7 @@
   display: grid; min-width: 120px; padding: var(--s-4); border-radius: var(--r-lg);
   background: var(--surface); border: 1px solid var(--line);
 }
-.summary-stat b { font-family: var(--font-display); font-size: var(--text-2xl); font-variant-numeric: tabular-nums; }
+.summary-stat b { font-family: var(--font-display); font-size: var(--text-2xl); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .summary-stat span { color: var(--ink-3); font-size: var(--text-sm); }
 .summary-stat.is-good b { color: var(--good); }
 .summary-stat.is-bad b { color: var(--bad); }
@@ -175,17 +183,31 @@
 
 /* ── Phones ────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .options { grid-template-columns: 1fr; }
-  .option { min-height: 54px; }
+  .options { grid-template-columns: 1fr; gap: 8px; }
+  .option { min-height: 56px; padding: 10px 12px; gap: 10px; font-size: 1rem; border-width: 1px; }
+  .option kbd.opt-key { width: 30px; height: 30px; border-radius: 8px; background: var(--paper); }
+  .opt-num { display: none; }
+  .opt-letter { display: inline; }
+  /* Once answered, the two rows that carry meaning (your pick, the right
+     answer) are enough; the explanation follows right below them. */
+  .options.is-resolved .option:not(.is-right):not(.is-wrong) { display: none; }
   .q-def, .q-sentence { font-size: var(--text-lg); }
-  .flash { min-height: 58vh; }
+  .flash { min-height: 54vh; }
   .match-grid { gap: var(--s-2); }
   .match-col { gap: var(--s-2); }
   .tile { min-height: 58px; padding: var(--s-2) var(--s-3); font-size: .95rem; }
-  .summary-stat { min-width: 0; flex: 1; }
-  .summary-actions { width: 100%; }
-  .summary-actions .btn { flex: 1; }
-  .action-bar kbd, .option kbd { display: none; }
+  .summary { padding-top: var(--s-4); gap: var(--s-3); }
+  .summary h1 { font-size: var(--text-2xl); }
+  .summary-stats { gap: 8px; margin-block: var(--s-1); }
+  .summary-stat { min-width: 0; flex: 1; padding: 12px 8px; }
+  .summary-stat b { font-size: 1.35rem; }
+  .summary-stat span { font-size: var(--text-2xs); }
+  .summary-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .summary-actions > .btn:first-child { grid-column: 1 / -1; }
+  .summary-actions > .btn:last-child:nth-child(2),
+  .summary-actions > .btn:last-child:nth-child(4) { grid-column: 1 / -1; }
+  .summary-actions > .btn { min-width: 0; padding-inline: var(--s-3); text-wrap: balance; }
+  .action-bar kbd { display: none; }
 }
 
 /* ── Speak: say the word, the app listens ─────────────────────── */
@@ -237,10 +259,10 @@
 .feedback-usage { margin-top: var(--s-2); }
 
 /* ── Use it: write your own sentence ───────────────────────────── */
-.write { display: grid; gap: var(--s-4); padding: clamp(20px, 4vw, 32px); }
-.write-word { display: grid; gap: var(--s-2); }
-.write-headword { font-family: var(--font-word); font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem); font-weight: 700; line-height: 1.15; }
-.write-ar { font-size: 1.3rem; font-weight: 600; }
+.write { display: grid; min-width: 0; gap: var(--s-4); padding: clamp(20px, 4vw, 32px); }
+.write-word { display: grid; min-width: 0; gap: var(--s-2); }
+.write-headword { font-family: var(--font-word); font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.write-ar { font-size: 1.3rem; font-weight: 600; overflow-wrap: anywhere; }
 .write-def { color: var(--ink-2); }
 .write-example summary { cursor: pointer; font-weight: 600; color: var(--brand); min-height: var(--tap); display: flex; align-items: center; }
 .write-example[open] { display: grid; gap: var(--s-2); }

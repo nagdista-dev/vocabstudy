@@ -64,7 +64,8 @@
       const missed = s.state === "wrong";
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Speak · " + s.scope.title, index: s.index, total: s.words.length, combo: s.combo })}
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Speak", sub: s.scope.title, index: s.index, total: s.words.length, combo: s.combo })}
+          <div class="activity-stage stage-center">
           <section class="speak card">
             <p class="speak-ar" lang="ar">${w.arabic}</p>
             <p class="speak-word"><span class="mark">${w.word}</span></p>
@@ -82,6 +83,7 @@
               : "Tap the mic and say it."}</p>
           </section>
           <p class="hint speak-note">Your browser does the listening (Chrome and Edge use their online speech service). Turn Speak off in Settings.</p>
+          </div>
           <div class="action-bar">
             ${said || s.tries >= TRIES
               ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="nextBtn">Next word <kbd>Enter</kbd></button>`
