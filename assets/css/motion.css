@@ -4,17 +4,106 @@
    (a right answer, a card leaving, a word appearing) and is over in
    well under a second. Nothing loops, nothing moves on its own.
    For hours-long study days that keeps the page lively, not tiring.
+
+   Two rules keep it light:
+   - nothing animates layout: only opacity and transform move. The
+     highlighter draws with background-size and the live mic pulses its
+     shadow — both paint-only. No blur, no filters;
+   - an entrance plays once, on arrival. The app removes .view-enter
+     before re-rendering the same screen, so typing, filtering or
+     answering never replays it.
    base.css turns all of this off for "reduce motion" users.
    ------------------------------------------------------------------ */
 
-/* 1. The signature: the highlighter draws itself under a new word. */
+/* 1. The signature: the highlighter draws itself under a new word.
+   Only a face that is in view draws: in Arabic-first cards the word sits
+   on the back, so the mark waits for the flip instead of playing unseen. */
 @keyframes mark-draw { from { background-size: 0% 100%; } }
-.flash-word .mark,
+.flash:not(.is-flipped) .flash-front .flash-word .mark,
+.flash.is-flipped .flash-back .flash-word .mark,
 .recall-word .mark,
-.feedback-word .mark { animation: mark-draw 560ms var(--ease) 140ms both; background-repeat: no-repeat; }
-.flash-word .mark, .recall-word .mark, .feedback-word .mark { background-repeat: no-repeat; background-size: 100% 100%; }
+.feedback .mark {
+  animation: mark-draw 560ms var(--ease) 140ms both;
+  background-repeat: no-repeat; background-size: 100% 100%;
+}
+/* An answer, then the same word at work in its sentence. */
+.feedback-example .mark { animation-delay: 300ms; }
 
-/* 2. Study cards leave in the direction of your answer. */
+/* 2. Arriving: one lift and fade for the screen itself (components.css),
+   then its small pieces settle in a short cascade. */
+@keyframes view-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(7px); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes grow-x { from { transform: scaleX(0); } }
+@keyframes dot-in { from { opacity: 0; transform: scale(.55); } }
+@keyframes badge-in { from { opacity: 0; transform: scale(.84); } }
+
+/* Home: the streak, the goal track and the practice chips. */
+.view-enter .today-streak { animation: badge-in 300ms var(--ease) 90ms both; }
+.view-enter .today-goal-track i { transform-origin: left; animation: grow-x 640ms var(--ease) 120ms both; }
+.view-enter .today-steps li { animation: rise-in 240ms var(--ease) both; }
+.view-enter .today-steps li:nth-child(1) { animation-delay: 80ms; }
+.view-enter .today-steps li:nth-child(2) { animation-delay: 110ms; }
+.view-enter .today-steps li:nth-child(3) { animation-delay: 140ms; }
+.view-enter .today-steps li:nth-child(4) { animation-delay: 170ms; }
+.view-enter .today-steps li:nth-child(5) { animation-delay: 200ms; }
+
+/* Lists that only exist on arrival: recent words, the week and its dots,
+   the progress tiles. */
+.view-enter .recent-list li { animation: rise-in 260ms var(--ease) both; }
+.view-enter .recent-list li:nth-child(1) { animation-delay: 50ms; }
+.view-enter .recent-list li:nth-child(2) { animation-delay: 80ms; }
+.view-enter .recent-list li:nth-child(3) { animation-delay: 110ms; }
+.view-enter .recent-list li:nth-child(4) { animation-delay: 140ms; }
+.view-enter .recent-list li:nth-child(5) { animation-delay: 170ms; }
+.view-enter .recent-list li:nth-child(6) { animation-delay: 200ms; }
+
+.view-enter .wk-days .wk-dot { animation: dot-in 280ms var(--ease) both; }
+.view-enter .wk-days li:nth-child(1) .wk-dot { animation-delay: 40ms; }
+.view-enter .wk-days li:nth-child(2) .wk-dot { animation-delay: 70ms; }
+.view-enter .wk-days li:nth-child(3) .wk-dot { animation-delay: 100ms; }
+.view-enter .wk-days li:nth-child(4) .wk-dot { animation-delay: 130ms; }
+.view-enter .wk-days li:nth-child(5) .wk-dot { animation-delay: 160ms; }
+.view-enter .wk-days li:nth-child(6) .wk-dot { animation-delay: 190ms; }
+.view-enter .wk-days li:nth-child(7) .wk-dot { animation-delay: 220ms; }
+
+.view-enter .stat-tiles > div { animation: rise-in 300ms var(--ease) both; }
+.view-enter .stat-tiles > div:nth-child(1) { animation-delay: 40ms; }
+.view-enter .stat-tiles > div:nth-child(2) { animation-delay: 80ms; }
+.view-enter .stat-tiles > div:nth-child(3) { animation-delay: 120ms; }
+.view-enter .stat-tiles > div:nth-child(4) { animation-delay: 160ms; }
+
+/* A fresh question: Quiz, Spell and Recall settle their card in; the
+   options follow in reading order. Answering re-renders without the
+   fresh class, so feedback animates alone. */
+.q-fresh .question,
+.spell-fresh,
+.recall-fresh { animation: rise-in 300ms var(--ease) both; }
+.q-fresh .option { animation: rise-in 260ms var(--ease) both; }
+.q-fresh .option:nth-child(1) { animation-delay: 40ms; }
+.q-fresh .option:nth-child(2) { animation-delay: 70ms; }
+.q-fresh .option:nth-child(3) { animation-delay: 100ms; }
+.q-fresh .option:nth-child(4) { animation-delay: 130ms; }
+
+/* 3. Sheets, menus and opened rows: they come from where the thumb is. */
+@keyframes sheet-in { from { opacity: 0; transform: translateY(18px) scale(.995); } }
+@keyframes sheet-up { from { opacity: 0; transform: translateY(28px); } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+@keyframes open-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.sheet[open] { animation: sheet-in 240ms var(--ease); }
+.sheet[open]::backdrop { animation: fade-in 180ms ease; }
+@media (max-width: 640px) { .sheet[open] { animation-name: sheet-up; } }
+
+.lib-more[open] .lib-more-menu {
+  transform-origin: top center;
+  animation: menu-in 160ms var(--ease) both;
+}
+.lib-more.is-up[open] .lib-more-menu { transform-origin: bottom center; }
+.word-row[open] .word-row-body,
+.add-more[open] .word-form { animation: open-in 220ms var(--ease) both; }
+
+/* 4. Study cards leave in the direction of your answer. */
 @keyframes fly-right { to { transform: translateX(42%) rotate(6deg); opacity: 0; } }
 @keyframes fly-left  { to { transform: translateX(-42%) rotate(-6deg); opacity: 0; } }
 @keyframes card-in   { from { transform: translateY(14px) scale(.98); opacity: 0; } }
@@ -29,14 +118,16 @@
 .flash[data-lean="good"]  .flash-face { box-shadow: 0 0 0 3px var(--good), var(--shadow-2); }
 .flash[data-lean="again"] .flash-face { box-shadow: 0 0 0 3px var(--bad), var(--shadow-2); }
 
-/* 3. Right and wrong. */
+/* 5. Right and wrong. */
 @keyframes pop { 40% { transform: scale(1.035); } }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 .option.is-right, .verdict.is-right { animation: pop 360ms var(--ease); }
+.option.is-right .icon, .option.is-wrong .icon { animation: badge-in 240ms var(--ease) both; }
 .tile.just-matched { animation: pop 360ms var(--ease); opacity: 1; }
 .field.is-right { animation: pop 360ms var(--ease); }
 .field.is-wrong { animation: shake 300ms; }
 
-/* 4. Combo counter: pulses each time it grows. */
+/* 6. Combo counter: pulses each time it grows. */
 .combo {
   display: inline-flex; align-items: center; gap: 4px;
   height: 28px; padding: 0 10px; border-radius: var(--r-pill);
@@ -46,7 +137,7 @@
 .combo.bump { animation: bump 420ms var(--ease); }
 @keyframes bump { 30% { transform: scale(1.18); background: var(--mark); } }
 
-/* 5. Results: stats arrive one after another. */
+/* 7. Results: stats arrive one after another. */
 .summary-stat { animation: card-in 360ms var(--ease) both; }
 .summary-stat:nth-child(2) { animation-delay: 80ms; }
 .summary-stat:nth-child(3) { animation-delay: 160ms; }
@@ -62,8 +153,27 @@
 .confetti i:nth-child(3n+1) { background: var(--good); }
 @keyframes fall { to { transform: translateY(105vh) rotate(540deg); opacity: .2; } }
 
-/* 6. Progress bars fill from the start. */
-.progress > i { transform-origin: left; }
+/* 8. Charts and meters: bars and the progress ring draw once from their base. */
+@keyframes rise { from { transform: scaleY(0); } }
+@keyframes ring-in { from { stroke-dashoffset: 100.5; } }
 
-/* 7. Today's plan settles in once, when you arrive. */
-.view-enter .today-strip { animation: card-in 320ms var(--ease) 60ms both; }
+/* 9. The one loop: the live mic. It is a listening status, not decoration. */
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 40%, transparent); }
+  50% { box-shadow: 0 0 0 14px transparent; }
+}
+
+/* 10. Small, direct presses: the page answers the thumb without moving
+   layout, and the one arrow on the hero leans forward on hover. */
+.today-cta .today-cta-ico { transition: transform var(--fast) var(--ease); }
+.today-cta:hover .today-cta-ico { transform: translateX(2px); }
+.option:active:not(:disabled), .tile:active:not(:disabled) { transform: scale(.985); }
+.tab-ico, .tab-link .icon, .bar-link .icon {
+  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.tab-link:active .tab-ico, .bar-link:active .icon { transform: scale(.94); }
+
+/* 11. Paper never animates. */
+@media print {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

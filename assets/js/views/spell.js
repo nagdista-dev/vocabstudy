@@ -48,7 +48,7 @@
         <div class="activity">
           ${VS.ui.activityHead({ back: s.scope.back, title: "Spell", sub: s.scope.title, index: s.index, total: s.words.length, combo: s.combo })}
           <div class="activity-stage stage-center">
-          <section class="spell card">
+          <section class="spell card ${!s.checked && !s.hints && !s.typed ? "spell-fresh" : ""}">
             <div class="spell-listen">
               <button class="speak-btn speak-xl" type="button" data-action="speak" data-say="${answer}" aria-label="Play the word">${icon("volume", "icon-lg")}</button>
               <button class="btn btn-quiet" type="button" data-action="slow">${icon("clock", "icon-sm")} Slower</button>

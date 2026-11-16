@@ -76,7 +76,6 @@
 .fc-bar i { display: block; width: 100%; background: var(--brand); border-radius: 6px 6px 0 0; transform-origin: bottom; animation: rise 600ms var(--ease) both; }
 .fc-bars .is-today .fc-bar i { background: var(--mark); }
 .fc-bars .is-today small { color: var(--ink); font-weight: 600; }
-@keyframes rise { from { transform: scaleY(0); } }
 
 
 

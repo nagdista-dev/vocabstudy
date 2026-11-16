@@ -143,7 +143,7 @@
       return html`
         <div class="activity">
           ${VS.ui.activityHead({ back: s.scope.back, title: "Quiz", sub: s.scope.title, index: s.index, total: s.questions.length, combo: s.combo })}
-          <div class="activity-stage">
+          <div class="activity-stage ${s.picked ? "" : "q-fresh"}">
             <section class="question card">${promptMarkup(q)}</section>
             <div class="options ${s.picked ? "is-resolved" : ""}" role="group" aria-label="Answers">${q.options.map((o, i) => optionMarkup(q, o, i))}</div>
             ${s.picked ? feedback(q) : ""}

@@ -256,7 +256,6 @@
 .ring-bg { stroke: var(--surface-2); }
 .ring-fill { stroke: var(--good); stroke-linecap: round; transition: stroke-dashoffset var(--slow) var(--ease); animation: ring-in 900ms var(--ease) both; }
 .ring b { font-size: calc(var(--size) * .24); font-variant-numeric: tabular-nums; color: var(--ink-2); }
-@keyframes ring-in { from { stroke-dashoffset: 100.5; } }
 
 /* Your note on a word (VS.ui.noteBox) */
 .note { display: grid; gap: var(--s-2); }
@@ -433,7 +432,6 @@ kbd {
 
 /* ── Entrance: one quiet fade when a screen changes ────────────── */
 .view-enter { animation: view-in var(--slow) var(--ease) both; }
-@keyframes view-in { from { opacity: 0; transform: translateY(6px); } }
 
 /* "A new version is ready" (app.js, after a deploy) */
 .update-bar {

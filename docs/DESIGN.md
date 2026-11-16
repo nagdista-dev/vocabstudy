@@ -138,16 +138,30 @@ with 22-letter words and long Arabic meanings:
 
 ## Motion (`assets/css/motion.css`)
 
+Motion shows what just happened and is over in under a second. Nothing
+animates layout: only opacity and transform move (the highlighter's
+`background-size` and the mic's shadow are paint-only). No blur, no filters.
+
 | Moment | Animation |
 | --- | --- |
-| New word | highlighter draws in |
+| A new screen | one 320ms lift and fade (`.view-enter`). Re-rendering the same screen drops the class first, so typing, filtering and answering never replay it |
+| Home on arrival | streak chip pops, goal track fills, practice chips rise in an 80–200ms cascade |
+| Recent words, week dots, stat tiles | a short rise / dot cascade, only on arrival |
+| A new quiz question | card and options rise in reading order (`q-fresh`) |
+| A new spelling or recall card | card settles in (`spell-fresh`, `recall-fresh`); hints and the reveal animate on their own |
+| A new word | highlighter draws in (560ms) |
 | Study card answered | card flies right (know) / left (learning); swipe on phones |
-| Right / wrong | pop / shake |
+| Right / wrong | pop / shake; the option's icon pops |
 | Streak of right answers | combo pill pulses |
-| Results | stats arrive in order; perfect round → highlighter confetti |
-| Home | progress and forecast bars grow in |
+| Results | stats arrive in order; a perfect round gets highlighter confetti |
+| Sheets, menus, opened rows | sheet lifts from the bottom edge, a menu scales from its trigger, a row body fades down |
+| Charts and the progress ring | bars rise and the ring draws once from its base |
+| Presses | options and tiles sink 1.5% while held, nav icons 6%; the hero arrow leans on hover |
+| Speak | the mic pulses only while it is listening — the app's one loop |
 
-All of it is switched off by the system "reduce motion" setting (`base.css`).
+`prefers-reduced-motion` sets every animation and transition to 1ms and every
+delay to 0 (`base.css`), so nothing is still waiting to start after the screen
+is already visible.
 
 ## Files
 

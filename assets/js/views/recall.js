@@ -79,7 +79,7 @@
     const cue = s.cues[s.index];
     const gap = cue.style === "gap";
     return html`
-      <article class="recall card">
+      <article class="recall card ${!s.revealed && !s.hints ? "recall-fresh" : ""}">
         <div class="row recall-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>
           ${w.tags.length ? html`<span class="hint recall-from">#${w.tags.join(" #")}</span>` : ""}</div>
         ${gap

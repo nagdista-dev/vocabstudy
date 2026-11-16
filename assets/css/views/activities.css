@@ -176,11 +176,6 @@
 .summary .word-list { width: 100%; text-align: start; }
 .summary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-3); margin-top: var(--s-3); }
 
-@keyframes shake {
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
 /* ── Phones ────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .options { grid-template-columns: 1fr; gap: 8px; }
@@ -227,7 +222,6 @@
 .mic:active { transform: scale(.96); }
 .mic:disabled { background: var(--good); opacity: 1; }
 .mic.is-listening { background: var(--bad); animation: mic-pulse 1.1s var(--ease) infinite; }
-@keyframes mic-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 40%, transparent); } 50% { box-shadow: 0 0 0 14px transparent; } }
 .speak-status { display: flex; align-items: center; justify-content: center; gap: var(--s-2); min-height: 1.6em; font-weight: 500; color: var(--ink-2); }
 .speak-note { text-align: center; margin: var(--s-3) auto 0; }
 

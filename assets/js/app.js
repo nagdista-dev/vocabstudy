@@ -362,7 +362,7 @@
   // Today's plan depends on settings (daily goal, new words per day): redraw just the strip.
   VS.$("#settings")?.addEventListener("close", () => {
     if (!current || current.name !== "library") return;
-    const strip = VS.$(".today-strip");
+    const strip = VS.$(".today-hero");
     if (strip) strip.outerHTML = String(VS.today.strip());
   });
 

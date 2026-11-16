@@ -74,10 +74,6 @@
 .filter-sheet {
   width: min(660px, calc(100vw - 32px)); max-height: calc(100dvh - 48px);
 }
-.filter-sheet[open] { animation: sheet-up 240ms var(--ease); }
-.filter-sheet[open]::backdrop { animation: fade-in 180ms ease; }
-@keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } }
-@keyframes fade-in { from { opacity: 0; } }
 .filter-body { padding: var(--s-4) var(--s-5) var(--s-5); gap: var(--s-5); }
 /* Two columns while the labels fit; one column at 320 with Larger text, where
    "Any memory" was being clipped inside a 136px select. The minimum is in rem,
