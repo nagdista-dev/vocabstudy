@@ -6,7 +6,7 @@ definition, example and pronunciation, teaches it to you, and brings it back
 on spaced days (1, 3, 7, 14, 30, 60 days later) until it stays. It ships with
 no words: your library is yours from the first one.
 
-**Open it: https://nagdista-dev.github.io/vocabstudy/** — then
+**Open it: https://vocabstudy.nagdista.com/** — then
 *Install app* / *Add to Home Screen*. No account, no ads, no server: your
 words and progress stay on your device, and it works offline.
 
