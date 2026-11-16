@@ -35,6 +35,11 @@
   display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--r-pill);
   background: var(--brand); color: var(--on-brand); font-size: .72rem; font-weight: 700;
 }
+/* Status filter: on phones every choice stays visible (wraps), nothing hides off-screen. */
+@media (max-width: 640px) {
+  .lib-tools > .seg { flex-wrap: wrap; overflow: visible; width: 100%; }
+  .lib-tools > .seg button { flex: 1 1 auto; }
+}
 .lib-panel { display: grid; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); }
 .lib-panel[hidden] { display: none; }
 .lib-panel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-3); }
@@ -42,7 +47,6 @@
 .lib-toggles .btn { margin-inline-start: auto; }
 .lib-bar { display: grid; gap: var(--s-2); margin-bottom: var(--s-3); }
 .lib-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-.lib-actions .btn { min-height: 38px; }
 .lib-more { position: relative; }
 .lib-more > summary { list-style: none; }
 .lib-more > summary::-webkit-details-marker { display: none; }
@@ -73,7 +77,7 @@
 .word-row summary::-webkit-details-marker { display: none; }
 .word-row-main { display: grid; min-width: 0; }
 .word-row-main b { font-weight: 600; overflow-wrap: anywhere; }
-.word-row-meta { font-size: var(--text-xs); color: var(--ink-3); }
+.word-row-meta { font-size: max(var(--text-xs), 13px); color: var(--ink-3); }
 .word-row-meta .icon { display: inline; vertical-align: -3px; width: 13px; height: 13px; }
 .sense { font-weight: 400; color: var(--ink-3); }
 .word-row-ar { text-align: right; color: var(--ink-2); font-size: 1.02rem; }

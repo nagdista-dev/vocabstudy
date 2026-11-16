@@ -104,16 +104,16 @@
         <div class="add-line">
           <label class="field field-xl">
             <span class="sr-only">English word or phrase</span>
-            <input data-form-field="word" id="addWord" value="${st.form.word || ""}" placeholder="Type an English word or phrase"
+            <input data-form-field="word" id="addWord" value="${st.form.word || ""}" placeholder="Type a word or phrase" aria-label="English word or phrase"
                    spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
           </label>
           <button class="btn btn-primary btn-lg" type="submit">${icon("plus", "icon-sm")} Add</button>
         </div>
         <p class="hint">${auto
-          ? "Press Enter. The app fills in the Arabic meaning, definition, example, pronunciation and level — only the word is sent online."
+          ? "Press Enter. The app fills in the Arabic meaning, definition, example and pronunciation — only the word is sent online."
           : html`Auto-fill is off (Settings), so nothing leaves this device. Add the details below.`}</p>
         <details class="add-more" ${!auto || filled ? VS.raw("open") : ""}>
-          <summary>${icon("chevron-right", "icon-sm")} More details ${auto ? html`<span class="hint">— optional, your text is kept</span>` : ""}</summary>
+          <summary>${icon("chevron-right", "icon-sm")} More details <span class="hint">(optional)</span></summary>
           <div class="word-form">
             ${field("arabic", "Arabic meaning", { ar: true, placeholder: "مثلاً: يستغل - يستفيد من" })}
             ${field("tags", "Tags", { placeholder: "IELTS, work", list: "tagList" })}

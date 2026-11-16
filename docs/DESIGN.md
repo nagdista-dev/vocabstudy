@@ -58,7 +58,21 @@ measured in `views/library.js`) — you are marking the word to keep.
 - 4px spacing grid (`--s-1` … `--s-8`).
 - Phones (≤ 640px): answer buttons sit in a fixed bar under the thumb;
   options stack; the app bar shows only where you are.
-- Touch targets ≥ 44px (`--tap`).
+- Touch targets ≥ 44px (`--tap`) on every touch screen — one block in
+  `components.css` ("Touch screens") sets it for every component.
+
+## Phones first
+
+Most learning happens on a phone, one-handed, by learners of every age.
+Checked at 360px and 414px with every text size (Normal, Large, Larger):
+
+- Nothing scrolls sideways. An input never widens its page (`.field` and
+  `.add-line .field` have `min-width: 0`).
+- Every control ≥ 44px; today's plan chips and the sound button 46px.
+- Small text never below ~13px; the tab bar labels 13px.
+- Every form field is 16px or more on touch screens, or iPhone zooms the page.
+- Textareas never resize by hand; they grow with the text.
+- Choices never hide off-screen: the status filter wraps on phones.
 
 ## Motion (`assets/css/motion.css`)
 

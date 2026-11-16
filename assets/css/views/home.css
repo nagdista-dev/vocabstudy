@@ -3,7 +3,7 @@
 
 /* Add a word: the signature moment. What you type gets the highlighter,
    the same yellow band every word you are learning wears. */
-.quick-add { display: grid; gap: var(--s-2); margin-bottom: var(--s-5); }
+.quick-add { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-2); margin-bottom: var(--s-5); }
 .quick-label { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; color: var(--ink); }
 .quick-add .field { background: var(--surface); border-color: var(--line-strong); box-shadow: var(--shadow-1); }
 /* The band is sized to the typed word in JS (--mark-w, views/library.js). */
@@ -15,7 +15,8 @@
 }
 .quick-add .hint a { margin-inline-start: var(--s-2); font-weight: 600; }
 .add-line { display: flex; gap: var(--s-3); align-items: stretch; }
-.add-line .field { flex: 1; }
+.add-line .field { flex: 1; min-width: 0; }            /* an input's natural width must not widen the page */
+.add-line .field input { width: 100%; min-width: 0; }
 
 /* Today's plan: one sentence, one button, then the steps as small chips. */
 .today-strip {
@@ -26,7 +27,7 @@
 .today-copy h2 { font-size: var(--text-xl); }
 .today-steps { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; }
 .today-steps a, .today-steps span {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 var(--s-3);
+  display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 var(--s-3);
   border-radius: var(--r-pill); font-size: var(--text-sm); font-weight: 600; text-decoration: none;
   background: var(--surface-2); color: var(--ink-2);
 }
@@ -53,6 +54,10 @@
 .first-steps li::marker { color: var(--brand); font-weight: 700; }
 .first-note { margin-top: var(--s-5); }
 
+@media (max-width: 420px) {
+  .quick-add .field-xl input, .add-form .field-xl input { font-size: 1.2rem; }
+  .quick-label { font-size: var(--text-lg); }
+}
 @media (max-width: 640px) {
   .today-strip { grid-template-columns: 1fr; padding: var(--s-4); }
   .today-strip > .btn { width: 100%; }

@@ -65,8 +65,7 @@
 
 /* Type a word: one line, Enter adds it. Details are optional. */
 .add-form { display: grid; gap: var(--s-3); }
-.add-line { display: flex; gap: var(--s-3); align-items: stretch; }
-.add-line .field { flex: 1; }
+.add-form .field-xl input { text-align: start; letter-spacing: 0; }
 .add-more { border-top: 1px solid var(--line); padding-top: var(--s-3); }
 .add-more > summary {
   display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap);

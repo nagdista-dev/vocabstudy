@@ -81,7 +81,7 @@
   .bar-nav { display: none; }
   .tab-bar {
     position: fixed; z-index: 18; left: 0; right: 0; bottom: 0;
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;          /* as many columns as links */
     padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--surface) 94%, transparent);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -90,8 +90,8 @@
   body[data-mode="activity"] .tab-bar { display: none; }
   body[data-mode="browse"] main { padding-bottom: 72px; }
   .tab-link {
-    display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border-radius: var(--r-md);
-    color: var(--ink-3); text-decoration: none; font-size: .7rem; font-weight: 600;
+    display: grid; justify-items: center; gap: 2px; min-height: 56px; padding: 6px 2px; border-radius: var(--r-md);
+    color: var(--ink-2); text-decoration: none; font-size: .82rem; font-weight: 600;
   }
   .tab-link[aria-current="page"] { color: var(--brand); }
   .tab-link[aria-current="page"] .tab-ico { background: var(--brand-soft); }
@@ -239,7 +239,9 @@
   color: var(--ink-3);
 }
 .field:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.field input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; height: var(--tap); color: var(--ink); }
+.field input { flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: none; height: var(--tap); color: var(--ink); }
+/* A field never grows past its container, whatever the text size: an input's natural width must not widen the page. */
+.field { min-width: 0; max-width: 100%; }
 
 /* Activity header: back, title, step counter and progress */
 .activity-head { display: grid; gap: var(--s-3); margin-bottom: var(--s-5); }
@@ -382,3 +384,19 @@ kbd {
 .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
 .check { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 34px; font-size: var(--text-sm); cursor: pointer; }
 .check input { width: 18px; height: 18px; accent-color: var(--brand); }
+
+/* ── Touch screens ───────────────────────────────────────────────
+   Most learning happens on a phone, one-handed, by learners of every
+   age. Every control is at least 44px; small text never goes below
+   ~13px; and form fields use 16px+, or iPhone zooms the page on focus. */
+@media (pointer: coarse), (max-width: 640px) {
+  .btn, .seg button, .icon-btn { min-height: var(--tap); }
+  .speak-btn { width: var(--tap); height: var(--tap); }
+  .brand { min-height: var(--tap); }
+  .check { min-height: var(--tap); }
+  .check input { width: 22px; height: 22px; }
+  input, select, textarea, .note textarea { font-size: max(16px, 1em); }
+  .speak-btn { width: 46px; height: 46px; }
+  .badge { height: 26px; font-size: .8rem; }
+  .hint { font-size: max(.85rem, 13.5px); }
+}
