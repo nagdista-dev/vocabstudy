@@ -48,6 +48,7 @@ SCRIPTS = [
     "assets/js/core/filters.js",
     "assets/js/core/sound-traps.js",
     "assets/js/core/usage-traps.js",   # the mistakes Arab learners make with a word (hand-written)
+    "assets/js/core/frequency.js",     # how common a word is (list in assets/data, loaded after start-up)
     "assets/js/core/study-time.js",
     "assets/js/core/week.js",          # the Saturday–Friday week and milestones
     "assets/js/core/importer.js",
@@ -94,7 +95,7 @@ def render(root: str, title: str, description: str, body_attrs: str) -> str:
 
 
 # Everything the published app needs — and nothing else (no tools, no docs).
-SITE_FILES = ["index.html", "sw.js", "manifest.webmanifest", ".nojekyll"]
+SITE_FILES = ["index.html", "about.html", "sw.js", "manifest.webmanifest", ".nojekyll"]   # about.html: the Arabic introduction
 SITE_DIRS = ["assets"]
 
 
@@ -122,7 +123,8 @@ def write_service_worker() -> None:
     files += [f"{p}?v={version(p)}" for p in STYLES + SCRIPTS]
     # Fonts and the PDF maker live in the project too, so everything works offline.
     files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / "assets" / "fonts").glob("*.woff2"))
-    files += ["assets/vendor/html2pdf.bundle.min.js", "assets/vendor/qrcode.js", "assets/vendor/jsQR.js"]
+    files += ["assets/vendor/html2pdf.bundle.min.js", "assets/vendor/qrcode.js", "assets/vendor/jsQR.js",
+              "assets/data/frequency.js"]
     stamp = hashlib.sha1("|".join(files).encode()).hexdigest()[:10]
     sw = (ROOT / "tools" / "templates" / "sw.js").read_text(encoding="utf-8")
     sw = sw.replace("{{VERSION}}", stamp).replace("{{PRECACHE}}", json.dumps(files, indent=2))

@@ -14,7 +14,7 @@
   function arabicFront(w) {
     return html`
       <div class="flash-face flash-front" aria-hidden="${s.flipped}">
-        <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span></div>
+        <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>${VS.ui.freq(w)}</div>
         <p class="flash-ar" lang="ar">${w.arabic}</p>
         ${w.definition ? html`<p class="flash-def">${w.definition}</p>` : ""}
         <p class="flash-tip">${icon("flip", "icon-sm")} Say the English word, then tap to check</p>
@@ -39,7 +39,7 @@
       <div class="flash ${s.flipped ? "is-flipped" : ""}" data-action="flip" role="button" tabindex="0"
            aria-label="${s.flipped ? "Card back" : "Card front. Press space to see the meaning"}">
         <div class="flash-face flash-front" aria-hidden="${s.flipped}">
-          <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span></div>
+          <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>${VS.ui.freq(w)}</div>
           <p class="flash-word"><span class="mark">${w.word}</span></p>
           ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
           <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>

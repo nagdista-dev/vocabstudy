@@ -54,6 +54,7 @@ learner learns to read them:
 | Struck-through line, red ✗, then ink line, green ✓ | "Arab learners say this → say this" (a usage trap) | word details, card back, recall, quiz, Use it |
 | Soft yellow block with a bulb | *your* memory: where you met the word, a note from the teacher | word details, card back, your week |
 | ○●○○ | word stress — the big dot is the stressed syllable | next to every IPA with two or more syllables |
+| ▂▃▅▆█ five rising bars + "Top 3,000" | how common the word is — more bars, more useful | word list, word details, card front |
 | Highlighter on a word in a paragraph | "I'm keeping this one" | From text |
 | Arabic on a small soft chip inside English | a quoted Arabic word, isolated so it reads right in both directions | trap explanations |
 

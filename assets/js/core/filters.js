@@ -2,7 +2,7 @@
    ------------------------------------------------------------------
    One filter object describes a list of words:
 
-     { q, status, level, type, box, added, tag, note, tricky, trap, usage, sort }
+     { q, status, level, type, box, added, tag, freq, note, tricky, trap, usage, sort }
 
    It lives in the address bar ("#/words?status=learning&tag=IELTS"), so a
    filtered list can be bookmarked, reopened, and handed to any activity:
@@ -21,15 +21,23 @@
   "use strict";
 
   const DEFAULTS = { q: "", status: "all", level: "all", type: "all", box: "all",
-                     added: "all", tag: "all", note: "", tricky: "", trap: "", usage: "", sort: "newest" };
+                     added: "all", tag: "all", freq: "all", note: "", tricky: "", trap: "", usage: "", sort: "newest" };
 
   const STATUS = { all: "All", new: "New", learning: "Learning", mastered: "Mastered", due: "Due today", started: "Started" };
   const ADDED = { all: "Any time", today: "Today", week: "This week", month: "This month", older: "Older" };
   const SORTS = {
     az: "A–Z", za: "Z–A", newest: "Newest added", oldest: "Oldest added",
-    weakest: "Weakest first", due: "Due soonest", missed: "Most mistakes", level: "Level",
+    weakest: "Weakest first", due: "Due soonest", missed: "Most mistakes", level: "Level", common: "Most common first",
   };
   const BOXES = ["New", "1 day", "3 days", "1 week", "2 weeks", "1 month", "2 months"];
+  /* How common (core/frequency.js): "Top 3,000" includes the top 1,000. */
+  const FREQ = { all: "Any", 5: "Top 1,000", 4: "Top 3,000", 3: "Top 6,000", 2: "Top 12,000", 1: "Uncommon", 0: "Rare" };
+  const freqOk = (w, want) => {
+    const b = VS.frequency.band(w);
+    if (!b) return false;
+    const n = Number(want);
+    return n >= 2 ? b.level >= n : b.level === n;
+  };
   const LEVEL_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
   function parse(query) {
@@ -72,6 +80,7 @@
       if (f.box !== "all" && String(e.box) !== f.box) return false;
       if (f.added === "older" ? w.added >= older : from && w.added < from) return false;
       if (f.tag === "none" ? w.tags.length : f.tag !== "all" && !w.tags.includes(f.tag)) return false;
+      if (f.freq !== "all" && !freqOk(w, f.freq)) return false;
       if (f.note && !store.note(w.id)) return false;
       if (tricky && !tricky.has(w.id)) return false;
       if (f.trap && !VS.soundTraps(w).length) return false;
@@ -97,6 +106,7 @@
       };
       case "missed": return (a, b) => store.word(b.id).wrong - store.word(a.id).wrong || az(a, b);
       case "level": return (a, b) => LEVEL_ORDER.indexOf(a.level) - LEVEL_ORDER.indexOf(b.level) || az(a, b);
+      case "common": return (a, b) => (VS.frequency.rank(a.word) - VS.frequency.rank(b.word)) || az(a, b);
       default: return az;
     }
   }
@@ -110,6 +120,7 @@
     if (f.type !== "all") parts.push(f.type + "s");
     if (f.box !== "all") parts.push("Box " + f.box);
     if (f.added !== "all") parts.push("Added " + ADDED[f.added].toLowerCase());
+    if (f.freq !== "all") parts.push(FREQ[f.freq] || "");
     if (f.tag === "none") parts.push("No tag");
     else if (f.tag !== "all") parts.push("#" + f.tag);
     if (f.note) parts.push("With notes");
@@ -120,5 +131,5 @@
     return parts.join(" · ");
   }
 
-  VS.filters = { DEFAULTS, STATUS, ADDED, SORTS, BOXES, parse, query, apply, describe, active };
+  VS.filters = { DEFAULTS, STATUS, ADDED, SORTS, BOXES, FREQ, parse, query, apply, describe, active };
 })();

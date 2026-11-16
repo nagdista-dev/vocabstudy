@@ -4,7 +4,8 @@
    (core/autofill.js fills in the rest), then every word you're learning.
 
    Search English, Arabic, definitions, examples, tags and your notes.
-   Filter by status, level, type, memory box, when you added it, tag, notes, tricky words and sound traps; sort eight ways. Then act on
+   Filter by status, level, type, memory box, when you added it, how common it is, tag, notes, tricky words,
+   sound and usage traps; sort nine ways. Then act on
    exactly that list: practise it, print it, export it, reset it, or
    delete it.
 
@@ -64,10 +65,12 @@
         </div>
         <div class="sheet-body filter-body">
           <div class="lib-panel-grid">
+            ${select("sort", "Sort", Object.entries(F.SORTS))}
             ${select("level", "Level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]].concat(levels.map((l) => [l, l]), [["none", "No level"]]))}
             ${select("type", "Type", [["all", "All types"]].concat(types.map((t) => [t, t])))}
             ${select("box", "Memory", [["all", "Any memory"]].concat(F.BOXES.map((b, i) => [String(i), i ? "Box " + i + " · waits " + b : "Not studied"])))}
             ${select("added", "Added", Object.entries(F.ADDED))}
+            ${select("freq", "How common", [["all", "Any"], ["5", "Top 1,000"], ["4", "Top 3,000"], ["3", "Top 6,000"], ["2", "Top 12,000"], ["1", "Uncommon"], ["0", "Rare"]])}
             ${select("tag", "Tag", [["all", "All tags"]].concat(tags.map((t) => [t.tag, "#" + t.tag + " (" + t.count + ")"]), [["none", "No tag"]]))}
           </div>
           <div class="lib-toggles">
@@ -219,7 +222,8 @@
         <li><span class="step-n">2</span><span><b>Learn it once</b><span class="hint">The meaning, the Arabic, an example and the sound.</span></span></li>
         <li><span class="step-n">3</span><span><b>Recall it on spaced days</b><span class="hint">1, 3, 7, 14, 30, 60 — until it stays.</span></span></li>
       </ol>
-      <p class="hint first-note">Free and open source. No account, no server: your words stay on this device.</p>`;
+      <p class="hint first-note">Free and open source. No account, no server: your words stay on this device.
+        <a href="about.html" lang="en">About VocabStudy, in Arabic</a></p>`;
   }
 
   function updateFilterButton() {

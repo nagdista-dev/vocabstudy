@@ -291,11 +291,12 @@
     /** Was this step of today's plan finished today? ("learn", "quiz", "spell", "match", "speak") */
     doneToday: (mode) => state.done["today:" + mode] === VS.todayKey(),
 
-    /** Words never studied, oldest added first: the library is a queue to learn from. */
+    /** Words never studied, oldest added first: the library is a queue to learn from.
+        Words added the same day: the most common first — they pay off soonest. */
     newWords() {
       return VS.allWords()
         .filter((w) => entry(w.id).box === 0)
-        .sort((a, b) => (a.added < b.added ? -1 : a.added > b.added ? 1 : 0));
+        .sort((a, b) => (a.added < b.added ? -1 : a.added > b.added ? 1 : VS.frequency.rank(a.word) - VS.frequency.rank(b.word)));
     },
 
     /** The strength of a word's memory, for "weakest first": wrong answers pull it down. */

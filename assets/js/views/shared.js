@@ -230,6 +230,17 @@
         (_, ar) => '<bdi class="ar-chip" lang="ar" dir="rtl">' + ar + "</bdi>"));
     },
 
+    /** How common the word is (core/frequency.js): five bars, like signal strength.
+        `line` adds the teacher's sentence about what that means. */
+    freq(w, line) {
+      const b = VS.frequency.band(w);
+      if (!b) return "";
+      const meter = html`<span class="freq" data-level="${b.level}" title="${b.line}">
+        <span class="freq-bars" aria-hidden="true">${[1, 2, 3, 4, 5].map((i) => html`<i class="${i <= b.level ? "is-on" : ""}"></i>`)}</span>
+        <span class="freq-label">${b.label}</span></span>`;
+      return line ? html`<p class="freq-row">${meter}<span class="hint">${b.line}</span></p>` : meter;
+    },
+
     /** The IPA, with the stress drawn as a teacher would: o O o o. */
     ipa(w) {
       if (!w.ipa) return "";
@@ -332,7 +343,7 @@
               : html`<span class="word-row-ar hint">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No meaning yet"}</span>`}
             <span class="word-row-meta">
               <span class="word-row-state" data-s="${s}">${state}</span><span class="word-row-sep" aria-hidden="true">·</span>
-              ${w.type}${w.level ? " · " + w.level : ""}${w.tags.length ? " · " + w.tags.map((t) => "#" + t).join(" ") : ""}${VS.store.note(w.id) ? html` · ${icon("bulb", "icon-sm")}` : ""}
+              ${w.type}${w.level ? " · " + w.level : ""}${VS.frequency.band(w) ? " · " + VS.frequency.band(w).label : ""}${w.tags.length ? " · " + w.tags.map((t) => "#" + t).join(" ") : ""}${VS.store.note(w.id) ? html` · ${icon("bulb", "icon-sm")}` : ""}
             </span>
             <span class="word-row-badges">${VS.ui.statusBadge(w)}${VS.ui.levelBadge(w)}</span>
             ${icon("chevron-right", "icon-sm word-row-chev")}
@@ -342,6 +353,7 @@
               ${VS.ui.speakButton(w.word)}
               ${VS.ui.ipa(w)}
             </div>
+            ${VS.ui.freq(w, true)}
             ${VS.ui.soundTraps(w)}
             ${w.definition ? html`<p>${w.definition}</p>` : ""}
             ${VS.autofill.enabled() ? html`<button class="link-btn" type="button" data-action="word-meanings" data-id="${w.id}">Not the meaning you met?</button>` : ""}

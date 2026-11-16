@@ -47,6 +47,11 @@ words and progress stay on your device, and it works offline.
   Recall asks with your own sentences first — the strongest cue there is.
 - **Stress you can see**: ○●○○ for pro·CRAS·ti·nate, read from the IPA —
   the dots a teacher draws on the board.
+- **Is this word worth your time?** Every word shows how common it is —
+  *Top 1,000* to *Rare* — from a list of the 30,000 most used English words
+  that ships with the app. A word counts with its forms (borrow, borrowed,
+  borrowing). Filter and sort by it; new words added the same day are
+  learned most common first.
 - **Real recordings**: a person saying the word (American or British) from
   the dictionary when you're online; your browser's voice when you're not.
 - **Sound traps** on every word that has one: P (not B), V (not F), silent
@@ -137,6 +142,8 @@ index.html, sw.js         generated — don't edit (tools/build.py)
 assets/css/               tokens → base → components → screens → motion
 assets/js/core/           library, progress (spaced repetition), filters, auto-fill, speech, importer
 assets/fonts, assets/vendor  self-hosted fonts, PDF maker and QR libraries (tools/vendor.py)
+assets/data/frequency.js  the 30,000 most used English words (tools/frequency.py, wordfreq, CC BY-SA 4.0)
+about.html                the Arabic introduction page (the app itself stays English)
 assets/js/views/          one file per screen
 assets/js/app.js          routing, navigation, settings, keyboard
 tools/                    build · check · build_icons · screenshots · templates
@@ -145,6 +152,7 @@ docs/                     architecture, design, learning guide
 
 | Read | to… |
 | --- | --- |
+| [about.html](about.html) | introduce the app to a friend — in Arabic |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | understand how the app boots, routes and schedules recall |
 | [docs/DESIGN.md](docs/DESIGN.md) | change colours, fonts, spacing, motion or sounds safely |
 | [docs/LEARN.md](docs/LEARN.md) | learn web development from this codebase (Arabic) |

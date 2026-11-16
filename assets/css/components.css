@@ -491,3 +491,18 @@ kbd {
 .milestone-hit .icon { flex: none; }
 .milestone-hit p { display: grid; gap: 2px; }
 .milestone-hit b { font-family: var(--font-display); font-size: var(--text-xl); }
+
+/* ── How common a word is (core/frequency.js): five rising bars, like signal strength ── */
+.freq { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.freq-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.freq-bars i { width: 3px; border-radius: 1px; background: var(--line); }
+.freq-bars i:nth-child(1) { height: 4px; }
+.freq-bars i:nth-child(2) { height: 6px; }
+.freq-bars i:nth-child(3) { height: 8px; }
+.freq-bars i:nth-child(4) { height: 10px; }
+.freq-bars i:nth-child(5) { height: 12px; }
+.freq-bars i.is-on { background: var(--brand); }
+.freq[data-level="0"] .freq-label { color: var(--ink-3); }
+.freq-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
+.freq-row .hint { font-size: var(--text-sm); }
+.flash-badges { align-items: center; }

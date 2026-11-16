@@ -267,6 +267,8 @@
         <h3 class="sheet-group">App &amp; data</h3>
         ${VS.speech.supported ? "" : html`<p class="hint">This browser has no built-in voices, so words can't be read aloud.</p>`}
         <div class="setting"><b>Install as an app</b>${installMarkup()}</div>
+        <div class="setting"><b>About VocabStudy</b><p class="hint">What it does and why, in Arabic — a page to share with a friend.</p>
+          <a class="btn" href="about.html">Read it in Arabic</a></div>
         <details class="setting shortcuts">
           <summary><b>Keyboard shortcuts</b></summary>
           <dl>
@@ -399,6 +401,15 @@
   applySettings();
   VS.store.onChange(() => current && renderBar());
   VS.autofill.resume();                          // words added offline get filled now
+  // Ask the browser to keep this site's data for good (Safari otherwise may clear
+  // a site that hasn't been opened for a week). Installed apps are usually granted it.
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then((on) => on || navigator.storage.persist()).catch(() => {});
+  // How common each word is: a 113 KB list, loaded after the first screen is drawn.
+  // Redrawn only if the learner isn't in the middle of something (an open word, a focused field).
+  setTimeout(() => VS.frequency.load().then(() => {
+    const busy = VS.$(".word-row[open]") || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
+    if (current && current.name === "library" && VS.frequency.ready && !busy) render();
+  }), 0);
   readShare();
   window.addEventListener("hashchange", go);
   go();

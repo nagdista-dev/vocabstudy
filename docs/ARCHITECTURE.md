@@ -50,6 +50,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/filters.js` | `VS.filters` — the library's filters and sorts, shared by every screen |
 | `core/sound-traps.js` | `VS.soundTraps(word)` — P/B, V/F, silent letters, -ed, th…; `VS.stress(ipa)` — syllables and the stressed one |
 | `core/usage-traps.js` | `VS.usageTraps(word)`, `VS.findUsageMistakes(text)` — 108 hand-written Arab-learner mistakes, each with a pattern (tested by `tools/test_traps.js`) |
+| `core/frequency.js` | `VS.frequency` — loads `assets/data/frequency.js` after start-up; `rank(word)` (best rank of the word's forms), `band(word)` → Top 1,000 … Rare |
 | `core/week.js` | `VS.week` — the Saturday–Friday week, its numbers and when the report is due; `VS.milestones` |
 | `core/study-time.js` | active study time + break reminder |
 | `core/importer.js` | `VS.importer` — parse pasted tables and word files |

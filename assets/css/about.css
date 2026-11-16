@@ -1,0 +1,122 @@
+/* about.css — the Arabic introduction page (about.html).
+   Same study desk as the app (tokens.css, fonts.css): paper, ink blue,
+   the yellow highlighter. Arabic is the voice here; English appears only
+   where the page shows the app. Light only, phone first. */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--font-arabic); font-size: 1.125rem; line-height: 1.85;
+}
+/* English inside an Arabic sentence: isolated, so slashes and brackets stay where they belong */
+[lang="en"] { font-family: var(--font-word); direction: ltr; unicode-bidi: isolate; }
+h1, h2, h3, p, dl, dd, ol, ul, figure { margin: 0; }
+a { color: var(--brand); text-underline-offset: 4px; }
+::selection { background: var(--mark); color: var(--on-mark); }
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+
+main, .top, .foot { width: min(100% - 32px, 760px); margin-inline: auto; }
+
+/* ── Header ── */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; color: var(--ink); text-decoration: none; }
+.brand-mark { width: 32px; height: 32px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px;
+  border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  font: inherit; font-weight: 600; text-decoration: none;
+}
+.btn:hover { border-color: var(--line-strong); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.btn-primary:hover { background: var(--brand-hover); }
+.btn-small { min-height: 44px; padding: 0 16px; font-size: 1rem; }
+
+/* ── Hero ── */
+.hero { display: grid; gap: 20px; padding: clamp(24px, 6vw, 56px) 0 40px; }
+h1 { font-size: clamp(2rem, 1.4rem + 3vw, 3.1rem); line-height: 1.35; font-weight: 600; text-wrap: balance; }
+mark, .typed {
+  color: inherit; padding: 0 .12em;
+  background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);
+}
+.lead { font-size: 1.2rem; color: var(--ink-2); max-width: 62ch; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.fine { font-size: 1rem; color: var(--ink-3); }
+
+/* ── Specimens: the app's own pieces, shown as they look in it ── */
+.specimen { border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); padding: 20px; box-shadow: var(--shadow-1); }
+.specimen figcaption { margin-top: 12px; font-size: 1rem; color: var(--ink-2); }
+.typing .field { display: block; padding: 14px 18px; border: 2px solid var(--brand); border-radius: var(--r-md); font-size: 1.6rem; letter-spacing: .04em; }
+.typing .typed {
+  background-size: 0% 100%; background-repeat: no-repeat;
+  background-image: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);
+  background-color: transparent; animation: draw 900ms var(--ease) 500ms forwards;
+}
+@keyframes draw { to { background-size: 100% 100%; } }
+@media (prefers-reduced-motion: reduce) { .typing .typed { animation: none; background-size: 100% 100%; } }
+
+.trap, .check { display: grid; gap: 4px; font-size: 1rem; line-height: 1.5; text-align: left; }
+.trap { background: var(--surface-2); border: 0; box-shadow: none; }
+.trap .kind { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.trap p, .check .fix { display: flex; gap: 8px; align-items: baseline; }
+.trap svg, .check svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transform: translateY(2px); }
+.trap .wrong { color: var(--ink-2); }
+.trap .wrong span { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 70%, transparent); }
+.trap .wrong svg { color: var(--bad); }
+.trap .right { font-weight: 600; }
+.trap .right svg, .check .fix svg { color: var(--good); }
+.check { background: color-mix(in srgb, var(--bad-soft) 60%, var(--surface)); border: 0; box-shadow: none; }
+.check .mine { font-size: 1.15rem; }
+.check u { text-decoration-color: var(--bad); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+s { text-decoration-color: var(--bad); }
+
+/* ── Sections ── */
+.block { display: grid; gap: 16px; padding: 40px 0; border-top: 1px solid var(--line); }
+h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2rem); line-height: 1.4; font-weight: 600; text-wrap: balance; }
+h3 { font-size: 1.2rem; line-height: 1.5; font-weight: 600; }
+.block > p { color: var(--ink-2); max-width: 64ch; }
+
+.steps { list-style: none; padding: 0; display: grid; gap: 28px; counter-reset: step; }
+.steps > li { display: grid; gap: 6px; padding-inline-start: 52px; position: relative; counter-increment: step; }
+.steps > li::before {
+  content: counter(step, arabic-indic); position: absolute; inset-inline-start: 0; top: 2px;
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--brand-soft); color: var(--brand); font-weight: 700;
+}
+.steps p { color: var(--ink-2); }
+.note { font-size: 1rem; color: var(--ink-3); }
+
+/* The spaced days as a ruler: the gaps grow, like the memory */
+.ruler { list-style: none; padding: 0; margin: 4px 0; display: flex; align-items: flex-end; gap: 6px; font-family: var(--font-word); }
+.ruler li { display: grid; justify-items: center; gap: 2px; flex: 1 1 0; min-width: 0; padding: 8px 0; border-radius: var(--r-sm); background: var(--surface); border: 1px solid var(--line); }
+.ruler li:nth-child(n+4) { background: var(--mark-soft); border-color: transparent; }
+.ruler b { font-size: 1.15rem; }
+.ruler span { font-size: .75rem; color: var(--ink-3); }
+
+.features, .install { display: grid; gap: 20px; }
+.features > div, .install > div { display: grid; gap: 4px; }
+.features dt, .install dt { font-weight: 600; font-size: 1.15rem; }
+.features dd, .install dd { color: var(--ink-2); }
+.freq { display: inline-flex; align-items: flex-end; gap: 2px; margin-inline-start: 6px; font-size: .85rem; font-weight: 600; color: var(--ink-2); vertical-align: middle; }
+.freq i { width: 3px; border-radius: 1px; background: var(--line); }
+.freq i:nth-child(1) { height: 4px; } .freq i:nth-child(2) { height: 6px; } .freq i:nth-child(3) { height: 8px; }
+.freq i:nth-child(4) { height: 10px; } .freq i:nth-child(5) { height: 12px; margin-inline-end: 6px; }
+.freq i.on { background: var(--brand); }
+.stress { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; margin-inline: 4px; }
+.stress i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--ink-3); }
+.stress i.on { width: 12px; height: 12px; border: 0; background: var(--brand); }
+
+.privacy ul { margin: 0; padding-inline-start: 1.2em; display: grid; gap: 8px; color: var(--ink-2); }
+
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary { display: flex; align-items: center; min-height: 52px; cursor: pointer; font-weight: 600; list-style: none; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; margin-inline-start: auto; font-size: 1.4rem; color: var(--ink-3); }
+.faq details[open] summary::after { content: "−"; }
+.faq details p { padding-bottom: 16px; color: var(--ink-2); }
+
+.final { display: grid; justify-items: start; gap: 20px; padding: 48px 0 56px; border-top: 1px solid var(--line); }
+
+.foot { padding: 24px 0 40px; border-top: 1px solid var(--line); font-size: .95rem; color: var(--ink-3); display: grid; gap: 6px; }
