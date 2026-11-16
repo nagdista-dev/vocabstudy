@@ -96,7 +96,7 @@ def render(root: str, title: str, description: str, body_attrs: str) -> str:
 
 
 # Everything the published app needs — and nothing else (no tools, no docs).
-SITE_FILES = ["index.html", "about.html", "sw.js", "manifest.webmanifest", ".nojekyll"]   # about.html: the Arabic introduction
+SITE_FILES = ["index.html", "about.html", "sw.js", "manifest.webmanifest", ".nojekyll", "CNAME"]   # CNAME: pins the GitHub Pages custom domain (vocabstudy.nagdista.com)
 SITE_DIRS = ["assets"]
 
 
