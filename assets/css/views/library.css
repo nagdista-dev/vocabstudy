@@ -62,16 +62,21 @@
 .lib-more > summary .icon { transform: rotate(90deg); transition: transform var(--fast); }
 .lib-more[open] > summary .icon { transform: rotate(-90deg); }
 .lib-more-menu {
-  position: absolute; z-index: 10; inset-inline-start: 0; top: calc(100% + 4px); min-width: 210px;
+  position: absolute; z-index: 10; inset-inline-start: 0; inset-inline-end: auto; top: calc(100% + 4px); min-width: 210px;
+  max-width: calc(100vw - 2 * var(--gutter));
   display: grid; padding: var(--s-1); border-radius: var(--r-md);
+  overflow-y: auto; overscroll-behavior: contain;
   background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2);
 }
+/* The last menu sits at the right edge of the row, so it opens leftwards. */
+.lib-more:last-child .lib-more-menu { inset-inline-start: auto; inset-inline-end: 0; }
+/* Not enough room below (landscape phones): open upwards instead. */
+.lib-more.is-up .lib-more-menu { top: auto; bottom: calc(100% + 4px); }
 .lib-more-menu .btn { justify-content: flex-start; }
 @media (max-width: 640px) {
   .lib-search-row .field { flex-basis: 100%; }
   .lib-search-row .lib-sort { flex: 1; }
   .lib-sort select { width: 100%; }
-  .lib-more-menu { inset-inline-start: auto; inset-inline-end: 0; }
 }
 .word-list { display: grid; gap: var(--s-2); }
 

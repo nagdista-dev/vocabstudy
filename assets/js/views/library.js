@@ -293,4 +293,52 @@
     syncAddress();
     VS.app.render();
   });
+
+  /* The two menus in the word list ("Practise" / "More") are <details>
+     elements: only one may be open, and a tap anywhere else closes it.
+     Without this, opening the second leaves the first floating over the list. */
+  document.addEventListener("click", (e) => {
+    if (VS.app.current() !== "library") return;
+    if (e.target.closest(".lib-more-menu")) {
+      const menu = e.target.closest(".lib-more");
+      if (menu) menu.open = false;
+      return;
+    }
+    const summary = e.target.closest(".lib-more > summary");
+    if (summary) {
+      const mine = summary.parentElement;
+      VS.$$(".lib-more[open]").forEach((d) => { if (d !== mine) d.open = false; });
+      return;
+    }
+    VS.$$(".lib-more[open]").forEach((d) => { d.open = false; });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || VS.app.current() !== "library") return;
+    VS.$$(".lib-more[open]").forEach((d) => { d.open = false; });
+  });
+
+  /* Open the menu upwards when the button is near the bottom of a short
+     screen (landscape phones), so it never runs under the tab bar. If even
+     that side is too short, cap the menu and let it scroll. */
+  document.addEventListener("toggle", (e) => {
+    const d = e.target;
+    if (!d.matches || !d.matches(".lib-more") || !d.open) return;
+    const menu = d.querySelector(".lib-more-menu");
+    if (!menu) return;
+    menu.style.maxHeight = "";
+    const head = d.getBoundingClientRect();
+    const height = menu.getBoundingClientRect().height;
+    const bar = document.querySelector(".app-bar");
+    const tabs = document.querySelector(".tab-bar");
+    const topEdge = bar ? bar.getBoundingClientRect().bottom : 0;
+    const tabBox = tabs ? tabs.getBoundingClientRect() : null;
+    const bottomEdge = tabBox && tabBox.height > 0 && tabBox.top < innerHeight ? tabBox.top : innerHeight;
+    const roomBelow = bottomEdge - head.bottom - 12;
+    const roomAbove = head.top - topEdge - 12;
+    const up = height > roomBelow && roomAbove > roomBelow;
+    d.classList.toggle("is-up", up);
+    const room = up ? roomAbove : roomBelow;
+    if (height > room) menu.style.maxHeight = Math.max(48, room) + "px";
+  }, true);
 })();
