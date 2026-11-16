@@ -111,7 +111,7 @@
               <tr>
                 <td class="p-n">${i + 1}</td>
                 <td class="p-word">${word(w)}${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}<span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span></td>
-                ${meaning ? html`<td class="p-def">${has("definition") ? w.definition : ""}${has("example") ? html`<i>“${VS.ui.example(w)}”</i>` : ""}${note(w)}</td>` : ""}
+                ${meaning ? html`<td class="p-def">${has("definition") ? w.definition : ""}${has("example") && w.example ? html`<i>${VS.ui.quote(w)}</i>` : ""}${note(w)}</td>` : ""}
                 ${has("arabic") ? html`<td class="p-ar" lang="ar">${w.arabic}</td>` : ""}
               </tr>`)}
           </tbody>
@@ -194,7 +194,7 @@
               <div class="p-write-head">${word(w)}${has("ipa") ? html` <span class="ipa">${w.ipa}</span>` : ""}
                 ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}</div>
               ${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}
-              ${has("example") ? html`<span class="p-meta"><i>e.g. “${w.example}”</i></span>` : ""}
+              ${has("example") && w.example ? html`<span class="p-meta"><i>e.g. “${w.example}”</i></span>` : ""}
               <span class="p-rule"></span><span class="p-rule"></span>
             </li>`)}
         </ol>`;
@@ -230,7 +230,7 @@
               ? html`<div class="p-card p-back">
                   ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}
                   ${has("definition") ? html`<span class="p-def">${w.definition}</span>` : ""}
-                  ${has("example") ? html`<i>“${VS.ui.example(w)}”</i>` : ""}
+                  ${has("example") && w.example ? html`<i>${VS.ui.quote(w)}</i>` : ""}
                   ${note(w)}
                 </div>`
               : html`<div class="p-card p-empty"></div>`)}

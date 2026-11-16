@@ -13,9 +13,11 @@ words and progress stay on your device, and it works offline.
 ## How it works
 
 1. **Add words to your library** — the home screen. Type a word and press
-   Enter: that's all. Auto-fill adds the Arabic meaning, definition, example,
-   IPA and type. (The CEFR level is yours to set: no free source knows it
-   reliably.)
+   Enter: that's all. Auto-fill adds the Arabic meaning, the most common
+   definition with its own example, similar words, the IPA (in your accent)
+   and the type. Met the word in another meaning? **Not the meaning you met?**
+   lists every sense, and one tap switches. (The CEFR level is yours to set:
+   no free source knows it reliably.)
    Or paste a list from Excel / Google Sheets / Notion, or upload `.csv` / `.tsv`
    files. Each word lives in your library once: duplicates are caught.
 2. **Follow today's plan**, right above your words:
@@ -41,12 +43,18 @@ words and progress stay on your device, and it works offline.
 **Remember, not just recognise**
 - Daily **recall** (active recall + spaced repetition): from the meaning or
   from a sentence with a gap — you bring the English word back yourself.
+  Stuck? A **hint** gives the first letter, then more. Type it and the app
+  checks it: a one-letter slip is **Almost**, and it shows the letters you
+  missed. Mis-tapped a grade? **Undo**.
+- Meeting a new word for the first time is not a test: "Still learning" on
+  a card you've never seen is not counted as a mistake.
 - **Tricky words**: the ones you keep missing get their own practice.
 - Recall **forecast** for the next 7 days.
 
 **Learn**
-- Study cards (English-first or Arabic-first), swipe on phones.
-- Quiz with 5 question types incl. **listening**; every answer shows the full word.
+- Study cards (English-first or Arabic-first), swipe on phones, with similar words.
+- Quiz with 5 question types incl. **listening**; every answer shows the full
+  word, and a wrong pick shows what *that* word means — the difference is the lesson.
 - Spelling from sound with letter-by-letter feedback.
 - **Speak** with your browser's speech recognition (off by default; turn it
   on in Settings).
@@ -80,7 +88,7 @@ Two things can use the internet, and both can be switched off in Settings:
 
 | Feature | What is sent | Where |
 | --- | --- | --- |
-| Auto-fill (when you add a word) | only the English word | dictionaryapi.dev, mymemory.translated.net |
+| Auto-fill (when you add a word) | only the English word | Google Translate (free web endpoint), dictionaryapi.dev, mymemory.translated.net (fallback) |
 | Speak (Chrome / Edge) | your voice, by the browser itself | the browser's speech service |
 
 **Backup & export** saves everything to one file — choose the folder and name

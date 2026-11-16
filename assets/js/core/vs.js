@@ -23,7 +23,7 @@
      twice, and progress belongs to the word, not to when it was added.
 
      Each word: { id, word, sense, type, level, ipa, definition, example,
-                  arabic, tags: [], added: "YYYY-MM-DD" }
+                  arabic, synonyms: [], tags: [], added: "YYYY-MM-DD" }
      Every word is the learner's own: the app ships with none. They are
      saved by core/store.js and join VS.words at start-up. */
 
@@ -55,6 +55,7 @@
       w.level = w.level || "";                                         // only if you set it
       w.type = w.type || (/\s/.test(w.word) ? "Phrase" : "Noun");     // until auto-fill knows better
       w.tags = Array.isArray(w.tags) ? w.tags : VS.parseTags(w.tags);
+      w.synonyms = Array.isArray(w.synonyms) ? w.synonyms : VS.parseTags(w.synonyms).slice(0, 6);
       w.added = w.added || VS.todayKey();
       if (VS.byId[w.id]) { out.skipped.push(w); return; }
       VS.words.push(w);
@@ -83,11 +84,19 @@
 
   /** Show a headword the way it is written in a sentence: "Get Used To" →
       "get used to". Learners copy what they see, and Spell checks every
-      letter. "I", acronyms and words the example capitalises mid-sentence (Monday,
-      English) keep their capital. The id is lower case, so progress stays. */
+      letter. "I", acronyms, days, months, languages and words the example
+      capitalises mid-sentence keep their capital (wednesday → Wednesday).
+      The id is lower case, so progress stays. */
+  // "May" and "March" are left out: they are everyday words too (may, march).
+  const PROPER = new Set(("monday tuesday wednesday thursday friday saturday sunday january february april " +
+    "june july august september october november december english arabic french german spanish italian chinese " +
+    "japanese turkish russian egyptian american british european african asian muslim christian christmas ramadan eid"
+  ).split(" "));
   VS.naturalCase = function (text, example) {
     const ex = String(example || "");
     return String(text || "").replace(/[A-Za-z’']+/g, (t) => {
+      // Days, months and languages always take a capital: wednesday → Wednesday.
+      if (PROPER.has(t.toLowerCase())) return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
       if (t === "I" || !/^[A-Z][a-z’']*$/.test(t)) return t;        // I, TV, iPhone stay as written
       const mid = new RegExp("[^.!?\\s]\\s+" + t + "\\b").test(ex);
       return mid ? t : t.toLowerCase();

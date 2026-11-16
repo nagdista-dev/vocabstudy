@@ -8,8 +8,9 @@
 }
 .stat-tiles > div { padding: var(--s-4); display: grid; gap: 2px; }
 .stat-tiles dt { display: flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: var(--text-sm); }
-.stat-tiles dd { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-tiles dd { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
 .stat-tiles small { font-family: var(--font-body); font-size: var(--text-sm); font-weight: 400; color: var(--ink-3); }
+.stat-dot { margin-inline-end: 4px; color: var(--line-strong); }
 
 .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-5); }
 .chart { padding: var(--s-5); display: grid; gap: var(--s-4); margin: 0; }
@@ -85,4 +86,7 @@
 }
 @media (max-width: 640px) {
   .bar-col small { font-size: .72rem; }
+  .stat-tiles dd { font-size: var(--text-lg); }
+  .stat-tiles small { display: block; margin-top: 2px; }
+  .stat-dot { display: none; }
 }

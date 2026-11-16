@@ -118,9 +118,9 @@
           <header class="page-head"><div><h1>Your progress</h1><p class="hint">Since ${longDate(history[0].date)}</p></div></header>
 
           <dl class="stat-tiles">
-            <div class="card"><dt>${icon("clock", "icon-sm")} Total study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>
-            <div class="card"><dt>${icon("flame", "icon-sm")} Days studied</dt><dd>${history.length} <small>· streak ${t.streak}</small></dd></div>
-            <div class="card"><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${answered ? Math.round((right / answered) * 100) + "%" : "—"} <small>of ${answered} answers</small></dd></div>
+            <div class="card"><dt>${icon("clock", "icon-sm")} Study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>
+            <div class="card"><dt>${icon("flame", "icon-sm")} Days studied</dt><dd>${history.length} <small><span class="stat-dot" aria-hidden="true">·</span>streak ${t.streak}</small></dd></div>
+            <div class="card"><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${answered ? Math.round((right / answered) * 100) + "%" : "—"} <small><span class="stat-dot" aria-hidden="true">·</span>${answered.toLocaleString("en-GB")} answers</small></dd></div>
             <div class="card"><dt>${icon("star", "icon-sm")} Mastered</dt><dd>${t.mastered} <small>/ ${t.words}</small></dd></div>
           </dl>
 

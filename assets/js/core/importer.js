@@ -17,7 +17,7 @@
 (function () {
   "use strict";
 
-  const FIELDS = ["word", "definition", "example", "type", "level", "ipa", "arabic", "tags"];
+  const FIELDS = ["word", "definition", "example", "type", "level", "ipa", "arabic", "tags", "synonyms"];
   const ALIASES = {
     word: ["word", "filename", "file", "name", "term", "headword", "vocab", "vocabulary", "english", "phrase", "expression"],
     sense: ["sense", "meaningnote", "context"],
@@ -28,6 +28,7 @@
     ipa: ["ipa", "pronunciation", "phonetic", "phonetics", "transcription"],
     arabic: ["arabic", "ar", "translation", "arabicmeaning", "meaningar", "عربي", "المعنى", "الترجمة"],
     tags: ["tags", "tag", "labels", "label", "group", "list", "topic"],
+    synonyms: ["synonyms", "synonym", "similar", "similarwords"],
   };
   const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
   const TYPES = ["Noun", "Verb", "Adjective", "Adverb", "Phrase", "Phrasal Verb", "Idiom",
@@ -94,7 +95,7 @@
     return { rows, columns, hasHeader, delimiter };
   }
 
-  const blank = () => ({ word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "", tags: "" });
+  const blank = () => ({ word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "", tags: "", synonyms: "" });
 
   /** Clean one word and list what's missing. Used by tables, files and the one-word form. */
   function checkWord(w, line) {
@@ -109,7 +110,7 @@
 
       const level = w.level.toUpperCase().replace(/\s/g, "");
       if (LEVELS.includes(level)) w.level = level;
-      else if (w.level) { issues.push({ kind: "warn", text: `level “${w.level}” isn't A1–C2 — it will be estimated` }); w.level = ""; }
+      else if (w.level) { issues.push({ kind: "warn", text: `level “${w.level}” isn't A1–C2 — it's left empty` }); w.level = ""; }
 
       const rawType = w.type;
       if (rawType) {

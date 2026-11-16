@@ -1,8 +1,7 @@
 /* views/library.js — the home screen and the brain of the app: your words.
    ------------------------------------------------------------------
-   Top to bottom: one box to add a word ("a word you want to remember" —
-   the app fills in the rest, core/autofill.js), today's plan
-   (views/home.js), then every word you're learning.
+   Top to bottom: today's plan (views/home.js), one line to add a word
+   (core/autofill.js fills in the rest), then every word you're learning.
 
    Search English, Arabic, definitions, examples, tags and your notes.
    Filter by status, level, type, memory box, when you added it, tag, notes, tricky words and sound traps; sort eight ways. Then act on
@@ -22,10 +21,17 @@
   let f = F.parse("");
   let limit = PAGE;
   let panelOpen = false;
+  let stepsRO = null;   // watches the one-row practice scroller for overflow
 
   const words = () => F.apply(VS.allWords(), f);
   const query = () => F.query(f);
   const pickHref = (mode) => "#/pick/" + mode + (query() ? "?" + query() : "");
+  const narrow = () => matchMedia("(max-width: 420px)").matches;
+
+  /* Status has its own chips; the badge on Filters counts only the
+     advanced filters hiding in the sheet. */
+  const advanced = () => Object.keys(F.DEFAULTS)
+    .filter((k) => !["q", "sort", "status"].includes(k) && f[k] && f[k] !== F.DEFAULTS[k]).length;
 
   /** Keep the address in step with the filters, without a new history entry. */
   function syncAddress() {
@@ -41,27 +47,42 @@
     return html`<label class="check"><input type="checkbox" data-filter="${name}" ${f[name] ? VS.raw("checked") : ""}><span>${label}</span></label>`;
   }
 
+  /* Advanced filters: a sheet, because on a phone a 500px form would push
+     the words off the screen. Filters apply to the list underneath while
+     it is open; the footer shows how many words match. */
   function panel() {
     const all = VS.allWords();
     const types = [...new Set(all.map((w) => w.type))].sort();
     const levels = [...new Set(all.map((w) => w.level).filter(Boolean))].sort();
     const tags = VS.allTags();
+    const n = words().length;
     return html`
-      <div class="lib-panel" id="libPanel" ${panelOpen ? "" : VS.raw("hidden")}>
-        <div class="lib-panel-grid">
-          ${select("level", "Level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]].concat(levels.map((l) => [l, l]), [["none", "No level"]]))}
-          ${select("type", "Type", [["all", "All types"]].concat(types.map((t) => [t, t])))}
-          ${select("box", "Memory", [["all", "Any memory"]].concat(F.BOXES.map((b, i) => [String(i), i ? "Box " + i + " · waits " + b : "Not studied"])))}
-          ${select("added", "Added", Object.entries(F.ADDED))}
-          ${select("tag", "Tag", [["all", "All tags"]].concat(tags.map((t) => [t.tag, "#" + t.tag + " (" + t.count + ")"]), [["none", "No tag"]]))}
+      <dialog class="sheet filter-sheet" id="libPanel" aria-labelledby="filtersTitle">
+        <div class="sheet-head">
+          <h2 id="filtersTitle">Filters</h2>
+          <button class="icon-btn" type="button" data-action="lib-panel-close" aria-label="Close filters">${icon("x")}</button>
         </div>
-        <div class="row lib-toggles">
-          ${toggle("note", "With my notes")}
-          ${toggle("tricky", "Tricky words")}
-          ${toggle("trap", "Sound traps")}
-          <button class="btn btn-quiet" type="button" data-action="lib-clear" ${F.active(f) || f.q ? "" : VS.raw("disabled")}>Clear filters</button>
+        <div class="sheet-body filter-body">
+          <div class="lib-panel-grid">
+            ${select("level", "Level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]].concat(levels.map((l) => [l, l]), [["none", "No level"]]))}
+            ${select("type", "Type", [["all", "All types"]].concat(types.map((t) => [t, t])))}
+            ${select("box", "Memory", [["all", "Any memory"]].concat(F.BOXES.map((b, i) => [String(i), i ? "Box " + i + " · waits " + b : "Not studied"])))}
+            ${select("added", "Added", Object.entries(F.ADDED))}
+            ${select("tag", "Tag", [["all", "All tags"]].concat(tags.map((t) => [t.tag, "#" + t.tag + " (" + t.count + ")"]), [["none", "No tag"]]))}
+          </div>
+          <div class="lib-toggles">
+            ${toggle("note", "With my notes")}
+            ${toggle("tricky", "Tricky words")}
+            ${toggle("trap", "Sound traps")}
+          </div>
         </div>
-      </div>`;
+        <div class="sheet-foot filter-foot">
+          <button class="btn btn-quiet" type="button" data-action="lib-clear" ${F.active(f) || f.q ? "" : VS.raw("disabled")}>Clear all</button>
+          <button class="btn btn-primary" type="button" data-action="lib-panel-done">
+            Show <span data-filter-count>${n}</span> <span data-filter-noun>${n === 1 ? "word" : "words"}</span>
+          </button>
+        </div>
+      </dialog>`;
   }
 
   /* What you can do with the list you're looking at. */
@@ -74,13 +95,13 @@
     return html`
       <div class="lib-actions">
         <details class="lib-more">
-          <summary class="btn">Practise ${n === VS.allWords().length ? "all" : "these " + n} ${icon("chevron-right", "icon-sm")}</summary>
+          <summary class="btn btn-tonal">${icon("play", "icon-sm")} Practise ${icon("chevron-right", "icon-sm")}</summary>
           <div class="lib-more-menu">
             ${modes.map(([m, l]) => (m === "match" && n < 2) ? "" : html`<a class="btn btn-quiet" href="${pickHref(m)}">${icon(m === "speak" ? "mic" : m, "icon-sm")} ${l}</a>`)}
           </div>
         </details>
         <details class="lib-more">
-          <summary class="btn btn-quiet">More ${icon("chevron-right", "icon-sm")}</summary>
+          <summary class="btn btn-quiet lib-more-btn" aria-label="More actions for this list">${icon("more")}<span class="lib-more-label">More</span></summary>
           <div class="lib-more-menu">
             <a class="btn btn-quiet" href="#/print/pick${query() ? "?" + query() : ""}">${icon("print", "icon-sm")} Print or PDF</a>
             <button class="btn btn-quiet" type="button" data-action="lib-export">${icon("book", "icon-sm")} Export CSV</button>
@@ -97,7 +118,7 @@
     const shown = list.slice(0, limit);
     return html`
       <div class="lib-bar">
-        <p aria-live="polite"><b>${VS.plural(list.length, "word")}</b>${desc ? html` <span class="hint">· ${desc}</span>` : ""}</p>
+        <p class="lib-count" aria-live="polite"><b>${VS.plural(list.length, "word")}</b>${desc ? html`<span class="lib-desc hint">${desc}</span>` : ""}</p>
         ${actions(list)}
       </div>
       ${list.length
@@ -112,6 +133,20 @@
             <p>${VS.allWords().length ? "Try another search or clear the filters." : "Your library is empty."}</p>
             ${VS.allWords().length ? html`<button class="btn" type="button" data-action="lib-clear">Clear filters</button>`
               : html`<a class="btn btn-primary" href="#/add">${icon("plus")} Add words</a>`}</div>`}`;
+  }
+
+  /* Status is the everyday filter, so it stays on the page as a single
+     scrollable row of chips — not a two-row form. */
+  function statusChips(s) {
+    const counts = { all: s.total, new: s.new, learning: s.learning, mastered: s.mastered, due: s.due, started: s.started };
+    return html`
+      <div class="chip-row" role="group" aria-label="Filter by status">
+        ${Object.entries(F.STATUS).map(([v, l]) => html`
+          <button class="chip" type="button" data-action="lib-status" data-value="${v}" aria-pressed="${f.status === v}"
+            ${v !== "all" && !counts[v] ? VS.raw("disabled") : ""}>
+            ${l}<span class="chip-n">${counts[v]}</span>
+          </button>`)}
+      </div>`;
   }
 
   /* Progress lives in this browser: remind once a week to keep a copy.
@@ -137,31 +172,53 @@
       </div>`;
   }
 
-  function addBox() {
+  /* One line to add a word. With an empty library the form gets a label
+     and a sentence about auto-fill; once there are words it is a quiet
+     utility above the library, not the whole first screen. */
+  function addBox(compact) {
     return html`
-      <form class="quick-add" data-form="quick-add" autocomplete="off">
-        <label class="quick-label" for="quickWord">A word you want to remember</label>
+      <form class="quick-add ${compact ? "is-compact" : ""}" data-form="quick-add" autocomplete="off">
+        ${compact ? "" : html`<label class="quick-label" for="quickWord">A word you want to remember</label>`}
         <div class="add-line">
-          <span class="field field-xl"><input id="quickWord" placeholder="Type a word or phrase" aria-label="An English word or phrase you want to remember"
-            spellcheck="false" autocapitalize="off" enterkeyhint="done"/></span>
-          <button class="btn btn-primary btn-lg" type="submit">${icon("plus", "icon-sm")} Add</button>
+          <span class="field field-xl">
+            <input id="quickWord" placeholder="${compact ? "Add a word or phrase" : "Type a word or phrase"}"
+              aria-label="An English word or phrase you want to remember"
+              spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
+          </span>
+          <button class="btn ${compact ? "btn-tonal" : "btn-primary"} btn-lg" type="submit" aria-label="Add this word">${icon("plus", "icon-sm")}<span class="add-label">Add</span></button>
         </div>
-        <p class="hint">${VS.autofill.enabled()
+        ${compact ? "" : html`<p class="hint">${VS.autofill.enabled()
           ? "Press Enter — the app adds the meaning, Arabic, example and sound."
           : "Auto-fill is off: add the details in Add words."}
-          <a href="#/add">Paste a list or upload a file</a></p>
+          <a href="#/add">Paste a list or upload a file</a></p>`}
       </form>`;
   }
 
-  /* An empty library: what happens after you add a word. */
+  /* An empty library: a first-run page, not an empty list. */
   function firstSteps() {
     return html`
       <ol class="first-steps">
-        <li><b>Add a word</b> you met today — in a book, a series, at work.</li>
-        <li><b>Learn it</b> once: the meaning, the Arabic, an example and the sound.</li>
-        <li><b>Recall it</b> on spaced days — 1, 3, 7, 14, 30, 60 — until it stays.</li>
+        <li><span class="step-n">1</span><span><b>Add a word you met today</b><span class="hint">In a book, a series, at work — anywhere.</span></span></li>
+        <li><span class="step-n">2</span><span><b>Learn it once</b><span class="hint">The meaning, the Arabic, an example and the sound.</span></span></li>
+        <li><span class="step-n">3</span><span><b>Recall it on spaced days</b><span class="hint">1, 3, 7, 14, 30, 60 — until it stays.</span></span></li>
       </ol>
       <p class="hint first-note">Free and open source. No account, no server: your words stay on this device.</p>`;
+  }
+
+  function updateFilterButton() {
+    const btn = VS.$('[data-action="lib-panel"]');
+    if (!btn) return;
+    btn.setAttribute("aria-expanded", String(panelOpen));
+    const pill = VS.$("[data-filter-pill]", btn);
+    const n = advanced();
+    if (pill) { pill.textContent = n; pill.hidden = !n; }
+  }
+
+  function updatePanelCount() {
+    const num = VS.$("[data-filter-count]");
+    const noun = VS.$("[data-filter-noun]");
+    if (num) num.textContent = words().length;
+    if (noun) noun.textContent = words().length === 1 ? "word" : "words";
   }
 
   function refreshResults() {
@@ -173,27 +230,32 @@
     title: () => "Your words",
     crumbs: () => [],
 
-    start(p) { f = F.parse(p.query); limit = PAGE; if (F.active(f)) panelOpen = true; },
+    start(p) { f = F.parse(p.query); limit = PAGE; panelOpen = false; },
 
     render() {
       const s = VS.store.statsFor(VS.allWords());
-      const on = F.active(f);
+      const on = advanced();
       if (!s.total) {
-        return html`<div class="page view-enter">${addBox()}${firstSteps()}</div>`;
+        return html`
+          <div class="page home-page view-enter">
+            <section class="home-empty">
+              <p class="today-kicker">Your vocabulary, remembered</p>
+              <h1>Start with <mark class="mark">one word</mark>.</h1>
+              <p class="home-empty-copy">Type a word you met today. VocabStudy adds the meaning, Arabic, example and sound — then brings it back on the days you're about to forget it.</p>
+            </section>
+            ${addBox(false)}
+            ${firstSteps()}
+          </div>`;
       }
       return html`
-        <div class="page view-enter">
-          ${addBox()}
-          ${backupNudge()}
+        <div class="page home-page view-enter">
           ${VS.today.strip()}
+          ${addBox(true)}
+          ${backupNudge()}
 
           <header class="lib-head">
             <h1>Your words</h1>
-            <dl class="lib-stats">
-              <div><dt>words</dt><dd>${s.total}</dd></div>
-              <div><dt>learning</dt><dd>${s.learning}</dd></div>
-              <div><dt>mastered</dt><dd>${s.mastered}</dd></div>
-            </dl>
+            <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
           </header>
 
           <div class="lib-tools">
@@ -201,19 +263,14 @@
               <label class="field">
                 ${icon("search", "icon-sm")}
                 <span class="sr-only">Search the library</span>
-                <input type="search" id="libSearch" value="${f.q}" placeholder="Search words, Arabic, tags, notes" autocomplete="off"
+                <input type="search" id="libSearch" value="${f.q}" placeholder="${narrow() ? "Search words or Arabic" : "Search words, Arabic, tags, notes"}" autocomplete="off"
                        aria-label="Search English, Arabic, definitions, examples, tags and your notes"/>
               </label>
-              <label class="lib-sort"><span class="sr-only">Sort</span>
-                <select data-filter="sort">${Object.entries(F.SORTS).map(([v, l]) => html`<option value="${v}" ${f.sort === v ? VS.raw("selected") : ""}>${l}</option>`)}</select>
-              </label>
-              <button class="btn" type="button" data-action="lib-panel" aria-expanded="${panelOpen}" aria-controls="libPanel">
-                ${icon("settings", "icon-sm")} Filters${on ? html` <span class="pill">${on}</span>` : ""}</button>
+              <button class="btn lib-filter-btn" type="button" data-action="lib-panel" aria-expanded="${panelOpen}" aria-controls="libPanel" aria-label="Filters">
+                ${icon("settings", "icon-sm")}<span class="lib-filter-label">Filters</span><span class="pill" data-filter-pill ${on ? "" : VS.raw("hidden")}>${on}</span>
+              </button>
             </div>
-            <div class="seg" role="group" aria-label="Status">
-              ${Object.entries(F.STATUS).map(([v, l]) => html`
-                <button type="button" data-action="lib-status" data-value="${v}" aria-pressed="${f.status === v}">${l}</button>`)}
-            </div>
+            ${statusChips(s)}
             ${panel()}
           </div>
 
@@ -222,36 +279,90 @@
     },
 
     mount(root) {
+      if (stepsRO) { stepsRO.disconnect(); stepsRO = null; }
       const search = VS.$("#libSearch", root);
       if (search) search.addEventListener("input", () => { f.q = search.value; limit = PAGE; syncAddress(); refreshResults(); });
       const add = VS.$("#quickWord", root);
-      VS.ui.watchKeyboard(add);
-      // The highlighter grows under exactly what you type (canvas measures the text).
-      const ctx = document.createElement("canvas").getContext("2d");
-      const mark = () => {
-        const cs = getComputedStyle(add);
-        ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
-        const w = add.value ? ctx.measureText(add.value).width + 8 : 0;
-        add.style.setProperty("--mark-w", Math.min(w, add.clientWidth) + "px");
-        add.style.backgroundPosition = (parseFloat(cs.paddingLeft) - 4) + "px 0";
-      };
-      add.addEventListener("input", mark);
-      VS.$("[data-form='quick-add']", root).addEventListener("submit", (e) => {
+      if (add) {
+        VS.ui.watchKeyboard(add);
+        VS.ui.watchDuplicate(add, add.closest(".add-line"));
+        // The highlighter grows under exactly what you type (canvas measures the text).
+        const ctx = document.createElement("canvas").getContext("2d");
+        const mark = () => {
+          const cs = getComputedStyle(add);
+          ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+          const w = add.value ? ctx.measureText(add.value).width + 8 : 0;
+          add.style.setProperty("--mark-w", Math.min(w, add.clientWidth) + "px");
+          add.style.backgroundPosition = (parseFloat(cs.paddingLeft) - 4) + "px 0";
+        };
+        add.addEventListener("input", mark);
+        if (!VS.allWords().length && matchMedia("(hover: hover)").matches) add.focus({ preventScroll: true });
+      }
+      const addForm = VS.$("[data-form='quick-add']", root);
+      if (addForm) addForm.addEventListener("submit", (e) => {
         e.preventDefault();
+        const wasEmpty = !VS.allWords().length;
         const w = VS.addWord({ word: add.value });
         if (!w) return;
         VS.toast(`“${w.word}” is in your library.`);
         VS.app.render();
-        const again = VS.$("#quickWord");
-        if (again) again.focus();
+        // On the first word, let the screen settle on today's plan instead
+        // of reopening the keyboard over it.
+        if (!wasEmpty) {
+          const again = VS.$("#quickWord");
+          if (again) again.focus();
+        }
       });
-      if (!VS.allWords().length && matchMedia("(hover: hover)").matches) add.focus({ preventScroll: true });
+
+      /* The practice row is one line. When it overflows, fade its edge so a
+         half-visible chip reads as "scroll me", and stop fading at the end. */
+      const steps = VS.$(".today-steps", root);
+      if (steps) {
+        const updateSteps = () => {
+          const over = steps.scrollWidth > steps.clientWidth + 1;
+          steps.classList.toggle("is-overflow", over);
+          steps.classList.toggle("is-end", !over || steps.scrollLeft + steps.clientWidth >= steps.scrollWidth - 2);
+        };
+        updateSteps();
+        steps.addEventListener("scroll", updateSteps, { passive: true });
+        requestAnimationFrame(updateSteps);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateSteps).catch(() => {});
+        if (window.ResizeObserver) {
+          stepsRO = new ResizeObserver(updateSteps);
+          stepsRO.observe(steps);
+        }
+      }
+
+      const panel = VS.$("#libPanel", root);
+      if (panel) {
+        if (panelOpen && !panel.open) panel.showModal();
+        else if (!panelOpen && panel.open) panel.close();
+        panel.addEventListener("close", () => {
+          panelOpen = false;
+          const btn = VS.$('[data-action="lib-panel"]', root);
+          if (btn) btn.setAttribute("aria-expanded", "false");
+        });
+        // A tap on the dimmed backdrop closes the sheet, like every native one.
+        panel.addEventListener("click", (e) => { if (e.target === panel) panel.close(); });
+      }
+    },
+
+    leave() {
+      if (stepsRO) { stepsRO.disconnect(); stepsRO = null; }
     },
 
     actions: {
-      "lib-panel"() { panelOpen = !panelOpen; VS.app.render(); },
+      "lib-panel"() { panelOpen = true; VS.app.render(); },
+      "lib-panel-close"() {
+        const p = VS.$("#libPanel");
+        if (p && p.open) p.close(); else { panelOpen = false; VS.app.render(); }
+      },
+      "lib-panel-done"() {
+        const p = VS.$("#libPanel");
+        if (p && p.open) p.close(); else { panelOpen = false; VS.app.render(); }
+      },
       "lib-status"(el) { f.status = el.dataset.value; limit = PAGE; syncAddress(); VS.app.render(); },
-      "lib-clear"() { f = F.parse(""); limit = PAGE; syncAddress(); VS.app.render(); },
+      "lib-clear"() { f = F.parse(""); limit = PAGE; panelOpen = false; syncAddress(); VS.app.render(); },
       "lib-more"() { limit += PAGE; refreshResults(); },
       "lib-export"() { VS.exportCSV(words(), query() ? "list" : "library"); },
       "backup-ignore"() {
@@ -284,14 +395,23 @@
   // A word just filled in by auto-fill: show its details in the list.
   VS.autofill.onFill(() => { if (VS.app.current() === "library") refreshResults(); });
 
-  // Selects and checkboxes in the filter panel (one listener for the app).
+  // Selects and checkboxes in the filter sheet (one listener for the app).
+  // While the sheet is open, changing a filter updates the list underneath
+  // and the live result count — it must not re-render the page and close it.
   document.addEventListener("change", (e) => {
     const name = e.target.dataset && e.target.dataset.filter;
     if (!name || VS.app.current() !== "library") return;
     f[name] = e.target.type === "checkbox" ? (e.target.checked ? "1" : "") : e.target.value;
     limit = PAGE;
     syncAddress();
-    VS.app.render();
+    const panel = VS.$("#libPanel");
+    if (panel && panel.open) {
+      refreshResults();
+      updateFilterButton();
+      updatePanelCount();
+    } else {
+      VS.app.render();
+    }
   });
 
   /* The two menus in the word list ("Practise" / "More") are <details>

@@ -45,7 +45,7 @@
       case "gap": {
         const hit = VS.findInExample(w);
         return html`<p class="q-label">Which word completes the sentence?</p>
-          <p class="q-sentence">${hit.before}<span class="gap">${s.picked ? hit.answer : "_____"}</span>${hit.after}</p>`;
+          <p class="q-sentence">${hit.before}${s.picked ? html`<mark class="mark">${hit.answer}</mark>` : html`<span class="gap"><span class="sr-only">blank</span></span>`}${hit.after}</p>`;
       }
       default:
         return html`<p class="q-label">Which word matches this meaning?</p><p class="q-def">${w.definition}</p>`;
@@ -76,8 +76,18 @@
         <div class="row"><b class="feedback-word">${VS.ui.headword(w)}</b>${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
         <p lang="ar" class="feedback-ar">${w.arabic}</p>
         <p class="hint">${w.definition}</p>
-        <p class="feedback-example">“${VS.ui.example(w)}”</p>
+        ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
+        ${ok ? "" : picked(VS.byId[s.picked])}
       </div>`;
+  }
+
+  /* A wrong pick is a word too: say what it means, so the difference itself
+     is learned ("actually" ≠ "eventually"). */
+  function picked(o) {
+    if (!o) return "";
+    return html`
+      <p class="feedback-picked">${icon("x", "icon-sm")}
+        <span>You chose <b>${VS.ui.headword(o)}</b>${o.arabic ? html` (<bdi lang="ar" dir="rtl">${o.arabic.split(" - ")[0]}</bdi>)` : ""}${o.definition ? html`: ${o.definition}` : ""}</span></p>`;
   }
 
   function finish() {

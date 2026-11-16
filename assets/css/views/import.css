@@ -2,10 +2,13 @@
 
 .import-page { display: grid; gap: var(--s-5); }
 .import-tabs { width: fit-content; max-width: 100%; }
-/* Phones: all three ways stay visible — equal columns, labels may wrap. */
+.import-tabs .tab-short { display: none; }
+/* Phones: all three ways stay visible — equal columns, short one-line labels. */
 @media (max-width: 480px) {
   .import-tabs { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .import-tabs button { white-space: normal; line-height: 1.2; padding: 4px 6px; text-align: center; }
+  .import-tabs button { white-space: nowrap; padding: 4px 6px; text-align: center; }
+  .import-tabs .tab-long { display: none; }
+  .import-tabs .tab-short { display: inline; }
 }
 
 /* Type a word */
@@ -66,6 +69,14 @@
 /* Type a word: one line, Enter adds it. Details are optional. */
 .add-form { display: grid; gap: var(--s-3); }
 .add-form .field-xl input { text-align: start; letter-spacing: 0; }
+@media (max-width: 640px) {
+  .add-form .field-xl input { font-size: 1rem; }
+  .add-form .add-line .btn { padding: 0 var(--s-3); }
+}
+@media (max-width: 374px) {
+  .add-form .add-line .btn { width: 46px; padding: 0; }
+  .add-form .add-label { display: none; }
+}
 .add-more { border-top: 1px solid var(--line); padding-top: var(--s-3); }
 .add-more > summary {
   display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap);

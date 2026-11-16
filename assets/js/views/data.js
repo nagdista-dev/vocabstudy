@@ -13,7 +13,7 @@
   const { html, icon } = VS;
 
   // The columns read back by Add words (word … tags), then your progress.
-  const COLUMNS = ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "tags",
+  const COLUMNS = ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "tags", "synonyms",
                    "added", "status", "box", "next_recall", "right", "wrong", "note"];
   const exportOpts = { which: "all" };
 
@@ -23,7 +23,7 @@
     return words.map((w) => {
       const e = VS.store.word(w.id);
       return [w.word, w.sense, w.type, w.level, w.ipa, w.definition, w.example, w.arabic, w.tags.join(", "),
-              w.added, VS.store.status(w.id), e.box, e.due, e.right, e.wrong, VS.store.note(w.id)];
+              w.synonyms.join(", "), w.added, VS.store.status(w.id), e.box, e.due, e.right, e.wrong, VS.store.note(w.id)];
     });
   }
 

@@ -8,29 +8,6 @@
   
   let s = null;   // { scope, words, index, typed, checked, hints, right, wrong: [] }
 
-  /**
-   * The correct spelling, letter by letter: green for letters you wrote in
-   * the right order, red (underlined) for letters you missed or got wrong.
-   * Uses the longest common subsequence, so one missing letter in the middle
-   * doesn't turn every letter after it red ("recieve" vs "receive").
-   */
-  function diff(typed, answer) {
-    const a = [...answer.toLowerCase()];
-    const t = [...typed.toLowerCase()];
-    const L = Array.from({ length: a.length + 1 }, () => new Array(t.length + 1).fill(0));
-    for (let i = a.length - 1; i >= 0; i--)
-      for (let j = t.length - 1; j >= 0; j--)
-        L[i][j] = a[i] === t[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
-    const hit = new Set();
-    for (let i = 0, j = 0; i < a.length && j < t.length;) {
-      if (a[i] === t[j]) { hit.add(i); i++; j++; }
-      else if (L[i + 1][j] >= L[i][j + 1]) i++;
-      else j++;
-    }
-    return [...answer].map((ch, i) =>
-      ch === " " ? html`<span class="ch-space"> </span>` : html`<span class="${hit.has(i) ? "ch-ok" : "ch-bad"}">${ch}</span>`);
-  }
-
   function finish() {
     const next = VS.finishStep(s.scope, "spell");
     if (!s.wrong.length) setTimeout(VS.ui.celebrate, 150);
@@ -94,10 +71,10 @@
                     ? html`<p class="spell-line"><span class="feedback-word"><span class="mark">${answer}</span></span> <span class="ipa">${w.ipa}</span></p>`
                     : html`
                       <p class="spell-line"><span class="hint">You wrote</span><span class="spell-typed">${s.typed}</span></p>
-                      <p class="spell-line"><span class="hint">Correct</span><span class="spell-diff" aria-label="Correct spelling: ${answer}">${diff(s.typed, answer)}</span></p>
+                      <p class="spell-line"><span class="hint">Correct</span><span class="spell-diff" aria-label="Correct spelling: ${answer}">${VS.ui.letters(s.typed, answer)}</span></p>
                       <p class="spell-legend hint"><span class="ch-ok">green</span> = you had it · <span class="ch-bad">red</span> = missed or wrong · <span class="ipa">${w.ipa}</span></p>`}
                   ${VS.ui.soundTraps(w)}
-                  <p class="feedback-example">“${VS.ui.example(w)}”</p>
+                  ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
                 </div>`
               : ""}
           </section>

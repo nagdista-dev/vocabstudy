@@ -45,6 +45,7 @@
     const w = {};
     ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic"].forEach((k) => { if (r[k]) w[k] = r[k]; });
     w.tags = VS.parseTags(r.tags);
+    if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
     return w;
   };
 
@@ -107,7 +108,7 @@
             <input data-form-field="word" id="addWord" value="${st.form.word || ""}" placeholder="Type a word or phrase" aria-label="English word or phrase"
                    spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
           </label>
-          <button class="btn btn-primary btn-lg" type="submit">${icon("plus", "icon-sm")} Add</button>
+          <button class="btn btn-primary btn-lg" type="submit" aria-label="Add this word">${icon("plus", "icon-sm")}<span class="add-label">Add</span></button>
         </div>
         <p class="hint">${auto
           ? "Press Enter. The app fills in the Arabic meaning, definition, example and pronunciation — only the word is sent online."
@@ -259,7 +260,7 @@
     return files;
   }
 
-  const TABS = [["type", "Type a word"], ["paste", "Paste a list"], ["files", "Upload files"]];
+  const TABS = [["type", "Type a word", "Type"], ["paste", "Paste a list", "Paste"], ["files", "Upload files", "Upload"]];
 
   VS.views.import = {
     title: () => "Add words",
@@ -275,7 +276,7 @@
 
           <section class="card import-step">
             <div class="seg import-tabs" role="tablist" aria-label="How to add words">
-              ${TABS.map(([v, l]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}">${l}</button>`)}
+              ${TABS.map(([v, l, short]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}"><span class="tab-long">${l}</span><span class="tab-short">${short}</span></button>`)}
             </div>
             ${st.tab === "type" ? typeTab() : st.tab === "paste" ? pasteTab() : filesTab()}
           </section>
@@ -299,6 +300,7 @@
         el.addEventListener("input", () => { st.form[el.dataset.formField] = el.value; });
       });
       VS.ui.watchKeyboard(VS.$("#addWord", root));
+      VS.ui.watchDuplicate(VS.$("#addWord", root), VS.$("#addWord", root) && VS.$("#addWord", root).closest(".add-line"));
       const form = VS.$("[data-form='one-word']", root);
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); VS.views.import.actions["form-add"](); });
       const first = VS.$("#addWord", root);

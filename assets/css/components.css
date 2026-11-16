@@ -9,6 +9,11 @@
   margin-inline: auto;
   padding: var(--s-6) var(--gutter) var(--s-8);
 }
+@media (max-width: 640px) {
+  .page { padding-top: var(--s-5); padding-bottom: var(--s-7); }
+  .page-head h1 { font-size: 1.75rem; }
+  .page-head { gap: var(--s-3); }
+}
 .activity {
   width: 100%;
   max-width: var(--activity-max);
@@ -28,8 +33,9 @@
 /* ── App bar ───────────────────────────────────────────────────── */
 .app-bar {
   position: sticky; top: 0; z-index: 20;
-  height: var(--bar-h);
-  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  height: calc(var(--bar-h) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);   /* installed iPhone: keep the bar under the clock */
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: saturate(1.4) blur(12px);
   -webkit-backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--line);
@@ -44,7 +50,7 @@
 .brand {
   display: inline-flex; align-items: center; gap: var(--s-2);
   font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
-  color: var(--ink); text-decoration: none; white-space: nowrap;
+  color: var(--ink); text-decoration: none; white-space: nowrap; letter-spacing: -.01em;
 }
 .brand-mark { width: 30px; height: 30px; flex: none; }
 .crumbs {
@@ -54,10 +60,14 @@
 .crumbs a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
 .crumbs a:hover { color: var(--brand); }
 .crumbs span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 560px) {
-  .brand > span { display: none; }                 /* the mark alone links home */
-  .crumbs > :not(:last-child) { display: none; }   /* show only where you are */
-  .crumbs { font-weight: 600; color: var(--ink); }
+@media (max-width: 640px) {
+  :root { --bar-h: 56px; }
+  .app-bar-inner { gap: var(--s-2); padding-inline: var(--gutter); }
+  .brand { font-size: 1rem; gap: 8px; }
+  .brand-mark { width: 28px; height: 28px; }
+  /* The page headline already names the screen; the bar stays brand chrome. */
+  .crumbs { display: none; }
+  .bar-actions { gap: 0; }
 }
 /* Top-bar navigation: icon + label on wide screens */
 .bar-nav { display: flex; align-items: center; gap: 2px; }
@@ -82,22 +92,29 @@
   .tab-bar {
     position: fixed; z-index: 18; left: 0; right: 0; bottom: 0;
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;          /* as many columns as links */
-    padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
-    background: color-mix(in srgb, var(--surface) 94%, transparent);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding: 2px 6px calc(2px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border-top: 1px solid var(--line);
   }
   body[data-mode="activity"] .tab-bar { display: none; }
-  body[data-mode="browse"] main { padding-bottom: 72px; }
+  body[data-mode="browse"] main { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
   .tab-link {
-    display: grid; justify-items: center; gap: 2px; min-height: 56px; padding: 6px 2px; border-radius: var(--r-md);
-    color: var(--ink-2); text-decoration: none; font-size: .82rem; font-weight: 600;
+    display: grid; justify-items: center; align-content: center; gap: 1px;
+    min-height: 54px; padding: 4px 2px; border-radius: var(--r-md);
+    color: var(--ink-3); text-decoration: none; font-size: .72rem; font-weight: 600;
+    letter-spacing: .005em; transition: color var(--fast);
   }
+  .tab-link .icon { width: 22px; height: 22px; }
   .tab-link[aria-current="page"] { color: var(--brand); }
   .tab-link[aria-current="page"] .tab-ico { background: var(--brand-soft); }
   .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 28px; border-radius: var(--r-pill); }
-  .toast { bottom: 90px; }
-  .break-card { bottom: 90px; }
+  .tab-ico .count {
+    top: -4px; inset-inline-end: -8px; min-width: 17px; height: 17px; padding: 0 4px;
+    border: 2px solid var(--surface); font-size: .62rem; line-height: 13px;
+  }
+  .toast { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .break-card { bottom: calc(80px + env(safe-area-inset-bottom)); }
 }
 .bar-actions { margin-inline-start: auto; display: flex; align-items: center; gap: var(--s-1); }
 
@@ -124,6 +141,10 @@
 .btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
 .btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
 .btn-quiet:hover { background: var(--surface-2); color: var(--ink); }
+/* A second-level action: clearly clickable, never competing with the one
+   primary button on the screen. Same ink, quieter fill. */
+.btn-tonal { background: var(--brand-soft); border-color: transparent; color: var(--brand); }
+.btn-tonal:hover { background: color-mix(in srgb, var(--brand) 14%, var(--surface)); border-color: transparent; }
 .btn-good { background: var(--good-soft); border-color: transparent; color: var(--good); }
 .btn-bad  { background: var(--bad-soft);  border-color: transparent; color: var(--bad); }
 .btn-lg { min-height: 52px; padding: 0 var(--s-5); font-size: var(--text-md); border-radius: var(--r-md); }
@@ -410,3 +431,20 @@ kbd {
   .badge { height: 26px; font-size: .8rem; }
   .hint { font-size: max(.85rem, 13.5px); }
 }
+
+/* Similar words — under a meaning, on a card back, in a hint */
+.similar { font-size: var(--text-sm); color: var(--ink-2); }
+.similar > span { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: var(--text-xs); color: var(--ink-3); margin-inline-end: var(--s-1); }
+.flash-similar { text-align: center; }
+
+/* "Already in your library", while typing a new word */
+.dup-note { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); margin-top: var(--s-2);
+  font-size: var(--text-sm); color: var(--ink-2); }
+.dup-note .icon { color: var(--good); }
+.dup-note a { font-weight: 600; }
+.dup-note[hidden] { display: none; }
+
+/* A text-style button: a small secondary action inside running content */
+.link-btn { justify-self: start; padding: var(--s-2) 0; min-height: var(--tap); border: 0; background: none; font: inherit;
+  font-size: var(--text-sm); font-weight: 600; color: var(--brand); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link-btn:hover { color: var(--brand-hover); }

@@ -24,7 +24,8 @@
         ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
         <div class="row flash-sound">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
         ${VS.ui.soundTraps(w, "flash-traps")}
-        <div class="flash-example"><p>“${VS.ui.example(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}</div>
+        ${VS.ui.similar(w, "flash-similar")}
+        ${w.example ? html`<div class="flash-example"><p>${VS.ui.quote(w)}</p>${VS.ui.speakButton(w.example, "Hear the example")}</div>` : ""}
       </div>`;
   }
 
@@ -47,10 +48,11 @@
         <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
           <p class="flash-ar" lang="ar">${w.arabic}</p>
           <p class="flash-def">${w.definition}</p>
-          <div class="flash-example">
-            <p>“${VS.ui.example(w)}”</p>
+          ${w.example ? html`<div class="flash-example">
+            <p>${VS.ui.quote(w)}</p>
             ${VS.ui.speakButton(w.example, "Hear the example")}
-          </div>
+          </div>` : ""}
+          ${VS.ui.similar(w, "flash-similar")}
           <p class="flash-word-small">${VS.ui.headword(w)} <span class="ipa">${w.ipa}</span></p>
         </div>
       </div>`;
@@ -139,7 +141,7 @@
       const w = s.queue[s.index];
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Study · " + s.scope.title, index: s.index, total: s.queue.length })}
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Study · " + s.scope.title, index: s.index, total: s.queue.length, undo: !!s.undo })}
           ${card(w)}
           <div class="action-bar">
             <button class="btn btn-lg btn-bad" type="button" data-action="grade" data-grade="again">
@@ -173,8 +175,12 @@
         if (s.busy) return;
         const w = s.queue[s.index];
         const grade = el.dataset.grade;
+        // Remember the round as it was, so Undo can put this card back.
+        s.undo = { index: s.index, queue: s.queue.slice(), known: new Set(s.known), learning: new Set(s.learning),
+                   again: new Set(s.again), token: null };
         // Grade the schedule once per round; a card shown again only moves the round on.
-        if (!s.again.has(w.id)) VS.store.grade(w.id, grade);
+        // A new word met for the first time is not a test: "Still learning" is no mistake.
+        if (!s.again.has(w.id)) s.undo.token = VS.store.grade(w.id, grade, { meet: true });
         if (grade === "again") {
           s.learning.add(w.id); s.known.delete(w.id);
           if (!s.again.has(w.id)) { s.again.add(w.id); s.queue.push(w); }
@@ -189,6 +195,15 @@
         setTimeout(() => { s.index++; s.flipped = false; s.busy = false; VS.app.render(); }, card ? 220 : 0);
       },
       restart() { VS.views.cards.start(VS.app.params()); VS.app.render(); },
+      undo() {
+        const u = s.undo;
+        if (!u || s.busy) return;
+        if (u.token) VS.store.undo(u.token);
+        Object.assign(s, { index: u.index, queue: u.queue, known: u.known, learning: u.learning, again: u.again,
+                           flipped: true, undo: null });
+        VS.toast("Answer taken back.");
+        VS.app.render();
+      },
     },
 
     keys(e) {
@@ -196,6 +211,7 @@
       if (e.key === " " || e.key === "Enter") { e.preventDefault(); this.actions.flip(); }
       else if (e.key === "1" || e.key === "ArrowLeft") this.actions.grade({ dataset: { grade: "again" } });
       else if (e.key === "2" || e.key === "ArrowRight") this.actions.grade({ dataset: { grade: "good" } });
+      else if (e.key === "u" || e.key === "U") this.actions.undo();
     },
   };
 })();

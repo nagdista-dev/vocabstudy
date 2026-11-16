@@ -18,7 +18,9 @@ pasted or uploaded in the app and saved on the device — never in the build.
 
 **Local first.** The app has no server, no account and no CDN: fonts and the
 PDF maker ship with it. The only network calls are optional: auto-fill sends
-a new English word to two free dictionaries (Settings → Auto-fill), and in
+a new English word to free dictionaries — Google Translate's free endpoint for
+meanings, examples, Arabic and similar words, dictionaryapi.dev for the IPA,
+MyMemory as a fallback (Settings → Auto-fill) — and in
 Chrome/Edge the browser's own speech recognition powers Speak.
 
 ## Why these choices
@@ -49,7 +51,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/sound-traps.js` | `VS.soundTraps(word)` — P/B, V/F, silent letters, -ed, th… |
 | `core/study-time.js` | active study time + break reminder |
 | `core/importer.js` | `VS.importer` — parse pasted tables and word files |
-| `core/autofill.js` | `VS.autofill` — fills a new word's details in the background |
+| `core/autofill.js` | `VS.autofill` — fills a new word's details in the background; `senses(word)` for Other meanings |
 | `views/shared.js` | `VS.ui.*` — word row, tags, note box, activity header, results, keyboard guard |
 | `views/home.js` | `VS.today` — today's plan, shown at the top of the library |
 | `views/*.js` | one screen each: library (home), cards, recall, quiz, spell, match, speak, stats, print, import, data |
@@ -107,9 +109,15 @@ Each word has a **box** 0–6 and a **due** date.
 
 | Event | Effect |
 | --- | --- |
+| First meeting on a card (`grade(id, g, { meet: true })`, box 0) | box 1 (I know it / Still learning) — not a right or wrong answer, not in accuracy; counts for the daily goal as `today.met` |
 | Right answer on a new or due word | box + 1 (Easy in recall: + 2), due = today + wait |
 | Right answer on a word not yet due | counted only — cramming doesn't move it |
 | Wrong answer / Forgot / Still learning | box 1, due tomorrow |
+
+`grade()` returns an undo token; `VS.store.undo(token)` puts the word and
+today's counts back (Undo in cards and recall — a mis-tap on a phone).
+Recall suggests the honest grade from what was typed: exact → Got it, one
+slip (`VS.isAlmost`, Levenshtein) → Got it without Easy, anything else → Forgot.
 
 Waits per box: 1, 3, 7, 14, 30, 60 days. Box 4+ = **mastered**.
 Tricky = 3+ wrong answers, more wrong than half the right ones, not mastered.
@@ -119,7 +127,8 @@ Tricky = 3+ wrong answers, more wrong than half the right ones, not mastered.
 `VS.store.saveUserWords(words)` adds them to `state.library` (skipping words
 already in the library) and returns `{ added, skipped }`. Only the fields the
 learner gave are stored; `core/autofill.js` fills the empty ones later with
-`store.fillUserWord` — never overwriting. Words added offline keep
+`store.fillUserWord` — never overwriting (the only exception: a capital the
+dictionary proves, "wednesday" → "Wednesday", which keeps the id). Words added offline keep
 `auto: "todo"` and are filled when the app is next online.
 `editUserWord` refuses a change that would duplicate another word, and moves
 progress and notes when the word's id changes. `deleteUserWords` /

@@ -139,6 +139,27 @@
   /** The word as the learner should type it in Spell (no sense label). */
   VS.spellingOf = (w) => w.word.trim();
 
+  /** How many letters must change to turn one text into the other (Levenshtein).
+      1 = a slip ("recieve" for "receive" is 2: a swap counts as two). */
+  VS.editDistance = function (a, b) {
+    a = VS.normalise(a); b = VS.normalise(b);
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const row = [i];
+      for (let j = 1; j <= b.length; j++) {
+        row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+      prev = row;
+    }
+    return prev[b.length];
+  };
+
+  /** A typed answer that is right but for a slip: one letter (two in a long word). */
+  VS.isAlmost = (typed, answer) => {
+    const d = VS.editDistance(typed, answer);
+    return d > 0 && d <= (VS.normalise(answer).length >= 8 ? 2 : 1);
+  };
+
   /** Normalise typed answers: case, curly quotes and extra spaces don't count. */
   VS.normalise = (s) =>
     String(s).toLowerCase().replace(/[’‘`]/g, "'").replace(/\s+/g, " ").trim();

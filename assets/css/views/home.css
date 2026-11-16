@@ -1,75 +1,161 @@
-/* views/home.css — the home screen: add a word, today's plan, the words list header.
-   The list itself is styled in views/library.css. */
+/* views/home.css — the home screen: today's plan, one line to add a word,
+   the library header. The list itself is styled in views/library.css. */
 
-/* Add a word: the signature moment. What you type gets the highlighter,
-   the same yellow band every word you are learning wears. */
-.quick-add { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-2); margin-bottom: var(--s-5); }
-.quick-label { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; color: var(--ink); }
-.quick-add .field { background: var(--surface); border-color: var(--line-strong); box-shadow: var(--shadow-1); }
+/* ── Today's plan ───────────────────────────────────────────────
+   The first thing a returning learner sees. One next action, one button,
+   a quiet goal line and the other ways to practise in a single row. */
+.today-strip {
+  display: grid; gap: var(--s-3);
+  padding: var(--s-5) var(--s-4) var(--s-4);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+.today-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); min-width: 0; }
+.today-kicker {
+  font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.today-streak {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+  min-height: 24px; padding: 0 9px; border-radius: var(--r-pill);
+  background: var(--mark-soft); color: var(--on-mark);
+  font-size: .72rem; font-weight: 700; white-space: nowrap;
+}
+.today-streak .icon { width: 13px; height: 13px; }
+.today-copy { display: grid; gap: 3px; min-width: 0; }
+.today-copy h2 {
+  font-size: clamp(1.35rem, 1.1rem + 1.5vw, 1.5rem);
+  line-height: 1.18; letter-spacing: -.015em; text-wrap: pretty;
+}
+.today-copy .hint { font-size: .88rem; line-height: 1.45; max-width: 46ch; }
+.today-copy .mark { padding-inline: .1em; }
+.today-cta { width: 100%; min-height: 50px; }
+.today-goal {
+  display: grid; grid-template-columns: auto minmax(56px, 1fr); align-items: center;
+  gap: 10px; min-width: 0;
+}
+.today-goal-label {
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0;
+  font-size: .8rem; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.today-goal-label b { color: var(--ink); font-weight: 700; }
+.today-goal-label svg { flex: none; color: var(--ink-3); }
+.today-goal-sep { color: var(--ink-3); }
+.today-goal-track { height: 5px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.today-goal-track i { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width 420ms var(--ease); }
+.today-goal.is-done .today-goal-label, .today-goal.is-done .today-goal-label b, .today-goal.is-done .today-goal-label svg { color: var(--good); }
+.today-goal.is-done .today-goal-track i { background: var(--good); }
+
+/* One scrollable row, not a cloud of wrapped pills. On phones it bleeds to
+   the card edge, so a cut-off chip reads as "more" rather than as clipping. */
+.today-steps {
+  display: flex; gap: 6px; list-style: none; padding: 0 0 2px;
+  margin-inline: calc(var(--s-1) * -1); padding-inline: var(--s-1);
+  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.today-steps::-webkit-scrollbar { display: none; }
+.today-steps li { flex: none; }
+.today-steps a {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 10px;
+  border-radius: var(--r-pill); font-size: .8rem; font-weight: 600; text-decoration: none;
+  background: var(--surface-2); color: var(--ink-2); white-space: nowrap;
+}
+.today-steps a .icon { width: 14px; height: 14px; color: var(--ink-3); }
+.today-steps b {
+  font-variant-numeric: tabular-nums; font-size: .72rem; line-height: 18px;
+  color: var(--on-mark); background: var(--mark); padding: 0 6px; border-radius: var(--r-pill);
+}
+.today-steps a:hover { background: var(--brand-soft); color: var(--brand); }
+.today-steps a:hover .icon { color: var(--brand); }
+.today-steps .is-done a { background: var(--good-soft); color: var(--good); }
+.today-steps .is-done a .icon { color: var(--good); }
+@media (max-width: 640px) {
+  .today-steps {
+    margin-inline: calc(var(--s-4) * -1);
+    padding-inline: var(--s-4);
+  }
+  .today-steps a { min-height: 44px; }
+  .today-steps.is-overflow {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+            mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+  }
+  .today-steps.is-end { -webkit-mask-image: none; mask-image: none; }
+}
+/* 360px phones: keep all four practice chips on one line. */
+@media (max-width: 380px) {
+  .today-steps { gap: 4px; }
+  .today-steps a { gap: 4px; padding: 0 7px; }
+}
+
+/* ── Add a word ─────────────────────────────────────────────────
+   The highlighter still draws under what you type; the box no longer
+   takes the whole first screen away from today's plan. */
+.home-page { display: block; }
+.quick-add { display: grid; gap: 6px; margin: var(--s-5) 0 0; max-width: 680px; }
+.quick-label {
+  font-family: var(--font-display); font-size: var(--text-lg); line-height: 1.2;
+  font-weight: 700; color: var(--ink);
+}
+.quick-add .hint { font-size: max(.82rem, 13px); line-height: 1.5; }
+.quick-add .hint a { font-weight: 600; white-space: nowrap; }
+.add-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-2); align-items: stretch; }
+.add-line .field { min-width: 0; }
+.add-line .field input { width: 100%; min-width: 0; }
+.quick-add .field { background: var(--surface); border-color: var(--line); }
+.quick-add .field:focus-within { border-color: var(--brand); }
 /* The band is sized to the typed word in JS (--mark-w, views/library.js). */
 .quick-add .field-xl input {
-  font-family: var(--font-word); font-weight: 600; text-align: start; letter-spacing: 0; font-size: 1.45rem;
+  font-family: var(--font-word); font-weight: 600; text-align: start; letter-spacing: 0;
+  font-size: 1.15rem;
   background: linear-gradient(transparent 60%, var(--mark) 60%, var(--mark) 88%, transparent 88%) no-repeat;
   background-size: var(--mark-w, 0px) 100%;
   transition: background-size 260ms var(--ease);
 }
-.quick-add .hint a { margin-inline-start: var(--s-2); font-weight: 600; }
-.add-line { display: flex; gap: var(--s-3); align-items: stretch; }
-.add-line .field { flex: 1; min-width: 0; }            /* an input's natural width must not widen the page */
-.add-line .field input { width: 100%; min-width: 0; }
-
-/* Today's plan: one sentence, one button, then the steps as small chips. */
-.today-strip {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--s-3) var(--s-5);
-  padding: var(--s-5); margin-bottom: var(--s-6);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-1);
+.quick-add .add-line .btn { flex: none; padding: 0 var(--s-4); }
+.quick-add.is-compact { margin: var(--s-4) 0 var(--s-5); }
+.quick-add.is-compact .field { box-shadow: none; }
+.quick-add.is-compact .field-xl input { font-size: 1.05rem; font-weight: 500; }
+.quick-add.is-compact .btn { min-height: 46px; }
+/* The smallest phones: the plus is enough; it keeps the field wide. */
+@media (max-width: 374px) {
+  .quick-add .add-label { display: none; }
+  .quick-add .add-line .btn { width: 46px; padding: 0; }
+  .quick-add .field-xl input { font-size: 1rem; }
 }
-.today-copy h2 { font-size: var(--text-xl); }
-/* Daily goal: one quiet line and a thin bar, under the plan's first sentence. */
-.today-goal { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(60px, 240px); justify-content: start; align-items: center; gap: var(--s-3); }
-.today-goal-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.today-goal-label b { color: var(--ink); }
-.today-goal-label svg { color: var(--ink-3); }
-.today-goal-track { height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
-.today-goal-track i { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width 420ms var(--ease); }
-.today-goal.is-done .today-goal-label, .today-goal.is-done .today-goal-label b, .today-goal.is-done .today-goal-label svg { color: var(--good); }
-.today-goal.is-done .today-goal-track i { background: var(--good); }
-.today-steps { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; }
-.today-steps a, .today-steps span {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 var(--s-3);
-  border-radius: var(--r-pill); font-size: var(--text-sm); font-weight: 600; text-decoration: none;
-  background: var(--surface-2); color: var(--ink-2);
+
+/* ── Empty library: a first-run page ──────────────────────────── */
+.home-empty { display: grid; gap: var(--s-2); max-width: 560px; margin-bottom: var(--s-2); }
+.home-empty h1 { font-size: clamp(1.8rem, 1.35rem + 2.2vw, 2.4rem); line-height: 1.12; }
+.home-empty h1 .mark { padding-inline: .1em; }
+.home-empty-copy { color: var(--ink-2); font-size: var(--text-md); line-height: 1.55; max-width: 46ch; }
+.first-steps {
+  display: grid; gap: var(--s-3); list-style: none; padding: 0; margin: var(--s-6) 0 0;
+  max-width: 560px;
 }
-/* Not open yet: an outline, so it never looks like a button that doesn't work. */
-.today-steps span { color: var(--ink-3); font-weight: 500; background: transparent; border: 1px dashed var(--line-strong); }
-.today-steps b { font-variant-numeric: tabular-nums; color: var(--on-mark); background: var(--mark); padding: 0 6px; border-radius: var(--r-pill); }
-.today-steps a:hover { background: var(--brand-soft); color: var(--brand); }
-.today-steps .is-next a { background: var(--brand-soft); color: var(--brand); }
-.today-steps .is-done a { background: var(--good-soft); color: var(--good); }
-.today-steps .is-tricky a { background: var(--bad-soft); color: var(--bad); }
-.today-steps .is-tricky b { background: var(--surface); color: var(--bad); }
+.first-steps li { display: flex; gap: var(--s-3); align-items: flex-start; }
+.first-steps .step-n { width: 28px; height: 28px; font-size: var(--text-xs); background: var(--brand-soft); color: var(--brand); }
+.first-steps b { display: block; font-size: .98rem; line-height: 1.3; }
+.first-steps .hint { display: block; font-size: .84rem; line-height: 1.4; }
+.first-note { margin-top: var(--s-6); max-width: 48ch; }
 
-/* "Your words": the heading with three quiet numbers beside it. */
-.lib-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; }
-.lib-head h1 { font-size: var(--text-2xl); }
-.lib-stats { display: flex; gap: var(--s-4); }
-.lib-stats div { display: flex; align-items: baseline; gap: 6px; flex-direction: row-reverse; }
-.lib-stats dd { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
-.lib-stats dt { color: var(--ink-3); font-size: var(--text-sm); }
-
-/* An empty library: three short lines, then nothing else competing. */
-.first-steps { display: grid; gap: var(--s-3); max-width: 60ch; padding-inline-start: 1.4em; color: var(--ink-2); margin-top: var(--s-5); }
-.first-steps b { color: var(--ink); }
-.first-steps li::marker { color: var(--brand); font-weight: 700; }
-.first-note { margin-top: var(--s-5); }
-
-@media (max-width: 420px) {
-  .quick-add .field-xl input, .add-form .field-xl input { font-size: 1.2rem; }
-  .quick-label { font-size: var(--text-lg); }
-  .today-goal { grid-template-columns: 1fr; gap: 6px; }
+/* ── Library header ───────────────────────────────────────────── */
+.lib-head { display: grid; gap: 2px; margin-top: var(--s-6); }
+.lib-head h1 { font-size: 1.45rem; line-height: 1.2; }
+.lib-stats {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px;
+  font-size: .8rem; color: var(--ink-3);
 }
-@media (max-width: 640px) {
-  .today-strip { grid-template-columns: 1fr; padding: var(--s-4); }
-  .today-strip > .btn { width: 100%; }
-  .add-line .btn { padding: 0 var(--s-4); }
+.lib-stats b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.lib-stats [aria-hidden] { color: var(--line-strong); }
+
+@media (min-width: 760px) {
+  .today-strip { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-5); padding: var(--s-5) var(--s-6); }
+  .today-top { grid-column: 1 / -1; }
+  .today-copy { grid-column: 1; }
+  .today-copy h2 { font-size: 1.7rem; }
+  .today-cta { grid-column: 2; width: auto; min-width: 210px; }
+  .today-goal, .today-steps { grid-column: 1 / -1; }
+  .quick-add.is-compact { max-width: 720px; margin-top: var(--s-5); margin-bottom: var(--s-6); }
+  .lib-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); }
+  .lib-head h1 { font-size: var(--text-2xl); }
 }

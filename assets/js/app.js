@@ -149,10 +149,20 @@
     });
   }
 
+  /* Words due today on the installed app's icon (Badging API, where the
+     system supports it): a reminder with no server and no notifications. */
+  let badged = -1;
+  function appBadge(due) {
+    if (due === badged || !("setAppBadge" in navigator)) return;
+    badged = due;
+    (due ? navigator.setAppBadge(due) : navigator.clearAppBadge()).catch(() => {});
+  }
+
   /* ── App bar ──────────────────────────────────────────────────── */
   function renderBar() {
     const crumbs = current.view.crumbs ? current.view.crumbs(current.params) : [];
     const due = VS.store.totals().due;
+    appBadge(due);
     const crumbsEl = VS.$("#crumbs");
     if (!crumbsEl) return;
     document.body.dataset.mode = ACTIVITIES.includes(current.name) || current.name === "print" ? "activity" : "browse";
@@ -235,7 +245,7 @@
         ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>
           <span class="hint">Say words out loud and the app checks them. Your browser does the listening — Chrome and Edge use their online speech service.</span></div>` : ""}
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
-        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day, across all activities. Progress shows on today's plan.</span></div>
+        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day across all activities (each new word you meet counts too). Progress shows on today's plan.</span></div>
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
 
         <h3 class="sheet-group">Look</h3>
@@ -255,6 +265,8 @@
             <div><dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Choose an answer · grade a card</dd></div>
             <div><dt><kbd>Enter</kbd></dt><dd>Check · next question</dd></div>
             <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Still learning · I know it (cards)</dd></div>
+            <div><dt><kbd>H</kbd></dt><dd>A hint in recall</dd></div>
+            <div><dt><kbd>U</kbd></dt><dd>Undo the last answer (cards, recall)</dd></div>
             <div><dt><kbd>/</kbd></dt><dd>Search words</dd></div>
           </dl>
         </details>

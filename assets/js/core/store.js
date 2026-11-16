@@ -29,7 +29,7 @@
   const DEFAULTS = {
     words: {},                                     // id → [box, due, right, wrong] (packed, see below)
     streak: { last: "", count: 0 },
-    today: { date: "", answered: 0, right: 0, seconds: 0, newWords: 0, learned: [] },   // learned: ids first studied today
+    today: { date: "", answered: 0, right: 0, seconds: 0, newWords: 0, met: 0, learned: [] },   // met: new words first met on a card; learned: ids first studied today
     done: {},                                      // "today:quiz" → date last finished
     notes: {},                                     // id → your own note / memory trick
     history: {},                                   // "2026-11-15" → [answered, right, seconds, newWords, mastered]
@@ -57,6 +57,7 @@
 
   let state = load();
   const listeners = [];
+  let lastUndo = null;     // the last grade, so a mis-tap can be taken back
 
   /* One compact row per study day: [answers, right, seconds, new words, mastered total].
      Kept for every day you study — the Stats screen draws from it. */
@@ -89,16 +90,22 @@
 
   function freshToday() {
     const today = VS.todayKey();
-    if (state.today.date !== today) state.today = { date: today, answered: 0, right: 0, seconds: 0, newWords: 0, learned: [] };
+    if (state.today.date !== today) state.today = { date: today, answered: 0, right: 0, seconds: 0, newWords: 0, met: 0, learned: [] };
     if (!Array.isArray(state.today.learned)) state.today.learned = [];
     return today;
   }
 
   /** Count today's activity and keep the daily streak. */
   function touchDay(correct) {
-    const today = freshToday();
+    freshToday();
     state.today.answered++;
     if (correct) state.today.right++;
+    touchStreak();
+  }
+
+  /** Studying today keeps the streak alive. */
+  function touchStreak() {
+    const today = freshToday();
     if (state.streak.last !== today) {
       state.streak.count = state.streak.last === VS.yesterdayKey() ? state.streak.count + 1 : 1;
       state.streak.last = today;
@@ -120,16 +127,28 @@
     /**
      * The one function every activity calls after the learner answers.
      * grade: "again" (forgot / wrong) | "good" (right) | "easy" (knew it instantly)
+     * opts.meet: the learner is meeting a new word for the first time (Learn
+     *   new words). That is not a test: "Still learning" is no mistake, so it
+     *   counts as studied — not as a wrong answer, and not in today's accuracy.
+     * Returns an undo token for VS.store.undo().
      */
-    grade(id, grade) {
+    grade(id, grade, opts) {
+      const before = { id, entry: state.words[id] ? state.words[id].slice() : null,
+                       today: JSON.parse(JSON.stringify(state.today)), streak: Object.assign({}, state.streak) };
       const e = Object.assign({}, entry(id));
+      const meet = !!(opts && opts.meet) && e.box === 0;
       const correct = grade !== "again";
-      touchDay(correct);
+      if (meet) touchStreak(); else touchDay(correct);
       if (e.box === 0) {
         state.today.newWords = (state.today.newWords || 0) + 1;
         if (!state.today.learned.includes(id)) state.today.learned.push(id);
       }
-      if (!correct) {
+      if (meet) {
+        state.today.met = (state.today.met || 0) + 1;     // effort for the daily goal, not a test
+        // First contact: box 1, back tomorrow. "Easy" may skip a step.
+        e.box = grade === "easy" ? 2 : 1;
+        e.due = addDays(WAIT_DAYS[e.box]);
+      } else if (!correct) {
         e.wrong++;
         e.box = 1;
         e.due = addDays(1);
@@ -142,7 +161,21 @@
       }
       put(id, e);
       save();
-      return e;
+      lastUndo = before;
+      return before;
+    },
+
+    /** Take back the last answer (a mis-tap on a phone): the word and today's counts go back. */
+    undo(token) {
+      const t = token || lastUndo;
+      if (!t || t !== lastUndo) return false;
+      if (t.entry) state.words[t.id] = t.entry; else delete state.words[t.id];
+      const seconds = state.today.seconds;          // time studied since then still counts
+      state.today = Object.assign(t.today, { seconds: Math.max(seconds || 0, t.today.seconds || 0) });
+      state.streak = t.streak;
+      lastUndo = null;
+      save();
+      return true;
     },
 
     /** Study history, oldest first → [{ date, answered, right, seconds, newWords, mastered }] */
@@ -221,7 +254,7 @@
 
     totals() {
       const all = VS.allWords();
-      const today = state.today.date === VS.todayKey() ? state.today : { answered: 0, right: 0, seconds: 0, newWords: 0 };
+      const today = state.today.date === VS.todayKey() ? state.today : { answered: 0, right: 0, seconds: 0, newWords: 0, met: 0 };
       const live = state.streak.last === VS.todayKey() || state.streak.last === VS.yesterdayKey();
       return {
         words: all.length,
@@ -382,6 +415,13 @@
       ["ipa", "definition", "example", "type", "level", "arabic"].forEach((k) => {
         if (fields[k] && !raw[k]) { raw[k] = fields[k]; w[k] = fields[k]; }
       });
+      if (fields.synonyms && fields.synonyms.length && !(raw.synonyms && raw.synonyms.length)) {
+        raw.synonyms = fields.synonyms.slice(); w.synonyms = fields.synonyms.slice();
+      }
+      // "wednesday" → "Wednesday": only the capital changes, so the id stays.
+      if (fields.word && VS.wordKey(fields.word) === VS.wordKey(raw.word) && fields.word !== raw.word) {
+        raw.word = fields.word; w.word = fields.word;
+      }
       if (auto) raw.auto = w.auto = auto;
       else { delete raw.auto; delete w.auto; }
       save();
@@ -416,7 +456,7 @@
   /** A word as it is stored: only the fields you typed (ids are derived). */
   function plain(w) {
     const out = {};
-    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "tags", "added", "auto"].forEach((k) => {
+    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "tags", "added", "auto"].forEach((k) => {
       if (w.given && (k === "type" || k === "level") && !w.given[k]) return;     // a display default, not your choice
       if (w[k] !== undefined && w[k] !== "" && !(Array.isArray(w[k]) && !w[k].length)) out[k] = w[k];
     });
