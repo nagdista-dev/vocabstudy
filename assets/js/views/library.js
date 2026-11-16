@@ -74,6 +74,7 @@
             ${toggle("note", "With my notes")}
             ${toggle("tricky", "Tricky words")}
             ${toggle("trap", "Sound traps")}
+            ${toggle("usage", "Usage traps")}
           </div>
         </div>
         <div class="sheet-foot filter-foot">
@@ -89,7 +90,7 @@
   function actions(list) {
     const n = list.length;
     const started = list.filter((w) => VS.store.status(w.id) !== "new").length;
-    const modes = [["cards", "Cards"], ["quiz", "Quiz"], ["spell", "Spell"], ["match", "Match"]]
+    const modes = [["cards", "Cards"], ["quiz", "Quiz"], ["spell", "Spell"], ["match", "Match"], ["write", "Use it"]]
       .concat(VS.listen && VS.listen.supported ? [["speak", "Speak"]] : []);
     if (!n) return "";
     return html`
@@ -97,7 +98,7 @@
         <details class="lib-more">
           <summary class="btn btn-tonal">${icon("play", "icon-sm")} Practise ${icon("chevron-right", "icon-sm")}</summary>
           <div class="lib-more-menu">
-            ${modes.map(([m, l]) => (m === "match" && n < 2) ? "" : html`<a class="btn btn-quiet" href="${pickHref(m)}">${icon(m === "speak" ? "mic" : m, "icon-sm")} ${l}</a>`)}
+            ${modes.map(([m, l]) => (m === "match" && n < 2) ? "" : html`<a class="btn btn-quiet" href="${pickHref(m)}">${icon(m === "speak" ? "mic" : m === "write" ? "pen" : m, "icon-sm")} ${l}</a>`)}
           </div>
         </details>
         <details class="lib-more">
@@ -146,6 +147,22 @@
             ${v !== "all" && !counts[v] ? VS.raw("disabled") : ""}>
             ${l}<span class="chip-n">${counts[v]}</span>
           </button>`)}
+      </div>`;
+  }
+
+  /* Thursday and Friday: the week's report is ready (core/week.js). */
+  function weekReady() {
+    const start = VS.week.reportDue();
+    if (!start) return "";
+    const last = start !== VS.week.range().start;
+    return html`
+      <div class="recall-strip week-ready">
+        <a class="recall-strip-main" href="#/week?start=${start}">
+          ${icon("trophy")}
+          <span><b>${last ? "Last week's report" : "Your week is ready"}</b>
+            <span class="hint">Saturday to Friday: what you did, and one thing for next week.</span></span>
+          ${icon("arrow-right", "icon-sm")}
+        </a>
       </div>`;
   }
 
@@ -250,6 +267,7 @@
       return html`
         <div class="page home-page view-enter">
           ${VS.today.strip()}
+          ${weekReady()}
           ${addBox(true)}
           ${backupNudge()}
 
@@ -301,6 +319,12 @@
       const addForm = VS.$("[data-form='quick-add']", root);
       if (addForm) addForm.addEventListener("submit", (e) => {
         e.preventDefault();
+        // Pasted a sentence? Let the learner tap the words they mean, and keep the sentence.
+        if (add.value.trim().split(/\s+/).length >= 5) {
+          VS.capture = { text: add.value.trim(), context: "", source: "" };
+          location.hash = "#/add?tab=text";
+          return;
+        }
         const wasEmpty = !VS.allWords().length;
         const w = VS.addWord({ word: add.value });
         if (!w) return;

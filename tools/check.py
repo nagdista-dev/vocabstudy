@@ -4,14 +4,18 @@
     python3 tools/check.py
 
 ERRORS: a file the page or the offline list needs is missing, a class in the
-markup has no CSS rule, or a screen re-implements a helper that lives in
-core/. The app ships with no words, so there is no word data to check.
+markup has no CSS rule, a screen re-implements a helper that lives in
+core/, or a usage trap's pattern misses its own mistake (tools/test_traps.js,
+run when Node is installed). The app ships with no words, so there is no
+word data to check.
 """
 
 from __future__ import annotations
 
 import json
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -69,10 +73,21 @@ def check_styles(errors: list[str]) -> None:
                     errors.append(f"{src.relative_to(ROOT)}: class “{cls}” has no CSS rule")
 
 
+def check_traps(errors: list[str]) -> None:
+    """Every usage trap must catch its own mistake and leave good English alone."""
+    node = shutil.which("node")
+    if not node:
+        return
+    run = subprocess.run([node, str(ROOT / "tools" / "test_traps.js")], capture_output=True, text=True)
+    if run.returncode:
+        errors.extend(line.strip() for line in run.stdout.splitlines() if "FAIL" in line)
+
+
 def main(argv: list[str]) -> int:
     errors: list[str] = []
     check_pages(errors)
     check_styles(errors)
+    check_traps(errors)
     for e in errors:
         print(f"  ERROR    {e}")
     print(f"check {'FAILED' if errors else 'OK'}: {len(errors)} error(s)")

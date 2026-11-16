@@ -231,3 +231,25 @@
   border-top: 1px solid color-mix(in srgb, var(--bad) 25%, transparent); font-size: var(--text-sm); color: var(--ink-2); }
 .feedback-picked .icon { flex: none; color: var(--bad); transform: translateY(2px); }
 .feedback-picked [lang="ar"] { font-family: var(--font-arabic); font-size: calc(var(--text-sm) * var(--arabic-scale)); color: var(--ink); }
+
+/* Cards, quiz and recall: the extra teaching stays compact */
+.flash-met, .flash-usage { justify-self: stretch; }
+.feedback-usage { margin-top: var(--s-2); }
+
+/* ── Use it: write your own sentence ───────────────────────────── */
+.write { display: grid; gap: var(--s-4); padding: clamp(20px, 4vw, 32px); }
+.write-word { display: grid; gap: var(--s-2); }
+.write-headword { font-family: var(--font-word); font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem); font-weight: 700; line-height: 1.15; }
+.write-ar { font-size: 1.3rem; font-weight: 600; }
+.write-def { color: var(--ink-2); }
+.write-example summary { cursor: pointer; font-weight: 600; color: var(--brand); min-height: var(--tap); display: flex; align-items: center; }
+.write-example[open] { display: grid; gap: var(--s-2); }
+.write-form textarea { font-size: var(--text-lg); line-height: 1.5; min-height: 96px; }
+.write-form .form-field > span { font-size: var(--text-md); color: var(--ink); }
+.write-check { padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: color-mix(in srgb, var(--bad-soft) 60%, var(--surface)); }
+.write-check-title { font-weight: 700; color: var(--bad); margin-bottom: var(--s-2); }
+.write-check ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-3); }
+.write-check li { display: grid; gap: 2px; color: var(--ink); }
+.write-saved { font-size: var(--text-lg); line-height: 1.5; }
+.write-ok .feedback-title { display: flex; align-items: center; gap: var(--s-1); }
+.write-check .usage-wrong small { margin-inline-start: auto; font-size: var(--text-xs); color: var(--ink-3); text-decoration: none; }

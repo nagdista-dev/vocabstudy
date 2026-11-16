@@ -131,7 +131,13 @@
       senses.push({ type: typeOf(pos, word), pos, definition: "", example: examples[0] || "", synonyms: [],
                     arabic: arabicList([translation].concat(arabicFor[pos] || [])) });
     }
-    return { senses, translation: hasArabic(translation) ? arabicList([translation]) : "" };
+    // "postponed" → base "postpone": a learner should learn the verb, not one of its forms.
+    const d0 = (data.dict || [])[0];
+    // Only regular forms (postponed, borrowing, studied): "born" is not "bear", "found" may not be "find".
+    const b = d0 && d0.pos === "verb" && d0.base_form ? d0.base_form.toLowerCase() : "";
+    const base = b && b !== word.toLowerCase() && !/\s/.test(word) &&
+      word.toLowerCase().startsWith(b.replace(/[ey]$/, "")) && /(?:s|ed|ing)$/i.test(word) ? b : "";
+    return { senses, translation: hasArabic(translation) ? arabicList([translation]) : "", base };
   }
 
   /* ── dictionaryapi.dev: IPA, and a definition when Google has none ── */
@@ -154,6 +160,13 @@
     const ipa = (phonetics.find((p) => accent.test(p.audio || "")) || phonetics[0] || {}).text ||
       data.map((e) => e.phonetic).find(goodIPA);
     if (ipa) out.ipa = slashed(ipa);
+    // Real recordings (S5): the dictionary tags them -us / -uk. Played when online.
+    const audio = {};
+    data.flatMap((e) => e.phonetics || []).forEach((p) => {
+      const m = /-(us|uk)\.mp3$/.exec(p.audio || "");
+      if (m && !audio[m[1]] && /^https:\/\//.test(p.audio)) audio[m[1]] = p.audio;
+    });
+    if (audio.us || audio.uk) out.audio = audio;
     // The main part of speech has the most senses ("borrow" is a verb, though a
     // rare noun is listed first); its FIRST sense is the most common one.
     const byType = {};
@@ -204,6 +217,7 @@
     fields.arabic = first.arabic || gv.translation || "";
     fields.synonyms = first.synonyms || [];
     fields.ipa = dv.ipa || "";
+    fields.audio = dv.audio || "";
     if (!fields.arabic) { try { fields.arabic = await myMemory(word); } catch (e) { /* offline */ } }
     const word2 = caseFrom(word, fields.example);
     if (word2) fields.word = word2;
@@ -211,7 +225,7 @@
     Object.keys(fields).forEach((k) => { if (!fields[k] || (Array.isArray(fields[k]) && !fields[k].length)) delete fields[k]; });
     if (!senses.length && dv.definition) senses.push({ type: dv.type, definition: dv.definition, example: dv.example || "", synonyms: [], arabic: fields.arabic || "" });
     const offline = g.status === "rejected" && d.status === "rejected";
-    return { fields, senses, offline };
+    return { fields, senses, offline, base: gv.base || "" };
   }
 
   const enabled = () => VS.store.settings().autofill !== false;
@@ -225,15 +239,23 @@
       const w = VS.byId[id];
       if (!w) continue;
       running++;
+      let now = id;
       try {
-        const { fields, offline } = await lookup(w.word);
+        let found = await lookup(w.word);
+        // An inflected verb ("postponed", "went") becomes its base form, unless
+        // that word is already in the library. The sentence it came with stays.
+        if (found.base && VS.store.status(id) === "new") {
+          const moved = VS.store.renameUserWord(id, found.base);
+          if (moved) { now = moved; found = await lookup(found.base); }
+        }
+        const { fields, offline } = found;
         // Offline: keep it marked, and try again next time the app is online.
-        VS.store.fillUserWord(id, fields, offline && !Object.keys(fields).length ? "todo" : "");
+        VS.store.fillUserWord(now, fields, offline && !Object.keys(fields).length ? "todo" : "");
       } catch (e) {
-        VS.store.fillUserWord(id, {}, "todo");
+        VS.store.fillUserWord(now, {}, "todo");
       } finally {
         running--;
-        listeners.forEach((fn) => fn(id));
+        listeners.forEach((fn) => fn(now, id));
         work();
       }
     }
@@ -244,7 +266,7 @@
     enabled,
     /** Every meaning of a word, most common first (Edit → Other meanings). */
     async senses(word) { return (await lookup(word)).senses; },
-    /** Called with a word id each time a word has been filled. */
+    /** Called with (id, oldId) each time a word has been filled; the id changes when a verb form became its base. */
     onFill(fn) { listeners.push(fn); },
     /** Is this word still waiting to be filled? */
     pending: (id) => queue.includes(id) || (VS.byId[id] && VS.byId[id].auto === "todo" && enabled()),

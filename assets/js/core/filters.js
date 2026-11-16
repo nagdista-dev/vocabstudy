@@ -2,7 +2,7 @@
    ------------------------------------------------------------------
    One filter object describes a list of words:
 
-     { q, status, level, type, box, added, tag, note, tricky, trap, sort }
+     { q, status, level, type, box, added, tag, note, tricky, trap, usage, sort }
 
    It lives in the address bar ("#/words?status=learning&tag=IELTS"), so a
    filtered list can be bookmarked, reopened, and handed to any activity:
@@ -21,7 +21,7 @@
   "use strict";
 
   const DEFAULTS = { q: "", status: "all", level: "all", type: "all", box: "all",
-                     added: "all", tag: "all", note: "", tricky: "", trap: "", sort: "newest" };
+                     added: "all", tag: "all", note: "", tricky: "", trap: "", usage: "", sort: "newest" };
 
   const STATUS = { all: "All", new: "New", learning: "Learning", mastered: "Mastered", due: "Due today", started: "Started" };
   const ADDED = { all: "Any time", today: "Today", week: "This week", month: "This month", older: "Older" };
@@ -75,6 +75,7 @@
       if (f.note && !store.note(w.id)) return false;
       if (tricky && !tricky.has(w.id)) return false;
       if (f.trap && !VS.soundTraps(w).length) return false;
+      if (f.usage && !VS.usageTraps(w).length) return false;
       if (!q) return true;
       return (w.word + " " + w.sense + " " + w.arabic + " " + w.definition + " " + w.example + " " +
               w.tags.join(" ") + " " + store.note(w.id)).toLowerCase().includes(q);
@@ -114,6 +115,7 @@
     if (f.note) parts.push("With notes");
     if (f.tricky) parts.push("Tricky");
     if (f.trap) parts.push("Sound traps");
+    if (f.usage) parts.push("Usage traps");
     if (f.q.trim()) parts.push("“" + f.q.trim() + "”");
     return parts.join(" · ");
   }

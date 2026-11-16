@@ -307,21 +307,7 @@
      A4 PDF exactly as you see it — Arabic included. It ships with the app
      (assets/vendor/, see tools/vendor.py) and loads only the first time
      you press the button. Page breaks follow the same rules as printing. */
-  const PDF_LIB = "assets/vendor/html2pdf.bundle.min.js";
-  let pdfLib = null;
-  function loadPdfLib() {
-    if (window.html2pdf) return Promise.resolve(window.html2pdf);
-    if (!pdfLib) {
-      pdfLib = new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = PDF_LIB;
-        s.onload = () => resolve(window.html2pdf);
-        s.onerror = () => { pdfLib = null; reject(new Error("missing")); };
-        document.head.appendChild(s);
-      });
-    }
-    return pdfLib;
-  }
+  const loadPdfLib = () => VS.loadScript("assets/vendor/html2pdf.bundle.min.js", "html2pdf");
 
   function fileName(words) {
     const layout = LAYOUTS.find((l) => l[0] === opts.layout)[1].toLowerCase().replace(/\W+/g, "-");

@@ -17,10 +17,10 @@
 (function () {
   "use strict";
 
-  const FIELDS = ["word", "definition", "example", "type", "level", "ipa", "arabic", "tags", "synonyms"];
+  const FIELDS = ["word", "definition", "example", "type", "level", "ipa", "arabic", "tags", "synonyms", "context", "source"];
   const ALIASES = {
     word: ["word", "filename", "file", "name", "term", "headword", "vocab", "vocabulary", "english", "phrase", "expression"],
-    sense: ["sense", "meaningnote", "context"],
+    sense: ["sense", "meaningnote"],
     definition: ["definition", "def", "meaning", "explanation", "englishmeaning", "description"],
     example: ["example", "examples", "sentence", "examplesentence", "usage"],
     type: ["type", "category", "pos", "partofspeech", "class", "wordtype", "kind"],
@@ -29,6 +29,8 @@
     arabic: ["arabic", "ar", "translation", "arabicmeaning", "meaningar", "عربي", "المعنى", "الترجمة"],
     tags: ["tags", "tag", "labels", "label", "group", "list", "topic"],
     synonyms: ["synonyms", "synonym", "similar", "similarwords"],
+    context: ["context", "wheremet", "whereimetit", "sentenceimet", "metin", "originalsentence"],
+    source: ["source", "from", "where"],
   };
   const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
   const TYPES = ["Noun", "Verb", "Adjective", "Adverb", "Phrase", "Phrasal Verb", "Idiom",
@@ -95,7 +97,7 @@
     return { rows, columns, hasHeader, delimiter };
   }
 
-  const blank = () => ({ word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "", tags: "", synonyms: "" });
+  const blank = () => ({ word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "", tags: "", synonyms: "", context: "", source: "" });
 
   /** Clean one word and list what's missing. Used by tables, files and the one-word form. */
   function checkWord(w, line) {

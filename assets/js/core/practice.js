@@ -10,6 +10,7 @@
   /**
    * Which words an activity works on, from the route: #/<scope>/<mode>?filters
      recall   words due today                    #/recall
+     quick    the 10 words that matter most      #/quick   (Quick 5: five minutes)
      new      the next new words to learn        #/new/cards
      today    words you first studied today      #/today/quiz
      tricky   words you keep missing             #/tricky/spell
@@ -20,12 +21,17 @@
     const home = "#/";
     switch (params.scope) {
       case "recall": return { kind: "recall", title: "Daily recall", back: home, words: VS.store.dueWords() };
+      case "quick": return { kind: "quick", title: "Quick 5", back: home, words: VS.store.quickWords(10) };
       case "tricky": return { kind: "tricky", title: "Tricky words", back: home, words: VS.store.trickyWords() };
       case "all": return { kind: "all", title: "Whole library", back: "#/words", words: VS.allWords() };
       case "new": return { kind: "new", title: "New words", back: home, words: VS.store.newWords().slice(0, VS.newLeftToday()) };
       case "today": {
         const ids = VS.store.totals().learnedToday;
         return { kind: "today", title: "Today's words", back: home, words: ids.map((id) => VS.byId[id]) };
+      }
+      case "word": {
+        const w = VS.byId[new URLSearchParams(params.query || "").get("id") || ""];
+        return w ? { kind: "word", title: w.word, back: "#/words?q=" + encodeURIComponent(w.word), words: [w] } : null;
       }
       case "pick": {
         const f = VS.filters.parse(params.query);
@@ -44,9 +50,10 @@
   VS.newLeftToday = () => Math.max(0, VS.newPerDay() - VS.store.totals().newToday);
 
   /* Today's plan, in order: learn the new words with cards, then practise
-     today's words. Speak joins only where the browser can listen. */
-  VS.todaySteps = () => ["quiz", "spell", "match"].concat(VS.listen && VS.listen.supported ? ["speak"] : []);
-  const STEP_NAMES = { quiz: "Quiz", spell: "Spell", match: "Match", speak: "Speak" };
+     today's words — recognise (Quiz), spell, connect (Match), then use them
+     in a sentence of your own (Write). Speak joins only where the browser can listen. */
+  VS.todaySteps = () => ["quiz", "spell", "match", "write"].concat(VS.listen && VS.listen.supported ? ["speak"] : []);
+  const STEP_NAMES = { quiz: "Quiz", spell: "Spell", match: "Match", write: "Use it", speak: "Speak" };
 
   /**
    * Called when an activity ends: remembers today's plan steps, and returns
@@ -127,14 +134,74 @@
    * "Fill the gap" uses strict, so the blank never swallows other words.
    * Returns { before, answer, after } or null.
    */
-  VS.findInExample = function (w, loose) {
+  VS.findInExample = (w, loose) => VS.findIn(w, w.example, loose);
+
+  /** The same search in any text: where you met it, or a sentence you wrote. */
+  VS.findIn = function (w, text, loose) {
+    if (!text) return null;
     const tokens = w.word.toLowerCase().replace(/’/g, "'").replace(/[^a-z' -]/g, "").trim().split(/[\s-]+/).filter(Boolean);
     if (!tokens.length) return null;
     const join = loose ? "(?:[\\s-]+[\\w'’]+){0,3}?[\\s-]+" : "[\\s-]+";
-    const m = new RegExp(tokens.map(tokenPattern).join(join), "i").exec(w.example);
+    const m = new RegExp(tokens.map(tokenPattern).join(join), "i").exec(text);
     if (!m) return null;
-    return { before: w.example.slice(0, m.index), answer: m[0], after: w.example.slice(m.index + m[0].length) };
+    return { before: text.slice(0, m.index), answer: m[0], after: text.slice(m.index + m[0].length) };
   };
+
+  /**
+   * Read a sentence the learner wrote with a word ("Use it"), the way a
+   * teacher marks it — on this device, no service:
+   *   problems  must be fixed before it counts: Arabic keyboard, too short,
+   *             the word missing, a copy of the example, an Arab-learner
+   *             mistake from core/usage-traps.js (anywhere in the sentence)
+   *   tips      small things that don't block: a capital, a full stop, "I"
+   * → { ok, problems: [{ text, trap? }], tips: [text], clean }
+   */
+  VS.checkSentence = function (w, text) {
+    const raw = String(text || "").replace(/\s+/g, " ").trim();
+    const problems = [], tips = [];
+    const words = raw.split(" ").filter((x) => /[a-z]/i.test(x));
+    if (VS.isArabicTyping(raw)) {
+      problems.push({ text: "Your keyboard is in Arabic — switch it to English and write the sentence again." });
+      return { ok: false, problems, tips, clean: raw };
+    }
+    if (words.length < 4) problems.push({ text: "Make it a full sentence: at least four words — who does what, when or why." });
+    if (!VS.findIn(w, raw, true)) {
+      const forms = formsHint(w);
+      problems.push({ text: `Use “${w.word}” in it.` + (forms ? ` Any form works: ${forms}.` : "") });
+    }
+    const copied = [w.example, w.context].concat(w.mine || []).filter(Boolean)
+      .some((s) => VS.editDistance(s, raw) <= Math.max(3, VS.normalise(s).length * 0.15));
+    if (copied) problems.push({ text: "That sentence is already here. Write a new one — about your own day, your work or someone you know." });
+    // The learner's own words that went wrong ("depends of"), next to the fix.
+    VS.findUsageMistakes(raw).forEach((trap) => {
+      const m = trap.bad.exec(" " + raw.replace(/[’‘]/g, "'") + " ");
+      problems.push({ text: trap.why, trap, found: m ? m[0].trim() : "" });
+    });
+    if (/^[a-z]/.test(raw)) tips.push("Start with a capital letter.");
+    if (raw && !/[.!?…"”')]$/.test(raw)) tips.push("End with a full stop.");
+    if (/(^|\s)i(\s|'|$)/.test(raw)) tips.push("Write I as a capital: I, I'm, I've.");
+    // Fix the small things for the saved copy; the learner sees the tips.
+    let clean = raw.replace(/(^|\s)i(?=\s|'|$)/g, "$1I");
+    clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+    if (clean && !/[.!?…"”')]$/.test(clean)) clean += ".";
+    return { ok: !problems.length, problems, tips, clean };
+  };
+
+  /** "borrow" → "borrows, borrowed, borrowing" — so learners know any form counts.
+      Only verbs and nouns change; for other words there's nothing to say. */
+  function formsHint(w) {
+    const word = String(w.word).trim();
+    const head = word.split(/\s+/)[0].toLowerCase();
+    if (/verb/i.test(w.type)) {
+      const irr = VS.IRREGULAR[head];
+      const rest = word.slice(head.length);
+      if (irr && irr.length) return [head].concat(irr.slice(0, 2)).map((v) => v + rest).join(", ");
+      const base = head.replace(/e$/, "");
+      return [head + "s", base + "ed", base + "ing"].map((v) => v + rest).join(", ");
+    }
+    if (w.type === "Noun" && !/\s/.test(word)) return word + ", " + (/(s|x|z|ch|sh)$/.test(word) ? word + "es" : /[^aeiou]y$/.test(word) ? word.slice(0, -1) + "ies" : word + "s");
+    return "";
+  }
 
   /** The word as the learner should type it in Spell (no sense label). */
   VS.spellingOf = (w) => w.word.trim();

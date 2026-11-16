@@ -68,7 +68,7 @@
           <section class="speak card">
             <p class="speak-ar" lang="ar">${w.arabic}</p>
             <p class="speak-word"><span class="mark">${w.word}</span></p>
-            <div class="row speak-sound">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span>
+            <div class="row speak-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}
               <button class="btn btn-quiet" type="button" data-action="slow">${icon("clock", "icon-sm")} Slower</button></div>
             ${VS.ui.soundTraps(w)}
             <button class="mic ${s.state === "listening" ? "is-listening" : ""}" type="button" data-action="listen"

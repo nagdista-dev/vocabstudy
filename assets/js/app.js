@@ -3,16 +3,20 @@
    ROUTES (the part after # in the address bar)
      #/                      home = the library: add a word, today's plan, your words
      #/recall                daily recall: the words due today
+     #/quick                 Quick 5: the 10 words that matter most, for five minutes
      #/new/cards             learn the next new words from your library
      #/today/quiz            practise the words you first studied today
      #/all/quiz              an activity over the whole library
      #/tricky/quiz           an activity over the words you keep missing
      #/pick/quiz?level=B2    an activity over a filtered list (core/filters.js)
-                             modes: cards | quiz | spell | match | speak
+     #/word/write?id=borrow  an activity over one word
+                             modes: cards | quiz | spell | match | speak | write
      #/words?tag=IELTS       the library with its filters in the address
      #/add                   add words: type, paste a table, upload files
      #/data                  backup, restore (merge/replace), export words
+     #/transfer              move words and progress to another device by QR code
      #/stats                 progress charts
+     #/week                  your week, Saturday to Friday (ready on Thursday)
      #/print/pick?level=B2   print or save as PDF (also /print/recall, /tricky, /all, /today, /new)
 
    A VIEW is an object in VS.views with:
@@ -31,8 +35,8 @@
   "use strict";
   const { html, icon } = VS;
 
-  const MODES = ["cards", "quiz", "spell", "match", "speak"];
-  const SCOPES = ["new", "today", "all", "tricky", "pick"];
+  const MODES = ["cards", "quiz", "spell", "match", "speak", "write"];
+  const SCOPES = ["new", "today", "all", "tricky", "pick", "word"];
   const PRINT_SCOPES = ["recall", "tricky", "all", "today", "new", "pick"];
 
   VS.homeHref = "index.html";
@@ -42,12 +46,15 @@
     const [path, query = ""] = hash.replace(/^#\/?/, "").split("?");
     const parts = path.split("/").filter(Boolean);
     if (!parts.length || parts[0] === "words") return { view: "library", query };
-    if (parts[0] === "add") return { view: "import" };
+    if (parts[0] === "add") return { view: "import", query };
     if (parts[0] === "data") return { view: "data" };
+    if (parts[0] === "transfer") return { view: "transfer" };
     if (parts[0] === "stats") return { view: "stats" };
+    if (parts[0] === "week") return { view: "week", query };
     // An optional last part picks the layout: #/print/pick/test?level=B2
     if (parts[0] === "print" && PRINT_SCOPES.includes(parts[1])) return { view: "print", scope: parts[1], layout: parts[2], query };
     if (parts[0] === "recall") return { view: "recall", scope: "recall" };
+    if (parts[0] === "quick") return { view: "recall", scope: "quick" };
     if (SCOPES.includes(parts[0]) && MODES.includes(parts[1])) return { view: parts[1], scope: parts[0], query };
     return { view: "library", query: "" };
   }
@@ -134,10 +141,10 @@
   const NAV = [
     { id: "home", label: "Words", icon: "book", href: () => "#/", match: ["library"] },
     { id: "recall", label: "Recall", icon: "review", href: () => "#/recall", match: ["recall"] },
-    { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats"] },
+    { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats", "week"] },
     { id: "add", label: "Add words", icon: "plus", href: () => "#/add", match: ["import"] },
   ];
-  const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak"];
+  const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak", "write"];
 
   function navMarkup(due, cls) {
     return NAV.filter((n) => cls === "tab" || n.id !== "home").map((n) => {
@@ -229,6 +236,8 @@
         <h3 class="sheet-group">Sound</h3>
         <div class="setting"><b>Pronunciation</b><div class="seg">${choice("sound", true, "On")}${choice("sound", false, "Off")}</div></div>
         <div class="setting"><b>Accent</b><div class="seg">${choice("voice", "us", "American")}${choice("voice", "uk", "British")}</div></div>
+        <div class="setting"><b>Recorded voice</b><div class="seg">${choice("recorded", true, "On")}${choice("recorded", false, "Off")}</div>
+          <span class="hint">A real person saying the word, from the dictionary, when you're online. Offline — or for sentences — your browser's voice speaks.</span></div>
         <div class="setting"><b>Say new words automatically</b><div class="seg">${choice("autoplay", true, "On")}${choice("autoplay", false, "Off")}</div></div>
         <div class="setting"><b>Speaking speed</b><div class="seg">${choice("rate", 0.7, "Slow")}${choice("rate", 0.9, "Normal")}${choice("rate", 1.1, "Fast")}</div></div>
         <div class="setting"><b>Sound effects</b><div class="seg">${choice("effects", true, "On")}${choice("effects", false, "Off")}</div></div>
@@ -272,7 +281,8 @@
         </details>
         <div class="setting"><b>Your data</b>
           <p class="hint">Saved in this browser only. Back it up, restore it on another device, or export your words.</p>
-          <a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
+          <div class="row"><a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
+          <a class="btn" href="#/transfer" data-action="close-settings">${icon("qr", "icon-sm")} Move to another device</a></div>
         </div>
         <button class="danger-link" type="button" data-action="reset-progress">Reset all progress</button>
       </div>
@@ -360,6 +370,21 @@
     if (current.view.keys) current.view.keys(e);
   });
 
+  /* ── Shared to the app ──────────────────────────────────────────
+     Share → VocabStudy on a phone (manifest share_target), or the
+     bookmarks-bar button on a computer, opens index.html?share-text=…
+     The text waits in VS.capture for Add words (views/import.js). */
+  function readShare() {
+    const q = new URLSearchParams(location.search);
+    if (!["share-text", "share-title", "share-url"].some((k) => q.has(k))) return;
+    const strip = (s) => String(s || "").replace(/https?:\/\/\S+/g, "").replace(/\s+/g, " ").trim();
+    const url = q.get("share-url") || (String(q.get("share-text") || "").match(/https?:\/\/\S+/) || [])[0] || "";
+    let source = strip(q.get("share-title"));
+    if (!source && url) { try { source = new URL(url).hostname.replace(/^www\./, ""); } catch (e) { /* not a URL */ } }
+    VS.capture = { text: strip(q.get("share-text")).slice(0, 2000), context: strip(q.get("share-context")).slice(0, 800), source: source.slice(0, 80) };
+    history.replaceState(null, "", location.pathname + "#/add?from=share");
+  }
+
   /* ── Boot ─────────────────────────────────────────────────────────
      Every lookup is optional: a page built from an older template (or a
      stale browser cache) must still start, just without the new button. */
@@ -374,6 +399,7 @@
   applySettings();
   VS.store.onChange(() => current && renderBar());
   VS.autofill.resume();                          // words added offline get filled now
+  readShare();
   window.addEventListener("hashchange", go);
   go();
 })();

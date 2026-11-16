@@ -1,0 +1,117 @@
+/* core/week.js — your week, Saturday to Friday, and the milestones on the way.
+   ------------------------------------------------------------------
+   Long-term memory is slow to see day by day; a week makes it visible.
+   The week runs Saturday → Friday, as it does across the Arab world, and
+   the report is ready on Thursday — the end of the working week — so the
+   weekend can start with "this is what I did".
+
+     VS.week.range(date?)     → { start, end, days: [7 dates] }   (Sat … Fri)
+     VS.week.summary(start?)  → the numbers for one week, with last week's
+     VS.week.reportDue()      → the start date of a report the home screen
+                                should offer now, or ""
+     VS.milestones.next()     → { at, left, pct } toward the next milestone
+     VS.milestones.claim()    → a milestone just reached (once), or 0
+
+   Everything is computed from the study history store.js already keeps
+   (one row per day: answers, right, seconds, new words, mastered total).
+   ------------------------------------------------------------------ */
+(function () {
+  "use strict";
+
+  const DAY = 864e5;
+  const MILESTONES = [100, 500, 1000, 2000, 5000, 10000];
+  const at = (iso) => new Date(iso + "T12:00:00");
+
+  /** Saturday … Friday around a date. getDay(): Sunday 0 … Saturday 6. */
+  function range(date) {
+    const d = date ? at(date) : new Date();
+    const back = (d.getDay() + 1) % 7;               // days since Saturday
+    const sat = new Date(d.getTime() - back * DAY);
+    const days = Array.from({ length: 7 }, (_, i) => VS.dateKey(new Date(sat.getTime() + i * DAY)));
+    return { start: days[0], end: days[6], days };
+  }
+
+  function rowsBetween(start, end) {
+    return VS.store.history().filter((r) => r.date >= start && r.date <= end);
+  }
+
+  /** Mastered words at the end of a day (carried from the last day studied before it). */
+  function masteredAt(date) {
+    const rows = VS.store.history().filter((r) => r.date <= date);
+    return rows.length ? rows[rows.length - 1].mastered : 0;
+  }
+
+  function numbers(start) {
+    const r = range(start);
+    const rows = rowsBetween(r.start, r.end);
+    const byDay = {};
+    rows.forEach((row) => { byDay[row.date] = row; });
+    const sum = (k) => rows.reduce((n, row) => n + (row[k] || 0), 0);
+    const before = masteredAt(VS.dateKey(new Date(at(r.start).getTime() - DAY)));
+    const today = VS.todayKey();
+    const after = r.end >= today ? VS.store.totals().mastered : masteredAt(r.end);
+    const best = rows.reduce((a, b) => (!a || b.answered > a.answered ? b : a), null);
+    return {
+      start: r.start, end: r.end,
+      days: r.days.map((date) => ({ date, row: byDay[date] || null, future: date > today, today: date === today })),
+      studied: rows.filter((row) => row.answered || row.seconds >= 60 || row.newWords).length,
+      answers: sum("answered"), right: sum("right"), seconds: sum("seconds"), met: sum("newWords"),
+      mastered: Math.max(0, after - before),
+      added: VS.allWords().filter((w) => w.added >= r.start && w.added <= r.end).length,
+      best: best && best.answered ? best : null,
+    };
+  }
+
+  VS.week = {
+    range,
+
+    summary(start) {
+      const week = numbers(start);
+      week.last = numbers(VS.dateKey(new Date(at(week.start).getTime() - 7 * DAY)));
+      return week;
+    },
+
+    /** Thursday and Friday: this week's report. Saturday: last week's, if it was never opened. */
+    reportDue() {
+      if (!VS.store.history().length) return "";
+      const day = new Date().getDay();               // Thu 4, Fri 5, Sat 6
+      const r = range();
+      const seen = VS.store.weekSeen();
+      if ((day === 4 || day === 5) && seen !== r.start) return r.start;
+      if (day === 6) {
+        const last = range(VS.dateKey(new Date(Date.now() - DAY))).start;
+        if (seen !== last && rowsBetween(last, VS.dateKey(new Date(Date.now() - DAY))).length) return last;
+      }
+      return "";
+    },
+
+    /** "Sat 14 Nov – Fri 20 Nov" */
+    label(start) {
+      const r = range(start);
+      const f = (iso) => at(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+      return f(r.start) + " – " + f(r.end);
+    },
+  };
+
+  VS.milestones = {
+    LIST: MILESTONES,
+
+    /** The next milestone and how far along you are. */
+    next() {
+      const m = VS.store.totals().mastered;
+      const nextAt = MILESTONES.find((x) => x > m) || Math.ceil((m + 1) / 5000) * 5000;
+      const prev = MILESTONES.filter((x) => x <= m).pop() || 0;
+      return { at: nextAt, left: nextAt - m, pct: Math.round(((m - prev) / (nextAt - prev)) * 100), mastered: m };
+    },
+
+    /** A milestone reached and not yet celebrated → its number (marked as celebrated). */
+    claim() {
+      const m = VS.store.totals().mastered;
+      const reached = MILESTONES.filter((x) => x <= m);
+      const top = reached[reached.length - 1];
+      if (!top || VS.store.milestoneSeen() >= top) return 0;
+      VS.store.setMilestoneSeen(top);
+      return top;
+    },
+  };
+})();

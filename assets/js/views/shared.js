@@ -17,7 +17,9 @@
 
   /* Edit / delete your own words (global actions, so they work in every list). */
   const EDIT_FIELDS = [["word", "Word"], ["sense", "Sense"], ["arabic", "Arabic"], ["type", "Type"], ["level", "Level"],
-                       ["ipa", "IPA"], ["tags", "Tags"], ["synonyms", "Similar words"], ["definition", "Definition"], ["example", "Example"]];
+                       ["ipa", "IPA"], ["tags", "Tags"], ["synonyms", "Similar words"], ["definition", "Definition"], ["example", "Example"],
+                       ["context", "Where you met it (the sentence)"], ["source", "Source (a series, a book, work…)"]];
+  const LONG_FIELDS = ["definition", "example", "context"];
   const LIST_FIELDS = ["tags", "synonyms"];       // edited as "a, b, c"
   VS.actions = VS.actions || {};
   VS.actions["word-edit"] = (el) => {
@@ -27,12 +29,12 @@
     body.innerHTML = String(html`
       <form class="word-edit" data-edit-id="${w.id}">
         ${EDIT_FIELDS.map(([k, label]) => html`
-          <label class="form-field ${k === "definition" || k === "example" ? "is-wide" : ""}"><span>${label}</span>
+          <label class="form-field ${LONG_FIELDS.includes(k) ? "is-wide" : ""}"><span>${label}</span>
             ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
               : k === "level" ? html`<select name="level"><option value="">—</option>${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
               : k === "tags" ? html`<input name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
               : k === "synonyms" ? html`<input name="synonyms" value="${w.synonyms.join(", ")}" placeholder="delay, put off">`
-              : k === "definition" || k === "example" ? html`<textarea name="${k}" rows="2">${w[k] || ""}</textarea>`
+              : LONG_FIELDS.includes(k) ? html`<textarea name="${k}" rows="2">${w[k] || ""}</textarea>`
               : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
           </label>`)}
         ${VS.ui.tagList()}
@@ -58,6 +60,13 @@
     location.reload();                 // rebuild every list with the new version
   };
   VS.actions["word-cancel"] = () => VS.app.render();
+  VS.actions["sentence-remove"] = (el) => {
+    VS.store.removeSentence(el.dataset.id, Number(el.dataset.index));
+    const row = el.closest(".word-row");
+    const w = VS.byId[el.dataset.id];
+    if (row && w) { row.outerHTML = String(VS.ui.wordRow(w)); const again = VS.$(`.word-row[data-id="${CSS.escape(w.id)}"]`); if (again) again.open = true; }
+    VS.toast("Sentence removed.");
+  };
 
   /* Other meanings: a word has many senses, and the dictionary's first one may
      not be the one the learner met. List them all; one tap picks and saves. */
@@ -212,6 +221,69 @@
     /** The example in quotes — or nothing at all when the word has none yet. */
     quote: (w) => (w.example ? html`“${VS.ui.example(w)}”` : ""),
 
+    /** English text that may quote Arabic («يعتمد على»): each Arabic run is isolated,
+        so the line reads in the right order in both directions. */
+    mixed(text) {
+      const safe = VS.escape(text);
+      // «» around Arabic would flip in an English line; the isolated chip replaces them.
+      return VS.raw(safe.replace(/«?([\u0600-\u06FF][\u0600-\u06FF\u064B-\u065F\s،-]*[\u0600-\u06FF]|[\u0600-\u06FF])»?/g,
+        (_, ar) => '<bdi class="ar-chip" lang="ar" dir="rtl">' + ar + "</bdi>"));
+    },
+
+    /** The IPA, with the stress drawn as a teacher would: o O o o. */
+    ipa(w) {
+      if (!w.ipa) return "";
+      const st = VS.stress(w.ipa);
+      return html`<span class="ipa">${w.ipa}</span>${st ? html`
+        <span class="stress" role="img" title="Say the big one louder and longer"
+          aria-label="Stress on syllable ${st.stressed + 1} of ${st.count}">${Array.from({ length: st.count }, (_, i) =>
+            html`<i class="${i === st.stressed ? "is-on" : ""}"></i>`)}</span>` : ""}`;
+    },
+
+    /**
+     * What Arab learners get wrong with this word (core/usage-traps.js):
+     * the mistake, the fix, and why. `limit` keeps a card short.
+     */
+    usage(w, limit, cls) {
+      const traps = VS.usageTraps(w).slice(0, limit || 3);
+      if (!traps.length) return "";
+      return html`
+        <div class="usage ${cls || ""}" aria-label="What Arab learners often get wrong">
+          ${traps.map((t) => html`
+            <div class="usage-trap">
+              <p class="usage-kind">${t.label}</p>
+              <p class="usage-wrong">${icon("x", "icon-sm")}<span>${t.wrong}</span></p>
+              <p class="usage-right">${icon("check", "icon-sm")}<span>${t.right}</span></p>
+              <p class="usage-why">${VS.ui.mixed(t.why)}</p>
+            </div>`)}
+        </div>`;
+    },
+
+    /** Where the learner met the word: their own sentence, the strongest cue there is. */
+    context(w, cls) {
+      if (!w.context) return "";
+      const hit = VS.findIn(w, w.context, true);
+      return html`
+        <figure class="met ${cls || ""}">
+          <figcaption>${icon("bulb", "icon-sm")} Where you met it${w.source ? html` · <span class="met-source">${w.source}</span>` : ""}</figcaption>
+          <blockquote>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : w.context}</blockquote>
+        </figure>`;
+    },
+
+    /** Sentences the learner wrote with the word (Use it). */
+    mine(w, removable) {
+      if (!w.mine || !w.mine.length) return "";
+      return html`
+        <div class="mine">
+          <p class="mine-head">${icon("pen", "icon-sm")} Your sentences</p>
+          <ul>${w.mine.map((m, i) => {
+            const hit = VS.findIn(w, m, true);
+            return html`<li><span>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m}</span>
+              ${removable ? html`<button class="icon-btn mine-del" type="button" data-action="sentence-remove" data-id="${w.id}" data-index="${i}" aria-label="Remove this sentence">${icon("x", "icon-sm")}</button>` : ""}</li>`;
+          })}</ul>
+        </div>`;
+    },
+
     /** Similar words: another way in to the same meaning. */
     similar: (w, cls) => (w.synonyms && w.synonyms.length
       ? html`<p class="similar ${cls || ""}"><span>Similar</span> ${w.synonyms.join(" · ")}</p>` : ""),
@@ -237,7 +309,7 @@
         <label class="note">
           <span class="note-label">${icon("bulb", "icon-sm")} My note</span>
           <textarea data-note="${w.id}" rows="2" maxlength="500"
-            placeholder="A memory trick, or a sentence about your own life with this word">${note}</textarea>
+            placeholder="A memory trick: anything that helps you remember it">${note}</textarea>
         </label>`;
     },
 
@@ -250,7 +322,7 @@
       const e = VS.store.word(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
       return html`
-        <details class="word-row" data-status="${s}">
+        <details class="word-row" data-status="${s}" data-id="${w.id}">
           <summary>
             <span class="word-row-word">
               <i class="word-row-dot" aria-hidden="true"></i>
@@ -268,14 +340,18 @@
           <div class="word-row-body">
             <div class="row">
               ${VS.ui.speakButton(w.word)}
-              <span class="ipa">${w.ipa}</span>
+              ${VS.ui.ipa(w)}
             </div>
             ${VS.ui.soundTraps(w)}
             ${w.definition ? html`<p>${w.definition}</p>` : ""}
             ${VS.autofill.enabled() ? html`<button class="link-btn" type="button" data-action="word-meanings" data-id="${w.id}">Not the meaning you met?</button>` : ""}
-            ${w.example ? html`<p class="word-row-example">${VS.ui.quote(w)}</p>`
-              : html`<p class="hint">No example yet. A sentence of your own sticks best: write one in <b>My note</b>.</p>`}
+            ${VS.ui.context(w)}
+            ${w.example ? html`<p class="word-row-example">${VS.ui.quote(w)}</p>` : ""}
+            ${VS.ui.mine(w, true)}
+            ${VS.ui.usage(w)}
             ${VS.ui.similar(w)}
+            <a class="btn btn-tonal word-row-use" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}
+              ${w.mine.length ? "Write another sentence" : "Use it in a sentence"}</a>
             ${w.tags.length ? html`<p class="row word-row-tags">${VS.ui.tags(w)}</p>` : ""}
             ${VS.ui.noteBox(w)}
             <div class="row word-row-foot">
@@ -358,8 +434,17 @@
     /** End-of-session screen. `stats` = [{ value, label, tone }], `words` = mistakes to show. */
     summary({ title, message, stats, words, actions }) {
       VS.sfx.play("done");
+      // A milestone reached in this session (100, 500, 1000… mastered) is celebrated once.
+      const reached = VS.milestones.claim();
+      if (reached) setTimeout(VS.ui.celebrate, 250);
       return html`
         <section class="summary view-enter" aria-live="polite">
+          ${reached ? html`
+            <div class="milestone-hit">
+              ${icon("trophy", "icon-lg")}
+              <p><b>${reached.toLocaleString("en-GB")} words mastered.</b>
+                <span>${reached.toLocaleString("en-GB")} words you remembered after two weeks or more — they're yours now.</span></p>
+            </div>` : ""}
           <h1>${title}</h1>
           <p class="muted">${message}</p>
           <div class="summary-stats">

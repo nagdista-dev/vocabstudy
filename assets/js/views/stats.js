@@ -117,6 +117,14 @@
         <div class="page view-enter">
           <header class="page-head"><div><h1>Your progress</h1><p class="hint">Since ${longDate(history[0].date)}</p></div></header>
 
+          <section class="card stats-week" aria-labelledby="sw-title">
+            <div class="section-title"><h2 id="sw-title">This week</h2>
+              <a class="btn btn-quiet" href="#/week">Open your week ${icon("arrow-right", "icon-sm")}</a></div>
+            ${VS.ui.weekStrip(VS.week.summary())}
+            <p class="hint">Saturday to Friday. The full report is ready every Thursday.</p>
+          </section>
+          ${VS.ui.milestone()}
+
           <dl class="stat-tiles">
             <div class="card"><dt>${icon("clock", "icon-sm")} Study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>
             <div class="card"><dt>${icon("flame", "icon-sm")} Days studied</dt><dd>${history.length} <small><span class="stat-dot" aria-hidden="true">·</span>streak ${t.streak}</small></dd></div>

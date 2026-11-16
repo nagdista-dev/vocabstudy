@@ -36,6 +36,21 @@ Then test the screens you changed at phone width (375px) and desktop width.
 - **The learner comes first.** Every change should make studying clearer,
   calmer or more effective — see `docs/DESIGN.md`.
 
+## The best first contribution: a usage trap
+
+If you teach English to Arabic speakers, you know mistakes the app doesn't
+yet. Add one to `assets/js/core/usage-traps.js`:
+
+```js
+["depend|dependent", "prep", "It depends of the weather.", "It depends on the weather.",
+  "Always depend on — «يعتمد على» is on, never of, from or at.", "\\bdepend\\w*\\s+(?:of|from|at)\\b"],
+```
+
+keys · kind (prep, mix, meaning, count, with, grammar) · what learners say ·
+what natives say · one line on why · a pattern that finds the mistake in a
+sentence. Then run `node tools/test_traps.js`: the pattern must catch your
+wrong sentence, miss your right one, and leave everyday good English alone.
+
 ## Ideas that fit well
 
 - New question types for the quiz (see `views/quiz.js → promptMarkup`)

@@ -36,9 +36,11 @@
     library: [],                                   // your words, oldest first — the app ships with none
     lastBackup: "",                                // date of the last full backup download
     backupNudgeIgnored: "",                        // date the learner hid the weekly backup reminder
+    weekSeen: "",                                  // the Saturday of the last weekly report opened (core/week.js)
+    milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
-                accent: "blue", voice: "us", autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, speak: false,
+                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, speak: false,
                 quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 
@@ -209,6 +211,22 @@
         .sort((a, b) => (entry(a.id).due < entry(b.id).due ? -1 : 1));
     },
 
+    /**
+     * Quick 5: the ten words that matter most right now, for a five-minute gap
+     * in the day. Due words first — longest overdue, weakest memory, most
+     * missed — then, if fewer than ten are due, the weakest words you're
+     * learning. Words never studied are left for "Learn new words".
+     */
+    quickWords(n) {
+      const size = n || 10;
+      const score = (w) => { const e = entry(w.id); return e.box * 3 - e.wrong; };
+      const due = this.dueWords().sort((a, b) => (entry(a.id).due < entry(b.id).due ? -1 : entry(a.id).due > entry(b.id).due ? 1 : score(a) - score(b)));
+      if (due.length >= size) return due.slice(0, size);
+      const rest = VS.allWords().filter((w) => { const e = entry(w.id); return e.box > 0 && e.box < MASTERED_BOX && !isDue(e); })
+        .sort((a, b) => score(a) - score(b));
+      return due.concat(rest).slice(0, size);
+    },
+
     /** Words you keep missing (3+ wrong, not yet mastered): the most likely to be forgotten. */
     trickyWords: () => VS.allWords().filter((w) => {
       const e = entry(w.id);
@@ -313,6 +331,10 @@
     lastBackup: () => state.lastBackup,
     markBackup() { state.lastBackup = VS.todayKey(); save(); },
     backupNudgeIgnored: () => state.backupNudgeIgnored,
+    weekSeen: () => state.weekSeen || "",
+    setWeekSeen(start) { if (state.weekSeen !== start) { state.weekSeen = start; save(); } },
+    milestoneSeen: () => state.milestone || 0,
+    setMilestoneSeen(n) { state.milestone = n; save(); },
     ignoreBackupNudge() { state.backupNudgeIgnored = VS.todayKey(); save(); },
 
     /**
@@ -404,6 +426,24 @@
     },
 
     /**
+     * Give a word a new headword in place — auto-fill uses it to turn
+     * "postponed" into "postpone". Progress and note move with it. Returns
+     * the new id, or "" when that word is already in the library.
+     */
+    renameUserWord(id, word) {
+      const w = VS.byId[id];
+      const newId = VS.wordKey(word, w && w.sense);
+      if (!w || newId === id || VS.byId[newId]) return "";
+      const r = this.editUserWord(id, { word: VS.naturalCase(word, w.example) });
+      if (r.error) return "";
+      delete VS.byId[id];
+      w.word = VS.naturalCase(word, w.example);
+      w.id = newId;
+      VS.byId[newId] = w;
+      return newId;
+    },
+
+    /**
      * Auto-fill results for one of your words (core/autofill.js). Only empty
      * fields are filled — what you typed is never replaced. `auto` "todo"
      * keeps the word marked for another try (it was added offline).
@@ -415,6 +455,7 @@
       ["ipa", "definition", "example", "type", "level", "arabic"].forEach((k) => {
         if (fields[k] && !raw[k]) { raw[k] = fields[k]; w[k] = fields[k]; }
       });
+      if (fields.audio && !raw.audio) { raw.audio = fields.audio; w.audio = fields.audio; }
       if (fields.synonyms && fields.synonyms.length && !(raw.synonyms && raw.synonyms.length)) {
         raw.synonyms = fields.synonyms.slice(); w.synonyms = fields.synonyms.slice();
       }
@@ -424,6 +465,26 @@
       }
       if (auto) raw.auto = w.auto = auto;
       else { delete raw.auto; delete w.auto; }
+      save();
+    },
+
+    /** A sentence the learner wrote with a word ("Use it"): newest first, the last five kept. */
+    addSentence(id, text) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      const clean = String(text || "").trim().slice(0, 300);
+      if (!raw || !w || !clean) return;
+      raw.mine = [clean].concat((raw.mine || []).filter((s) => s !== clean)).slice(0, 5);
+      w.mine = raw.mine.slice();
+      save();
+    },
+    removeSentence(id, index) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      if (!raw || !w || !raw.mine) return;
+      raw.mine.splice(index, 1);
+      if (!raw.mine.length) delete raw.mine;
+      w.mine = (raw.mine || []).slice();
       save();
     },
 
@@ -456,7 +517,8 @@
   /** A word as it is stored: only the fields you typed (ids are derived). */
   function plain(w) {
     const out = {};
-    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "tags", "added", "auto"].forEach((k) => {
+    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "context", "source",
+     "mine", "audio", "tags", "added", "auto"].forEach((k) => {
       if (w.given && (k === "type" || k === "level") && !w.given[k]) return;     // a display default, not your choice
       if (w[k] !== undefined && w[k] !== "" && !(Array.isArray(w[k]) && !w[k].length)) out[k] = w[k];
     });

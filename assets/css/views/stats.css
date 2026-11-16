@@ -90,3 +90,43 @@
   .stat-tiles small { display: block; margin-top: 2px; }
   .stat-dot { display: none; }
 }
+
+/* ── Your week (Saturday → Friday) ─────────────────────────────── */
+.week-page { max-width: var(--activity-max); }
+.wk-head { margin-bottom: var(--s-4); }
+.wk-head h1 { font-family: var(--font-display); font-size: var(--text-3xl); letter-spacing: -0.02em; }
+.wk-card { display: grid; gap: var(--s-5); padding: clamp(20px, 4vw, 32px); }
+.wk-headline { font-family: var(--font-display); font-size: clamp(1.6rem, 1.2rem + 2vw, 2.2rem); line-height: 1.2; letter-spacing: -0.02em; text-wrap: balance; }
+
+.wk-days { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--s-1); }
+.wk-days li { display: grid; justify-items: center; gap: var(--s-1); }
+.wk-days small { font-size: var(--text-xs); color: var(--ink-3); white-space: nowrap; }
+.wk-dot { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line-strong); color: var(--on-brand); }
+.wk-days .is-done .wk-dot { background: var(--brand); border-color: var(--brand); }
+.wk-days .is-future .wk-dot { border-style: dashed; border-color: var(--line); }
+.wk-days .is-today small { color: var(--ink); font-weight: 700; }
+.wk-days .is-today .wk-dot { box-shadow: 0 0 0 3px var(--mark); }
+
+.wk-numbers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4) var(--s-5); margin: 0; }
+.wk-numbers > div { display: grid; gap: 2px; padding-top: var(--s-3); border-top: 1px solid var(--line); }
+.wk-numbers dt { font-size: var(--text-sm); color: var(--ink-2); }
+.wk-numbers dd { margin: 0; font-family: var(--font-display); font-size: var(--text-2xl); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.wk-numbers dd small { font-family: var(--font-body); font-size: var(--text-sm); color: var(--ink-2); }
+.wk-delta { font-size: var(--text-xs); color: var(--ink-3); }
+.wk-delta.is-up { color: var(--good); }
+@media (min-width: 720px) { .wk-numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.wk-note { display: flex; gap: var(--s-2); align-items: baseline; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--mark-soft); color: var(--on-mark); line-height: 1.5; }
+.wk-note .icon { flex: none; transform: translateY(2px); }
+.wk-nav { margin-top: var(--s-5); gap: var(--s-2); flex-wrap: wrap; }
+.wk-nav .btn-primary { margin-inline-start: auto; }
+
+/* Toward the next milestone: the highlighter fills the track */
+.wk-milestone { display: grid; gap: var(--s-2); margin-top: var(--s-5); }
+.wk-milestone p { display: flex; gap: var(--s-2); align-items: baseline; font-size: var(--text-sm); color: var(--ink-2); }
+.wk-milestone .icon { flex: none; color: var(--on-mark); transform: translateY(2px); }
+.wk-milestone b { color: var(--ink); }
+.wk-track { height: 10px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.wk-track i { display: block; height: 100%; background: var(--mark); border-radius: inherit; }
+
+.stats-week { display: grid; gap: var(--s-3); padding: var(--s-4) var(--s-5); margin-bottom: var(--s-2); }
+.wk-best { margin-top: calc(var(--s-2) * -1); }

@@ -3,6 +3,10 @@
    Type a word    the fast way: type it, press Enter. The app fills in
                   the rest (core/autofill.js). "More details" lets you
                   type any field yourself — your typing always wins.
+   From text      paste a paragraph (an article, subtitles, an email) and
+                  tap the words you don't know; each keeps the sentence it
+                  came from. Shared text lands here too: Share → VocabStudy
+                  on a phone, or the bookmarks-bar button on a computer.
    Paste a table  rows copied from Excel / Google Sheets / Notion
    Upload files   .tsv / .csv / .txt tables (a CSV export reads back in)
 
@@ -16,10 +20,11 @@
 
   const TEMPLATE = ["word\tdefinition\texample\ttype\tlevel\tipa\tarabic\ttags",
     "Habit\tSomething you do often, almost without thinking.\tI have a habit of reading before bed.\tNoun\tB1\t/ˈhæbɪt/\tعادة\tdaily life"].join("\n");
-  const DETAILS = ["arabic", "type", "level", "tags", "definition", "example", "ipa", "sense"];
+  const DETAILS = ["arabic", "type", "level", "tags", "context", "source", "definition", "example", "ipa", "sense"];
 
   const st = {
-    tab: "type",                  // type | paste | files
+    tab: "type",                  // type | text | paste | files
+    collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
     form: {},                     // the one-word form
@@ -43,7 +48,7 @@
   const savable = (rows) => rows.filter((r) => !r.issues.some((i) => i.kind === "error" || i.kind === "dup"));
   const clean = (r) => {
     const w = {};
-    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic"].forEach((k) => { if (r[k]) w[k] = r[k]; });
+    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "context", "source"].forEach((k) => { if (r[k]) w[k] = r[k]; });
     w.tags = VS.parseTags(r.tags);
     if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
     return w;
@@ -113,11 +118,13 @@
         <p class="hint">${auto
           ? "Press Enter. The app fills in the Arabic meaning, definition, example and pronunciation — only the word is sent online."
           : html`Auto-fill is off (Settings), so nothing leaves this device. Add the details below.`}</p>
-        <details class="add-more" ${!auto || filled ? VS.raw("open") : ""}>
+        <details class="add-more" ${!auto || filled || st.openDetails ? VS.raw("open") : ""}>
           <summary>${icon("chevron-right", "icon-sm")} More details <span class="hint">(optional)</span></summary>
           <div class="word-form">
             ${field("arabic", "Arabic meaning", { ar: true, placeholder: "مثلاً: يستغل - يستفيد من" })}
             ${field("tags", "Tags", { placeholder: "IELTS, work", list: "tagList" })}
+            ${field("context", "Where you met it", { wide: true, long: true, placeholder: "The sentence you saw it in — it's the best reminder there is" })}
+            ${field("source", "Source", { placeholder: "A series, a book, an email…" })}
             ${field("type", "Type", { options: VS.importer.TYPES, empty: auto ? "Auto" : "—" })}
             ${field("level", "Level (CEFR)", { options: VS.importer.LEVELS, empty: "—" })}
             ${field("definition", "Definition (English)", { wide: true, long: true, placeholder: "What it means, in simple English" })}
@@ -153,7 +160,134 @@
       </section>`;
   }
 
-  /* ── Tab 2: paste a table ──────────────────────────────────────── */
+  /* ── Tab 2: from text — tap the words you don't know ───────────── */
+
+  /** "It depends on you." → [{ text: "It", word: true, at: 0 }, { text: " " }, …] */
+  function tokens(text) {
+    const out = [];
+    const re = /[A-Za-z][A-Za-z'’-]*[A-Za-z]|[A-Za-z]/g;
+    let last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) out.push({ text: text.slice(last, m.index) });
+      out.push({ text: m[0], word: true, at: m.index });
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) out.push({ text: text.slice(last) });
+    return out;
+  }
+
+  /** The sentence around a position in a text: the context a word is kept with. */
+  function sentenceAt(text, at) {
+    const start = Math.max(text.lastIndexOf(". ", at), text.lastIndexOf("? ", at), text.lastIndexOf("! ", at), text.lastIndexOf("\n", at));
+    const ends = [". ", "? ", "! ", "\n"].map((e) => text.indexOf(e, at)).filter((i) => i >= 0);
+    const end = ends.length ? Math.min(...ends) + 1 : text.length;
+    return text.slice(start < 0 ? 0 : start + 1, end).replace(/\s+/g, " ").trim().slice(0, 300);
+  }
+
+  /* "ran out of" → "run out of": a phrase is learned in its base form. (Single
+     words are turned into their base by auto-fill, which can ask a dictionary.) */
+  let pastToBase = null;
+  function baseOfPhrase(text) {
+    const parts = text.split(" ");
+    if (parts.length < 2) return text;
+    if (!pastToBase) {
+      pastToBase = {};
+      Object.entries(VS.IRREGULAR).forEach(([base, forms]) => forms.forEach((f) => { if (f !== base) pastToBase[f] = base; }));
+    }
+    const first = parts[0].toLowerCase();
+    const base = pastToBase[first] || (/[^aeiou]ied$/.test(first) ? first.slice(0, -3) + "y" : "");
+    return base ? [base].concat(parts.slice(1)).join(" ") : text;
+  }
+
+  /** Picked words; neighbours become one phrase ("run" + "out" + "of" → "run out of"). */
+  function pickedPhrases() {
+    const c = st.collect;
+    const list = tokens(c.text);
+    const out = [];
+    let cur = null;
+    list.forEach((t, i) => {
+      if (t.word && c.picked.has(i)) {
+        if (cur) cur.text += cur.gap + t.text; else cur = { text: t.text, at: t.at };
+        cur.gap = "";
+      } else if (!t.word && cur && /^[\s-]+$/.test(t.text) && t.text.length <= 2) {
+        cur.gap = t.text.includes("-") ? "-" : " ";
+      } else if (cur) { out.push(cur); cur = null; }
+    });
+    if (cur) out.push(cur);
+    return out.map((p) => ({ word: baseOfPhrase(p.text), context: sentenceAt(c.text, p.at) }));
+  }
+
+  function collectPick() {
+    const c = st.collect;
+    const list = tokens(c.text);
+    if (!list.some((t) => t.word)) return html`<p class="hint">Paste some English above, then tap the words you want to keep.</p>`;
+    const phrases = pickedPhrases();
+    return html`
+      <p class="collect-text" lang="en">${list.map((t, i) => t.word
+        ? html`<button type="button" class="${VS.byId[VS.wordKey(t.text)] ? "tok is-known" : "tok"}" data-action="collect-tok" data-i="${i}" aria-pressed="${c.picked.has(i)}">${t.text}</button>`
+        : t.text)}</p>
+      <p class="hint">Words next to each other become one phrase.${list.some((t) => t.word && VS.byId[VS.wordKey(t.text)]) ? " Dotted words are already in your library." : ""}</p>
+      ${phrases.length ? html`
+        <div class="collect-picked">
+          <p class="row collect-chips">${phrases.map((p) => html`<span class="${VS.byId[VS.wordKey(p.word)] ? "collect-chip is-known" : "collect-chip"}">${p.word}</span>`)}</p>
+          <label class="form-field"><span>Source (optional)</span>
+            <input id="collectSource" value="${c.source}" placeholder="A series, an article, an email…" autocomplete="off"></label>
+          <div class="row">
+            <button class="btn btn-primary btn-lg" type="button" data-action="collect-save">${icon("plus", "icon-sm")}
+              Add ${VS.plural(phrases.filter((p) => !VS.byId[VS.wordKey(p.word)]).length, "word")}</button>
+            <button class="btn btn-quiet" type="button" data-action="collect-clear">Clear picks</button>
+          </div>
+        </div>` : ""}`;
+  }
+
+  /* On a computer: a bookmark that sends the selected words of any page here. */
+  function bookmarklet() {
+    const app = location.origin + location.pathname;
+    if (!/^https?:/.test(app)) return "";
+    const code = "javascript:(function(){var g=getSelection(),s=String(g).trim(),n=g.anchorNode,e=n&&(n.nodeType===1?n:n.parentElement),"
+      + "b=e&&e.closest('p,li,td,blockquote,h1,h2,h3,span,div'),c=b?b.innerText.trim().slice(0,600):'';"
+      + "window.open('" + app + "?share-text='+encodeURIComponent(s)+'&share-context='+encodeURIComponent(c)"
+      + "+'&share-title='+encodeURIComponent(document.title)+'&share-url='+encodeURIComponent(location.href),'vocabstudy');})()";
+    return html`
+      <details class="capture-help">
+        <summary>${icon("bulb", "icon-sm")} Add words from any website, in one tap</summary>
+        <p><b>On a phone:</b> install VocabStudy (Settings → Install), then select a word in Chrome or any app and tap <b>Share → VocabStudy</b>.</p>
+        <p><b>On a computer:</b> drag this button to your bookmarks bar. Select a word on any page — an article, YouTube subtitles, an email — and click it.</p>
+        <p><a class="btn btn-tonal bookmarklet" href="${VS.raw(VS.escape(code))}" draggable="true" data-action="bookmarklet-tip">${icon("plus", "icon-sm")} Add to VocabStudy</a></p>
+      </details>`;
+  }
+
+  function textTab() {
+    const c = st.collect;
+    return html`
+      <p class="muted">Paste a paragraph — from an article, subtitles, an email — then <b>tap the words you don't know</b>. Each one keeps the sentence it came from: the best reminder there is.</p>
+      <label class="form-field"><span class="sr-only">English text</span>
+        <textarea id="collectText" class="collect-input" rows="${c.text ? 2 : 4}" spellcheck="false" lang="en" placeholder="Paste or type some English here">${c.text}</textarea></label>
+      ${c.source ? html`<p class="hint">From ${c.source}</p>` : ""}
+      <div id="collectPick">${collectPick()}</div>
+      ${c.done ? html`<p class="import-done" role="status">${icon("check", "icon-sm")} ${c.done} <a href="#/new/cards">Learn them</a></p>` : ""}
+      ${bookmarklet()}`;
+  }
+
+  /* Text shared to the app (core: VS.capture, read at start-up in app.js):
+     a word or two goes to "Type" with its sentence; more goes to "From text". */
+  function takeCapture() {
+    const cap = VS.capture;
+    if (!cap) return;
+    VS.capture = null;
+    const words = cap.text.split(/\s+/).filter(Boolean);
+    if (cap.text && words.length <= 4 && !/[.!?]\s/.test(cap.text)) {
+      st.tab = "type";
+      const at = cap.context ? cap.context.toLowerCase().indexOf(cap.text.toLowerCase()) : -1;
+      st.form = { word: cap.text.replace(/^[^A-Za-z]+|[^A-Za-z'’]+$/g, ""), context: at >= 0 ? sentenceAt(cap.context, at) : "", source: cap.source };
+      st.openDetails = true;
+    } else {
+      st.tab = "text";
+      st.collect = { text: cap.text || cap.context || "", source: cap.source, picked: new Set(), done: "" };
+    }
+  }
+
+  /* ── Tab 3: paste a table ──────────────────────────────────────── */
   function pasteTab() {
     return html`
       <p class="muted">Copy rows from Excel, Google Sheets or Notion — with the header row — and paste them here.
@@ -260,11 +394,17 @@
     return files;
   }
 
-  const TABS = [["type", "Type a word", "Type"], ["paste", "Paste a list", "Paste"], ["files", "Upload files", "Upload"]];
+  const TABS = [["type", "Type a word", "Type"], ["text", "From text", "Text"], ["paste", "Paste a list", "List"], ["files", "Upload files", "File"]];
 
   VS.views.import = {
     title: () => "Add words",
     crumbs: () => [{ label: "Add words" }],
+
+    start(p) {
+      const tab = new URLSearchParams(p.query || "").get("tab");
+      if (TABS.some(([v]) => v === tab)) st.tab = tab;
+      takeCapture();
+    },
 
     render() {
       return html`
@@ -278,7 +418,7 @@
             <div class="seg import-tabs" role="tablist" aria-label="How to add words">
               ${TABS.map(([v, l, short]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}"><span class="tab-long">${l}</span><span class="tab-short">${short}</span></button>`)}
             </div>
-            ${st.tab === "type" ? typeTab() : st.tab === "paste" ? pasteTab() : filesTab()}
+            ${st.tab === "type" ? typeTab() : st.tab === "text" ? textTab() : st.tab === "paste" ? pasteTab() : filesTab()}
           </section>
 
           ${st.tab === "type" ? recent() : preview()}
@@ -286,6 +426,14 @@
     },
 
     mount(root) {
+      const collect = VS.$("#collectText", root);
+      if (collect) collect.addEventListener("input", () => {
+        st.collect.text = collect.value;
+        st.collect.picked = new Set();
+        st.collect.done = "";
+        const box = VS.$("#collectPick");
+        if (box) box.innerHTML = String(collectPick());
+      });
       const text = VS.$("#importText", root);
       if (text) text.addEventListener("input", () => { st.text = text.value; });
       const tags = VS.$("#pasteTags", root);
@@ -310,9 +458,41 @@
     actions: {
       "import-tab"(el) { st.tab = el.dataset.value; st.saved = ""; VS.app.render(); },
 
+      "collect-tok"(el) {
+        const i = Number(el.dataset.i);
+        const c = st.collect;
+        if (c.picked.has(i)) c.picked.delete(i); else c.picked.add(i);
+        c.done = "";
+        const src = VS.$("#collectSource");
+        if (src) c.source = src.value;
+        const box = VS.$("#collectPick");
+        if (box) box.innerHTML = String(collectPick());
+        const again = VS.$(`[data-action="collect-tok"][data-i="${i}"]`);
+        if (again) again.focus({ preventScroll: true });
+      },
+      "collect-clear"() { st.collect.picked = new Set(); VS.app.render(); },
+      "collect-save"() {
+        const c = st.collect;
+        const src = VS.$("#collectSource");
+        if (src) c.source = src.value.trim();
+        const fresh = pickedPhrases().filter((p) => !VS.byId[VS.wordKey(p.word)]);
+        if (!fresh.length) { VS.toast("Those words are already in your library."); return; }
+        const r = save(fresh.map((p) => ({ word: p.word, context: p.context, source: c.source, tags: [] })));
+        c.picked = new Set();
+        c.done = `Added ${VS.plural(r.added.length, "word")}, each with its sentence.`;
+        VS.sfx.play("done");
+        VS.app.render();
+      },
+      "bookmarklet-tip"(el, e) {
+        // A click inside the app does nothing useful: it's meant for the bookmarks bar.
+        e.preventDefault();
+        VS.toast("Drag this button to your bookmarks bar.");
+      },
+
       "form-add"() {
         if (!VS.addWord(st.form)) return;
         st.form = st.form.tags ? { tags: st.form.tags } : {};        // keep the tags for the next word
+        st.openDetails = false;
         VS.app.render();
         const first = VS.$("#addWord");
         if (first) first.focus();
@@ -354,7 +534,8 @@
 
   // Each filled word updates "Just added" while you're on this screen.
   // Only the list is redrawn, so typing the next word isn't interrupted.
-  VS.autofill.onFill(() => {
+  VS.autofill.onFill((id, oldId) => {
+    if (oldId && oldId !== id) st.recent = st.recent.map((r) => (r === oldId ? id : r));
     const box = VS.app.current() === "import" && st.tab === "type" && VS.$("#recentBox");
     if (box) box.outerHTML = String(recent());
   });

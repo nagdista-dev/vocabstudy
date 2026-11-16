@@ -159,3 +159,13 @@
   .lib-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); }
   .lib-head h1 { font-size: var(--text-2xl); }
 }
+
+/* Quick 5: a quiet door for a short gap in the day, under the plan */
+.today-quick {
+  display: flex; align-items: center; gap: var(--s-2); min-height: var(--tap); margin-top: var(--s-1);
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface-2);
+  color: var(--ink-2); font-size: var(--text-sm); text-decoration: none;
+}
+.today-quick .icon { flex: none; color: var(--brand); }
+.today-quick b { color: var(--ink); }
+.today-quick:hover { background: var(--brand-soft); color: var(--ink); }

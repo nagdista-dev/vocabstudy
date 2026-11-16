@@ -37,8 +37,17 @@ face for English words and a well-sized Arabic face for meanings.
 
 ## Surfaces
 One home: **the library**. Add a word at the top, today's plan under it, then
-every word with filters. Activities (learn, recall, quiz, spell, match, speak)
-open from there and come back to it.
+every word with filters. Activities (learn, recall, quiz, spell, match, use it,
+speak, Quick 5) open from there and come back to it. Words also arrive from
+outside: Share → VocabStudy, the bookmarks-bar button, From text.
+
+## What makes it a teacher, not a word list
+1. **Use it**: the learner writes their own sentence and the app marks it.
+2. **Usage traps**: the mistakes Arab learners make with each word, and why.
+3. **Where you met it**: the learner's own sentence is the first recall cue.
+4. **Stress you can see**, and real recorded voices.
+And a week that ends with a report (Saturday → Friday, ready Thursday).
 
 ## Out of scope (for now)
-Built-in word lists, guessed CEFR levels, grammar lessons, cloud sync, accounts.
+Built-in word lists, guessed CEFR levels, grammar lessons, cloud sync (devices
+meet by QR code instead), accounts, dark mode (by decision), anything paid.

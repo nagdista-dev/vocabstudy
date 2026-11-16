@@ -23,7 +23,10 @@
      twice, and progress belongs to the word, not to when it was added.
 
      Each word: { id, word, sense, type, level, ipa, definition, example,
-                  arabic, synonyms: [], tags: [], added: "YYYY-MM-DD" }
+                  arabic, synonyms: [], tags: [], added: "YYYY-MM-DD",
+                  context, source,   where the learner met it (the sentence, and where)
+                  mine: [],          sentences the learner wrote with it ("Use it")
+                  audio: { us, uk }  recordings from the dictionary (auto-fill) }
      Every word is the learner's own: the app ships with none. They are
      saved by core/store.js and join VS.words at start-up. */
 
@@ -56,6 +59,9 @@
       w.type = w.type || (/\s/.test(w.word) ? "Phrase" : "Noun");     // until auto-fill knows better
       w.tags = Array.isArray(w.tags) ? w.tags : VS.parseTags(w.tags);
       w.synonyms = Array.isArray(w.synonyms) ? w.synonyms : VS.parseTags(w.synonyms).slice(0, 6);
+      w.context = String(w.context || "").trim();
+      w.source = String(w.source || "").trim();
+      w.mine = Array.isArray(w.mine) ? w.mine : [];
       w.added = w.added || VS.todayKey();
       if (VS.byId[w.id]) { out.skipped.push(w); return; }
       VS.words.push(w);
@@ -167,6 +173,23 @@
   VS.formatTime = function (ms) {
     const s = Math.max(0, Math.round(ms / 1000));
     return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  };
+
+  /** Load a script that ships with the app (assets/vendor/) only when a screen needs it.
+      Resolves with window[name]; the same promise is reused, a failure can be retried. */
+  const loading = {};
+  VS.loadScript = function (src, name) {
+    if (window[name]) return Promise.resolve(window[name]);
+    if (!loading[src]) {
+      loading[src] = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = () => (window[name] ? resolve(window[name]) : reject(new Error("missing " + name)));
+        s.onerror = () => { delete loading[src]; s.remove(); reject(new Error("missing " + src)); };
+        document.head.appendChild(s);
+      });
+    }
+    return loading[src];
   };
 
   let toastTimer;

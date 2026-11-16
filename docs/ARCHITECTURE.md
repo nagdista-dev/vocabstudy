@@ -48,13 +48,15 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/sfx.js` | `VS.sfx.play()` — synthesised sound effects (Web Audio) |
 | `core/practice.js` | `VS.scope`, `VS.finishStep`, `VS.sessionWords`, `VS.distractors`, `VS.findInExample` |
 | `core/filters.js` | `VS.filters` — the library's filters and sorts, shared by every screen |
-| `core/sound-traps.js` | `VS.soundTraps(word)` — P/B, V/F, silent letters, -ed, th… |
+| `core/sound-traps.js` | `VS.soundTraps(word)` — P/B, V/F, silent letters, -ed, th…; `VS.stress(ipa)` — syllables and the stressed one |
+| `core/usage-traps.js` | `VS.usageTraps(word)`, `VS.findUsageMistakes(text)` — 108 hand-written Arab-learner mistakes, each with a pattern (tested by `tools/test_traps.js`) |
+| `core/week.js` | `VS.week` — the Saturday–Friday week, its numbers and when the report is due; `VS.milestones` |
 | `core/study-time.js` | active study time + break reminder |
 | `core/importer.js` | `VS.importer` — parse pasted tables and word files |
 | `core/autofill.js` | `VS.autofill` — fills a new word's details in the background; `senses(word)` for Other meanings |
 | `views/shared.js` | `VS.ui.*` — word row, tags, note box, activity header, results, keyboard guard |
 | `views/home.js` | `VS.today` — today's plan, shown at the top of the library |
-| `views/*.js` | one screen each: library (home), cards, recall, quiz, spell, match, speak, stats, print, import, data |
+| `views/*.js` | one screen each: library (home), cards, recall, quiz, spell, match, speak, write (Use it), stats, week, print, import, data, transfer |
 | `app.js` | router, app bar, settings, click + keyboard handling, focus keeping, boot |
 
 ## Routes
@@ -63,15 +65,20 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | --- | --- | --- |
 | `#/` | home = the library: add a word, today's plan, your words | every word |
 | `#/recall` | recall | words due today |
+| `#/quick` | Quick 5 (the recall screen) | the 10 that matter most: due first (oldest, weakest), then weak learning words |
 | `#/new/cards` | learn new words | the rest of today's *New words per day*, oldest added first |
-| `#/today/quiz\|spell\|match\|speak` | practise today's words | words first studied today |
+| `#/today/quiz\|spell\|match\|write\|speak` | practise today's words | words first studied today |
+| `#/word/<mode>?id=borrow` | an activity over one word (Use it from a word's details) | that word |
 | `#/all/<mode>` | activity | the whole library |
 | `#/tricky/<mode>` | activity | words missed 3+ times |
 | `#/pick/<mode>?filters` | activity | a filtered list from the library |
 | `#/words?filters` | the library with filters (same screen as `#/`) | filtered and sorted |
-| `#/add` | add words | — |
+| `#/add[?tab=text]` | add words: type, from text, paste a list, upload | — |
+| `index.html?share-text=…` | text shared to the app (Share target, bookmarklet) → `VS.capture` → Add words | — |
 | `#/data` | backup, restore, export | — |
-| `#/stats` | progress charts | history |
+| `#/stats` | progress charts, this week, next milestone | history |
+| `#/week[?start=YYYY-MM-DD]` | your week, Saturday to Friday | history |
+| `#/transfer` | move to another device by QR code | everything |
 | `#/print/<scope>[/layout][?filters]` | print / PDF | recall, tricky, all, today, new or pick |
 
 ## Today's plan
@@ -120,7 +127,26 @@ Recall suggests the honest grade from what was typed: exact → Got it, one
 slip (`VS.isAlmost`, Levenshtein) → Got it without Easy, anything else → Forgot.
 
 Waits per box: 1, 3, 7, 14, 30, 60 days. Box 4+ = **mastered**.
+Writing a sentence that passes in **Use it** is a right answer (`grade(id, "good")`).
 Tricky = 3+ wrong answers, more wrong than half the right ones, not mastered.
+
+## What the learner writes
+
+Each word can carry the learner's own language: `context` and `source`
+(where they met it — From text and Share fill them), and `mine` (sentences
+written in **Use it**, newest first, five kept; `store.addSentence`).
+Recall's gap questions prefer these over the dictionary example.
+`VS.checkSentence(word, text)` (core/practice.js) marks a sentence on the
+device: the word in any form (`VS.findIn`), at least four words, not a copy,
+and every usage-trap pattern over the whole sentence.
+
+## Moving between devices (views/transfer.js)
+
+`store.exportJSON()` → deflate (`CompressionStream`) → base64 → frames of
+600 characters (900 for big libraries): `VS1:<session>:<z|u>:<part>:<parts>:<data>`.
+The sender loops the frames as QR codes (assets/vendor/qrcode.js); the
+receiver reads them from the camera (`BarcodeDetector` where it exists,
+assets/vendor/jsQR.js otherwise), in any order, then `store.mergeJSON`.
 
 ## The learner's words
 

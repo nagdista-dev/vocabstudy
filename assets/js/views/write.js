@@ -1,0 +1,179 @@
+/* views/write.js — Use it: write a sentence of your own with the word.
+   ------------------------------------------------------------------
+   Knowing what "depend" means is not the same as using it. Arab learners
+   say "it depends of", "I did a mistake", "before three years" — not
+   because they forgot the word, but because nobody marked their own
+   sentence. This screen does what a teacher's red pen does, kindly and
+   on the device (VS.checkSentence in core/practice.js):
+
+     1. See the word: meaning, sound, and what Arab learners get wrong
+        with it (core/usage-traps.js).
+     2. Write one sentence about your own life with it.
+     3. Check: the word is there (any form), it's a full sentence, it's
+        not the example copied, and no usage trap is hiding in it.
+   A sentence that passes is kept with the word ("Your sentences") and
+   comes back in Recall as a gap — the strongest cue there is: your life.
+   ------------------------------------------------------------------ */
+(function () {
+  "use strict";
+  const { html, icon } = VS;
+
+  const ROUND = 5;          // writing is slow, careful work: five sentences make a round
+  /* Starters for the blank page — the hardest part of writing is the first word. */
+  const IDEAS = ["Yesterday I…", "At work, …", "My friend…", "Next week I want to…", "When I was a child, …",
+                 "In my city, …", "I think that…", "Last summer…", "Every morning I…", "My family…"];
+
+  let s = null;   // { scope, words, index, draft, result, written, skipped, saved }
+
+  function feedback() {
+    const r = s.result;
+    if (!r) return "";
+    if (r.ok) {
+      return html`
+        <div class="feedback is-right write-ok" role="status">
+          <p class="feedback-title">${icon("check", "icon-sm")} Kept with the word</p>
+          <p class="write-saved">${VS.ui.mixed(r.clean)}</p>
+          ${r.tips.length ? html`<p class="hint">${r.tips.join(" ")} (Fixed in the saved copy.)</p>` : ""}
+          <p class="hint">It comes back in Recall as a gap — your own life is the strongest reminder.</p>
+        </div>`;
+    }
+    return html`
+      <div class="write-check" role="status">
+        <p class="write-check-title">Almost there — fix this and check again:</p>
+        <ul>
+          ${r.problems.map((p) => html`
+            <li>${p.trap
+              ? html`<span class="usage-kind">${p.trap.label}</span>
+                     ${p.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.found}</span><small>you wrote</small></span>` : ""}
+                     <span class="usage-right">${icon("check", "icon-sm")}<span>${p.trap.right}</span></span>
+                     <span class="usage-why">${VS.ui.mixed(p.text)}</span>`
+              : html`<span>${VS.ui.mixed(p.text)}</span>`}</li>`)}
+        </ul>
+      </div>`;
+  }
+
+  function finish() {
+    const next = VS.finishStep(s.scope, "write");
+    if (s.written.length >= 3 && !s.skipped) setTimeout(VS.ui.celebrate, 150);
+    return VS.ui.summary({
+      title: s.written.length ? "Your words, your sentences" : "Round over",
+      message: s.written.length
+        ? "Each sentence is kept with its word and comes back in Recall."
+        : "Skipped this time. A sentence a day makes a word yours.",
+      stats: [
+        { value: s.written.length, label: s.written.length === 1 ? "sentence" : "sentences", tone: "good" },
+        { value: s.skipped, label: "skipped" },
+      ],
+      words: s.written.map((id) => VS.byId[id]).filter(Boolean),
+      actions: [
+        next ? Object.assign({ primary: true }, next) : { href: s.scope.back, label: "Done", primary: true },
+        s.scope.kind !== "word" ? { action: "restart", label: "Write more" } : null,
+      ],
+    });
+  }
+
+  VS.views.write = {
+    title: () => "Use it",
+    crumbs: (p) => VS.ui.crumbs(p, "Use it"),
+
+    start(p) {
+      const scope = VS.scope(p);
+      // Words with the fewest sentences first: every word deserves one.
+      const words = scope ? VS.sessionWords(scope.words).sort((a, b) => a.mine.length - b.mine.length).slice(0, ROUND) : [];
+      s = { scope, words, index: 0, draft: "", result: null, written: [], skipped: 0, idea: Math.floor(Math.random() * IDEAS.length) };
+    },
+
+    render() {
+      if (!s.scope || !s.words.length) return VS.ui.emptyActivity("#/", "There are no words to write with yet.");
+      if (s.index >= s.words.length) return html`<div class="activity">${finish()}</div>`;
+      const w = s.words[s.index];
+      const done = s.result && s.result.ok;
+      return html`
+        <div class="activity">
+          ${VS.ui.activityHead({ back: s.scope.back, title: "Use it · " + s.scope.title, index: s.index, total: s.words.length })}
+          <section class="write card">
+            <div class="write-word">
+              <p class="write-headword"><span class="mark">${w.word}</span></p>
+              <div class="row">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
+              ${w.arabic ? html`<p class="write-ar" lang="ar">${w.arabic}</p>` : ""}
+              ${w.definition ? html`<p class="write-def">${w.definition}</p>` : ""}
+            </div>
+            ${VS.ui.usage(w, 2, "write-usage")}
+            ${w.example || w.context ? html`
+              <details class="write-example">
+                <summary>See how it's used</summary>
+                ${VS.ui.context(w)}
+                ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
+              </details>` : ""}
+            <form class="write-form" data-form="write" autocomplete="off">
+              <label class="form-field">
+                <span>Write a sentence about <b>your own life</b> with “${w.word}”</span>
+                <textarea id="writeInput" rows="3" maxlength="300" spellcheck="true" lang="en" enterkeyhint="done"
+                  placeholder="${IDEAS[(s.idea + s.index) % IDEAS.length]}" ${done ? VS.raw("readonly") : ""}>${s.draft}</textarea>
+              </label>
+            </form>
+            ${feedback()}
+          </section>
+          <div class="action-bar">
+            ${done
+              ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="writeNext">
+                  ${s.index + 1 < s.words.length ? "Next word" : "See results"} <kbd>Enter</kbd></button>`
+              : html`
+                <button class="btn btn-lg btn-quiet" type="button" data-action="skip">Skip</button>
+                <button class="btn btn-lg btn-primary" type="button" data-action="check">Check <kbd>Enter</kbd></button>`}
+          </div>
+        </div>`;
+    },
+
+    mount() {
+      const input = VS.$("#writeInput");
+      if (input) {
+        VS.ui.watchKeyboard(input);
+        input.addEventListener("input", () => {
+          s.draft = input.value;
+          input.style.height = "auto";
+          input.style.height = Math.min(input.scrollHeight + 2, 220) + "px";
+        });
+        // Enter checks (a sentence is one line); Shift+Enter is still a new line.
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey && !input.readOnly) { e.preventDefault(); VS.views.write.actions.check(); }
+        });
+        if (!input.readOnly && matchMedia("(hover: hover)").matches) {
+          input.focus();
+          input.setSelectionRange(input.value.length, input.value.length);
+        }
+      }
+      const next = VS.$("#writeNext");
+      if (next) next.focus({ preventScroll: true });
+      const fb = VS.$(".write-check, .write-ok");
+      if (fb && innerWidth <= 640) fb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    },
+
+    actions: {
+      check() {
+        const w = s.words[s.index];
+        const input = VS.$("#writeInput");
+        s.draft = input ? input.value : s.draft;
+        if (!s.draft.trim()) { VS.toast("Write a sentence first — or Skip."); return; }
+        s.result = VS.checkSentence(w, s.draft);
+        if (s.result.ok) {
+          VS.store.addSentence(w.id, s.result.clean);
+          VS.store.grade(w.id, "good");      // using a word is a real right answer
+          s.written.push(w.id);
+          VS.sfx.play("right");
+        } else {
+          VS.sfx.play("wrong");
+        }
+        VS.app.render();
+      },
+      skip() { s.skipped++; this.next(); },
+      next() { s.index++; s.draft = ""; s.result = null; VS.app.render(); window.scrollTo({ top: 0 }); },
+      restart() { VS.views.write.start(VS.app.params()); VS.app.render(); },
+    },
+
+    keys(e) {
+      if (!s || s.index >= s.words.length) return;
+      if (e.key === "Enter" && s.result && s.result.ok && document.activeElement.id !== "writeNext") { e.preventDefault(); this.actions.next(); }
+    },
+  };
+})();

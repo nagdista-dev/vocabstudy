@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Copy the app's fonts and PDF maker into the project, so it runs with no internet.
+"""Copy the app's fonts, PDF maker and QR libraries into the project, so it runs with no internet.
 
-    python3 tools/vendor.py
+    python3 tools/vendor.py            # everything
+    python3 tools/vendor.py qr         # only the QR libraries (pdf, fonts work the same way)
 
 VocabStudy works fully on your device: no server, no CDN. This script is
 the only thing that downloads, and you run it by hand when a font or the
@@ -10,6 +11,8 @@ PDF library should change. It writes:
     assets/fonts/*.woff2          the four families (OFL licence), Latin + Arabic only
     assets/css/fonts.css          their @font-face rules (loaded first by the page)
     assets/vendor/html2pdf.bundle.min.js   the PDF maker used by Print (MIT licence)
+    assets/vendor/qrcode.js        draws QR codes for "Move to another device" (MIT licence)
+    assets/vendor/jsQR.js          reads QR codes from the camera there (Apache-2.0 licence)
 
 Commit the results. tools/build.py never touches the network.
 """
@@ -17,6 +20,8 @@ Commit the results. tools/build.py never touches the network.
 from __future__ import annotations
 
 import re
+import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -29,6 +34,10 @@ GOOGLE = ("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:w
           "&family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Charis+SIL:ital@0;1"
           "&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap")
 PDF_LIB = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+QR_LIBS = {
+    "qrcode.js": "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js",
+    "jsQR.js": "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js",
+}
 SUBSETS = {"latin", "latin-ext", "arabic"}      # latin-ext carries the IPA symbols
 # A current browser's User-Agent makes Google Fonts answer with woff2 files.
 AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
@@ -36,8 +45,15 @@ AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) 
 
 def get(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": AGENT})
-    with urllib.request.urlopen(req, timeout=60) as res:
-        return res.read()
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as res:
+                return res.read()
+        except OSError:
+            if attempt == 3:
+                raise
+            time.sleep(2 * (attempt + 1))
+    raise RuntimeError("unreachable")
 
 
 def slug(text: str) -> str:
@@ -75,6 +91,15 @@ def pdf_lib() -> None:
     print(f"pdf maker: {len(data) // 1024} KB → assets/vendor/html2pdf.bundle.min.js")
 
 
+def qr_libs() -> None:
+    VENDOR.mkdir(parents=True, exist_ok=True)
+    for name, url in QR_LIBS.items():
+        data = get(url)
+        (VENDOR / name).write_bytes(data)
+        print(f"qr: {name} {len(data) // 1024} KB → assets/vendor/{name}")
+
+
 if __name__ == "__main__":
-    fonts()
-    pdf_lib()
+    jobs = {"fonts": fonts, "pdf": pdf_lib, "qr": qr_libs}
+    for job in sys.argv[1:] or list(jobs):
+        jobs[job]()

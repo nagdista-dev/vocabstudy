@@ -240,3 +240,7 @@
 .sense-opt i { color: var(--ink-2); }
 .sense-type { font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; }
 .sense-type [lang="ar"] { font-family: var(--font-arabic); font-size: calc(var(--text-sm) * var(--arabic-scale)); color: var(--ink-2); }
+.word-row-use { justify-self: start; }
+/* The weekly report on the home screen (Thursday, Friday): a reward, so it wears the highlighter */
+.week-ready { background: var(--mark-soft); border-color: transparent; }
+.week-ready .recall-strip-main > .icon:first-child { color: var(--on-mark); }

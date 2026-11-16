@@ -18,6 +18,7 @@
     quiz: { icon: "quiz", name: "Quiz" },
     spell: { icon: "spell", name: "Spell" },
     match: { icon: "match", name: "Match" },
+    write: { icon: "pen", name: "Use it" },
     speak: { icon: "mic", name: "Speak" },
   };
 
@@ -99,7 +100,7 @@
   /* Shortcuts to the other things that help today's words stick. The
      primary action above already covers the next step, so it is left out. */
   function shortcuts(p) {
-    const keys = ["learn", "quiz", "spell", "match", "speak"];
+    const keys = ["learn", "quiz", "spell", "match", "write", "speak"];
     const items = p.steps.filter((s) => keys.includes(s.key) &&
       (!p.next || s.key !== p.next.key) && (s.open || (s.done && s.key !== "learn")));
     if (!items.length) return "";
@@ -132,6 +133,7 @@
         ${p.next ? html`<a class="btn btn-primary btn-lg btn-block today-cta" href="${p.next.href}">${icon(p.next.icon, "icon-sm")} ${cta}</a>` : ""}
         ${goal(p.t)}
         ${shortcuts(p)}
+        ${p.t.started >= 3 ? html`<a class="today-quick" href="#/quick">${icon("bolt", "icon-sm")}<span>Only five minutes? <b>Quick 5</b> — the 10 words that matter most</span></a>` : ""}
       </section>`;
   }
 

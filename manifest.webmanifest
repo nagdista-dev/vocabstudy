@@ -1,7 +1,7 @@
 {
   "name": "VocabStudy — vocabulary with spaced recall",
   "short_name": "VocabStudy",
-  "description": "Study a word set each day, then recall it on spaced days so it sticks.",
+  "description": "Add the English words you meet, learn them the way a good Arab teacher would, and recall them on spaced days so they stay.",
   "lang": "en",
   "start_url": "./index.html",
   "scope": "./",
@@ -9,16 +9,87 @@
   "orientation": "any",
   "background_color": "#f3f5f9",
   "theme_color": "#f3f5f9",
-  "categories": ["education", "productivity"],
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
-    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ],
   "shortcuts": [
-    { "name": "Recall due words", "short_name": "Recall", "url": "./index.html#/recall", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Library", "url": "./index.html#/words", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Progress", "url": "./index.html#/stats", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
-  ]
+    {
+      "name": "Quick 5 — the 10 most important words",
+      "short_name": "Quick 5",
+      "url": "./index.html#/quick",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Recall due words",
+      "short_name": "Recall",
+      "url": "./index.html#/recall",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Add words from text",
+      "short_name": "Add",
+      "url": "./index.html#/add?tab=text",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Progress",
+      "url": "./index.html#/stats",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "share-title",
+      "text": "share-text",
+      "url": "share-url"
+    }
+  }
 }

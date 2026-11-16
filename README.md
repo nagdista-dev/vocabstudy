@@ -18,18 +18,37 @@ words and progress stay on your device, and it works offline.
    and the type. Met the word in another meaning? **Not the meaning you met?**
    lists every sense, and one tap switches. (The CEFR level is yours to set:
    no free source knows it reliably.)
-   Or paste a list from Excel / Google Sheets / Notion, or upload `.csv` / `.tsv`
-   files. Each word lives in your library once: duplicates are caught.
+   Met it in an article, a series or an email? **Share it to VocabStudy**
+   (phone), click the **bookmarks-bar button** (computer), or paste the
+   paragraph into **From text** and tap the words you don't know — each keeps
+   the sentence it came from. Or paste a list from Excel / Google Sheets /
+   Notion, or upload `.csv` / `.tsv` files. Each word lives in your library
+   once: duplicates are caught.
 2. **Follow today's plan**, right above your words:
    **Recall** what's due → **Learn new words** (10 a day by default) →
-   practise today's words with **Quiz, Spell and Match** — and **Speak**
-   when you turn it on in Settings.
+   practise today's words with **Quiz, Spell and Match** → **Use it**: write
+   a sentence of your own — and **Speak** when you turn it on in Settings.
+   Only five minutes? **Quick 5** brings the 10 words that matter most.
 3. **Your library is the brain.** Search, filter and sort every word, tag them
    your way (IELTS, Work, Travel…), then practise, print or export exactly the
    list you're looking at.
 
 ## Made for Arabic speakers
 
+- **The teacher's margin: 108 usage traps.** The mistakes Arab learners make
+  with a word, and the fix: *depend ~~of~~ on*, *~~borrow~~ lend me*,
+  *~~before~~ three years ago*, *I ~~did~~ made a mistake*, *an ~~advice~~*,
+  *actually ≠ حالياً*. Written by hand, shipped with the app, no internet.
+- **Use it**: write a sentence about your own life with the word. The app
+  marks it like a teacher — on your device: the word is there (any form),
+  it's a full sentence, it isn't copied, and none of the 108 traps is hiding
+  in it ("depends of — you wrote"). Your sentences come back in Recall.
+- **Where you met it**: the sentence you found the word in, and the source.
+  Recall asks with your own sentences first — the strongest cue there is.
+- **Stress you can see**: ○●○○ for pro·CRAS·ti·nate, read from the IPA —
+  the dots a teacher draws on the board.
+- **Real recordings**: a person saying the word (American or British) from
+  the dictionary when you're online; your browser's voice when you're not.
 - **Sound traps** on every word that has one: P (not B), V (not F), silent
   letters (know, listen, island), -ed endings, TH, the extra vowel before
   "st" — and the classics (comfortable, Wednesday, vegetable).
@@ -50,6 +69,10 @@ words and progress stay on your device, and it works offline.
   a card you've never seen is not counted as a mistake.
 - **Tricky words**: the ones you keep missing get their own practice.
 - Recall **forecast** for the next 7 days.
+- **Your week**, Saturday to Friday, ready every **Thursday**: words that
+  stuck, days studied, new words, answers and time next to last week's,
+  and one note on what to do next. **Milestones** at 100, 500 and 1,000
+  words mastered.
 
 **Learn**
 - Study cards (English-first or Arabic-first), swipe on phones, with similar words.
@@ -89,11 +112,14 @@ Two things can use the internet, and both can be switched off in Settings:
 | Feature | What is sent | Where |
 | --- | --- | --- |
 | Auto-fill (when you add a word) | only the English word | Google Translate (free web endpoint), dictionaryapi.dev, mymemory.translated.net (fallback) |
+| Recorded voice (Settings → Sound) | nothing — the recording is downloaded | dictionaryapi.dev |
 | Speak (Chrome / Edge) | your voice, by the browser itself | the browser's speech service |
 
-**Backup & export** saves everything to one file — choose the folder and name
-in the save dialog. Restore it on another device, or merge phone and laptop.
-Browsers without a save dialog download the file instead.
+**Move to another device** by QR code: one device shows a moving code, the
+other reads it with its camera and merges — no internet, no account, nothing
+on a server. **Backup & export** saves everything to one file — choose the
+folder and name in the save dialog. Restore it on another device, or merge
+phone and laptop. Browsers without a save dialog download the file instead.
 
 ## Run it yourself
 
@@ -102,14 +128,15 @@ code, rebuild after editing:
 
 ```bash
 python3 tools/build.py    # writes index.html and sw.js, then checks everything
-python3 tools/check.py    # data, missing files, unstyled classes, duplicated helpers
+python3 tools/check.py    # missing files, unstyled classes, duplicated helpers, usage traps (with Node)
+node tools/test_traps.js  # every usage trap catches its own mistake and leaves good English alone
 ```
 
 ```text
 index.html, sw.js         generated — don't edit (tools/build.py)
 assets/css/               tokens → base → components → screens → motion
 assets/js/core/           library, progress (spaced repetition), filters, auto-fill, speech, importer
-assets/fonts, assets/vendor  self-hosted fonts and PDF maker (tools/vendor.py)
+assets/fonts, assets/vendor  self-hosted fonts, PDF maker and QR libraries (tools/vendor.py)
 assets/js/views/          one file per screen
 assets/js/app.js          routing, navigation, settings, keyboard
 tools/                    build · check · build_icons · screenshots · templates

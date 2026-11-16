@@ -83,6 +83,32 @@
     (w, ipa) => /^s(p|t|k|c[^eiy]|m|n|l|w|qu)/.test(w) && { title: "No vowel before S", text: "Start straight on the s: “street”, not “istreet”." },
   ];
 
+  /**
+   * Word stress, read from the IPA: how many syllables, and which one is
+   * stressed (ˈ marks the start of the stressed syllable).
+   *   "/pɹoʊˈkɹæstəneɪt/" → { count: 4, stressed: 1 }   pro-CRAS-ti-nate
+   * Arabic words keep their stress steady; English moves it, and a word with
+   * the right sounds on the wrong syllable is often not understood. Teachers
+   * draw it as circles: o O o o. Returns null for one syllable, phrases, or
+   * an IPA without a stress mark.
+   */
+  const VOWELS = "iɪeɛæaɑɒɔoʊuʌəɜɐɚɝyɨʉøœɵɤ";
+  VS.stress = function (ipa) {
+    const s = String(ipa || "").replace(/[\/\[\]()]/g, "").trim().normalize("NFD");
+    if (!s || /\s/.test(s)) return null;
+    let count = 0, stressed = -1, inVowel = false;
+    for (const ch of s) {
+      if (ch === "ˈ") { stressed = count; inVowel = false; continue; }
+      if (ch === "ˌ" || ch === ".") { inVowel = false; continue; }
+      if (ch === "̩") { count++; inVowel = false; continue; }      // syllabic consonant: the "l" in bottle /ˈbɒtl̩/
+      if (VOWELS.includes(ch)) { if (!inVowel) { count++; inVowel = true; } continue; }   // a diphthong is one syllable
+      if (ch === "ː" || /[̀-ͯ]/.test(ch)) continue;            // length and diacritics keep the vowel going
+      inVowel = false;
+    }
+    if (count < 2 || stressed < 0) return null;
+    return { count, stressed: Math.min(stressed, count - 1) };
+  };
+
   VS.soundTraps = function (word) {
     if (!word || !word.word) return [];
     const w = String(word.word).toLowerCase().trim();

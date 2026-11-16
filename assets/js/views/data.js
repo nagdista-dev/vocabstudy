@@ -13,7 +13,7 @@
   const { html, icon } = VS;
 
   // The columns read back by Add words (word … tags), then your progress.
-  const COLUMNS = ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "tags", "synonyms",
+  const COLUMNS = ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "tags", "synonyms", "context", "source",
                    "added", "status", "box", "next_recall", "right", "wrong", "note"];
   const exportOpts = { which: "all" };
 
@@ -23,7 +23,7 @@
     return words.map((w) => {
       const e = VS.store.word(w.id);
       return [w.word, w.sense, w.type, w.level, w.ipa, w.definition, w.example, w.arabic, w.tags.join(", "),
-              w.synonyms.join(", "), w.added, VS.store.status(w.id), e.box, e.due, e.right, e.wrong, VS.store.note(w.id)];
+              w.synonyms.join(", "), w.context, w.source, w.added, VS.store.status(w.id), e.box, e.due, e.right, e.wrong, VS.store.note(w.id)];
     });
   }
 
@@ -127,6 +127,18 @@
             </div>
             <div class="row">
               <button class="btn btn-primary" type="button" data-action="data-backup">Export backup</button>
+            </div>
+          </section>
+
+          <section class="card data-card">
+            <div class="data-ico">${icon("qr")}</div>
+            <div>
+              <h2>Move to another device</h2>
+              <p class="muted">Phone and laptop each keep their own copy. Bring them together through the camera:
+                one shows a moving QR code, the other reads it. No internet, no account.</p>
+            </div>
+            <div class="row">
+              <a class="btn btn-primary" href="#/transfer">${icon("qr", "icon-sm")} Move with a QR code</a>
             </div>
           </section>
 

@@ -22,10 +22,11 @@
       <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
         <p class="flash-word"><span class="mark">${w.word}</span></p>
         ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
-        <div class="row flash-sound">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
+        <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
         ${VS.ui.soundTraps(w, "flash-traps")}
         ${VS.ui.similar(w, "flash-similar")}
-        ${w.example ? html`<div class="flash-example"><p>${VS.ui.quote(w)}</p>${VS.ui.speakButton(w.example, "Hear the example")}</div>` : ""}
+        ${VS.ui.context(w, "flash-met")}
+        ${w.example && !w.context ? html`<div class="flash-example"><p>${VS.ui.quote(w)}</p>${VS.ui.speakButton(w.example, "Hear the example")}</div>` : ""}
       </div>`;
   }
 
@@ -41,18 +42,20 @@
           <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span></div>
           <p class="flash-word"><span class="mark">${w.word}</span></p>
           ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
-          <div class="row flash-sound">${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
+          <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
           ${VS.ui.soundTraps(w, "flash-traps")}
           <p class="flash-tip">${icon("flip", "icon-sm")} Tap to see the meaning · swipe to answer</p>
         </div>
         <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
           <p class="flash-ar" lang="ar">${w.arabic}</p>
           <p class="flash-def">${w.definition}</p>
-          ${w.example ? html`<div class="flash-example">
+          ${VS.ui.context(w, "flash-met")}
+          ${w.example && !w.context ? html`<div class="flash-example">
             <p>${VS.ui.quote(w)}</p>
             ${VS.ui.speakButton(w.example, "Hear the example")}
           </div>` : ""}
           ${VS.ui.similar(w, "flash-similar")}
+          ${VS.ui.usage(w, 1, "flash-usage")}
           <p class="flash-word-small">${VS.ui.headword(w)} <span class="ipa">${w.ipa}</span></p>
         </div>
       </div>`;

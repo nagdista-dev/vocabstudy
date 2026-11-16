@@ -448,3 +448,46 @@ kbd {
 .link-btn { justify-self: start; padding: var(--s-2) 0; min-height: var(--tap); border: 0; background: none; font: inherit;
   font-size: var(--text-sm); font-weight: 600; color: var(--brand); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link-btn:hover { color: var(--brand-hover); }
+
+/* ── The teacher's margin: what Arab learners get wrong (core/usage-traps.js) ──
+   A correction, not an alarm: the mistake in muted red and struck through,
+   the fix in ink with a green tick, one quiet line on why. */
+.usage { display: grid; gap: var(--s-2); width: 100%; max-width: 56ch; text-align: start; }
+.usage-trap { display: grid; gap: 2px; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--surface-2); }
+.usage-kind { font-size: var(--text-xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.usage-wrong, .usage-right { display: flex; gap: var(--s-2); align-items: baseline; font-size: var(--text-sm); line-height: 1.45; }
+.usage-wrong .icon, .usage-right .icon { flex: none; transform: translateY(2px); }
+.usage-wrong { color: var(--ink-2); }
+.usage-wrong span { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 70%, transparent); text-decoration-thickness: 1.5px; }
+.usage-wrong .icon { color: var(--bad); }
+.usage-right { color: var(--ink); font-weight: 600; }
+.usage-right .icon { color: var(--good); }
+.usage-why { font-size: var(--text-sm); color: var(--ink-2); margin-top: 2px; }
+/* Arabic quoted inside an English line: isolated, in the Arabic face, on a soft chip instead of «» */
+.ar-chip { font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); padding: 0 .3em; border-radius: 4px; background: color-mix(in srgb, var(--mark-soft) 70%, transparent); color: var(--ink); }
+
+/* ── Where you met it: personal memory, so it wears the highlighter's soft yellow ── */
+.met { display: grid; gap: var(--s-1); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--mark-soft); text-align: start; width: 100%; max-width: 56ch; }
+.met figcaption { display: flex; align-items: center; gap: var(--s-1); font-size: var(--text-xs); font-weight: 700; letter-spacing: .04em; color: var(--on-mark); }
+.met-source { font-weight: 500; letter-spacing: 0; }
+.met blockquote { margin: 0; font-size: var(--text-md); line-height: 1.5; color: var(--ink); }
+.met .mark { background-color: transparent; }
+
+/* ── Your sentences (Use it) ── */
+.mine { display: grid; gap: var(--s-1); }
+.mine-head { display: flex; align-items: center; gap: var(--s-1); font-size: var(--text-xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.mine ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-1); }
+.mine li { display: flex; align-items: center; gap: var(--s-2); justify-content: space-between; line-height: 1.5; }
+.mine-del { flex: none; color: var(--ink-3); }
+
+/* ── Word stress drawn the way teachers do: o O o o ── */
+.stress { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: var(--s-2); vertical-align: middle; }
+.stress i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--ink-3); }
+.stress i.is-on { width: 12px; height: 12px; border: 0; background: var(--brand); }
+
+/* A milestone reached (100, 500, 1000… mastered): shown once, on the results screen */
+.milestone-hit { display: flex; gap: var(--s-3); align-items: center; padding: var(--s-4); margin-bottom: var(--s-4);
+  border-radius: var(--r-lg); background: var(--mark); color: var(--on-mark); text-align: start; }
+.milestone-hit .icon { flex: none; }
+.milestone-hit p { display: grid; gap: 2px; }
+.milestone-hit b { font-family: var(--font-display); font-size: var(--text-xl); }

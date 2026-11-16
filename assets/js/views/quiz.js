@@ -73,11 +73,12 @@
     return html`
       <div class="feedback ${ok ? "is-right" : "is-wrong"}" role="status">
         <p class="feedback-title">${ok ? "Correct" : "Not quite"}</p>
-        <div class="row"><b class="feedback-word">${VS.ui.headword(w)}</b>${VS.ui.speakButton(w.word)}<span class="ipa">${w.ipa}</span></div>
+        <div class="row"><b class="feedback-word">${VS.ui.headword(w)}</b>${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
         <p lang="ar" class="feedback-ar">${w.arabic}</p>
         <p class="hint">${w.definition}</p>
         ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
         ${ok ? "" : picked(VS.byId[s.picked])}
+        ${VS.ui.usage(w, 1, "feedback-usage")}
       </div>`;
   }
 

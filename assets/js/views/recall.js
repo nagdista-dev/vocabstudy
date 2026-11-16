@@ -24,13 +24,24 @@
   const RECALL_BATCH = 50;
   const MAX_HINTS = 2;
 
-  let s = null;   // { scope, queue, style, index, revealed, typed, verdict, hints, results: Map(id → grade), undo }
+  let s = null;   // { scope, queue, cues, index, revealed, typed, verdict, hints, results: Map(id → grade), undo }
 
-  /* Two ways to ask, mixed at random: from the meaning, or from the word's
-     own sentence with a gap. Retrieving a word through different cues
-     builds more paths back to it — that is what makes it last. */
+  /* Two ways to ask, mixed at random: from the meaning, or from a sentence
+     with a gap. Retrieving a word through different cues builds more paths
+     back to it — that is what makes it last. The learner's own sentences
+     come first: where they met the word, or one they wrote (Use it). */
+  function pickCue(w) {
+    const own = (w.mine || []).concat(w.context ? [w.context] : []).filter((t) => VS.findIn(w, t));
+    if (own.length && Math.random() < 0.7) {
+      const text = own[Math.floor(Math.random() * own.length)];
+      return { style: "gap", text, own: w.mine.includes(text) ? "Your sentence" : "Where you met it" };
+    }
+    if (VS.findInExample(w) && Math.random() < 0.5) return { style: "gap", text: w.example, own: "" };
+    return { style: "meaning", text: "", own: "" };
+  }
+
   function gapText(w) {
-    const hit = VS.findInExample(w);
+    const hit = VS.findIn(w, s.cues[s.index].text);
     return s.revealed ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}`
                       : html`${hit.before}<span class="gap"><span class="sr-only">blank</span></span>${hit.after}`;
   }
@@ -65,13 +76,14 @@
   }
 
   function prompt(w) {
-    const gap = s.style[s.index] === "gap";
+    const cue = s.cues[s.index];
+    const gap = cue.style === "gap";
     return html`
       <article class="recall card">
         <div class="row recall-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>
           ${w.tags.length ? html`<span class="hint recall-from">#${w.tags.join(" #")}</span>` : ""}</div>
         ${gap
-          ? html`<p class="q-label">Which word fits the sentence?</p>
+          ? html`<p class="q-label">${cue.own ? html`${icon(cue.own === "Your sentence" ? "pen" : "bulb", "icon-sm")} ${cue.own} — which word fits?` : "Which word fits the sentence?"}</p>
                  <p class="recall-gap">${gapText(w)}</p>
                  <p class="recall-ar recall-ar-sm" lang="ar">${w.arabic}</p>`
           : html`<p class="recall-ar" lang="ar">${w.arabic}</p>
@@ -87,9 +99,10 @@
                 <p class="recall-word"><span class="mark">${w.word}</span></p>
                 ${VS.ui.speakButton(w.word)}
               </div>
-              <span class="ipa">${w.ipa}</span>
+              ${VS.ui.ipa(w)}
               ${!gap && w.example ? html`<p class="recall-example">${VS.ui.quote(w)}</p>` : ""}
               ${VS.ui.similar(w)}
+              ${VS.ui.usage(w, 1)}
             </div>`
           : html`
             <form class="recall-form" data-form="reveal" autocomplete="off">
@@ -122,6 +135,19 @@
     const forgot = [...s.results].filter(([, g]) => g === "again").map(([id]) => VS.byId[id]).filter(Boolean);
     if (!counts.again && s.results.size >= 5) setTimeout(VS.ui.celebrate, 150);
     const next = VS.store.nextReview();
+    const due = VS.store.totals().due;
+    if (s.scope.kind === "quick") return VS.ui.summary({
+      title: "Five minutes, well spent",
+      message: due ? html`${VS.plural(due, "word")} still due today — finish them when you have more time.` : "Nothing else is due today.",
+      stats: [
+        { value: s.results.size, label: "words" },
+        { value: counts.good + counts.easy, label: "remembered", tone: "good" },
+        { value: counts.again, label: "forgot", tone: "bad" },
+      ],
+      words: forgot,
+      actions: [due ? { href: "#/recall", label: "Recall the rest", primary: true } : { href: s.scope.back, label: "Done", primary: true },
+                due ? { href: s.scope.back, label: "Stop for now" } : null],
+    });
     return VS.ui.summary({
       title: "Recall done",
       message: next
@@ -149,15 +175,26 @@
 
     start(p) {
       const scope = VS.scope(p);
-      const words = scope ? VS.store.dueWords(scope.words) : [];
-      const queue = VS.shuffle(words).slice(0, RECALL_BATCH);
-      s = { scope, queue, style: queue.map((w) => (VS.findInExample(w) && Math.random() < 0.5 ? "gap" : "meaning")),
-            more: Math.max(0, words.length - RECALL_BATCH),
+      // Quick 5 keeps its order (most important first) and includes weak words not yet due.
+      const quick = scope && scope.kind === "quick";
+      const words = !scope ? [] : quick ? scope.words : VS.store.dueWords(scope.words);
+      const queue = quick ? words.slice() : VS.shuffle(words).slice(0, RECALL_BATCH);
+      s = { scope, queue, cues: queue.map(pickCue),
+            more: quick ? 0 : Math.max(0, words.length - RECALL_BATCH),
             index: 0, revealed: false, typed: "", draft: "", verdict: "", hints: 0, results: new Map(), combo: 0, undo: null };
     },
 
     render() {
       if (!s.scope) return VS.ui.emptyActivity("#/", "This list was not found.");
+      if (!s.queue.length && s.scope.kind === "quick") {
+        return html`<div class="activity"><div class="empty">
+          <h2>Nothing for Quick 5 yet</h2>
+          <p>Quick 5 brings back words you've started learning. Meet a few new words first — it takes about five minutes too.</p>
+          <div class="row empty-actions">
+            <a class="btn btn-primary" href="#/new/cards">${icon("cards", "icon-sm")} Learn new words</a>
+            <a class="btn btn-quiet" href="#/">Go back</a>
+          </div></div></div>`;
+      }
       if (!s.queue.length) {
         const next = VS.store.nextReview();
         // Nothing studied yet: the useful next step is learning, not practising.
@@ -186,7 +223,7 @@
       const w = s.queue[s.index];
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: "Recall", index: s.index, total: s.queue.length, combo: s.combo, undo: !!s.undo })}
+          ${VS.ui.activityHead({ back: s.scope.back, title: s.scope.kind === "quick" ? "Quick 5" : "Recall", index: s.index, total: s.queue.length, combo: s.combo, undo: !!s.undo })}
           ${prompt(w)}
           <div class="action-bar">
             ${s.revealed
@@ -241,14 +278,14 @@
         const w = s.queue[s.index];
         const grade = el.dataset.grade;
         // Remember the session as it was, so Undo can bring this word back.
-        s.undo = { index: s.index, queue: s.queue.slice(), style: s.style.slice(), results: new Map(s.results), combo: s.combo,
+        s.undo = { index: s.index, queue: s.queue.slice(), cues: s.cues.slice(), results: new Map(s.results), combo: s.combo,
                    typed: s.typed, verdict: s.verdict, hints: s.hints, token: null };
         if (!s.results.has(w.id)) s.undo.token = VS.store.grade(w.id, grade);
         s.results.set(w.id, s.results.get(w.id) === "again" ? "again" : grade);
         s.combo = grade === "again" ? 0 : s.combo + 1;
         VS.sfx.play(grade === "again" ? "wrong" : "right");
         // A forgotten word comes back once at the end, so the session ends on success.
-        if (grade === "again" && s.queue.indexOf(w, s.index + 1) === -1) { s.queue.push(w); s.style.push("meaning"); }
+        if (grade === "again" && s.queue.indexOf(w, s.index + 1) === -1) { s.queue.push(w); s.cues.push({ style: "meaning", text: "", own: "" }); }
         nextCard();
         VS.app.render();
       },
@@ -256,7 +293,7 @@
         const u = s.undo;
         if (!u) return;
         if (u.token) VS.store.undo(u.token);
-        Object.assign(s, { index: u.index, queue: u.queue, style: u.style, results: u.results, combo: u.combo,
+        Object.assign(s, { index: u.index, queue: u.queue, cues: u.cues, results: u.results, combo: u.combo,
                            typed: u.typed, verdict: u.verdict, hints: u.hints, revealed: true, undo: null });
         VS.toast("Answer taken back.");
         VS.app.render();

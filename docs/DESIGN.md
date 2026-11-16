@@ -43,6 +43,23 @@ Settings → Text size multiplies everything (`--text-scale`).
 Advice, not errors: `.traps` is quiet ink on a soft fill (never red/green);
 `.kb-warn` ("Your keyboard is in Arabic") uses the highlighter's soft yellow.
 
+## The teacher's marks
+
+The app speaks like a teacher who has marked thousands of Arab learners'
+notebooks — never like a machine. Its marks are always the same, so a
+learner learns to read them:
+
+| Mark | Means | Where |
+| --- | --- | --- |
+| Struck-through line, red ✗, then ink line, green ✓ | "Arab learners say this → say this" (a usage trap) | word details, card back, recall, quiz, Use it |
+| Soft yellow block with a bulb | *your* memory: where you met the word, a note from the teacher | word details, card back, your week |
+| ○●○○ | word stress — the big dot is the stressed syllable | next to every IPA with two or more syllables |
+| Highlighter on a word in a paragraph | "I'm keeping this one" | From text |
+| Arabic on a small soft chip inside English | a quoted Arabic word, isolated so it reads right in both directions | trap explanations |
+
+Red and green still mean only wrong and right: a trap's mistake is wrong,
+its fix is right.
+
 ## The signature
 
 The home screen opens on one box: "A word you want to remember". As you
