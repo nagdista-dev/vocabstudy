@@ -130,9 +130,11 @@
 .btn-bad  { background: var(--bad-soft);  border-color: transparent; color: var(--bad); }
 .btn-lg { min-height: 52px; padding: 0 var(--s-5); font-size: var(--text-md); border-radius: var(--r-md); }
 .btn-block { width: 100%; }
+/* Key hints take the button's own colour, so they read on every fill. */
 .btn kbd {
-  font: 600 .7rem/1 var(--font-body); padding: 3px 6px; border-radius: 5px;
-  background: color-mix(in srgb, currentColor 12%, transparent); opacity: .8;
+  font: 600 .7rem/1 var(--font-body); padding: 3px 6px; border-radius: 5px; min-width: 0;
+  color: inherit; border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: color-mix(in srgb, currentColor 12%, transparent);
 }
 .icon-btn {
   display: inline-grid; place-items: center; position: relative;

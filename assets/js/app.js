@@ -70,8 +70,29 @@
     render();                                    // …unless the view focuses something itself in mount()
   }
 
+  /* ── Keep keyboard focus across re-renders ─────────────────────
+     Re-rendering replaces the markup, so the focused button vanishes and
+     focus would fall back to <body>: a keyboard user loses their place
+     after every answer. Remember what was focused, then focus its twin. */
+  const FOCUS_KEYS = ["action", "id", "grade", "side", "name", "value", "mode", "filter"];
+  function focusKey(root) {
+    const el = document.activeElement;
+    if (!el || el === root || !root.contains(el)) return null;
+    if (el.id) return "#" + CSS.escape(el.id);
+    const parts = FOCUS_KEYS.filter((k) => el.dataset[k] !== undefined)
+      .map((k) => `[data-${k}="${CSS.escape(el.dataset[k])}"]`);
+    return parts.length ? el.tagName.toLowerCase() + parts.join("") : null;
+  }
+  function restoreFocus(key, root) {
+    const now = document.activeElement;
+    if (!key || (now && now !== document.body && now !== root && root.contains(now))) return;  // mount() chose focus itself
+    const el = root.querySelector(key);
+    if (el && !el.disabled) el.focus({ preventScroll: true });
+  }
+
   function render() {
     const { view, params } = current;
+    const focused = focusKey(viewRoot);
     viewRoot.innerHTML = String(view.render(params));
     renderBar();
     const title = view.title ? view.title(params) : "";
@@ -80,6 +101,20 @@
     document.title = (due ? "(" + due + ") " : "") +
       (title && title !== "VocabStudy" ? title + " · VocabStudy" : "VocabStudy — vocabulary with spaced recall");
     if (view.mount) view.mount(viewRoot, params);
+    restoreFocus(focused, viewRoot);
+  }
+
+  /* Redraw the settings sheet in place: same scroll position, same focus. */
+  function redrawSettings() {
+    const dlg = VS.$("#settings");
+    const body = VS.$(".sheet-body", dlg);
+    const top = body ? body.scrollTop : 0, dlgTop = dlg.scrollTop;
+    const focused = focusKey(dlg);
+    dlg.innerHTML = String(settingsMarkup());
+    const nextBody = VS.$(".sheet-body", dlg);
+    if (nextBody) nextBody.scrollTop = top;
+    dlg.scrollTop = dlgTop;
+    restoreFocus(focused, dlg);
   }
 
   VS.app = {
@@ -242,14 +277,14 @@
       const value = raw === "true" ? true : raw === "false" ? false : isNaN(raw) ? raw : Number(raw);
       VS.store.setSetting(el.dataset.name, value);
       applySettings();
-      VS.$("#settings").innerHTML = String(settingsMarkup());
+      redrawSettings();
       if (el.dataset.name === "rate") VS.speech.say("This is how words will sound.");
       if (el.dataset.name === "showSample") setTimeout(() => location.reload(), 300);
     },
     install() {
       if (!installPrompt) return;
       installPrompt.prompt();
-      installPrompt.userChoice.finally(() => { installPrompt = null; VS.$("#settings").innerHTML = String(settingsMarkup()); });
+      installPrompt.userChoice.finally(() => { installPrompt = null; redrawSettings(); });
     },
     "reset-progress"() {
       if (!confirm("Reset all progress? Your recall schedule, streak and scores will be deleted. This cannot be undone.")) return;

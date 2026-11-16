@@ -58,8 +58,8 @@
       return html`
         <div class="page data-page view-enter">
           <header class="day-head"><div>
-            <p class="hint">Everything is saved in this browser only</p>
             <h1>Backup &amp; export</h1>
+            <p class="hint">Everything is saved in this browser only.</p>
           </div></header>
 
           <section class="card data-card">

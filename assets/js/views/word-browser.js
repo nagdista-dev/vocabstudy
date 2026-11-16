@@ -83,7 +83,7 @@
           <label class="field">
             ${icon("search", "icon-sm")}
             <span class="sr-only">Search words</span>
-            <input type="search" data-wb-search placeholder="Search English, Arabic or your notes" value="${this.f.q}" autocomplete="off"/>
+            <input type="search" data-wb-search placeholder="Search words, Arabic, notes" aria-label="Search English words, Arabic meanings or your notes" value="${this.f.q}" autocomplete="off"/>
           </label>
           ${this.seg("level", [["all", "All levels"]].concat(levels.map((l) => [l, l + "1–" + l + "2"])))}
           ${this.seg("status", [["all", "All"], ["new", "New"], ["learning", "Learning"], ["mastered", "Mastered"], ["due", "Due"]])}

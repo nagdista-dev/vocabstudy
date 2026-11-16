@@ -226,8 +226,8 @@
       return html`
         <div class="page import-page view-enter">
           <header class="day-head"><div>
-            <p class="hint">Your words stay on this device</p>
             <h1>Add words</h1>
+            <p class="hint">Your words stay on this device.</p>
           </div></header>
 
           <section class="card import-step">

@@ -18,8 +18,8 @@
         <div class="page view-enter">
           <header class="day-head">
             <div>
-              <p class="hint">${VS.plural(VS.days.length, "set")}</p>
               <h1>Library</h1>
+              <p class="hint">${VS.plural(VS.days.length, "set")}</p>
             </div>
             <dl class="day-stats">
               <div><dt>Words</dt><dd>${t.words}</dd></div>

@@ -35,7 +35,9 @@
   const dayLabel = (iso, i, n) => {
     const d = new Date(iso + "T12:00:00");
     if (i === n - 1) return "Today";
-    return n > 14 ? (d.getDate() % 5 === 0 ? String(d.getDate()) : "") : d.toLocaleDateString("en-GB", { weekday: "narrow" });
+    // Long charts label every 5th date, but never right next to "Today" (they'd overlap).
+    if (n > 14) return d.getDate() % 5 === 0 && i < n - 3 ? String(d.getDate()) : "";
+    return d.toLocaleDateString("en-GB", { weekday: "narrow" });
   };
   const longDate = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 
@@ -90,7 +92,7 @@
 
       return html`
         <div class="page view-enter">
-          <header class="day-head"><div><p class="hint">Since ${longDate(history[0].date)}</p><h1>Your progress</h1></div></header>
+          <header class="day-head"><div><h1>Your progress</h1><p class="hint">Since ${longDate(history[0].date)}</p></div></header>
 
           <dl class="stat-tiles">
             <div class="card"><dt>${icon("clock", "icon-sm")} Total study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>

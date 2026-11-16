@@ -18,7 +18,6 @@
 .today-main h1 { font-size: var(--text-3xl); max-width: 18ch; }
 .today-main p.muted { max-width: 52ch; }
 .today-main .btn { margin-top: var(--s-2); }
-.eyebrow { color: var(--ink-3); font-weight: 500; }
 .welcome-steps { display: grid; gap: var(--s-2); padding-inline-start: 1.3em; color: var(--ink-2); max-width: 52ch; }
 .welcome-steps b { color: var(--ink); }
 .welcome-steps li::marker { color: var(--brand); font-weight: 700; }

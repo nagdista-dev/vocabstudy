@@ -53,8 +53,8 @@
             <div class="row day-title">
               ${VS.ui.ring(s.percent, null, 64)}
               <div>
-                <p class="hint">${day.weekday}</p>
                 <h1>${day.label}</h1>
+                <p class="hint">${day.weekday}</p>
               </div>
             </div>
             <dl class="day-stats">

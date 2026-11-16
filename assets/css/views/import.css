@@ -2,6 +2,11 @@
 
 .import-page { display: grid; gap: var(--s-5); }
 .import-tabs { width: fit-content; max-width: 100%; }
+/* Phones: all three ways stay visible — equal columns, labels may wrap. */
+@media (max-width: 480px) {
+  .import-tabs { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .import-tabs button { white-space: normal; line-height: 1.2; padding: 4px 6px; text-align: center; }
+}
 
 /* Type a word */
 .word-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-4); }

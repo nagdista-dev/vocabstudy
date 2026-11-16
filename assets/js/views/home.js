@@ -13,11 +13,6 @@
     { mode: "match", icon: "match", name: "Match", text: "Beat the clock" },
   ];
 
-  function greeting() {
-    const h = new Date().getHours();
-    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  }
-
   /* A first visit: no words of their own and nothing studied yet. */
   const isNewLearner = (t) => !t.started && !VS.allWords().some((w) => w.custom);
 
@@ -45,7 +40,6 @@
       const newest = VS.days[0];
       return html`
         <div class="today-main">
-          <p class="eyebrow">${greeting()}</p>
           <h1>Start with your newest word set.</h1>
           <p class="muted">Study the cards once. From tomorrow, the words you studied come back here for recall, spaced out so they stick.</p>
           ${newest ? html`<a class="btn btn-primary btn-lg" href="${VS.dayHref(newest.iso)}">${icon("cards")} Study ${newest.label}</a>` : ""}
@@ -54,7 +48,6 @@
     if (t.due) {
       return html`
         <div class="today-main">
-          <p class="eyebrow">${greeting()}</p>
           <h1><span class="today-count">${t.due}</span> ${t.due === 1 ? "word is" : "words are"} ready for recall.</h1>
           <p class="muted">See the meaning, bring the English word back from memory, then check yourself. A few minutes now saves relearning later.</p>
           <div class="row">
@@ -66,7 +59,6 @@
     const next = VS.store.nextReview();
     return html`
       <div class="today-main">
-        <p class="eyebrow">${greeting()}</p>
         <h1>You're all caught up.</h1>
         <p class="muted">${next
           ? html`Next recall: ${VS.plural(next.count, "word")} ${VS.ui.whenText(next.date)}. Meanwhile, study a new set or practise one you know.`
