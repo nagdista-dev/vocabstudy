@@ -506,3 +506,12 @@ kbd {
 .freq-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
 .freq-row .hint { font-size: var(--text-sm); }
 .flash-badges { align-items: center; }
+
+/* More examples (Tatoeba), on request */
+.more-ex { display: grid; gap: var(--s-1); }
+.more-ex-list:empty { display: none; }
+.more-ex-items { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-2); }
+.more-ex-items li { display: flex; align-items: center; gap: var(--s-2); justify-content: space-between; font-style: italic; color: var(--ink-2); line-height: 1.5; }
+.more-ex-items .speak-btn { flex: none; }
+.more-ex-credit { font-size: var(--text-xs); }
+.goes > span { color: var(--ink-3); }

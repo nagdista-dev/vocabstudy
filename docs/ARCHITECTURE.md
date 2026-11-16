@@ -17,8 +17,10 @@ is identified by the word itself (`borrow`, `axe (tool)`). Words are typed,
 pasted or uploaded in the app and saved on the device — never in the build.
 
 **Local first.** The app has no server, no account and no CDN: fonts and the
-PDF maker ship with it. The only network calls are optional: auto-fill sends
-a new English word to free dictionaries — Google Translate's free endpoint for
+PDF maker ship with it. Every network call is optional and goes to a free
+service with no account: Use it sends the learner's sentence to LanguageTool
+(Settings → Grammar check), "More examples" sends the word to Tatoeba, and
+auto-fill sends a new English word to free dictionaries — Google Translate's free endpoint for
 meanings, examples, Arabic and similar words, dictionaryapi.dev for the IPA,
 MyMemory as a fallback (Settings → Auto-fill) — and in
 Chrome/Edge the browser's own speech recognition powers Speak.
@@ -54,7 +56,8 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/week.js` | `VS.week` — the Saturday–Friday week, its numbers and when the report is due; `VS.milestones` |
 | `core/study-time.js` | active study time + break reminder |
 | `core/importer.js` | `VS.importer` — parse pasted tables and word files |
-| `core/autofill.js` | `VS.autofill` — fills a new word's details in the background; `senses(word)` for Other meanings |
+| `core/autofill.js` | `VS.autofill` — fills a new word's details in the background (incl. `goes`: collocations from Datamuse); `senses(word)` for Other meanings |
+| `core/grammar.js` | `VS.grammar.check(text)` — LanguageTool for Use it: grammar and spelling, online and optional; skipped quietly when offline |
 | `views/shared.js` | `VS.ui.*` — word row, tags, note box, activity header, results, keyboard guard |
 | `views/home.js` | `VS.today` — today's plan, shown at the top of the library |
 | `views/*.js` | one screen each: library (home), cards, recall, quiz, spell, match, speak, write (Use it), stats, week, print, import, data, transfer |

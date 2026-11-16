@@ -248,7 +248,9 @@
         <div class="setting"><b>Quiz questions</b>
           <div class="checks">${QUIZ_TYPES.map(([v, l]) => html`<label class="check"><input type="checkbox" data-quiz-type value="${v}" ${(st.quizTypes || []).includes(v) ? VS.raw("checked") : ""}><span>${l}</span></label>`)}</div></div>
         <div class="setting"><b>Auto-fill new words</b><div class="seg">${choice("autofill", true, "On")}${choice("autofill", false, "Off")}</div>
-          <span class="hint">Fills in the Arabic, definition, example and pronunciation from free online dictionaries. Only the English word is sent. Off: nothing ever leaves this device.</span></div>
+          <span class="hint">Fills in the Arabic, definition, example, pronunciation and the words it goes with, from free online dictionaries. Only the English word is sent. Off: no word leaves this device.</span></div>
+        <div class="setting"><b>Grammar check</b><div class="seg">${choice("grammar", true, "On")}${choice("grammar", false, "Off")}</div>
+          <span class="hint">In Use it, LanguageTool reads your sentence for grammar and spelling (“She don't”, “I didn't went”). Only that sentence is sent, when you press Check.</span></div>
         <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
           <span class="hint">How many new words “Learn” brings each day. The rest wait for tomorrow.</span></div>
         ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>

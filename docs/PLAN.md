@@ -497,3 +497,23 @@
 - [x] T36.1 `about.html` + `assets/css/about.css`، واتنشرت مع الموقع
 - [x] T36.2 لينك من أول شاشة ومن Settings
 - [x] T37.1 `navigator.storage.persist()`
+
+---
+
+# v8 — APIs مجانية (قرار المستخدم: أي API مجاني مسموح)
+
+**التاريخ:** 16 نوفمبر 2026. الشرط العملي: من غير مفتاح ولا حساب (التطبيق مالوش سيرفر
+يخبّي فيه مفتاح)، بيبعت أقل حاجة ممكنة، واختياري، والتطبيق يكمّل لو مفيش نت.
+جرّبت كل خدمة من المتصفح قبل ما أقرر:
+
+| الخدمة | القرار | ليه |
+| --- | --- | --- |
+| **LanguageTool** | ✅ تصحيح جرامر في Use it | مسك "She don't"، "He have"، "I didn't went"، "more taller". بيكمّل الـ 108 فخ. وزرار "Keep it" لأن أي مصحح ممكن يغلط |
+| **Datamuse** | ✅ "Goes with" في الـ auto-fill | heavy rain، final decision، subtle differences — بالظبط مكان غلط العربي (strong rain) |
+| **Tatoeba** | ✅ More examples (لما تدوس بس) — إنجليزي بس | الترجمات العربي متطوعين ومستواها متفاوت ("You borrow books" ← «أنت تعير الكتب» غلط)، فمش بنعرضها |
+| **Openverse (صور)** | ❌ | الصور كتير مالهاش علاقة بالمعنى، وصورة غلط بتعلّم معنى غلط |
+
+- [x] T38.1 `core/grammar.js` + Use it: فحص محلي الأول، وبعدين LanguageTool؛ "Keep it"؛ إعداد Grammar check
+- [x] T38.2 Datamuse في الـ auto-fill → `goes` في الكلمة؛ بتظهر في التفاصيل والكارت و Use it
+- [x] T38.3 Tatoeba: More examples عند الطلب، مهلة 12 ثانية، وذكر المصدر (CC BY 2.0 FR)
+- [x] T38.4 الخصوصية: README و ARCHITECTURE وصفحة about بتقول كل اللي بيروح للنت بالظبط

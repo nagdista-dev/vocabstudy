@@ -60,6 +60,48 @@
     location.reload();                 // rebuild every list with the new version
   };
   VS.actions["word-cancel"] = () => VS.app.render();
+  /* More examples: one word in several real sentences builds more ways back to it.
+     Tatoeba (tatoeba.org, free, no account) is a collection of sentences written
+     by people; only the word is sent, and only when the learner taps. Its Arabic
+     translations are left out: they're volunteer work and too uneven to teach from. */
+  const exampleCache = {};
+  VS.actions["word-examples"] = async (el) => {
+    const w = VS.byId[el.dataset.id];
+    const box = el.parentElement.querySelector(".more-ex-list");
+    if (!w || !box) return;
+    if (!navigator.onLine) { box.innerHTML = String(html`<p class="hint">More examples need the internet.</p>`); return; }
+    let c = exampleCache[w.id];
+    if (!c) {
+      el.disabled = true;
+      box.innerHTML = String(html`<p class="hint">Finding sentences with “${w.word}”…</p>`);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 12000);      // Tatoeba can be slow; never hang
+      try {
+        const res = await fetch("https://api.tatoeba.org/unstable/sentences?lang=eng&sort=relevance&limit=40&q=" + encodeURIComponent(w.word), { signal: ctrl.signal });
+        const data = res.ok ? await res.json() : {};
+        const known = new Set([w.example, w.context].concat(w.mine).filter(Boolean).map(VS.normalise));
+        const list = (data.data || []).map((x) => String(x.text || "").trim())
+          .filter((t) => { const n = t.split(/\s+/).length; return n >= 4 && n <= 18 && VS.findIn(w, t) && !known.has(VS.normalise(t)); });
+        c = exampleCache[w.id] = { list: [...new Set(list)], at: 0 };
+      } catch (e) {
+        c = null;
+      }
+      clearTimeout(timer);
+      el.disabled = false;
+      if (!c) { box.innerHTML = String(html`<p class="hint">The sentence library didn't answer. Try again in a moment.</p>`); return; }
+    }
+    if (!c.list.length) { box.innerHTML = String(html`<p class="hint">No more sentences found for “${w.word}”.</p>`); return; }
+    const shown = c.list.slice(c.at, c.at + 3);
+    c.at = c.at + 3 >= c.list.length ? 0 : c.at + 3;
+    el.textContent = c.list.length > 3 ? "Other examples" : "More examples";
+    box.innerHTML = String(html`
+      <ul class="more-ex-items">${shown.map((t) => {
+        const hit = VS.findIn(w, t, true);
+        return html`<li>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : t}${VS.ui.speakButton(t, "Hear this sentence")}</li>`;
+      })}</ul>
+      <p class="hint more-ex-credit">Sentences from <a href="https://tatoeba.org" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR).</p>`);
+  };
+
   VS.actions["sentence-remove"] = (el) => {
     VS.store.removeSentence(el.dataset.id, Number(el.dataset.index));
     const row = el.closest(".word-row");
@@ -295,6 +337,17 @@
         </div>`;
     },
 
+    /** "More examples": real sentences from Tatoeba, fetched only when the learner asks. */
+    moreExamples: (w) => html`
+      <div class="more-ex">
+        <button class="link-btn" type="button" data-action="word-examples" data-id="${w.id}">More examples</button>
+        <div class="more-ex-list" aria-live="polite"></div>
+      </div>`,
+
+    /** The words it goes with ("heavy rain", "subtle difference"): English puts words together its own way. */
+    goes: (w, cls) => (w.goes && w.goes.length
+      ? html`<p class="similar goes ${cls || ""}"><span>Goes with</span> ${w.goes.join(" · ")}</p>` : ""),
+
     /** Similar words: another way in to the same meaning. */
     similar: (w, cls) => (w.synonyms && w.synonyms.length
       ? html`<p class="similar ${cls || ""}"><span>Similar</span> ${w.synonyms.join(" · ")}</p>` : ""),
@@ -361,7 +414,9 @@
             ${w.example ? html`<p class="word-row-example">${VS.ui.quote(w)}</p>` : ""}
             ${VS.ui.mine(w, true)}
             ${VS.ui.usage(w)}
+            ${VS.ui.goes(w)}
             ${VS.ui.similar(w)}
+            ${VS.ui.moreExamples(w)}
             <a class="btn btn-tonal word-row-use" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}
               ${w.mine.length ? "Write another sentence" : "Use it in a sentence"}</a>
             ${w.tags.length ? html`<p class="row word-row-tags">${VS.ui.tags(w)}</p>` : ""}

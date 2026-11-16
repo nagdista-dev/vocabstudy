@@ -26,6 +26,7 @@
                   arabic, synonyms: [], tags: [], added: "YYYY-MM-DD",
                   context, source,   where the learner met it (the sentence, and where)
                   mine: [],          sentences the learner wrote with it ("Use it")
+                  goes: [],          the words it goes with ("heavy rain"), from auto-fill
                   audio: { us, uk }  recordings from the dictionary (auto-fill) }
      Every word is the learner's own: the app ships with none. They are
      saved by core/store.js and join VS.words at start-up. */
@@ -62,6 +63,7 @@
       w.context = String(w.context || "").trim();
       w.source = String(w.source || "").trim();
       w.mine = Array.isArray(w.mine) ? w.mine : [];
+      w.goes = Array.isArray(w.goes) ? w.goes : [];          // collocations: "heavy rain"
       w.added = w.added || VS.todayKey();
       if (VS.byId[w.id]) { out.skipped.push(w); return; }
       VS.words.push(w);

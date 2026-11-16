@@ -14,6 +14,9 @@
          definition when Google has none
      mymemory.translated.net
          the Arabic meaning when Google can't be reached
+     api.datamuse.com
+         the words it goes with: heavy rain, a subtle difference
+         (Arab learners say "strong rain": collocations are where they slip)
 
    THE MOST COMMON MEANING FIRST. Dictionaries list a word's senses from
    the most common down. The app takes the first sense of the main part
@@ -191,6 +194,30 @@
     return hasArabic(text) ? arabicList([text]) : "";
   }
 
+  /* ── Datamuse: the words it goes with (collocations) ─────────── */
+
+  // Words that go with almost anything teach nothing: "much rain", "such advice".
+  const FILLER = new Set(("little much more most such whole entire many few several various certain other own same " +
+    "next last first second main real great big small good new").split(" "));
+
+  /** Nouns → the adjectives used with them ("heavy rain"); adjectives → their nouns ("subtle difference"). */
+  async function collocations(word, type) {
+    if (/\s/.test(word) || (type !== "Noun" && type !== "Adjective")) return [];
+    const rel = type === "Noun" ? "rel_jjb" : "rel_jja";
+    const data = await getJSON("https://api.datamuse.com/words?max=25&" + rel + "=" + encodeURIComponent(word.toLowerCase()));
+    if (!Array.isArray(data)) return [];
+    const seen = new Set();
+    const out = [];
+    data.forEach((d) => {
+      const x = String(d.word || "").toLowerCase();
+      const key = x.replace(/(s|x|z|ch|sh)es$/, "$1").replace(/s$/, "");   // "change"/"changes", "box"/"boxes" are one
+      if (!/^[a-z-]+$/.test(x) || FILLER.has(x) || seen.has(key) || out.length >= 4) return;
+      seen.add(key);
+      out.push(type === "Noun" ? x + " " + word.toLowerCase() : word.toLowerCase() + " " + x);
+    });
+    return out;
+  }
+
   /** "wednesday" → "Wednesday" when the example writes it with a capital mid-sentence. */
   function caseFrom(word, example) {
     const cap = word.charAt(0).toUpperCase() + word.slice(1);
@@ -219,6 +246,7 @@
     fields.ipa = dv.ipa || "";
     fields.audio = dv.audio || "";
     if (!fields.arabic) { try { fields.arabic = await myMemory(word); } catch (e) { /* offline */ } }
+    try { fields.goes = await collocations(word, fields.type); } catch (e) { /* offline: no collocations, that's all */ }
     const word2 = caseFrom(word, fields.example);
     if (word2) fields.word = word2;
     // Drop empty values: "found nothing" must not overwrite anything.

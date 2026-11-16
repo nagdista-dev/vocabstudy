@@ -40,7 +40,7 @@
     milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
-                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, speak: false,
+                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, grammar: true, speak: false,
                 quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 
@@ -457,6 +457,7 @@
         if (fields[k] && !raw[k]) { raw[k] = fields[k]; w[k] = fields[k]; }
       });
       if (fields.audio && !raw.audio) { raw.audio = fields.audio; w.audio = fields.audio; }
+      if (fields.goes && fields.goes.length && !(raw.goes && raw.goes.length)) { raw.goes = fields.goes.slice(); w.goes = fields.goes.slice(); }
       if (fields.synonyms && fields.synonyms.length && !(raw.synonyms && raw.synonyms.length)) {
         raw.synonyms = fields.synonyms.slice(); w.synonyms = fields.synonyms.slice();
       }
@@ -519,7 +520,7 @@
   function plain(w) {
     const out = {};
     ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "context", "source",
-     "mine", "audio", "tags", "added", "auto"].forEach((k) => {
+     "mine", "audio", "goes", "tags", "added", "auto"].forEach((k) => {
       if (w.given && (k === "type" || k === "level") && !w.given[k]) return;     // a display default, not your choice
       if (w[k] !== undefined && w[k] !== "" && !(Array.isArray(w[k]) && !w[k].length)) out[k] = w[k];
     });

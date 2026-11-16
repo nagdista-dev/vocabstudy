@@ -54,6 +54,7 @@
             <p>${VS.ui.quote(w)}</p>
             ${VS.ui.speakButton(w.example, "Hear the example")}
           </div>` : ""}
+          ${VS.ui.goes(w, "flash-similar")}
           ${VS.ui.similar(w, "flash-similar")}
           ${VS.ui.usage(w, 1, "flash-usage")}
           <p class="flash-word-small">${VS.ui.headword(w)} <span class="ipa">${w.ipa}</span></p>

@@ -253,3 +253,4 @@
 .write-saved { font-size: var(--text-lg); line-height: 1.5; }
 .write-ok .feedback-title { display: flex; align-items: center; gap: var(--s-1); }
 .write-check .usage-wrong small { margin-inline-start: auto; font-size: var(--text-xs); color: var(--ink-3); text-decoration: none; }
+.write-privacy { font-size: var(--text-xs); margin-top: calc(var(--s-2) * -1); }

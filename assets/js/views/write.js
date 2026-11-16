@@ -10,7 +10,10 @@
         with it (core/usage-traps.js).
      2. Write one sentence about your own life with it.
      3. Check: the word is there (any form), it's a full sentence, it's
-        not the example copied, and no usage trap is hiding in it.
+        not the example copied, and no usage trap is hiding in it. Then,
+        online, LanguageTool reads its grammar (core/grammar.js): "She
+        don't", "I didn't went". The learner can keep a sentence anyway —
+        no checker is always right.
    A sentence that passes is kept with the word ("Your sentences") and
    comes back in Recall as a gap — the strongest cue there is: your life.
    ------------------------------------------------------------------ */
@@ -35,6 +38,7 @@
           <p class="write-saved">${VS.ui.mixed(r.clean)}</p>
           ${r.tips.length ? html`<p class="hint">${r.tips.join(" ")} (Fixed in the saved copy.)</p>` : ""}
           <p class="hint">It comes back in Recall as a gap — your own life is the strongest reminder.</p>
+          ${r.grammarSkipped && VS.grammar.enabled() ? html`<p class="hint">Grammar wasn't checked this time (offline).</p>` : ""}
         </div>`;
     }
     return html`
@@ -47,9 +51,25 @@
                      ${p.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.found}</span><small>you wrote</small></span>` : ""}
                      <span class="usage-right">${icon("check", "icon-sm")}<span>${p.trap.right}</span></span>
                      <span class="usage-why">${VS.ui.mixed(p.text)}</span>`
+              : p.grammar
+              ? html`<span class="usage-kind">${p.grammar.label}</span>
+                     ${p.grammar.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.grammar.found}</span><small>you wrote</small></span>` : ""}
+                     ${p.grammar.fixes.length ? html`<span class="usage-right">${icon("check", "icon-sm")}<span>${p.grammar.fixes.join(" / ")}</span></span>` : ""}
+                     <span class="usage-why">${p.text}</span>`
               : html`<span>${VS.ui.mixed(p.text)}</span>`}</li>`)}
         </ul>
+        ${r.canKeep ? html`<p class="hint">Sure it's right? A grammar checker can be wrong too — you can keep it.</p>` : ""}
       </div>`;
+  }
+
+  /* A sentence that passed (or that the learner chose to keep): saved with the word. */
+  function keep(w, result) {
+    s.result = Object.assign(result, { ok: true });
+    VS.store.addSentence(w.id, result.clean);
+    VS.store.grade(w.id, "good");      // using a word is a real right answer
+    s.written.push(w.id);
+    VS.sfx.play("right");
+    VS.app.render();
   }
 
   function finish() {
@@ -106,12 +126,14 @@
                 ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
               </details>` : ""}
             <form class="write-form" data-form="write" autocomplete="off">
+              ${VS.ui.goes(w)}
               <label class="form-field">
                 <span>Write a sentence about <b>your own life</b> with “${w.word}”</span>
                 <textarea id="writeInput" rows="3" maxlength="300" spellcheck="true" lang="en" enterkeyhint="done"
                   placeholder="${IDEAS[(s.idea + s.index) % IDEAS.length]}" ${done ? VS.raw("readonly") : ""}>${s.draft}</textarea>
               </label>
             </form>
+            ${VS.grammar.enabled() && !done ? html`<p class="hint write-privacy">Grammar is checked online by LanguageTool — only this sentence is sent. (Settings → Grammar check)</p>` : ""}
             ${feedback()}
           </section>
           <div class="action-bar">
@@ -119,8 +141,8 @@
               ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="writeNext">
                   ${s.index + 1 < s.words.length ? "Next word" : "See results"} <kbd>Enter</kbd></button>`
               : html`
-                <button class="btn btn-lg btn-quiet" type="button" data-action="skip">Skip</button>
-                <button class="btn btn-lg btn-primary" type="button" data-action="check">Check <kbd>Enter</kbd></button>`}
+                <button class="btn btn-lg btn-quiet" type="button" data-action="${s.result && s.result.canKeep ? "keep" : "skip"}">${s.result && s.result.canKeep ? "Keep it" : "Skip"}</button>
+                <button class="btn btn-lg btn-primary" type="button" data-action="check" ${s.checking ? VS.raw("disabled") : ""}>${s.checking ? "Checking…" : "Check"} <kbd>Enter</kbd></button>`}
           </div>
         </div>`;
     },
@@ -150,21 +172,31 @@
     },
 
     actions: {
-      check() {
+      async check() {
+        if (s.checking) return;
         const w = s.words[s.index];
         const input = VS.$("#writeInput");
         s.draft = input ? input.value : s.draft;
         if (!s.draft.trim()) { VS.toast("Write a sentence first — or Skip."); return; }
-        s.result = VS.checkSentence(w, s.draft);
-        if (s.result.ok) {
-          VS.store.addSentence(w.id, s.result.clean);
-          VS.store.grade(w.id, "good");      // using a word is a real right answer
-          s.written.push(w.id);
-          VS.sfx.play("right");
-        } else {
-          VS.sfx.play("wrong");
-        }
+        const local = VS.checkSentence(w, s.draft);
+        if (!local.ok) { s.result = local; VS.sfx.play("wrong"); VS.app.render(); return; }
+        // The word is used well: now the general grammar, online (core/grammar.js).
+        s.checking = true;
         VS.app.render();
+        const g = await VS.grammar.check(local.clean);
+        s.checking = false;
+        if (g.issues.length) {
+          s.result = Object.assign({}, local, { ok: false, canKeep: true,
+            problems: g.issues.map((i) => ({ text: i.message, grammar: i })) });
+          VS.sfx.play("wrong");
+          VS.app.render();
+          return;
+        }
+        keep(w, Object.assign(local, { grammarSkipped: g.skipped }));
+      },
+      keep() {
+        const w = s.words[s.index];
+        keep(w, Object.assign(VS.checkSentence(w, s.draft), { ok: true }));
       },
       skip() { s.skipped++; this.next(); },
       next() { s.index++; s.draft = ""; s.result = null; VS.app.render(); window.scrollTo({ top: 0 }); },

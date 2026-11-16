@@ -42,7 +42,11 @@ words and progress stay on your device, and it works offline.
 - **Use it**: write a sentence about your own life with the word. The app
   marks it like a teacher — on your device: the word is there (any form),
   it's a full sentence, it isn't copied, and none of the 108 traps is hiding
-  in it ("depends of — you wrote"). Your sentences come back in Recall.
+  in it ("depends of — you wrote"). Online, LanguageTool also reads its
+  grammar ("She don't", "I didn't went"). Your sentences come back in Recall.
+- **Goes with**: the words English puts with yours — *heavy* rain, *final*
+  decision, *subtle* differences — because "strong rain" is exactly where
+  Arab learners slip. **More examples** brings real sentences from Tatoeba.
 - **Where you met it**: the sentence you found the word in, and the source.
   Recall asks with your own sentences first — the strongest cue there is.
 - **Stress you can see**: ○●○○ for pro·CRAS·ti·nate, read from the IPA —
@@ -111,12 +115,15 @@ Keyboard: `n` new word · `/` search · `Space` flip / reveal / speak · `1`–`
 ## Your data stays yours
 
 Everything lives in your browser (localStorage). The app has no server and
-loads nothing from anyone else — fonts and the PDF maker ship with it.
-Two things can use the internet, and both can be switched off in Settings:
+loads nothing from anyone else — fonts, the PDF maker, the QR libraries and the
+word-frequency list ship with it. These use free online services (no account,
+no key), and each one is optional:
 
 | Feature | What is sent | Where |
 | --- | --- | --- |
-| Auto-fill (when you add a word) | only the English word | Google Translate (free web endpoint), dictionaryapi.dev, mymemory.translated.net (fallback) |
+| Auto-fill (when you add a word) | only the English word | Google Translate (free web endpoint), dictionaryapi.dev, api.datamuse.com (the words it goes with), mymemory.translated.net (fallback) |
+| Grammar check (Use it, when you press Check) | only that sentence | api.languagetool.org |
+| More examples (when you tap it) | only the English word | api.tatoeba.org |
 | Recorded voice (Settings → Sound) | nothing — the recording is downloaded | dictionaryapi.dev |
 | Speak (Chrome / Edge) | your voice, by the browser itself | the browser's speech service |
 
