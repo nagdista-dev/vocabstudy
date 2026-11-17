@@ -238,38 +238,67 @@
       </aside>`;
   }
 
-  /* One line to add a word. With an empty library the form gets a label
-     and a sentence about auto-fill; once there are words it is a quiet
-     utility above the library, not the whole first screen. */
+  /* One line to add a word. On the first run it is the page's one action:
+     a numbered label, the field, and the quiet other ways in (Enter, paste,
+     upload). Once there are words it becomes a compact utility. */
   function addBox(compact) {
     return html`
-      <form class="quick-add ${compact ? "is-compact" : ""}" data-form="quick-add" autocomplete="off">
-        ${compact ? "" : html`<label class="quick-label" for="quickWord">A word you want to remember</label>`}
+      <form class="quick-add ${compact ? "is-compact" : "first-add"}" data-form="quick-add" autocomplete="off">
+        ${compact ? "" : html`
+          <label class="quick-label first-label" for="quickWord"><span class="act-n" aria-hidden="true">1</span> A word you met today</label>
+          <p class="first-form-where" id="firstWhere">In a book, a series, at work — anywhere.</p>`}
         <div class="add-line">
           <span class="field field-xl">
-            <input id="quickWord" placeholder="${compact ? "Add a word or phrase" : "Type a word or phrase"}"
-              aria-label="An English word or phrase you want to remember"
+            <input id="quickWord" placeholder="${compact ? "Add a word or phrase" : "Type a word"}"
+              ${compact
+                ? VS.raw('aria-label="An English word or phrase you want to remember"')
+                : VS.raw('aria-describedby="firstWhere firstHow"')}
               spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
           </span>
           <button class="btn ${compact ? "btn-tonal" : "btn-primary"} btn-lg" type="submit" aria-label="Add this word">${icon("plus", "icon-sm")}<span class="add-label">Add</span></button>
         </div>
-        ${compact ? "" : html`<p class="hint">${VS.autofill.enabled()
-          ? "Press Enter — the app adds the meaning, Arabic, example and sound."
-          : "Auto-fill is off: add the details in Add words."}
-          <a href="#/add">Paste a list or upload a file</a></p>`}
+        ${compact ? "" : html`<p class="first-form-how" id="firstHow">${VS.autofill.enabled()
+          ? html`<span class="first-how-key">Press Enter — or </span><span class="first-how-touch">Or </span><a href="#/add">paste a list or upload a file</a>.`
+          : html`Auto-fill is off — <a href="#/add">add the details in Add words</a>.`}</p>`}
       </form>`;
   }
 
-  /* An empty library: a first-run page, not an empty list. */
-  function firstSteps() {
+  /* The example card: what one typed word becomes. The promise is shown,
+     not described — meaning, Arabic, example and sound, in the same shape
+     as a real word page. */
+  function firstCard() {
     return html`
-      <ol class="first-steps">
-        <li><span class="step-n">1</span><span><b>Add a word you met today</b><span class="hint">In a book, a series, at work — anywhere.</span></span></li>
-        <li><span class="step-n">2</span><span><b>Learn it once</b><span class="hint">The meaning, the Arabic, an example and the sound.</span></span></li>
-        <li><span class="step-n">3</span><span><b>Recall it on spaced days</b><span class="hint">1, 3, 7, 14, 30, 60 — until it stays.</span></span></li>
-      </ol>
-      <p class="hint first-note">Free and open source. No account, no server: your words stay on this device.
-        <a href="about.html" lang="en">About VocabStudy, in Arabic</a></p>`;
+      <div class="first-card" role="group" aria-label="Example card for the word resilient">
+        <div class="first-card-head">
+          <div class="first-card-word">
+            <h3 class="first-card-hw"><mark class="mark">resilient</mark></h3>
+            <p class="first-card-meta"><span class="ipa">/rɪˈzɪliənt/</span><span class="first-card-dot" aria-hidden="true">·</span>Adjective</p>
+          </div>
+          <div class="first-card-side">
+            <p class="first-card-ar" lang="ar" dir="rtl">صامد، مرن</p>
+            ${VS.speech.supported ? VS.ui.speakButton("resilient", "Hear resilient") : ""}
+          </div>
+        </div>
+        <p class="first-card-def">Able to recover quickly from difficulties.</p>
+        <p class="first-card-ex">“Children are often more <mark class="mark">resilient</mark> than we expect.”</p>
+      </div>`;
+  }
+
+  /* Step three: the six days, drawn as a ruler rather than described. */
+  function firstRecall() {
+    return html`
+      <section class="first-recall" aria-labelledby="first-recall-title">
+        <div class="first-recall-copy">
+          <h2 class="first-h2" id="first-recall-title"><span class="act-n" aria-hidden="true">3</span> Recall it on spaced days</h2>
+          <p class="first-recall-until">Until it stays.</p>
+        </div>
+        <div class="first-recall-days">
+          <p class="first-recall-label">Days after you learn it</p>
+          <ol class="recall-days" aria-label="Recall days after learning">
+            ${[1, 3, 7, 14, 30, 60].map((day) => html`<li><span class="sr-only">Day </span><b>${day}</b></li>`)}
+          </ol>
+        </div>
+      </section>`;
   }
 
   function updateFilterButton() {
@@ -294,7 +323,7 @@
   }
 
   VS.views.library = {
-    title: () => "Your words",
+    title: () => (VS.allWords().length ? "Your words" : "Start with one word"),
     crumbs: () => [],
 
     start(p) { f = F.parse(p.query); limit = PAGE; panelOpen = false; },
@@ -304,13 +333,24 @@
       const on = advanced();
       if (!s.total) {
         return html`
-          <div class="page home-page view-enter">
-            <section class="home-empty">
-              <h1>Start with <mark class="mark">one word</mark>.</h1>
-              <p class="home-empty-copy">Type a word you met today. VocabStudy adds the meaning, Arabic, example and sound — then brings it back on the days you're about to forget it.</p>
-            </section>
-            ${addBox(false)}
-            ${firstSteps()}
+          <div class="page home-page first-run view-enter">
+            <div class="first-hero">
+              <div class="first-copy">
+                <h1 class="first-title">Start with <mark class="mark">one word</mark>.</h1>
+                <p class="first-lede">Type a word you met today. VocabStudy adds the meaning, Arabic, example and sound — then brings it back on the days you're about to forget it.</p>
+                ${addBox(false)}
+              </div>
+              <section class="first-learn" aria-labelledby="first-learn-title">
+                <h2 class="first-h2" id="first-learn-title"><span class="act-n" aria-hidden="true">2</span> Learn it once</h2>
+                <p class="hint first-learn-hint">This is the card you'll get — the meaning, the Arabic, an example and the sound.</p>
+                ${firstCard()}
+              </section>
+            </div>
+            ${firstRecall()}
+            <footer class="first-foot">
+              <p>Free and open source. No account, no server: <b>your words stay on this device</b>.</p>
+              <a href="about.html" hreflang="ar">About VocabStudy, in Arabic</a>
+            </footer>
           </div>`;
       }
       return html`
@@ -379,7 +419,6 @@
           add.style.backgroundPosition = (parseFloat(cs.paddingLeft) - 4) + "px 0";
         };
         add.addEventListener("input", mark);
-        if (!VS.allWords().length && matchMedia("(hover: hover)").matches) add.focus({ preventScroll: true });
       }
       const addForm = VS.$("[data-form='quick-add']", root);
       if (addForm) addForm.addEventListener("submit", (e) => {
@@ -396,8 +435,11 @@
         VS.toast(`“${w.word}” is in your library.`);
         VS.app.render();
         // On the first word, let the screen settle on today's plan instead
-        // of reopening the keyboard over it.
-        if (!wasEmpty) {
+        // of reopening the keyboard over it: the app restores focus to the
+        // field, so move it to the new screen.
+        if (wasEmpty) {
+          root.focus({ preventScroll: true });
+        } else {
           const again = VS.$("#quickWord");
           if (again) again.focus();
         }

@@ -48,6 +48,25 @@
 .view-enter .today-steps li:nth-child(4) { animation-delay: 170ms; }
 .view-enter .today-steps li:nth-child(5) { animation-delay: 200ms; }
 
+/* The first run: the highlighter draws under the promise, the example card
+   answers it, and the six recall days arrive in order. The page itself
+   already lifts in; nothing here moves layout or loops. */
+.view-enter .first-title .mark {
+  animation: mark-draw 560ms var(--ease) 120ms both;
+  background-repeat: no-repeat; background-size: 100% 100%;
+}
+.view-enter .first-card-hw .mark {
+  animation: mark-draw 560ms var(--ease) 380ms both;
+  background-repeat: no-repeat; background-size: 100% 100%;
+}
+.view-enter .recall-days li { animation: dot-in 280ms var(--ease) both; }
+.view-enter .recall-days li:nth-child(1) { animation-delay: 120ms; }
+.view-enter .recall-days li:nth-child(2) { animation-delay: 170ms; }
+.view-enter .recall-days li:nth-child(3) { animation-delay: 220ms; }
+.view-enter .recall-days li:nth-child(4) { animation-delay: 270ms; }
+.view-enter .recall-days li:nth-child(5) { animation-delay: 320ms; }
+.view-enter .recall-days li:nth-child(6) { animation-delay: 370ms; }
+
 /* Lists that only exist on arrival: recent words, the week and its dots,
    the progress tiles. */
 .view-enter .recent-list li { animation: rise-in 260ms var(--ease) both; }

@@ -109,6 +109,37 @@ width is measured in `views/library.js`) — you are marking the word to keep.
 `.mark` draws the same highlighter band behind a word. It appears on every new word
 (cards, recall, quiz feedback) and draws itself in (`motion.css → mark-draw`).
 
+## First run (empty library)
+
+The empty library is the first lesson, not an empty state: three acts read
+top to bottom — one action, the artifact it produces, then the schedule that
+keeps it.
+
+- **1 · A word you met today.** The h1 states the promise; the form is the
+  page's only action. A numbered label, one line saying where words come
+  from, the field and Add, then the keyboard / paste / upload hint. At
+  ≤374px the field and Add stack, so both get the full width at 320px and
+  1.25× text.
+- **2 · Learn it once.** A real example card for *resilient* — IPA, type,
+  Arabic, definition, example and a working speaker — in the same reading
+  order as the word page. It sits beside the form from 820px and below it on
+  smaller screens. The heading says "This is the card you'll get", so the
+  card is proof, not decoration.
+- **3 · Recall it on spaced days.** The six returns (1, 3, 7, 14, 30, 60)
+  are a ruler, not a sentence: one tick per day, the first in highlighter
+  yellow. The label "Days after you learn it" makes the scale explicit.
+- **Edges.** One centred 620px column at tablet portrait; two columns from
+  820px (1.08fr invitation / .92fr card), with the ruler and footer running
+  underneath both. The card, ruler and footer share the same right edge.
+  Checked at 320/360/390/520/768/1280 and 1.25×; no horizontal scroll and no
+  clipped placeholder. The compact post-add form keeps its icon-only button
+  at ≤374px.
+- **Handoff.** The page opens at the heading, not the field. After the first
+  word is added, focus moves to the new screen so a phone keyboard closes
+  instead of covering today's plan.
+- **Trust.** The footer keeps the local-first promise and links to the Arabic
+  About page; the example speaker is omitted when speech is unavailable.
+
 ## The About page (`about.html`)
 
 The only Arabic-first surface, and a static one (`assets/css/about.css`, no app
@@ -221,6 +252,7 @@ animates layout: only opacity and transform move (the highlighter's
 | --- | --- |
 | A new screen | one 320ms lift and fade (`.view-enter`). Re-rendering the same screen drops the class first, so typing, filtering and answering never replay it |
 | Home on arrival | streak chip pops, goal track fills, practice chips rise in an 80–200ms cascade |
+| First run | the headline and example word draw their highlighters; the six recall ticks arrive in a 120–370ms cascade |
 | Recent words, week dots, stat tiles | a short rise / dot cascade, only on arrival |
 | A new quiz question | card and options rise in reading order (`q-fresh`) |
 | A new spelling or recall card | card settles in (`spell-fresh`, `recall-fresh`); hints and the reveal animate on their own |

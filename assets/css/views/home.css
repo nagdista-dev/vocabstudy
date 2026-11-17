@@ -1,6 +1,6 @@
-/* views/home.css — the home screen: today's hero, one capture bar,
-   a slim backup reminder, the library header and the desktop rail.
-   The list itself is styled in views/library.css. */
+/* views/home.css — the home screen: the first-run lesson, today's hero,
+   one capture bar, a slim backup reminder, the library header and the
+   desktop rail. The list itself is styled in views/library.css. */
 
 /* ── Today's hero ────────────────────────────────────────────────
    One tinted paper block answers "what now?" in a glance: the count, one
@@ -152,10 +152,14 @@
 .quick-add.is-compact .field { box-shadow: none; }
 .quick-add.is-compact .field-xl input { font-weight: 500; }
 .quick-add.is-compact .btn { min-height: 46px; }
-/* The smallest phones: the plus is enough; it keeps the field wide. */
+/* The smallest phones: the compact utility keeps its plus-only button,
+   while the first-run form stacks so the field and the one action both
+   get the full width instead of a clipped placeholder and a tiny target. */
 @media (max-width: 374px) {
-  .quick-add .add-label { display: none; }
-  .quick-add .add-line .btn { width: 46px; padding: 0; }
+  .quick-add.is-compact .add-label { display: none; }
+  .quick-add.is-compact .add-line .btn { width: 46px; padding: 0; }
+  .first-add .add-line { grid-template-columns: minmax(0, 1fr); }
+  .first-add .add-line .btn { width: 100%; }
 }
 
 /* ── Backup: a weekly one-line utility, never a yellow hero ────── */
@@ -180,20 +184,251 @@
 .backup-arrow { color: var(--ink-3); flex: none; }
 .backup-dismiss { width: 40px; height: 40px; flex: none; color: var(--ink-3); }
 
-/* ── Empty library: a first-run page ──────────────────────────── */
-.home-empty { display: grid; gap: var(--s-3); max-width: 560px; margin-bottom: var(--s-2); }
-.home-empty h1 { font-size: clamp(1.8rem, 1.35rem + 2.2vw, 2.4rem); line-height: 1.12; }
-.home-empty h1 .mark { padding-inline: .1em; }
-.home-empty-copy { color: var(--ink-2); font-size: var(--text-md); line-height: 1.55; max-width: 46ch; }
-.first-steps {
-  display: grid; gap: var(--s-4); list-style: none; padding: 0; margin: var(--s-6) 0 0;
-  max-width: 560px;
+/* ── First run: the first card ──────────────────────────────────
+   The screen a new learner meets is a three-act lesson, not an empty
+   state: 1) add one word, 2) see the card it becomes, 3) see the days
+   it comes back. The form is the only action; the example card and the
+   recall ruler carry the promise with the app's own artifacts.
+
+   The page is deliberately a page, not a modal or a tour: a learner can
+   read it, type one word, and leave the rest for later. */
+.first-run { display: block; }
+.first-hero { display: grid; gap: var(--s-6); min-width: 0; }
+.first-copy { min-width: 0; max-width: 620px; }
+.first-title {
+  max-width: 12ch;
+  font-size: clamp(2.35rem, 1.5rem + 3.4vw, 4.2rem);
+  line-height: 1.03; letter-spacing: -.035em;
+  text-wrap: balance;
 }
-.first-steps li { display: flex; gap: var(--s-3); align-items: flex-start; }
-.first-steps .step-n { width: 30px; height: 30px; font-size: var(--text-xs); background: var(--brand-soft); color: var(--brand); }
-.first-steps b { display: block; font-size: var(--text-sm); line-height: 1.35; }
-.first-steps .hint { display: block; font-size: var(--text-xs); line-height: 1.45; }
-.first-note { margin-top: var(--s-6); max-width: 48ch; }
+.first-title .mark { padding-inline: .06em; }
+.first-lede {
+  margin-top: var(--s-3);
+  max-width: 48ch;
+  color: var(--ink-2);
+  font-size: clamp(1rem, .95rem + .25vw, 1.125rem);
+  line-height: 1.55;
+}
+
+/* Act one: the one action. The label is a numbered step, the field is a
+   wide sheet, and the only alternatives are paste and upload. */
+.first-add { margin-top: var(--s-5); max-width: 560px; gap: 7px; }
+.first-add .first-label {
+  display: flex; align-items: baseline; gap: 10px;
+  font-size: clamp(1.125rem, 1rem + .35vw, 1.25rem);
+  line-height: 1.25;
+}
+.act-n {
+  flex: none;
+  color: var(--brand);
+  font-family: var(--font-display);
+  font-size: .78em; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.first-form-where {
+  margin-top: -1px;
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+.first-add .add-line { margin-top: 6px; }
+.first-add .field { min-height: 56px; }
+.first-add .field-xl input { height: 54px; font-size: 1.0625rem; }
+.first-add .add-line .btn {
+  min-height: 56px;
+  padding-inline: var(--s-5);
+  font-size: var(--text-md);
+}
+.first-form-how {
+  margin-top: 5px;
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.first-form-how a { font-weight: 600; }
+.first-how-touch { display: none; }
+/* Only a finger-only screen drops the keyboard hint. A hybrid laptop with
+   a mouse (hover:hover) or a headless browser with no pointer at all keeps
+   it, because Enter is still the fastest way in there. */
+@media (hover: none) and (pointer: coarse) {
+  .first-how-key { display: none; }
+  .first-how-touch { display: inline; }
+}
+
+/* Act two: the card you get. One white index card, the same reading
+   order as the word page: headword and sound, Arabic, meaning, example. */
+.first-learn { min-width: 0; align-self: start; }
+.first-h2 {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: clamp(1.25rem, 1.1rem + .5vw, 1.45rem);
+  line-height: 1.2; letter-spacing: -.015em;
+}
+.first-learn-hint {
+  margin-top: 6px;
+  max-width: 42ch;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.first-card {
+  margin-top: var(--s-4);
+  padding: 20px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 18px 40px -30px rgb(20 27 45 / .42), var(--shadow-1);
+}
+.first-card-head {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;
+  gap: 10px 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.first-card-word { min-width: 0; }
+.first-card-hw {
+  color: var(--ink);
+  font-family: var(--font-word);
+  font-size: clamp(1.6rem, 1.4rem + .6vw, 1.85rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+}
+.first-card-hw .mark { padding-inline: .04em; }
+.first-card-meta {
+  margin-top: 3px;
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+.first-card-meta .ipa { color: var(--ink-2); font-size: 1.02em; }
+.first-card-dot { margin: 0 6px; color: var(--line-strong); }
+.first-card-side {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: 10px;
+  margin-inline-start: auto;
+}
+.first-card-ar {
+  color: var(--ink);
+  font-family: var(--font-arabic);
+  font-size: calc(1.12rem * var(--arabic-scale));
+  line-height: 1.5;
+  text-align: start;
+}
+.first-card-def {
+  margin-top: 14px;
+  max-width: 46ch;
+  color: var(--ink);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+.first-card-ex {
+  margin-top: 12px;
+  padding-inline-start: 12px;
+  max-width: 46ch;
+  border-inline-start: 2px solid var(--mark);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  font-style: italic;
+  line-height: 1.55;
+}
+
+/* Act three: the six returns, drawn as a ruler instead of described.
+   Equal spacing is deliberate: the labels are the point, not a scale. */
+.first-recall {
+  display: grid; gap: var(--s-5);
+  margin-top: var(--s-6);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--line);
+}
+.first-recall-copy { max-width: 360px; }
+.first-recall-until {
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.first-recall-days { min-width: 0; }
+.first-recall-label { color: var(--ink-3); font-size: var(--text-xs); }
+.recall-days {
+  position: relative;
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 12px 0 0; padding: 0;
+  list-style: none;
+}
+.recall-days::before {
+  content: "";
+  position: absolute; z-index: 0; top: 3.5px; left: 8.333%; right: 8.333%;
+  height: 1px;
+  background: repeating-linear-gradient(to right, var(--line-strong) 0 3px, transparent 3px 7px);
+}
+.recall-days li {
+  position: relative; z-index: 1;
+  display: grid; justify-items: center; gap: 8px;
+  min-width: 0;
+}
+.recall-days li::before {
+  content: "";
+  width: 8px; height: 8px;
+  border: 1.5px solid var(--brand);
+  border-radius: 50%;
+  background: var(--surface);
+}
+.recall-days li:first-child::before { border-color: var(--mark); background: var(--mark); }
+.recall-days b {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1rem, .9rem + .35vw, 1.15rem);
+  font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The colophon: the trust line, then the Arabic About page. */
+.first-foot {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 10px var(--s-6);
+  margin-top: var(--s-7);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.first-foot p { max-width: 60ch; }
+.first-foot b { color: var(--ink-2); font-weight: 600; }
+.first-foot a { flex: none; font-weight: 600; }
+
+/* Tablet portrait: one centred column, wide enough to read, narrow
+   enough that the card and the copy stay a single lesson. */
+@media (min-width: 641px) and (max-width: 819px) {
+  .first-hero, .first-recall, .first-foot {
+    max-width: 620px;
+    margin-inline: auto;
+  }
+}
+
+/* Two columns once there is room: the invitation on the left, the card
+   and its promise on the right. The recall ruler then runs underneath
+   both, like a line printed on the desk. */
+@media (min-width: 820px) {
+  .first-hero {
+    grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
+    gap: var(--s-7);
+    align-items: start;
+  }
+  .first-copy { max-width: none; }
+  .first-add { max-width: 540px; }
+  .first-recall {
+    grid-template-columns: minmax(240px, .9fr) minmax(0, 1.7fr);
+    align-items: center;
+    gap: var(--s-6);
+    margin-top: var(--s-7);
+  }
+  .first-recall-copy { max-width: 320px; }
+}
+@media (min-width: 1024px) {
+  .first-hero { gap: 64px; }
+  .first-learn-hint { max-width: 40ch; }
+}
 
 /* ── Library header ─────────────────────────────────────────────
    On a phone the status chips already carry the counts, so the extra
