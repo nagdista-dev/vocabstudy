@@ -101,6 +101,7 @@
 }
 .lib-more.is-up[open] .lib-more-menu { transform-origin: bottom center; }
 .word-row[open] .word-row-body,
+.word-traps[open] .traps,
 .add-more[open] .word-form { animation: open-in 220ms var(--ease) both; }
 
 /* 4. Study cards leave in the direction of your answer. */

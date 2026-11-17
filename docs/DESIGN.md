@@ -131,10 +131,36 @@ with 22-letter words and long Arabic meanings:
 - Choices never hide off-screen: the status filter scrolls with an edge fade,
   and its sheet drops to one column when a select needs the width.
 - Word rows keep status, type, level and frequency on the collapsed line; tags
-  wait in the expanded row. A long word stacks its Arabic underneath on phones
-  instead of squeezing both.
+  wait in the expanded margin. A long word, or any word at 320px with Larger
+  text, stacks its Arabic and meta under the headword instead of breaking the
+  word mid-way.
 - Week strips shorten "Today" to "Now" at ≤360px so seven labels never collide;
   charts use the same 2xs labels.
+
+## The word page (an open library row)
+
+The summary is the entry's title; opening it turns the row into a page in a
+learner's notebook, not a stack of labelled cards.
+
+- **Summary.** Headword, Arabic beside it on wide screens, status/type/level/
+  frequency on a quiet second line. Badges and the chevron sit at the end.
+- **Reading column.** One sound strip (speaker, IPA, stress, a `Sound tips`
+  disclosure), the meaning as the largest text, a quiet `Other meanings` link,
+  the example as an italic pull quote with a highlighter rule, and one tools
+  row: `Hear the sentence` left, `More examples` right. The primary
+  `Write a sentence` action follows.
+- **Memory.** Personal blocks wear the highlighter tint (where you met the
+  word); the learner's own sentences follow, then teacher corrections when the
+  word has a usage trap, then `Goes with` / `Similar`.
+- **The margin.** On a wide card (container query, 620px) the learner's note,
+  tags, next recall, memory box and three plain text actions sit beside the
+  reading column behind a hairline. On a phone they follow it.
+- **No labels for their own sake.** No all-caps section labels and no nested
+  white cards: type size, spacing and the highlighter carry the order. Actions
+  are underlined text or plain text with hairline separators, not rows of
+  ghost buttons.
+- **Empty states keep the same order.** `No definition yet. Add a definition`,
+  `Find a meaning`, `No example yet. Add an example`, then `More examples`.
 
 ## Motion (`assets/css/motion.css`)
 

@@ -318,7 +318,7 @@
       const hit = VS.findIn(w, w.context, true);
       return html`
         <figure class="met ${cls || ""}">
-          <figcaption>${icon("bulb", "icon-sm")} Where you met it${w.source ? html` · <span class="met-source">${w.source}</span>` : ""}</figcaption>
+          <figcaption>${icon("book", "icon-sm")}<span>Where you met it${w.source ? html`, <span class="met-source">${w.source}</span>` : ""}</span></figcaption>
           <blockquote>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : w.context}</blockquote>
         </figure>`;
     },
@@ -328,7 +328,7 @@
       if (!w.mine || !w.mine.length) return "";
       return html`
         <div class="mine">
-          <p class="mine-head">${icon("pen", "icon-sm")} Your sentences</p>
+          <p class="mine-head">Your sentences</p>
           <ul>${w.mine.map((m, i) => {
             const hit = VS.findIn(w, m, true);
             return html`<li><span>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m}</span>
@@ -346,11 +346,11 @@
 
     /** The words it goes with ("heavy rain", "subtle difference"): English puts words together its own way. */
     goes: (w, cls) => (w.goes && w.goes.length
-      ? html`<p class="similar goes ${cls || ""}"><span>Goes with</span> ${w.goes.join(" · ")}</p>` : ""),
+      ? html`<p class="similar goes ${cls || ""}"><span>Goes with</span> ${w.goes.join("\u00A0· ")}</p>` : ""),
 
     /** Similar words: another way in to the same meaning. */
     similar: (w, cls) => (w.synonyms && w.synonyms.length
-      ? html`<p class="similar ${cls || ""}"><span>Similar</span> ${w.synonyms.join(" · ")}</p>` : ""),
+      ? html`<p class="similar ${cls || ""}"><span>Similar</span> ${w.synonyms.join("\u00A0· ")}</p>` : ""),
 
     /** One expandable row in a word list (day page and review page). */
     /** A small progress ring (SVG). `pct` 0–100; `label` sits in the middle. */
@@ -385,6 +385,7 @@
       const s = VS.store.status(w.id);
       const e = VS.store.word(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
+      const tips = VS.soundTraps(w);
       return html`
         <details class="word-row ${w.word.length > 14 ? "is-long" : ""}" data-status="${s}" data-id="${w.id}">
           <summary>
@@ -398,41 +399,89 @@
               <span class="word-row-state" data-s="${s}">${state}</span><span class="word-row-sep" aria-hidden="true">·</span>
               <span>${w.type}${w.level ? " · " + w.level : ""}</span>
               ${VS.frequency.band(w) ? html`<span class="word-row-freq">${VS.frequency.band(w).label}</span>` : ""}
-              ${w.tags.length ? html`<span class="word-row-tagline">${w.tags.map((t) => "#" + t).join(" ")}</span>` : ""}
               ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
             </span>
             <span class="word-row-badges">${VS.ui.statusBadge(w)}${VS.ui.levelBadge(w)}</span>
             ${icon("chevron-right", "icon-sm word-row-chev")}
           </summary>
           <div class="word-row-body">
-            <div class="row">
-              ${VS.ui.speakButton(w.word)}
-              ${VS.ui.ipa(w)}
-            </div>
-            ${VS.ui.freq(w, true)}
-            ${VS.ui.soundTraps(w)}
-            ${w.definition ? html`<p>${w.definition}</p>` : ""}
-            ${VS.autofill.enabled() ? html`<button class="link-btn" type="button" data-action="word-meanings" data-id="${w.id}">Not the meaning you met?</button>` : ""}
-            ${VS.ui.context(w)}
-            ${w.example ? html`<p class="word-row-example">${VS.ui.quote(w)}</p>` : ""}
-            ${VS.ui.mine(w, true)}
-            ${VS.ui.usage(w)}
-            ${VS.ui.goes(w)}
-            ${VS.ui.similar(w)}
-            ${VS.ui.moreExamples(w)}
-            <a class="btn btn-tonal word-row-use" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}
-              ${w.mine.length ? "Write another sentence" : "Use it in a sentence"}</a>
-            ${w.tags.length ? html`<p class="row word-row-tags">${VS.ui.tags(w)}</p>` : ""}
-            ${VS.ui.noteBox(w)}
-            <div class="row word-row-foot">
-              <span class="hint">${s === "new"
-                ? "Added " + VS.ui.dateText(w.added) + " · not studied yet"
-                : html`Next recall ${whenText(e.due)} · box ${e.box} of 6 · ${e.right} right, ${e.wrong} wrong`}</span>
-              <span class="row">
-                ${s === "new" ? "" : html`<button class="btn btn-quiet" type="button" data-action="forget" data-id="${w.id}">${icon("review", "icon-sm")} Start over</button>`}
-                                  <button class="btn btn-quiet" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>
-                  <button class="btn btn-quiet danger" type="button" data-action="word-delete" data-id="${w.id}">Delete</button>
-              </span>
+            <div class="word-entry">
+              <div class="word-sound">
+                <div class="word-sound-main">
+                  ${VS.ui.speakButton(w.word)}
+                  ${w.ipa ? html`<span class="word-sound-ipa">${VS.ui.ipa(w)}</span>` : ""}
+                </div>
+                ${tips.length ? html`
+                  <details class="word-traps">
+                    <summary>
+                      <span>Sound tips</span>
+                      <span class="word-traps-n">${tips.length}</span>
+                      ${icon("chevron-right", "icon-sm word-traps-chev")}
+                    </summary>
+                    ${VS.ui.soundTraps(w)}
+                  </details>` : ""}
+              </div>
+
+              <div class="word-main">
+                <div class="word-lead">
+                  ${w.definition
+                    ? html`<p class="word-definition">${w.definition}</p>`
+                    : html`<p class="hint">No definition yet.
+                        <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
+                  ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="word-meanings" data-id="${w.id}">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
+                </div>
+
+                <div class="word-example-block">
+                  ${w.example ? html`
+                    <figure class="word-example">
+                      <blockquote>${VS.ui.quote(w)}</blockquote>
+                    </figure>` : html`<p class="hint word-no-ex">No example yet.
+                      <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add an example</button></p>`}
+                  <div class="word-ex-tools">
+                    ${w.example ? html`<button class="word-hear" type="button" data-action="speak" data-say="${w.example}">
+                      ${icon("volume", "icon-sm")}<span>Hear the sentence</span>
+                    </button>` : ""}
+                    ${VS.ui.moreExamples(w)}
+                  </div>
+                </div>
+
+                <div class="word-practice">
+                  <a class="btn btn-primary word-write" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}
+                    ${w.mine.length ? "Another sentence" : "Write a sentence"}</a>
+                </div>
+
+                ${VS.ui.context(w)}
+                ${VS.ui.mine(w, true)}
+                ${VS.usageTraps(w).length ? html`<div class="word-usage">${VS.ui.usage(w)}</div>` : ""}
+                ${(w.goes && w.goes.length) || (w.synonyms && w.synonyms.length) ? html`
+                  <div class="word-related">
+                    ${VS.ui.goes(w)}
+                    ${VS.ui.similar(w)}
+                  </div>` : ""}
+              </div>
+
+              <aside class="word-margin" aria-label="Notes and schedule for this word">
+                ${VS.ui.noteBox(w)}
+                ${w.tags.length ? html`<div class="word-tags">${VS.ui.tags(w)}</div>` : ""}
+                <div class="word-record">
+                  ${s === "new"
+                    ? html`<span>Added ${VS.ui.dateText(w.added)} · not studied yet</span>`
+                    : html`
+                      <span>Next recall <b>${whenText(e.due)}</b></span>
+                      <span class="word-box-line">
+                        <span class="word-boxes" role="img" aria-label="Memory box ${e.box} of 6">
+                          ${[1, 2, 3, 4, 5, 6].map((n) => html`<i class="${n <= e.box ? "is-on" : ""}"></i>`)}
+                        </span>
+                        <span class="word-box-label">Box ${e.box}/6</span>
+                      </span>
+                      <span class="word-score">${e.right} right · ${e.wrong} wrong</span>`}
+                </div>
+                <div class="word-manage">
+                  ${s === "new" ? "" : html`<button class="word-manage-btn" type="button" data-action="forget" data-id="${w.id}">Start over</button>`}
+                  <button class="word-manage-btn" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>
+                  <button class="word-manage-btn danger" type="button" data-action="word-delete" data-id="${w.id}">Delete</button>
+                </div>
+              </aside>
             </div>
           </div>
         </details>`;
