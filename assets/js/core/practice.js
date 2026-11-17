@@ -90,12 +90,20 @@
    * Prefers words of the same type (a verb among verbs is a fair test),
    * never repeats the right answer's text, and falls back to all words.
    */
+  /* Wrong answers that make you think: the same kind of word first — from
+     this round, then from the whole library — and only then anything. A
+     verb among adjectives gives the answer away ("achieve" next to
+     "beautiful", "actually"). Verb and phrasal verb are one family. */
+  const FAMILY = { "Phrasal Verb": "Verb", Idiom: "Phrase" };
+  const family = (t) => FAMILY[t] || t;
   VS.distractors = function (target, field, count, pool) {
     const seen = new Set([String(target[field]).toLowerCase()]);
     const pick = [];
-    const sameType = VS.shuffle((pool || VS.allWords()).filter((w) => w.type === target.type));
+    const kin = (w) => family(w.type) === family(target.type);
+    const sameType = VS.shuffle((pool || VS.allWords()).filter(kin));
+    const sameTypeAll = VS.shuffle(VS.allWords().filter(kin));
     const any = VS.shuffle(VS.allWords());
-    for (const w of sameType.concat(any)) {
+    for (const w of sameType.concat(sameTypeAll, any)) {
       const value = String(w[field] || "").toLowerCase();
       if (w.id === target.id || !value || seen.has(value)) continue;     // never a blank answer
       seen.add(value);

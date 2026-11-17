@@ -338,6 +338,15 @@
   const QUIZ_TYPES = [["meaning", "Definition → word"], ["arabic", "Arabic → English"], ["english", "English → Arabic"],
                       ["gap", "Fill the gap"], ["listen", "Listening"]];
 
+  /* Settings open on the four choices a new learner may want (accent, new
+     words a day, daily goal, text size) and their data. The other twenty
+     wait under "More settings" — open, they stay open while you change
+     things (the sheet redraws in place). */
+  let moreSettingsOpen = false;
+  document.addEventListener("toggle", (e) => {
+    if (e.target.classList && e.target.classList.contains("more-settings")) moreSettingsOpen = e.target.open;
+  }, true);
+
   function settingsMarkup() {
     const st = VS.store.settings();
     const choice = (name, value, label) =>
@@ -346,16 +355,36 @@
       <div class="sheet-head"><h2 id="settingsTitle">Settings</h2>
         <button class="icon-btn" type="button" data-action="close-settings" aria-label="Close">${icon("x")}</button></div>
       <div class="sheet-body">
-        <h3 class="sheet-group">Sound</h3>
-        <div class="setting"><b>Pronunciation</b><div class="seg">${choice("sound", true, "On")}${choice("sound", false, "Off")}</div></div>
+        <h3 class="sheet-group">Basics</h3>
         <div class="setting"><b>Accent</b><div class="seg">${choice("voice", "us", "American")}${choice("voice", "uk", "British")}</div></div>
+        <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
+          <span class="hint">How many new words “Learn” brings each day. The rest wait for tomorrow.</span></div>
+        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day across all activities (each new word you meet counts too). Progress shows on today's plan.</span></div>
+        <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
+
+        <h3 class="sheet-group">App &amp; data</h3>
+        ${VS.speech.supported ? "" : html`<p class="hint">This browser has no built-in voices, so words can't be read aloud.</p>`}
+        <div class="setting"><b>Install as an app</b>${installMarkup()}</div>
+        <div class="setting"><b>Your data</b>
+          <p class="hint">Saved in this browser only. Back it up, restore it on another device, or export your words.</p>
+          <div class="row"><a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
+          <a class="btn" href="#/transfer" data-action="close-settings">${icon("qr", "icon-sm")} Move to another device</a></div>
+        </div>
+        <div class="setting"><b>About VocabStudy</b><p class="hint">What it does and why, in Arabic — a page to share with a friend.</p>
+          <a class="btn" href="about.html">Read it in Arabic</a></div>
+
+        <details class="more-settings" ${moreSettingsOpen ? VS.raw("open") : ""}>
+          <summary>${icon("settings", "icon-sm")} More settings <span class="hint">sound, study, look, reset</span></summary>
+          <div class="more-settings-body">
+          <h3 class="sheet-group">Sound</h3>
+        <div class="setting"><b>Pronunciation</b><div class="seg">${choice("sound", true, "On")}${choice("sound", false, "Off")}</div></div>
         <div class="setting"><b>Recorded voice</b><div class="seg">${choice("recorded", true, "On")}${choice("recorded", false, "Off")}</div>
           <span class="hint">A real person saying the word, from the dictionary, when you're online. Offline — or for sentences — your browser's voice speaks.</span></div>
         <div class="setting"><b>Say new words automatically</b><div class="seg">${choice("autoplay", true, "On")}${choice("autoplay", false, "Off")}</div></div>
         <div class="setting"><b>Speaking speed</b><div class="seg">${choice("rate", 0.7, "Slow")}${choice("rate", 0.9, "Normal")}${choice("rate", 1.1, "Fast")}</div></div>
         <div class="setting"><b>Sound effects</b><div class="seg">${choice("effects", true, "On")}${choice("effects", false, "Off")}</div></div>
 
-        <h3 class="sheet-group">Study</h3>
+          <h3 class="sheet-group">Study</h3>
         <div class="setting"><b>Study cards show first</b><div class="seg">${choice("cardFront", "en", "English word")}${choice("cardFront", "ar", "Arabic meaning")}</div>
           <span class="hint">Arabic first makes you produce the English word — harder, and it sticks better.</span></div>
         <div class="setting"><b>Quiz questions</b>
@@ -364,28 +393,18 @@
           <span class="hint">Fills in the Arabic, definition, example, pronunciation and the words it goes with, from free online dictionaries. Only the English word is sent. Off: no word leaves this device.</span></div>
         <div class="setting"><b>Grammar check</b><div class="seg">${choice("grammar", true, "On")}${choice("grammar", false, "Off")}</div>
           <span class="hint">In Use it, LanguageTool reads your sentence for grammar and spelling (“She don't”, “I didn't went”). Only that sentence is sent, when you press Check.</span></div>
-        <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
-          <span class="hint">How many new words “Learn” brings each day. The rest wait for tomorrow.</span></div>
         ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>
           <span class="hint">Say words out loud and the app checks them. Your browser does the listening — Chrome and Edge use their online speech service.</span></div>` : ""}
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
-        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day across all activities (each new word you meet counts too). Progress shows on today's plan.</span></div>
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
 
-        <h3 class="sheet-group">Look</h3>
+          <h3 class="sheet-group">Look</h3>
         <div class="setting"><b>Accent colour</b><div class="seg swatches">
           ${[["blue", "Ink blue"], ["teal", "Teal"], ["sky", "Sky"], ["violet", "Violet"], ["plum", "Plum"], ["rose", "Rose"], ["cocoa", "Cocoa"], ["amber", "Amber"], ["graphite", "Graphite"], ["glass", "Glass"]].map(([v, l]) =>
             html`<button type="button" data-action="setting" data-name="accent" data-value="${v}" aria-pressed="${st.accent === v}"><i class="swatch sw-${v}"></i>${l}</button>`)}
           </div>
           ${st.accent === "glass" ? html`<span class="hint">Liquid Glass is a material, not a tint: actions, bars and today's plan turn translucent while the text stays dark ink.</span>` : ""}
         </div>
-        <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
-
-        <h3 class="sheet-group">App &amp; data</h3>
-        ${VS.speech.supported ? "" : html`<p class="hint">This browser has no built-in voices, so words can't be read aloud.</p>`}
-        <div class="setting"><b>Install as an app</b>${installMarkup()}</div>
-        <div class="setting"><b>About VocabStudy</b><p class="hint">What it does and why, in Arabic — a page to share with a friend.</p>
-          <a class="btn" href="about.html">Read it in Arabic</a></div>
         <details class="setting shortcuts">
           <summary><b>Keyboard shortcuts</b></summary>
           <dl>
@@ -398,11 +417,8 @@
             <div><dt><kbd>/</kbd></dt><dd>Search words</dd></div>
           </dl>
         </details>
-        <div class="setting"><b>Your data</b>
-          <p class="hint">Saved in this browser only. Back it up, restore it on another device, or export your words.</p>
-          <div class="row"><a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
-          <a class="btn" href="#/transfer" data-action="close-settings">${icon("qr", "icon-sm")} Move to another device</a></div>
-        </div>
+
+          <h3 class="sheet-group">Start again</h3>
         <div class="setting"><b>Reset progress only</b>
           <p class="hint">Keep your words and settings. Clear the recall schedule, streak and scores.</p>
           <button class="danger-link" type="button" data-action="reset-progress">Reset progress</button>
@@ -411,6 +427,8 @@
           <p class="hint">Delete every word, note and answer on this device and go back to the first day. You'll save a backup first.</p>
           <a class="btn btn-danger-quiet" href="#/reset" data-action="close-settings">Start over…</a>
         </div>
+          </div>
+        </details>
       </div>
       <div class="sheet-foot"><button class="btn btn-primary" type="button" data-action="close-settings">Done</button></div>`;
   }

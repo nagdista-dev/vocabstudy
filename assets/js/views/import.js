@@ -249,19 +249,47 @@
     return out.map((p) => ({ word: baseOfPhrase(p.text), context: sentenceAt(c.text, p.at) }));
   }
 
+  /* The meaning of each picked word, before it is added: one request for all
+     of them (only those words are sent), cached for the visit. Words already
+     in the library show the Arabic they have. */
+  const gloss = {};
+  async function glossPicked() {
+    if (!VS.autofill.enabled() || !navigator.onLine) return;
+    const todo = pickedPhrases().map((p) => p.word).filter((w) => !(w in gloss) && !VS.byId[VS.wordKey(w)]);
+    if (!todo.length) return;
+    todo.forEach((w) => { gloss[w] = ""; });
+    try {
+      const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dj=1&dt=t&q=" + encodeURIComponent(todo.join("\n"));
+      const res = await fetch(url);
+      const data = res.ok ? await res.json() : {};
+      const lines = (data.sentences || []).map((x) => x.trans || "").join("").split("\n");
+      todo.forEach((w, i) => { gloss[w] = String(lines[i] || "").replace(/[.。]+$/, "").trim(); });
+    } catch (e) { todo.forEach((w) => delete gloss[w]); return; }
+    const chips = VS.$(".collect-chips");
+    if (chips) chips.outerHTML = String(chipsMarkup(pickedPhrases()));
+  }
+  const chipsMarkup = (phrases) => html`<p class="row collect-chips">${phrases.map((p) => {
+    const known = VS.byId[VS.wordKey(p.word)];
+    const ar = known ? known.arabic : gloss[p.word];
+    return html`<span class="${known ? "collect-chip is-known" : "collect-chip"}"><b>${p.word}</b>${ar ? html`<bdi lang="ar" dir="rtl">${ar}</bdi>` : ""}</span>`;
+  })}</p>`;
+
   function collectPick() {
     const c = st.collect;
     const list = tokens(c.text);
     if (!list.some((t) => t.word)) return html`<p class="hint">Paste some English above, then tap the words you want to keep.</p>`;
     const phrases = pickedPhrases();
     return html`
-      <p class="collect-text" lang="en">${list.map((t, i) => t.word
-        ? html`<button type="button" class="${VS.byId[VS.wordKey(t.text)] ? "tok is-known" : "tok"}" data-action="collect-tok" data-i="${i}" aria-pressed="${c.picked.has(i)}">${t.text}</button>`
-        : t.text)}</p>
+      <p class="collect-text" lang="en">${list.map((t, i) => {
+        if (!t.word) return i > 0 && list[i - 1].word ? t.text.replace(/^[^\s]+/, "") : t.text;   // its leading punctuation went with the word before
+        // A word keeps the punctuation right after it ("sick.") on its line.
+        const tail = ((list[i + 1] && !list[i + 1].word && list[i + 1].text.match(/^[^\s]+/)) || [""])[0];
+        return html`<span class="tok-wrap"><button type="button" class="${VS.byId[VS.wordKey(t.text)] ? "tok is-known" : "tok"}" data-action="collect-tok" data-i="${i}" aria-pressed="${c.picked.has(i)}">${t.text}</button>${tail}</span>`;
+      })}</p>
       <p class="hint">Words next to each other become one phrase.${list.some((t) => t.word && VS.byId[VS.wordKey(t.text)]) ? " Dotted words are already in your library." : ""}</p>
       ${phrases.length ? html`
         <div class="collect-picked">
-          <p class="row collect-chips">${phrases.map((p) => html`<span class="${VS.byId[VS.wordKey(p.word)] ? "collect-chip is-known" : "collect-chip"}">${p.word}</span>`)}</p>
+          ${chipsMarkup(phrases)}
           <label class="form-field"><span>Source (optional)</span>
             <input id="collectSource" value="${c.source}" placeholder="A series, an article, an email…" autocomplete="off"></label>
           <div class="row">
@@ -502,6 +530,7 @@
         if (src) c.source = src.value;
         const box = VS.$("#collectPick");
         if (box) box.innerHTML = String(collectPick());
+        glossPicked();
         const again = VS.$(`[data-action="collect-tok"][data-i="${i}"]`);
         if (again) again.focus({ preventScroll: true });
       },

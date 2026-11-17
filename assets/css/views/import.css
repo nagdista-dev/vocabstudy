@@ -178,3 +178,9 @@
 .capture-help p { font-size: var(--text-sm); color: var(--ink-2); }
 .bookmarklet { cursor: grab; }
 .collect-input { font-family: var(--font-word); font-size: var(--text-md); line-height: 1.5; }
+
+/* From text: a word and the punctuation after it stay on one line ("sick." never breaks before the dot). */
+.tok-wrap { white-space: nowrap; }
+/* Picked words show their meaning before they're added (views/import.js glossPicked). */
+.collect-chip { display: inline-flex; align-items: baseline; gap: var(--s-2); }
+.collect-chip bdi { font-family: var(--font-arabic); font-weight: 500; color: var(--ink-2); }
