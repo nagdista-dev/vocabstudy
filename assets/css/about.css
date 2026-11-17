@@ -81,6 +81,11 @@ main, .foot, .top-inner {
 }
 .top-nav a:hover { background: var(--surface-2); color: var(--ink); }
 @media (min-width: 900px) { .top-nav { display: flex; } }
+/* Below 900px the section nav is gone, so the CTA takes the far end:
+   auto margin on its inline-start (right in RTL) opens the space after
+   the logo and pins the button to the opposite side. At 900px+ the nav
+   already holds the centre, and this rule must not unbalance it. */
+@media (max-width: 899px) { .top-inner > .btn { margin-inline-start: auto; } }
 @media (max-width: 420px) {
   .brand { font-size: 1rem; gap: 7px; }
   .brand-mark { width: 29px; height: 29px; }

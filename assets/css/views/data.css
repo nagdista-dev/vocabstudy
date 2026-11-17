@@ -35,6 +35,20 @@
 .data-foot { margin-top: 0; }
 .data-foot a { color: var(--brand); }
 
+/* The door out: a quiet strip after the backup jobs, not another card. */
+.data-start {
+  display: grid; gap: var(--s-3); align-items: center;
+  padding-top: var(--s-5); border-top: 1px solid var(--line);
+}
+.data-start h2 { font-size: var(--text-md); }
+.data-start p { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; max-width: 58ch; }
+@media (min-width: 760px) {
+  .data-start { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-6); }
+}
+@media (max-width: 640px) {
+  .data-start .btn { width: 100%; }
+}
+
 /* Wide screens: text on the left, its actions on the right, like a
    settings page. The hint under "Export words" still spans the row. */
 @media (min-width: 900px) {

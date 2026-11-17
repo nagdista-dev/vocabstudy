@@ -14,6 +14,7 @@
      #/words?tag=IELTS       the library with its filters in the address
      #/add                   add words: type, paste a table, upload files
      #/data                  backup, restore (merge/replace), export words
+     #/reset                 start over: backup first, then type RESET
      #/transfer              move words and progress to another device by QR code
      #/stats                 progress charts
      #/week                  your week, Saturday to Friday (ready on Thursday)
@@ -48,6 +49,7 @@
     if (!parts.length || parts[0] === "words") return { view: "library", query };
     if (parts[0] === "add") return { view: "import", query };
     if (parts[0] === "data") return { view: "data" };
+    if (parts[0] === "reset") return { view: "reset" };
     if (parts[0] === "transfer") return { view: "transfer" };
     if (parts[0] === "stats") return { view: "stats" };
     if (parts[0] === "week") return { view: "week", query };
@@ -113,6 +115,7 @@
       (title && title !== "VocabStudy" ? title + " · VocabStudy" : "VocabStudy — vocabulary with spaced recall");
     if (view.mount) view.mount(viewRoot, params);
     restoreFocus(focused, viewRoot);
+    syncInstallNudge();
   }
 
   /* Redraw the settings sheet in place: same scroll position, same focus. */
@@ -130,6 +133,7 @@
 
   VS.app = {
     render,
+    applySettings,
     params: () => current.params,
     current: () => current && current.name,
   };
@@ -186,7 +190,8 @@
      app still works, just without install and offline caching. */
   let installPrompt = null;
   const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));   // iPadOS reports a Mac
   if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
     // A new version was published: the new service worker takes over, and we
@@ -204,7 +209,102 @@
     });
   }
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
-  window.addEventListener("appinstalled", () => { installPrompt = null; VS.toast("VocabStudy is installed."); });
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    installedNow = true;
+    hideNudge();
+    VS.toast("VocabStudy is installed.");
+  });
+
+  /* ── A quiet invitation to install ─────────────────────────────
+     Phones only, and only after the learner has a word of their own:
+     the first-run lesson is never covered. This is a card, not a
+     modal — it takes no focus and the app stays usable behind it.
+     "Not now" (or the ×) hides it for 30 days; Settings keeps the
+     permanent install entry for anyone who wants it sooner. */
+  let nudgeShown = false;       // at most one appearance per visit
+  let nudgeTimer = 0;
+  let installedNow = false;
+  const NUDGE_DAYS = 30;
+  const phoneOnly = () => matchMedia("(max-width: 700px), ((pointer: coarse) and (max-width: 1023px))").matches;
+
+  function nudgeSnoozed() {
+    const last = VS.store.installNudgeDismissed();
+    if (!last) return false;
+    return Math.round((new Date(VS.todayKey()) - new Date(last)) / 864e5) < NUDGE_DAYS;
+  }
+
+  function nudgeWanted() {
+    const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    return !isStandalone() && !installedNow && phoneOnly() && !nudgeSnoozed()
+      && current && current.name === "library" && VS.allWords().length > 0 && !typing
+      && !document.querySelector("#settings[open], dialog[open], .update-bar, .toast.is-on, .word-row[open]");
+  }
+
+  function removeNudge() {
+    const el = VS.$("#installNudge");
+    if (el) el.remove();
+  }
+
+  function hideNudge() {
+    const el = VS.$("#installNudge");
+    if (!el) return;
+    el.classList.add("is-off");
+    setTimeout(removeNudge, 200);
+  }
+
+  function nudgeMarkup() {
+    const native = !!installPrompt && !isIOS;
+    const title = isIOS ? "Add it to your Home Screen" : "Keep it one tap away";
+    const text = native
+      ? "Open it full screen from your home screen. It still works offline."
+      : isIOS
+        ? "Tap Share, then Add to Home Screen. It opens full screen and works offline."
+        : "Use your browser menu → Install app / Add to Home screen. It opens full screen and works offline.";
+    return html`
+      <div class="install-nudge-top">
+        <span class="install-nudge-ico" aria-hidden="true">${icon(isIOS ? "share" : "download")}</span>
+        <div class="install-nudge-copy">
+          <p class="install-nudge-kicker">VocabStudy</p>
+          <p class="install-nudge-title">${title}</p>
+        </div>
+        <button class="install-nudge-x" type="button" data-action="install-later" aria-label="Not now">${icon("x", "icon-sm")}</button>
+      </div>
+      <p class="install-nudge-text">${text}</p>
+      <div class="install-nudge-actions">
+        <button class="btn btn-primary" type="button" data-action="${native ? "install-now" : "install-got-it"}">${native ? "Install app" : "Got it"}</button>
+      </div>`;
+  }
+
+  function showNudge() {
+    if (!nudgeWanted() || document.visibilityState === "hidden" || VS.$("#installNudge")) return;
+    nudgeShown = true;
+    const el = document.createElement("aside");
+    el.id = "installNudge";
+    el.className = "install-nudge";
+    el.setAttribute("role", "region");
+    el.setAttribute("aria-label", "Install VocabStudy");
+    el.innerHTML = String(nudgeMarkup());
+    document.body.appendChild(el);
+  }
+
+  function syncInstallNudge() {
+    clearTimeout(nudgeTimer);
+    nudgeTimer = 0;
+    if (!nudgeWanted()) { removeNudge(); return; }
+    if (nudgeShown) return;
+    // Let the screen settle first: a suggestion that jumps out with the page
+    // reads as an ad. Three seconds in, the learner is already reading.
+    nudgeTimer = setTimeout(() => { nudgeTimer = 0; showNudge(); }, 3500);
+  }
+
+  window.addEventListener("resize", () => {
+    clearTimeout(syncInstallNudge.timer);
+    syncInstallNudge.timer = setTimeout(syncInstallNudge, 250);
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") syncInstallNudge();
+  });
 
   function installMarkup() {
     if (isStandalone()) return html`<p class="hint">${icon("check", "icon-sm")} Installed — you're using the app.</p>`;
@@ -290,7 +390,14 @@
           <div class="row"><a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
           <a class="btn" href="#/transfer" data-action="close-settings">${icon("qr", "icon-sm")} Move to another device</a></div>
         </div>
-        <button class="danger-link" type="button" data-action="reset-progress">Reset all progress</button>
+        <div class="setting"><b>Reset progress only</b>
+          <p class="hint">Keep your words and settings. Clear the recall schedule, streak and scores.</p>
+          <button class="danger-link" type="button" data-action="reset-progress">Reset progress</button>
+        </div>
+        <div class="setting"><b>Start over</b>
+          <p class="hint">Delete every word, note and answer on this device and go back to the first day. You'll save a backup first.</p>
+          <a class="btn btn-danger-quiet" href="#/reset" data-action="close-settings">Start over…</a>
+        </div>
       </div>
       <div class="sheet-foot"><button class="btn btn-primary" type="button" data-action="close-settings">Done</button></div>`;
   }
@@ -307,6 +414,7 @@
       const dlg = VS.$("#settings");
       dlg.innerHTML = String(settingsMarkup());
       dlg.showModal();
+      hideNudge();
     },
     "close-settings"() { VS.$("#settings").close(); },
     setting(el) {
@@ -320,18 +428,51 @@
     install() {
       if (!installPrompt) return;
       installPrompt.prompt();
-      installPrompt.userChoice.finally(() => { installPrompt = null; redrawSettings(); });
+      installPrompt.userChoice.then((choice) => {
+        installPrompt = null;
+        if (choice && choice.outcome === "accepted") installedNow = true;
+        else VS.store.dismissInstallNudge();      // tried and closed it: no follow-up card
+        hideNudge();
+        redrawSettings();
+      }).catch(() => {
+        installPrompt = null;
+        hideNudge();
+        redrawSettings();
+      });
+    },
+    "install-now"(el) {
+      if (!installPrompt) { hideNudge(); return; }
+      const prompt = installPrompt;
+      el.disabled = true;
+      prompt.prompt();
+      prompt.userChoice.then((choice) => {
+        installPrompt = null;
+        if (choice && choice.outcome === "accepted") installedNow = true;
+        else VS.store.dismissInstallNudge();       // closing the system sheet is a "not now"
+        hideNudge();
+      }).catch(() => {
+        installPrompt = null;
+        hideNudge();
+      });
+    },
+    "install-got-it"() {
+      VS.store.dismissInstallNudge();
+      hideNudge();
+    },
+    "install-later"() {
+      VS.store.dismissInstallNudge();
+      hideNudge();
     },
     "reset-progress": async () => {
       const yes = await VS.confirm({
-        title: "Reset all progress?",
-        body: "Your recall schedule, streak and scores will be deleted. This cannot be undone.",
-        confirmLabel: "Reset",
+        title: "Reset progress?",
+        body: "Your words and settings stay. The recall schedule, streak and scores will be cleared. This cannot be undone.",
+        confirmLabel: "Reset progress",
       });
       if (!yes) return;
       VS.store.resetProgress();
       VS.$("#settings").close();
-      VS.toast("Progress reset.");
+      VS.toast("Progress reset. Your words are safe.");
       go();
     },
   });
@@ -354,6 +495,7 @@
     const row = e.target;
     if (!row.classList || !row.classList.contains("word-row") || !row.open) return;
     VS.$$(".word-row[open]").forEach((other) => { if (other !== row) other.open = false; });
+    hideNudge();                                  // the card must never cover an open word
   }, true);
 
   // Quiz question types (Settings): keep at least one switched on.
@@ -380,6 +522,7 @@
     if (!current || current.name !== "library") return;
     const strip = VS.$(".today-hero");
     if (strip) strip.outerHTML = String(VS.today.strip());
+    syncInstallNudge();
   });
 
   document.addEventListener("keydown", (e) => {

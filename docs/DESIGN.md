@@ -155,9 +155,14 @@ JS). It keeps the same desk without imitating an app screen:
 - Arabic headings use IBM Plex Sans Arabic; Bricolage has no Arabic glyphs.
   English UI labels are isolated LTR islands, and tap sequences use the Arabic
   word "ثم" instead of a bidi arrow.
-- Phones: one column, 16px gutters, header keeps only brand + CTA. Tablets get
-  two step cards plus a wide third; desktop splits the hero, teacher, privacy
-  and final. The privacy online list becomes two columns at ≥1024px.
+- Phones: one column, 16px gutters, header keeps only brand + CTA. Below
+  900px the section nav is hidden, so the CTA gets `margin-inline-start:
+  auto` and takes the far end (the left, in RTL), away from the logo; from
+  900px the nav holds the centre and the CTA already sits at the end. The
+  header never overflows at 320px.
+- Tablets get two step cards plus a wide third; desktop splits the hero,
+  teacher, privacy and final. The privacy online list becomes two columns at
+  ≥1024px.
 - Every section anchor clears the sticky header (`scroll-margin-top: 84px`).
   No horizontal scroll at 320 or at 1.25× text; the ruler stays six ticks.
 
@@ -241,6 +246,62 @@ confirmLabel })` returns a promise and renders the app's own sheet:
 focus, and the action named in red (`btn-danger`). Escape or the backdrop
 answers no. On phones it rises from the thumb edge like every other sheet; on
 wide screens it is a small centred page.
+
+## Starting over (`#/reset`)
+
+This app has one copy of the learner's words: this browser. "Start over" is
+therefore the only door out, and it is built as a receipt, not a red button in
+a menu.
+
+- **Two losses, two names.** *Reset progress* keeps words and settings and
+  clears the schedule, streak and scores. *Start over* deletes the words,
+  notes, answers, history, streak and settings, then returns to the first-run
+  lesson. The Settings copy says which is which; the quiet red entry appears
+  in both Settings and Backup & export.
+- **A backup gate that is real.** The delete button unlocks only after a full
+  backup has actually been saved from this screen (`VS.backup.save()` in
+  `core/backup.js`, shared with Backup & export so the file and its name never
+  drift). An older backup does not count: the learner may have added words
+  since. Cancelling the save dialog leaves the gate locked and says "No backup
+  saved. Nothing was deleted."
+- **A typed word.** `RESET`, case-insensitive and trimmed, plus the saved
+  backup. The button stays disabled until both are true, and a live hint names
+  the missing step. Enter inside the field does nothing: the typed word
+  unlocks, the button is the deliberate act. The reason is tied to the button
+  with `aria-describedby`.
+- **The receipt.** Four rows (words, notes, answers, settings) and one line
+  saying the app and its restore path stay. On phones the rows are compact;
+  the two exit actions go full width at ≤480px, with the safe exit outlined
+  above the red one. From 481px they sit on one line, danger at the far end.
+- **Landing.** Deletion clears the undo token and in-memory capture, applies
+  the default accent and text size, replaces the history entry with `#/`, and
+  lands on the first-run screen with the focus on `MAIN.view`; the toast says
+  where the backup went, using the save method that actually succeeded.
+- **Checked** at 320/360/390/520/768/1280 and 1.25×: no horizontal scroll, no
+  clipped filename, and the gate behaves with mouse, touch and keyboard.
+
+## The install invitation
+
+A phone-only card above the tab bar, never a modal and never on the first-run
+screen:
+
+- **When.** At most once per visit, 3.5s after the library settles, and only
+  when the learner has a word of their own. It stays away while Settings or a
+  confirmation sheet is open, an update bar is waiting, a toast is showing or
+  a word row is expanded; opening any of those hides it.
+- **What.** Chromium gets the real `beforeinstallprompt` and an `Install app`
+  button. iOS (including iPadOS reporting a Mac) gets the Share → Add to Home
+  Screen steps with the share glyph; other browsers get the menu instruction.
+  Both fall back to a single `Got it` button.
+- **How it behaves.** It never takes focus. `Not now` (or the ×) snoozes it
+  for 30 days in `installNudgeDismissed`; accepting the system prompt sets
+  `installedNow`, and `appinstalled` removes the card. `standalone` hides it
+  for good. Settings keeps a permanent install entry, so dismissing is never
+  the end of the road.
+- **Fit.** ≤700px, or a coarse pointer up to 1023px where the tab bar still
+  exists. It is hidden on desktop and on fine-pointer windows wider than
+  700px. At 320 the card is 296px wide; at 390 it is 366px; at 1.25× the text
+  wraps without clipping and the bottom gap to the tab bar stays 11px.
 
 ## Motion (`assets/css/motion.css`)
 

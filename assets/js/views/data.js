@@ -40,56 +40,6 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
-  /** The full backup, indented so it stays readable if opened by hand. */
-  function backupText() {
-    return JSON.stringify(JSON.parse(VS.store.exportJSON()), null, 2);
-  }
-
-  /**
-   * Save the backup where the learner chooses. Chrome and Edge open the
-   * system save dialog; browsers without it fall back to a normal download.
-   * Cancelling the dialog rejects with AbortError — the caller stays quiet.
-   */
-  async function saveBackup() {
-    const name = "backup-" + VS.todayKey() + ".json";
-    if (typeof window.showSaveFilePicker !== "function") {
-      download(name, backupText(), "application/json");
-      return "downloaded";
-    }
-    let handle;
-    try {
-      // Open the dialog first: building the JSON must not use up the click.
-      handle = await window.showSaveFilePicker({
-        suggestedName: name,
-        types: [{ description: "VocabStudy backup", accept: { "application/json": [".json"] } }],
-      });
-    } catch (err) {
-      // A page that cannot show the picker (a framed or restricted context)
-      // still gets its backup through a normal download.
-      if (err && err.name === "SecurityError") {
-        download(name, backupText(), "application/json");
-        return "downloaded";
-      }
-      throw err;
-    }
-    const text = backupText();
-    const writable = await handle.createWritable();
-    try {
-      await writable.write(text);
-      await writable.close();
-    } catch (err) {
-      try { await writable.abort(); } catch (ignore) {}
-      throw err;
-    }
-    return "saved";
-  }
-
-  function saveErrorText(err) {
-    if (err && err.name === "NotAllowedError") return "Saving was blocked. Try again, or choose a different folder.";
-    if (err && err.name === "QuotaExceededError") return "There isn't enough space to save the backup.";
-    return "Couldn't save the backup. Try again.";
-  }
-
   /** Download any list of words as CSV — the library uses it for "Export these". */
   VS.exportCSV = function (words, name) {
     const lines = [COLUMNS.join(",")].concat(rows(words).map((r) => r.map(csvCell).join(",")));
@@ -122,7 +72,7 @@
               <span class="file-type" aria-hidden="true">JSON</span>
               <div class="file-copy">
                 <h2 id="backup-title">Full backup</h2>
-                <p class="file-name">vocabstudy-backup-${VS.todayKey()}.json</p>
+                <p class="file-name">${VS.backup.fileName()}</p>
               </div>
               <button class="btn btn-primary" type="button" data-action="data-backup">Export backup</button>
             </div>
@@ -166,6 +116,14 @@
             </div>
           </section>
 
+          <section class="data-start" aria-labelledby="start-over-title">
+            <div>
+              <h2 id="start-over-title">Start over</h2>
+              <p>Delete every word, note and answer on this device and go back to the first day. You'll save a backup first.</p>
+            </div>
+            <a class="btn btn-danger-quiet" href="#/reset">Start over…</a>
+          </section>
+
           <p class="hint data-foot">A CSV export can be added back with <a href="#/add">Add words</a> → Upload files.
             Print sheets and PDFs are in the <a href="#/print/all">library print screen</a>.</p>
         </div>`;
@@ -198,15 +156,14 @@
         const label = el.textContent;
         el.disabled = true;
         el.textContent = "Saving…";
-        saveBackup().then((how) => {
-          VS.store.markBackup();
+        VS.backup.save().then((how) => {
           VS.toast(how === "saved" ? "Backup saved." : "Backup saved to your downloads.");
           VS.app.render();
         }).catch((err) => {
           el.disabled = false;
           el.textContent = label;
           if (err && err.name === "AbortError") return;     // the learner closed the save dialog
-          VS.toast(saveErrorText(err));
+          VS.toast(VS.backup.errorText(err));
         });
       },
       "data-which"(el) { exportOpts.which = el.dataset.value; VS.app.render(); },

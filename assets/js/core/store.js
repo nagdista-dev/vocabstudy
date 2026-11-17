@@ -36,6 +36,7 @@
     library: [],                                   // your words, oldest first — the app ships with none
     lastBackup: "",                                // date of the last full backup download
     backupNudgeIgnored: "",                        // date the learner hid the weekly backup reminder
+    installNudgeDismissed: "",                     // date the learner said "not now" to installing the app
     weekSeen: "",                                  // the Saturday of the last weekly report opened (core/week.js)
     milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
@@ -332,6 +333,8 @@
     lastBackup: () => state.lastBackup,
     markBackup() { state.lastBackup = VS.todayKey(); save(); },
     backupNudgeIgnored: () => state.backupNudgeIgnored,
+    installNudgeDismissed: () => state.installNudgeDismissed || "",
+    dismissInstallNudge() { state.installNudgeDismissed = VS.todayKey(); save(); },
     weekSeen: () => state.weekSeen || "",
     setWeekSeen(start) { if (state.weekSeen !== start) { state.weekSeen = start; save(); } },
     milestoneSeen: () => state.milestone || 0,
@@ -510,7 +513,23 @@
     resetProgress() {
       // Words you added are content, not progress: they survive a reset.
       state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), { settings: state.settings, library: state.library });
+      lastUndo = null;
       save();
+    },
+
+    /**
+     * Delete everything this browser holds and return to the first day.
+     * Words, notes, answers, history, streak, best times and settings all go;
+     * the installed app itself stays. The caller must take a backup first —
+     * this is the one action the app cannot undo.
+     */
+    startOver() {
+      const ids = [...new Set([...Object.keys(VS.byId), ...state.library.map((w) => VS.wordKey(w.word, w.sense))])];
+      state = JSON.parse(JSON.stringify(DEFAULTS));
+      lastUndo = null;
+      VS.removeWords(ids);
+      save();
+      return ids.length;
     },
 
     WAIT_DAYS,

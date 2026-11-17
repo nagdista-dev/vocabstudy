@@ -1,0 +1,89 @@
+/* views/reset.css — Start over: a receipt, a backup, then a typed word.
+   Deliberately quieter than the rest of the app: one reading column, a
+   plain ledger, and no decoration on the destructive step. */
+
+.reset-page { max-width: 700px; display: grid; gap: var(--s-5); align-content: start; }
+.reset-head { display: block; }
+.reset-lede { margin-top: var(--s-2); color: var(--ink-2); font-size: var(--text-md); max-width: 58ch; }
+
+/* The receipt: exactly what leaves the browser, in four rows. */
+.reset-ledger { padding: var(--s-5); display: grid; gap: var(--s-3); }
+.reset-ledger h2 { font-size: var(--text-md); }
+.reset-ledger dl { display: grid; }
+.reset-ledger dl > div {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4);
+  padding: 9px 0; border-top: 1px solid var(--line);
+}
+.reset-ledger dt { color: var(--ink-2); }
+.reset-ledger dd { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; text-align: end; }
+.reset-keep {
+  display: flex; align-items: flex-start; gap: var(--s-2);
+  padding-top: var(--s-3); border-top: 1px solid var(--line);
+  color: var(--ink-3); font-size: var(--text-sm); line-height: 1.45;
+}
+.reset-keep .icon { margin-top: 3px; color: var(--brand); }
+
+/* Two numbered steps in one panel, divided by a hairline. */
+.reset-panel { padding: 0 var(--s-5); }
+.reset-step { display: grid; gap: var(--s-4); padding: var(--s-5) 0; border-top: 1px solid var(--line); }
+.reset-step:first-child { border-top: 0; }
+.reset-step-head { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: var(--s-3); }
+.reset-step-head h2 { font-size: var(--text-lg); }
+.reset-step-head p { margin-top: 2px; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; max-width: 52ch; }
+.reset-step-head .step-n { margin-top: 1px; }
+.reset-step-danger .step-n { background: var(--bad-soft); color: var(--bad); }
+
+/* Step 1: the safe action, and proof that it happened. */
+.reset-backup {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3);
+  padding-inline-start: calc(36px + var(--s-3));
+}
+.reset-backup-status {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px;
+  min-width: 0; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.45;
+}
+.reset-backup-status .icon { color: var(--brand); }
+.reset-backup-done { color: var(--ink); font-weight: 600; }
+.reset-file-name {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: var(--text-xs); color: var(--ink-3); overflow-wrap: anywhere;
+}
+.reset-state { color: var(--ink-3); }
+
+/* Step 2: the typed word is the lock; the button is the handle. */
+.reset-confirm {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3);
+  padding-inline-start: calc(36px + var(--s-3));
+}
+.reset-label { color: var(--ink-2); font-size: var(--text-sm); }
+.reset-label b { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .09em; color: var(--ink); }
+.reset-word {
+  width: min(220px, 100%); min-height: 46px; padding: 0 12px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink);
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--text-md); letter-spacing: .14em; text-transform: uppercase;
+}
+.reset-word:focus { outline: none; border-color: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
+.reset-confirm.is-matched .reset-word { border-color: var(--bad); }
+.reset-hint { padding-inline-start: calc(36px + var(--s-3)); max-width: 56ch; }
+.reset-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2);
+  padding-inline-start: calc(36px + var(--s-3));
+}
+.reset-actions .btn-danger { margin-inline-start: auto; }
+/* The safe way out is a full button on a phone, not a floating word. */
+.reset-cancel { background: transparent; border-color: transparent; color: var(--ink-2); }
+.reset-cancel:hover { background: var(--surface-2); color: var(--ink); }
+
+@media (max-width: 640px) {
+  .reset-ledger { padding: var(--s-4); }
+  .reset-panel { padding: 0 var(--s-4); }
+  .reset-step { padding: var(--s-4) 0; }
+  .reset-backup, .reset-confirm, .reset-hint, .reset-actions { padding-inline-start: 0; }
+  .reset-cancel { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
+}
+@media (max-width: 480px) {
+  .reset-actions .btn { flex: 1 1 160px; }
+  .reset-actions .btn-danger { margin-inline-start: 0; }
+}

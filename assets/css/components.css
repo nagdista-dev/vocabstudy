@@ -174,6 +174,12 @@
    mistaken for the safe choice beside it. */
 .btn-danger { background: var(--bad); border-color: var(--bad); color: var(--on-brand); }
 .btn-danger:hover { background: color-mix(in srgb, var(--bad) 84%, black); border-color: color-mix(in srgb, var(--bad) 84%, black); }
+/* A destructive door, not a red alarm: the label carries the warning. */
+.btn-danger-quiet {
+  justify-self: start;
+  background: var(--surface); border-color: color-mix(in srgb, var(--bad) 32%, var(--line)); color: var(--bad);
+}
+.btn-danger-quiet:hover { background: var(--bad-soft); border-color: var(--bad); }
 .btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
 .btn-quiet:hover { background: var(--surface-2); color: var(--ink); }
 /* A second-level action: clearly clickable, never competing with the one
@@ -359,6 +365,47 @@
 }
 
 /* ── Overlays ──────────────────────────────────────────────────── */
+/* Install invitation: a bottom card above the thumb bar, not a modal.
+   It appears once the learner has a word, sleeps for 30 days after
+   "not now", and is hidden on anything wider than a phone. */
+.install-nudge {
+  position: fixed; z-index: 19; inset-inline: 12px;
+  bottom: calc(60px + 12px + env(safe-area-inset-bottom));
+  width: min(440px, calc(100vw - 24px));
+  margin-inline: auto;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  animation: nudge-in 220ms var(--ease) both;
+}
+@keyframes nudge-in { from { opacity: 0; transform: translateY(10px); } }
+.install-nudge.is-off { animation: none; opacity: 0; transform: translateY(6px); transition: opacity 160ms, transform 160ms; }
+@media (min-width: 701px) and (pointer: fine) { .install-nudge { display: none; } }
+.install-nudge-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.install-nudge-ico {
+  display: grid; place-items: center; width: 38px; height: 38px;
+  border-radius: 10px; background: var(--brand-soft); color: var(--brand);
+}
+.install-nudge-ico .icon { width: 19px; height: 19px; }
+.install-nudge-copy { min-width: 0; }
+.install-nudge-kicker {
+  font-size: var(--text-2xs); font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-3); line-height: 1.2;
+}
+.install-nudge-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-md); line-height: 1.25; }
+.install-nudge-x {
+  display: grid; place-items: center; width: 40px; height: 40px;
+  border: 0; border-radius: 10px;
+  background: transparent; color: var(--ink-3);
+}
+.install-nudge-x:hover { background: var(--surface-2); color: var(--ink); }
+.install-nudge-text { margin-top: 8px; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
+.install-nudge-actions { display: flex; margin-top: 12px; }
+.install-nudge-actions .btn { flex: 1 1 auto; min-height: 42px; }
+@media (max-width: 420px) { .install-nudge { padding: 12px 14px 14px; } }
+
 .toast {
   position: fixed; z-index: 50; left: 50%; bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
   transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
