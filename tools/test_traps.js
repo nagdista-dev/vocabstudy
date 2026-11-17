@@ -31,6 +31,9 @@ const CLEAN = [
   "I'm still tired from yesterday.",
   "We met last year, and now we are friends.",
   "I didn't need it, and I didn't feed the cat.",
+  // The -ing trap must leave "to" + a noun alone.
+  "I keep to the left on the road.",
+  "He gave up to the police after an hour.",
   "I listen to podcasts on my way to work.",
   "It depends on the weather.",
   "She is married to a doctor and they live in Giza.",
@@ -71,6 +74,19 @@ traps.forEach((t) => {
   if (t.bad.test(" " + t.right + " ")) fail(`"${t.keys[0]}": pattern fires on its right sentence: ${t.right}`);
 });
 
+// The learner's sentence, fixed (VS.fixSentence): a trap's own wrong sentence must come out
+// as its right one — a fix that invents a new mistake is worse than the rule alone.
+const norm = (s) => String(s).replace(/\s*\(.*?\)/g, "").replace(/\s*\/.*$/, "").toLowerCase().replace(/[^a-z' ]/g, "").replace(/\s+/g, " ").trim();
+let fixes = 0;
+traps.forEach((t) => {
+  if (!t.bad) return;
+  const wrong = t.wrong.replace(/\s*\(=.*?\)/, "");
+  const fixed = VS.fixSentence(wrong, t);
+  if (!fixed) return;
+  fixes++;
+  if (norm(fixed) !== norm(t.right)) fail(`"${t.keys[0]}": fixSentence gives "${fixed}", expected "${t.right}"`);
+});
+
 // Arabic must not start a sentence mid-line ("… . «حالياً» is…"): it reads out of order.
 traps.forEach((t) => {
   if (/[.!?]\s+«/.test(t.why)) fail(`"${t.keys[0]}": Arabic starts a sentence after a full stop in "why" — write "For «…», say …"`);
@@ -81,5 +97,5 @@ CLEAN.forEach((s) => {
   if (hits.length) fail(`clean sentence flagged (${hits.map((h) => h.keys[0]).join(", ")}): ${s}`);
 });
 
-console.log(failed ? `traps FAILED: ${failed} problem(s)` : `traps OK: ${traps.length} traps, ${traps.filter((t) => t.bad).length} with patterns`);
+console.log(failed ? `traps FAILED: ${failed} problem(s)` : `traps OK: ${traps.length} traps, ${traps.filter((t) => t.bad).length} with patterns, ${fixes} fix the learner's own sentence`);
 process.exit(failed ? 1 : 0);

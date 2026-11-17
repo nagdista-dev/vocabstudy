@@ -49,6 +49,15 @@
           <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
           ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
           ${w.definition ? html`<p class="flash-def">${w.definition}</p>` : ""}
+          ${!w.trusted && !w.confirmed && w.arabic && VS.autofill.enabled() ? html`
+            <div class="meaning-ask">
+              <p class="meaning-ask-q">Is this the meaning you met?</p>
+              <div class="row meaning-ask-actions">
+                <button class="btn btn-tonal" type="button" data-action="meaning-yes" data-id="${w.id}">${icon("check", "icon-sm")} Yes</button>
+                <button class="btn btn-quiet" type="button" data-action="meaning-list" data-id="${w.id}">Another meaning</button>
+              </div>
+              <div class="meanings" aria-live="polite"></div>
+            </div>` : ""}
           ${VS.ui.context(w, "flash-met")}
           ${w.example && !w.context ? html`<div class="flash-example">
             <p>${VS.ui.quote(w)}</p>

@@ -191,6 +191,44 @@
   const cores = (list) => String(list || "").split(" - ").map(core).filter(Boolean);
   const shares = (a, b) => { const B = cores(b); return cores(a).some((x) => B.some((y) => x === y || x.includes(y) || y.includes(x))); };
 
+  /* ── Meanings checked by hand, and the meaning the learner met ────
+     assets/data/overrides.js holds the common words free dictionaries get
+     wrong. Its meanings are trusted: they come first and need no "Is this
+     the meaning?" question. When the learner met the word in a sentence
+     ("The plane will take off at six"), that sentence picks the meaning:
+     the one whose keys, definition or example share its words. */
+  function overrideSenses(word) {
+    const o = (window.VS_OVERRIDES || {})[VS.wordKey(word)];
+    if (!o) return null;
+    return (o.senses || [o]).map((m) => ({ type: m.type, pos: String(m.type || "").toLowerCase(), definition: m.definition,
+      example: m.example, arabic: m.arabic, synonyms: m.synonyms || [], keys: m.keys || "", trusted: true }));
+  }
+  function contextWords(text, word) {
+    const own = new Set(String(word).toLowerCase().split(/\s+/).map(stem));
+    return new Set(String(text || "").toLowerCase().split(/[^a-z']+/)
+      .filter((x) => x.length >= 3 && !STOP.has(x)).map(stem).filter((x) => !own.has(x)));
+  }
+  /** The meaning a sentence points to → its index, or -1 when nothing in the sentence decides. */
+  function senseFor(senses, context, word) {
+    const ctx = contextWords(context, word);
+    if (!ctx.size) return -1;
+    let best = -1, bestN = 0;
+    senses.slice(0, 8).forEach((m, i) => {
+      const keys = new Set([...keysOf(m, word)].concat(String(m.keys || "").split(/\s+/).filter(Boolean).map(stem))
+        .concat(contextWords(m.example, word).size ? [...contextWords(m.example, word)] : []));
+      const n = [...ctx].filter((x) => keys.has(x)).length;
+      if (n > bestN) { best = i; bestN = n; }
+    });
+    return best;
+  }
+  /** Similar words a learner can use: common (top 6,000), one or two words, three at most. */
+  function commonSimilar(list) {
+    return (list || []).filter((x) => {
+      const parts = String(x).toLowerCase().split(/\s+/);
+      return parts.length <= 2 && parts.every((t) => VS.frequency.rank(t) < 6000);
+    }).slice(0, 3);
+  }
+
   /** Google's usual Arabic for a part of speech: its translation if it's one of them, then its top words. */
   function mainArabic(translation, entries) {
     const top = (entries || []).slice(0, 3).map((e) => e.word);
@@ -294,10 +332,11 @@
     // "postponed" → base "postpone": a learner should learn the verb, not one of its forms.
     const d0 = (data.dict || [])[0];
     // Only regular forms (postponed, borrowing, studied): "born" is not "bear", "found" may not be "find".
-    const b = d0 && d0.pos === "verb" && d0.base_form ? d0.base_form.toLowerCase() : "";
+    // "relieved", "interested", "tired" are adjectives a learner meets as such: never turned into a verb.
+    const b = d0 && d0.pos === "verb" && d0.base_form && !entriesFor.adjective && !overrideSenses(word) ? d0.base_form.toLowerCase() : "";
     const base = b && b !== word.toLowerCase() && !/\s/.test(word) &&
       word.toLowerCase().startsWith(b.replace(/[ey]$/, "")) && /(?:s|ed|ing)$/i.test(word) ? b : "";
-    return { senses, translation: hasArabic(translation) ? arabicList([translation]) : "", base, mainPos, entriesFor,
+    return { senses, translation: hasArabic(translation) ? arabicList([translation]) : "", base, mainPos, entriesFor, examples,
              found: !!((data.dict || []).length || (data.definitions || []).length) };
   }
 
@@ -403,8 +442,11 @@
     const out = [];
     data.forEach((d) => {
       const x = String(d.word || "").toLowerCase();
-      const key = x.replace(/(s|x|z|ch|sh)es$/, "$1").replace(/s$/, "");   // "change"/"changes", "box"/"boxes" are one
-      if (!/^[a-z-]+$/.test(x) || FILLER.has(x) || seen.has(key) || out.length >= 4) return;
+      // "change"/"changes", "box"/"boxes", "woman"/"women" are one collocate.
+      const key = ({ women: "woman", men: "man", children: "child", people: "person", feet: "foot", teeth: "tooth" })[x] ||
+        x.replace(/(s|x|z|ch|sh)es$/, "$1").replace(/s$/, "");
+      // Three at most, and only collocates a learner meets (top 6,000): "heavy rain", not "resilient modulus".
+      if (!/^[a-z-]+$/.test(x) || FILLER.has(x) || seen.has(key) || out.length >= 3 || VS.frequency.rank(x) >= 6000) return;
       seen.add(key);
       out.push(type === "Noun" ? x + " " + word.toLowerCase() : word.toLowerCase() + " " + x);
     });
@@ -423,7 +465,8 @@
    * `fields` holds only what was found; the caller decides what to keep.
    * `senses` lists every meaning, for Edit → Other meanings.
    */
-  async function lookup(word) {
+  async function lookup(word, context) {
+    await VS.frequency.load();
     const [g, d] = await Promise.allSettled([google(word), dictionary(word)]);
     const gv = g.status === "fulfilled" ? g.value : { senses: [], translation: "", entriesFor: {} };
     const dv = d.status === "fulfilled" ? d.value : {};
@@ -452,22 +495,45 @@
       else senses[0].unsure = true;
     }
     try { await translateTerms(senses); } catch (e) { /* offline or blocked: those meanings stay without Arabic */ }
+    // Checked meanings first; then the meaning the learner's own sentence points to.
+    const checked = overrideSenses(word);
+    let fromContext = false, unsettled = false;
+    if (checked) {
+      const i = senseFor(checked, context, word);
+      if (i > 0) checked.unshift(checked.splice(i, 1)[0]);
+      fromContext = i >= 0;
+      unsettled = checked.length > 1 && i < 0;           // several everyday meanings, nothing to choose by
+      senses = checked.concat(senses);
+    } else if (context) {
+      const i = senseFor(senses, context, word);
+      if (i > 0) senses.unshift(senses.splice(i, 1)[0]);
+      fromContext = i >= 0;
+    }
     const first = senses[0] || {};
     const fields = {};
     // The definition belongs to the Arabic shown: the dictionary's first one only when nothing else is known.
     fields.definition = first.definition || (first.arabic && !first.unsure ? "" : dv.definition) || "";
     // An example belongs to its definition: use the dictionary's only with its own definition.
     fields.example = first.definition ? first.example : (dv.example || first.example || "");
+    // A short example reads better for an A2–B1 learner: when the meaning's own is long
+    // (over 14 words), Google's shortest everyday example for the same word goes in.
+    const words = (t) => String(t || "").split(/\s+/).filter(Boolean).length;
+    if (!first.trusted && fields.example && words(fields.example) > 14 && senses[0] === gv.senses[0]) {
+      const short = (gv.examples || []).filter((e) => words(e) <= 14 && VS.findIn({ word }, e)).sort((a, b) => words(a) - words(b))[0];
+      if (short) fields.example = short;
+    }
     fields.type = first.type || dv.type || "";
     // A meaning's own Arabic; Google's one-line translation only when there are no meanings at all.
     fields.arabic = first.arabic || (first.definition ? "" : gv.translation) || "";
-    fields.synonyms = first.synonyms || [];
+    fields.synonyms = first.trusted ? (first.synonyms || []) : commonSimilar(first.synonyms);
     fields.ipa = dv.ipa || "";
     fields.audio = dv.audio || "";
     if (!fields.arabic) { try { fields.arabic = await myMemory(word); } catch (e) { /* offline */ } }
     try { fields.goes = await collocations(word, fields.type); } catch (e) { /* offline: no collocations, that's all */ }
     const word2 = caseFrom(word, fields.example);
     if (word2) fields.word = word2;
+    if (first.trusted) fields.trusted = true;
+    if (fromContext) fields.fromContext = true;
     // Drop empty values: "found nothing" must not overwrite anything.
     Object.keys(fields).forEach((k) => { if (!fields[k] || (Array.isArray(fields[k]) && !fields[k].length)) delete fields[k]; });
     if (!senses.length && dv.definition) senses.push({ type: dv.type, definition: dv.definition, example: dv.example || "", synonyms: [], arabic: fields.arabic || "" });
@@ -486,8 +552,9 @@
       // "Keep it as typed" is remembered with the word, so it is never asked again.
       fields.check = VS.spelling.kept(word) ? { kind: "ok" } : { kind: "spelling", fix };
     }
-    // Meanings a learner would translate differently: ask which one they met.
-    else if (ambiguous(senses, gv.entriesFor, word)) fields.check = { kind: "meaning" };
+    // Meanings a learner would translate differently: ask which one they met —
+    // unless a checked meaning or the learner's own sentence already settled it.
+    else if (checked ? unsettled : !fromContext && ambiguous(senses, gv.entriesFor, word)) fields.check = { kind: "meaning" };
     return { fields, senses, offline, googleDown, base: gv.base || "" };
   }
 
@@ -508,12 +575,12 @@
         // Filled while Google was down, and not studied yet: start again from
         // scratch, so the Arabic and the definition come from one meaning.
         if (w.partial && VS.store.status(id) === "new") VS.store.clearAutoFields(id);
-        let found = await lookup(w.word);
+        let found = await lookup(w.word, w.context);
         // An inflected verb ("postponed", "went") becomes its base form, unless
         // that word is already in the library. The sentence it came with stays.
         if (found.base && VS.store.status(id) === "new") {
           const moved = VS.store.renameUserWord(id, found.base);
-          if (moved) { now = moved; found = await lookup(found.base); }
+          if (moved) { now = moved; found = await lookup(found.base, w.context); }
         }
         const { fields, offline, googleDown } = found;
         // Offline: keep it marked, and try again next time the app is online.
@@ -538,7 +605,9 @@
     lookup,
     enabled,
     /** Every meaning of a word, most common first (Edit → Other meanings). */
-    async senses(word) { return (await lookup(word)).senses; },
+    async senses(word, context) { return (await lookup(word, context)).senses; },
+    /** The checked meanings of a word (assets/data/overrides.js), or null. */
+    checked: (word) => overrideSenses(word),
     /** Arabic for one meaning that has none yet (picked in Other meanings): "" if it can't be found. */
     async arabicOf(sense) {
       const m = Object.assign({ synonyms: [] }, sense, { arabic: "" });

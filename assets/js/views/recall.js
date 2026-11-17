@@ -42,6 +42,13 @@
     return { style: "meaning", text: "", own: "" };
   }
 
+  /* The Arabic next to the learner's own sentence must mean what that sentence
+     means: "The plane will ___ at six" never comes with «نزع». It shows only
+     when the meaning is settled — checked by hand, confirmed by the learner,
+     or picked from that very sentence — or when the cue is the dictionary
+     example, which belongs to the definition. */
+  const arabicFits = (w, cue) => !cue.own || !!(w.trusted || w.confirmed || (w.fromContext && cue.text === w.context));
+
   function gapText(w) {
     const hit = VS.findIn(w, s.cues[s.index].text);
     return s.revealed ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}`
@@ -88,7 +95,7 @@
         ${gap
           ? html`<p class="q-label">${cue.own ? html`${icon(cue.own === "Your sentence" ? "pen" : "bulb", "icon-sm")} ${cue.own} — which word fits?` : "Which word fits the sentence?"}</p>
                  <p class="recall-gap">${gapText(w)}</p>
-                 <p class="recall-ar recall-ar-sm" lang="ar">${w.arabic}</p>`
+                 ${arabicFits(w, cue) ? html`<p class="recall-ar recall-ar-sm" lang="ar">${w.arabic}</p>` : ""}`
           : html`<p class="recall-ar" lang="ar">${w.arabic}</p>
                  ${w.definition ? html`<p class="recall-def">${w.definition}</p>` : ""}`}
         ${w.sense ? html`<p class="hint">Sense: ${w.sense}</p>` : ""}

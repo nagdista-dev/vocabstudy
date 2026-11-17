@@ -53,7 +53,7 @@
             <li>${p.trap
               ? html`<span class="usage-kind">${p.trap.label}</span>
                      ${p.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.found}</span><small>you wrote</small></span>` : ""}
-                     <span class="usage-right">${icon("check", "icon-sm")}<span>${p.trap.right}</span></span>
+                     ${p.fixed ? html`<span class="usage-right">${icon("check", "icon-sm")}<span>${p.fixed}</span><small>your sentence, fixed</small></span>` : ""}
                      <span class="usage-why">${VS.ui.mixed(p.text)}</span>`
               : p.grammar
               ? html`<span class="usage-kind">${p.grammar.label}</span>

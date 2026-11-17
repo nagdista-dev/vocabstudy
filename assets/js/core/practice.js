@@ -184,7 +184,8 @@
     // The learner's own words that went wrong ("depends of"), next to the fix.
     VS.findUsageMistakes(raw).forEach((trap) => {
       const m = trap.bad.exec(" " + raw.replace(/[’‘]/g, "'") + " ");
-      problems.push({ text: trap.why, trap, found: m ? m[0].trim() : "" });
+      // The learner's own sentence, fixed — never the trap's canned example (core/usage-traps.js).
+      problems.push({ text: trap.why, trap, found: m ? m[0].trim() : "", fixed: VS.fixSentence(raw, trap) });
     });
     if (/^[a-z]/.test(raw)) tips.push("Start with a capital letter.");
     if (raw && !/[.!?…"”')]$/.test(raw)) tips.push("End with a full stop.");

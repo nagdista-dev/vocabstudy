@@ -473,6 +473,9 @@
       if (filled.size) raw.filled = [...filled];
       // "Check the spelling" / "Which meaning did you meet?" (core/autofill.js).
       if (fields.check) { raw.check = Object.assign({}, fields.check); w.check = raw.check; }
+      // A meaning checked by hand (assets/data/overrides.js) needs no "Is this the meaning?" question.
+      if (fields.trusted) raw.trusted = w.trusted = true;
+      if (fields.fromContext) raw.fromContext = w.fromContext = true;     // the meaning came from "Where you met it"
       // "wednesday" → "Wednesday": only the capital changes, so the id stays.
       if (fields.word && VS.wordKey(fields.word) === VS.wordKey(raw.word) && fields.word !== raw.word) {
         raw.word = fields.word; w.word = fields.word;
@@ -517,6 +520,39 @@
       if (w) w.auto = "todo";
       save();
       return newId;
+    },
+
+    /** The learner says the meaning shown is the one they met ("Yes" on the Meet card). */
+    confirmMeaning(id) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      if (!raw) return;
+      raw.confirmed = true; if (w) w.confirmed = true;
+      delete raw.check; if (w) delete w.check;
+      save();
+    },
+
+    /**
+     * Use another meaning for a word: its Arabic, definition, example, type
+     * and similar words replace the old ones together (never mixed), and the
+     * word counts as confirmed. The id stays the same.
+     */
+    applySense(id, m) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      if (!raw || !m) return;
+      const next = { arabic: m.arabic || "", definition: m.definition || "", example: m.example || "",
+                     type: m.type || raw.type || "", synonyms: (m.synonyms || []).slice(0, 3) };
+      Object.keys(next).forEach((k) => {
+        const v = next[k];
+        if (v && (!Array.isArray(v) || v.length)) { raw[k] = v; if (w) w[k] = Array.isArray(v) ? v.slice() : v; }
+        else { delete raw[k]; if (w) w[k] = Array.isArray(w[k]) ? [] : ""; }
+      });
+      if (w && !w.type) w.type = /\s/.test(w.word) ? "Phrase" : "Noun";
+      raw.confirmed = true; if (w) w.confirmed = true;
+      if (m.trusted) { raw.trusted = true; if (w) w.trusted = true; }
+      delete raw.check; if (w) delete w.check;
+      save();
     },
 
     /** Forget what auto-fill wrote for a word (what the learner typed stays), so it can be filled afresh. */

@@ -159,6 +159,80 @@
     // One tap is the choice: save it (with any other change made in the form).
     VS.actions["word-save"](form.querySelector('[data-action="word-save"]'));
   };
+  /* ── The meanings of a word, inline (V0.5 / V2.4) ────────────────
+     "Other meanings", "Show the others" and "Another meaning" on the Meet card
+     all open the same short list right where the learner is — never the
+     13-field Edit form. The meaning shown now is marked "This one"; any other
+     is one tap: "Use this meaning" (VS.store.applySense). "Yes" confirms. */
+  const meaningLists = {};
+  const meaningBox = (el) => {
+    const host = el.closest(".meaning-ask, .word-main, .word-check");
+    const scope = host && host.closest(".word-main, .meaning-ask") || host;
+    return scope && scope.querySelector(".meanings");
+  };
+  const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+  VS.actions["meaning-list"] = async (el) => {
+    const w = VS.byId[el.dataset.id];
+    const box = meaningBox(el);
+    if (!w || !box) return;
+    if (box.dataset.open === "1") { box.innerHTML = ""; box.dataset.open = ""; return; }   // a second tap closes it
+    box.dataset.open = "1";
+    box.innerHTML = String(html`<p class="hint">Looking up “${w.word}”…</p>`);
+    let list = [];
+    try { list = await VS.autofill.senses(w.word, w.context); } catch (e) { list = []; }
+    // The same meaning can come from two dictionaries: keep the first of each definition.
+    const seen = new Set();
+    list = list.filter((m) => m.definition && !seen.has(m.definition.toLowerCase()) && seen.add(m.definition.toLowerCase())).slice(0, 6);
+    // Meanings checked by hand say all a learner needs; the dictionary's (a duel…) only add noise.
+    if (list.some((m) => m.trusted)) list = list.filter((m) => m.trusted);
+    meaningLists[w.id] = list;
+    // Only the meaning already shown: say so, instead of listing it again.
+    if (list.length === 1 && same(list[0].definition, w.definition)) {
+      box.innerHTML = String(html`<p class="hint">That's the only meaning we found for “${w.word}”.</p>`);
+      return;
+    }
+    box.innerHTML = String(list.length
+      ? html`<ol class="meaning-list">${list.map((m, i) => {
+          const current = same(m.definition, w.definition);
+          return html`<li class="${current ? "is-current" : ""}">
+            <p class="meaning-head"><span class="meaning-type">${m.type}</span>${m.arabic ? html`<bdi class="meaning-ar" lang="ar" dir="rtl">${m.arabic}</bdi>` : ""}</p>
+            <p class="meaning-def">${m.definition}</p>
+            ${m.example ? html`<p class="meaning-ex">“${m.example}”</p>` : ""}
+            ${current
+              ? html`<p class="meaning-this">${icon("check", "icon-sm")} This one</p>`
+              : html`<button class="btn btn-tonal" type="button" data-action="meaning-use" data-id="${w.id}" data-index="${i}">Use this meaning</button>`}
+          </li>`;
+        })}</ol>`
+      : html`<p class="hint">${navigator.onLine ? "No other meanings found." : "You're offline — try again when you're online."}</p>`);
+  };
+  VS.actions["meaning-use"] = async (el) => {
+    const id = el.dataset.id;
+    const m = (meaningLists[id] || [])[Number(el.dataset.index)];
+    if (!m) return;
+    el.disabled = true;
+    // A meaning without Arabic gets its own now — the old Arabic belongs to the old meaning.
+    if (!m.arabic) m.arabic = await VS.autofill.arabicOf(m);
+    VS.store.applySense(id, m);
+    VS.toast("Meaning changed.");
+    refreshWord(id);
+  };
+  VS.actions["meaning-yes"] = (el) => {
+    VS.store.confirmMeaning(el.dataset.id);
+    refreshWord(el.dataset.id);
+  };
+  /** Redraw one word where it is: its open row in a list, or the whole activity. */
+  function refreshWord(id) {
+    const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
+    const w = VS.byId[id];
+    if (row && w) {
+      row.outerHTML = String(VS.ui.wordRow(w));
+      const again = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
+      if (again) again.open = true;
+    } else {
+      VS.app.render();
+    }
+  }
+
   /* A flagged word (VS.ui.checkLine): fix the spelling, or say it's right. */
   const reopen = (id) => {
     const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
@@ -295,7 +369,23 @@
     /** The example sentence with the word highlighted when we can find it. */
     example(w) {
       const hit = VS.findInExample(w, true);
-      return hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : html`${w.example}`;
+      if (!hit) return html`${w.example}`;
+      // The highlighter takes the word's preposition with it ("depend on", "afraid of")
+      // when the word's usage trap is about that preposition: that pair is the lesson.
+      const prep = VS.ui.prepOf(w);
+      const m = prep && new RegExp("^(\\s+" + prep + ")\\b", "i").exec(hit.after);
+      return m
+        ? html`${hit.before}<mark class="mark">${hit.answer}${m[1]}</mark>${hit.after.slice(m[1].length)}`
+        : html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}`;
+    },
+
+    /** The preposition a word's usage trap teaches ("depend" → "on"), or "". */
+    prepOf(w) {
+      const t = VS.usageTraps(w).find((x) => x.kind === "prep");
+      if (!t) return "";
+      const hit = VS.findIn(w, t.right, true);
+      const m = hit && /^\s+(on|in|at|to|of|for|with|about|from|by|into)\b/i.exec(hit.after);
+      return m ? m[1].toLowerCase() : "";
     },
 
     /** The example in quotes — or nothing at all when the word has none yet. */
@@ -448,8 +538,8 @@
       return html`
         <div class="word-check" role="note">
           <span>${icon("book", "icon-sm")} “${w.word}” has more than one meaning. Is this the one you met?</span>
-          <button class="btn btn-tonal" type="button" data-action="word-meanings" data-id="${w.id}">Show the others</button>
-          <button class="btn btn-quiet" type="button" data-action="word-check-ok" data-id="${w.id}">Yes, this one</button>
+          <button class="btn btn-tonal" type="button" data-action="meaning-list" data-id="${w.id}">Show the others</button>
+          <button class="btn btn-quiet" type="button" data-action="meaning-yes" data-id="${w.id}">Yes, this one</button>
         </div>`;
     },
 
@@ -503,8 +593,9 @@
                     ? html`<p class="word-definition">${w.definition}</p>`
                     : html`<p class="hint">No definition yet.
                         <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
-                  ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="word-meanings" data-id="${w.id}">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
+                  ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
                 </div>
+                <div class="meanings" aria-live="polite"></div>
 
                 <div class="word-example-block">
                   ${w.example ? html`

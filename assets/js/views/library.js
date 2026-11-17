@@ -275,7 +275,7 @@
             <p class="first-card-meta"><span class="ipa">/rɪˈzɪliənt/</span><span class="first-card-dot" aria-hidden="true">·</span>Adjective</p>
           </div>
           <div class="first-card-side">
-            <p class="first-card-ar" lang="ar" dir="rtl">صامد، مرن</p>
+            <p class="first-card-ar" lang="ar" dir="rtl">صامد - مرن</p>
             ${VS.speech.supported ? VS.ui.speakButton("resilient", "Hear resilient") : ""}
           </div>
         </div>

@@ -68,7 +68,7 @@
   const DATA = [
     /* ── Prepositions: Arabic picks a different one, or none ───── */
     ["depend|dependent", "prep", "It depends of the weather.", "It depends on the weather.",
-      "Always depend on — «يعتمد على» is on, never of, from or at.", "\\bdepend\\w*\\s+(?:of|from|at)\\b"],
+      "«يعتمد على» = depend on — never of, from or at.", "\\bdepend\\w*\\s+(?:of|from|at)\\b"],
     ["afraid|scared|frightened", "prep", "I'm afraid from dogs.", "I'm afraid of dogs.",
       "«خايف من» is afraid of — never from.", "\\b(?:afraid|scared|frightened)\\s+from\\b"],
     ["listen", "prep", "I listen music on the bus.", "I listen to music on the bus.",
@@ -156,7 +156,7 @@
       "Make a mistake, a decision, an effort, money, a plan. Do homework, a job, your best.",
       "\\b(?:do|does|did|doing|done)\\s+(?:a\\s+)?(?:big\\s+|huge\\s+|lot\\s+of\\s+|many\\s+|some\\s+|silly\\s+|small\\s+)?mistakes?\\b"],
     ["decision|decide", "with", "I did a decision.", "I made a decision.",
-      "Make a decision (British English also says take a decision).", "\\b(?:do|does|did|doing|done)\\s+(?:a|the|this|that|my|your|our|a\\s+big)\\s+decision\\b"],
+      "Arabic says «اتخذ قرار» (take), but English makes it: make a decision.", "\\b(?:do|does|did|doing|done)\\s+(?:a|the|this|that|my|your|our|a\\s+big)\\s+decision\\b"],
     ["homework|do", "with", "I make my homework after dinner.", "I do my homework after dinner.",
       "Do homework, do the dishes, do your best.", "\\b(?:make|makes|made|making)\\s+(?:my|your|his|her|our|their|the)\\s+homework\\b"],
     ["party", "with", "We'll do a party on Friday.", "We'll have a party on Friday.",
@@ -299,6 +299,9 @@
       "No to after can, must, should, could, might, will.", "\\b(?:can|could|must|should|will|would|might|may)\\s+to\\s+(?!be\\s+honest)\\w+"],
     ["let", "grammar", "Let me to explain.", "Let me explain.",
       "Let someone do — no to.", `\\blet\\s+${PRON}\\s+to\\b`],
+    ["give up|enjoy|avoid|finish|mind|keep|practise|practice|consider|suggest", "grammar", "My father gave up to smoke.", "My father gave up smoking.",
+      "After give up, enjoy, avoid, finish, mind and keep, the next verb takes -ing: gave up smoking, enjoy reading. Arabic says «بطّل يدخّن»; English doesn't use to here.",
+      "\\b(?:g(?:ive|ives|ave|iven|iving)\\s+up|enjoy(?:s|ed|ing)?|avoid(?:s|ed|ing)?|finish(?:es|ed|ing)?|mind(?:s|ed)?|keep(?:s|ing)?|kept)\\s+to\\s+(?!the\\b|a\\b|an\\b|my\\b|your\\b|his\\b|her\\b|our\\b|their\\b|me\\b|him\\b|them\\b|us\\b|it\\b|this\\b|that\\b)[a-z]+\\b"],
     ["enjoy", "grammar", "We enjoyed in the party.", "We enjoyed the party. (We enjoyed ourselves.)",
       "Enjoy needs an object: enjoy it, enjoy yourself, enjoy + -ing.", "\\benjoy(?:s|ed|ing)?\\s+(?:in|with)\\b"],
     ["suggest|recommend", "grammar", "He suggested me to go.", "He suggested that I go. (He suggested going.)",
@@ -350,6 +353,59 @@
   VS.findUsageMistakes = function (text) {
     const t = " " + String(text || "").replace(/[’‘]/g, "'") + " ";
     return TRAPS.filter((trap) => trap.bad && trap.bad.test(t));
+  };
+
+  /**
+   * The learner's own sentence, corrected — never the trap's canned example.
+   * The trap's wrong and right sentences differ by one word swapped, added or
+   * removed ("depends of" → "depends on", "discuss about" → "discuss", "listen
+   * music" → "listen to music"); the same edit is made inside what the learner
+   * wrote. A trap whose fix isn't that simple (tense, word order) returns ""
+   * and the app shows the rule alone.
+   *   VS.fixSentence(text, trap) → corrected text, or ""
+   */
+  const toks = (t) => String(t).replace(/\s*\(=.*?\)/, "").toLowerCase().match(/[a-z']+/g) || [];
+  function oneEdit(trap) {
+    const a = toks(trap.wrong), b = toks(trap.right);
+    let i = 0;
+    while (i < a.length && i < b.length && a[i] === b[i]) i++;
+    let ja = a.length - 1, jb = b.length - 1;
+    while (ja >= i && jb >= i && a[ja] === b[jb]) { ja--; jb--; }
+    const from = a.slice(i, ja + 1), to = b.slice(i, jb + 1);
+    if (from.length > 1 || to.length > 1 || (!from.length && !to.length)) return null;
+    return { from: from[0] || "", to: to[0] || "", before: a[i - 1] || "" };
+  }
+  /** smoke → smoking, stop → stopping, lie → lying, read → reading. */
+  const ing = (v) => /ie$/.test(v) ? v.slice(0, -2) + "ying"
+    : /[^aeiou]e$/.test(v) && v !== "be" ? v.slice(0, -1) + "ing"
+    : /^[^aeiou]*[aeiou][bdgmnprt]$/.test(v) && v.length <= 4 ? v + v.slice(-1) + "ing" : v + "ing";
+  VS.fixSentence = function (text, trap) {
+    if (!trap || !trap.bad || trap.kind === "tense") return "";
+    const t = " " + String(text || "").replace(/[’‘]/g, "'") + " ";
+    const m = trap.bad.exec(t);
+    if (!m) return "";
+    // "give up to smoke" → "give up smoking": the -ing trap is two words, not one.
+    // Only when the right sentence has the -ing of the very verb after "to" ("to smoke" → "smoking"),
+    // so "attended to the meeting" is never turned into "attended thing meeting".
+    const toVerb = /\bto\s+([a-z]+)/i.exec(trap.wrong);
+    if (toVerb && new RegExp("\\b" + ing(toVerb[1].toLowerCase()) + "\\b", "i").test(trap.right)) {
+      // "look forward to meet" keeps its "to" (→ to meeting); "give up to smoke" loses it (→ smoking).
+      const keepTo = new RegExp("\\bto\\s+" + ing(toVerb[1].toLowerCase()) + "\\b", "i").test(trap.right);
+      const fixedIng = m[0].replace(/\bto\s+([a-z]+)/i, (_, v) => (keepTo ? "to " : "") + ing(v.toLowerCase()));
+      return fixedIng === m[0] ? "" : (t.slice(0, m.index) + fixedIng + t.slice(m.index + m[0].length)).replace(/\s+/g, " ").trim();
+    }
+    const e = oneEdit(trap);
+    if (!e) return "";
+    const found = m[0];
+    let fixed;
+    if (e.from && e.to) fixed = found.replace(new RegExp("\\b" + e.from + "\\b", "i"), e.to);           // swap
+    else if (e.from) fixed = found.replace(new RegExp("\\s*\\b" + e.from + "\\b", "i"), "");          // remove
+    else {                                                                                       // add after the word before
+      const w = /^(\s*\S+)/.exec(found);
+      fixed = w ? w[1] + " " + e.to + found.slice(w[1].length) : "";
+    }
+    if (!fixed || fixed === found) return "";
+    return (t.slice(0, m.index) + fixed + t.slice(m.index + found.length)).replace(/\s+/g, " ").trim();
   };
 
   VS.usageTrapsCount = TRAPS.length;

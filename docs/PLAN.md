@@ -882,29 +882,56 @@ Memrise/Quizlet: محتوى منظّف ومراجَع. إحنا أقوى منه�
 > الأبسط اللي بيخدم "خطوة واحدة واضحة" واكتبه هنا.
 
 ### V0 — ثقة المحتوى (P0) — الأول قبل أي حاجة
-- [ ] **V0.1 المعنى من الجملة اللي قابلها فيها.** لو الكلمة ليها `context` (Where you met it) أو اتضافت من
+- [x] **V0.1 المعنى من الجملة اللي قابلها فيها.** لو الكلمة ليها `context` (Where you met it) أو اتضافت من
       From text: اختار المعنى اللي كلماته بتشارك الجملة (take off + plane → "leave the ground" = أقلعت). ولو
       مفيش تطابق، العربي ميتعرضش في الـ cue اللي فيه الجملة دي. ملفات: `core/autofill.js`، `views/recall.js`.
-- [ ] **V0.2 جدول تصحيحات يدوي** `assets/data/overrides.js`: أشهر الكلمات اللي الآلي بيغلط فيها (persuade=أقنع،
+- [x] **V0.2 جدول تصحيحات يدوي** `assets/data/overrides.js`: أشهر الكلمات اللي الآلي بيغلط فيها (persuade=أقنع،
       afford=يقدر على (تكلفة)، commute=يتنقّل يوميًا (للشغل)، relieved=مرتاح (adjective)، give up=يبطّل/يستسلم،
       challenge=تحدّي (من غير duel)، look after=يعتني بـ، depend=يعتمد على…). يبدأ بـ 100 كلمة شائعة على الأقل
       ويكون سهل يتزود. الـ override بيكسب على الآلي. اختبار في `tools/` بيتأكد إن كل override ليه word/arabic/definition.
-- [ ] **V0.3 Similar نضيف:** من أشهر 6,000 كلمة بس، نفس نوع الكلمة، 3 بالكتير، ومن غير register نادر. "Goes with"
+- [x] **V0.3 Similar نضيف:** من أشهر 6,000 كلمة بس، نفس نوع الكلمة، 3 بالكتير، ومن غير register نادر. "Goes with"
       3 بالكتير ومرتبين بالشيوع.
-- [ ] **V0.4 أمثلة بسيطة:** أفضّل مثال ≤ 12 كلمة ومستوى عادي (من Tatoeba أو جوجل)؛ highlight على الـ collocation
+- [x] **V0.4 أمثلة بسيطة:** أفضّل مثال ≤ 12 كلمة ومستوى عادي (من Tatoeba أو جوجل)؛ highlight على الـ collocation
       كلها (depend **on**).
-- [ ] **V0.5 المتعلم يأكد المعنى في Meet:** تحت العربي: "Is this the meaning you met? ✓ Yes / Another meaning".
+- [x] **V0.5 المتعلم يأكد المعنى في Meet:** تحت العربي: "Is this the meaning you met? ✓ Yes / Another meaning".
       "Another meaning" يفتح قايمة المعاني inline (V2.4). الكلمة اللي اتأكدت تتعلّم `confirmed`.
-- [ ] **V0.6 تصحيح Use it على جملة المتعلم:** لما فخ بيلقط، اعرض جملته هو بالتصحيح (I give up to smoke → I gave
+- [x] **V0.6 تصحيح Use it على جملة المتعلم:** لما فخ بيلقط، اعرض جملته هو بالتصحيح (I give up to smoke → I gave
       up smoking)، أو القاعدة بس — **ممنوع** الجملة المحفوظة بتاعة الفخ. "Keep it anyway" بس للي جاي من
       LanguageTool مش من فخ متأكد منه.
-- [ ] **V0.7 فخوخ جديدة/مصلّحة:** give up / stop / avoid / enjoy / finish + -ing؛ "make a decision — العربي بيقول
+- [x] **V0.7 فخوخ جديدة/مصلّحة:** give up / stop / avoid / enjoy / finish + -ing؛ "make a decision — العربي بيقول
       اتخذ (take)، الإنجليزي بيقول make" (من غير "British also says take")؛ صياغة depend: "يعتمد على = depend
       **on** — never of, from or at"؛ مثال about.html "my plans depends of" فيه غلطتين → غلطة واحدة.
-- [ ] **V0.8 كلمات مكررة:** relieved اتحولت relieve واتعمل منها نسختين بصمت → متضيفش lemma جديدة لو الشكل الأصلي
+- [x] **V0.8 كلمات مكررة:** relieved اتحولت relieve واتعمل منها نسختين بصمت → متضيفش lemma جديدة لو الشكل الأصلي
       فيه context؛ واسأل بدل ما تحوّل بصمت ("relieved (adjective) or relieve (verb)?").
-- [ ] **V0.9 عرض أول تشغيل صادق:** كارت المثال (resilient صامد، مرن) يطابق اللي الـ auto-fill بيطلعه فعلًا
+- [x] **V0.9 عرض أول تشغيل صادق:** كارت المثال (resilient صامد، مرن) يطابق اللي الـ auto-fill بيطلعه فعلًا
       (أو resilient يدخل جدول V0.2).
+
+#### اللي اتعمل في V0 (والمقاسات)
+- **جدول المعاني المراجَعة** `assets/data/overrides.js`: **95 كلمة** مكتوبة باليد (تعريف بإنجليزي بسيط، عربي
+  قصير، مثال ≤ 14 كلمة — كلها مكتوبة للتطبيق مش منقولة من قاموس). الكلمات اللي ليها كذا معنى يومي (take off،
+  give up، fine، apply، manage، turn down، break down، challenge) ليها `senses` و`keys`. `tools/check.py`
+  بيرفض أي entry ناقص أو عربيه مش عربي أو مثاله طويل (اتجرّب بكسر entry عمدًا → الفحص وقع).
+- **المعنى من الجملة:** `lookup(word, context)` — جملة "Where you met it" بتختار المعنى (keys + التعريف +
+  المثال). **اتجرّب:** take off + "The plane…" ← تقلع (الطيارة)؛ fine + "parking" ← غرامة؛ turn down + "the
+  music" ← يوطّي (الصوت). من غير جملة والكلمة ليها كذا معنى ← "Which meaning?".
+- **Recall:** العربي جنب جملة المتعلم بيظهر بس لو المعنى متأكد منه (مراجَع / المتعلم أكده / جه من نفس
+  الجملة) — "The plane will ___" عمرها ما تيجي جنب «نزع».
+- **Similar:** من أشهر 6,000 بس، 3 بالكتير؛ Goes with 3 بالكتير وwoman/women واحد.
+- **أمثلة:** المثال الطويل (> 14 كلمة) بيتبدّل بأقصر مثال لنفس الكلمة؛ الـ highlighter بياخد حرف الجر مع
+  الكلمة لما الفخ عن حرف الجر (depend **on**).
+- **Meet:** "Is this the meaning you met? Yes / Another meaning" للكلمات اللي مش مراجَعة؛ "Another meaning" /
+  "Other meanings" / "Show the others" بقوا **قايمة inline واحدة** (`meaning-list`) — المعنى الحالي "✓ This one"،
+  والباقي "Use this meaning" (`VS.store.applySense`)؛ مش فورم الـ Edit. لو الكلمة ليها معاني مراجَعة بتظهر هي بس
+  (مفيش duel)؛ لو مفيش غير معنى واحد: "That's the only meaning we found".
+- **Use it بيصحح جملة المتعلم هو** (`VS.fixSentence`): تبديل/إضافة/حذف كلمة واحدة، والـ -ing (gave up to smoke →
+  gave up smoking، look forward to meet → to meeting). **78 فخ** بيصححوا جملة المتعلم، و`tools/test_traps.js`
+  بيتأكد إن تصحيح الجملة الغلط بتاعة كل فخ = الجملة الصح بالظبط — الاختبار مسك 3 bugs قبل ما توصل لحد
+  ("attended thing meeting"، "look forward meeting"، "used waking"). الزمن: القاعدة بس.
+- **فخ جديد:** give up / enjoy / avoid / finish / mind / keep + to (من غير ما يمسك "keep to the left" أو "gave up
+  to the police")؛ depend و make a decision اتعادت صياغتهم؛ مثال about.html بقى غلطة واحدة وبيوري جملة
+  المتعلم متصححة.
+- **relieved / interested / tired** مبقوش بيتحولوا لفعل (relieve) بصمت.
+- **أول تشغيل صادق:** resilient في الجدول = صامد - مرن بنفس التعريف والمثال اللي في كارت أول تشغيل.
 
 ### V1 — الأمان والتحكم (P1)
 - [ ] **V1.1 Undo لكل حذف:** حذف كلمة/كلمات/جملة/reset كلمة → toast فيه "Undo" لمدة 10 ثواني (soft-delete في

@@ -83,11 +83,33 @@ def check_traps(errors: list[str]) -> None:
         errors.extend(line.strip() for line in run.stdout.splitlines() if "FAIL" in line)
 
 
+def check_overrides(errors: list[str]) -> None:
+    """Every hand-checked meaning (assets/data/overrides.js) is complete: no half entries reach a learner."""
+    node = shutil.which("node")
+    path = ROOT / "assets" / "data" / "overrides.js"
+    if not node or not path.exists():
+        return
+    script = (
+        "const window={};" + path.read_text(encoding="utf-8") +
+        ";const bad=[];for(const [w,o] of Object.entries(window.VS_OVERRIDES)){"
+        "for(const m of (o.senses||[o])){for(const k of ['type','arabic','definition','example'])"
+        "if(!m[k]||!String(m[k]).trim())bad.push(w+': missing '+k);"
+        "if(!/[\\u0600-\\u06FF]/.test(m.arabic||''))bad.push(w+': arabic is not Arabic');"
+        "if((m.example||'').split(/\\s+/).length>14)bad.push(w+': example over 14 words');}}"
+        "console.log(bad.join('\\n'));"
+    )
+    run = subprocess.run([node, "-e", script], capture_output=True, text=True)
+    if run.returncode:
+        errors.append("overrides.js does not load: " + run.stderr.strip()[:200])
+    errors.extend("overrides.js — " + line for line in run.stdout.splitlines() if line.strip())
+
+
 def main(argv: list[str]) -> int:
     errors: list[str] = []
     check_pages(errors)
     check_styles(errors)
     check_traps(errors)
+    check_overrides(errors)
     for e in errors:
         print(f"  ERROR    {e}")
     print(f"check {'FAILED' if errors else 'OK'}: {len(errors)} error(s)")
