@@ -97,7 +97,7 @@
     box.innerHTML = String(html`
       <ul class="more-ex-items">${shown.map((t) => {
         const hit = VS.findIn(w, t, true);
-        return html`<li>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : t}${VS.ui.speakButton(t, "Hear this sentence")}</li>`;
+        return html`<li><span class="more-ex-text">${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : t}</span>${VS.ui.speakButton(t, "Hear this sentence")}</li>`;
       })}</ul>
       <p class="hint more-ex-credit">Sentences from <a href="https://tatoeba.org" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR).</p>`);
   };
@@ -152,9 +152,15 @@
     // One tap is the choice: save it (with any other change made in the form).
     VS.actions["word-save"](form.querySelector('[data-action="word-save"]'));
   };
-  VS.actions["word-delete"] = (el) => {
+  VS.actions["word-delete"] = async (el) => {
     const w = VS.byId[el.dataset.id];
-    if (!w || !confirm(`Delete “${w.word}” from your library? Its progress and note go too. This can't be undone.`)) return;
+    if (!w) return;
+    const yes = await VS.confirm({
+      title: `Delete “${w.word}”?`,
+      body: "Its progress and note go too. This can't be undone.",
+      confirmLabel: "Delete",
+    });
+    if (!yes) return;
     VS.store.deleteUserWords([w.id]);
     location.reload();
   };

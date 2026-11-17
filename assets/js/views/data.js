@@ -172,11 +172,18 @@
     },
 
     mount(root) {
-      VS.$$("[data-restore]", root).forEach((input) => input.addEventListener("change", () => {
+      VS.$$("[data-restore]", root).forEach((input) => input.addEventListener("change", async () => {
         const file = input.files[0];
         if (!file) return;
         const mode = input.dataset.restore;
-        if (mode === "replace" && !confirm("Replace everything on this device with the backup? Progress made here since that backup will be lost.")) return;
+        if (mode === "replace") {
+          const yes = await VS.confirm({
+            title: "Replace everything on this device?",
+            body: "Words and progress here that the backup doesn't have will be lost. This can't be undone.",
+            confirmLabel: "Replace",
+          });
+          if (!yes) { input.value = ""; return; }
+        }
         file.text().then((text) => {
           const ok = mode === "merge" ? VS.store.mergeJSON(text) : VS.store.importJSON(text);
           if (!ok) { VS.toast("That file is not a VocabStudy backup."); return; }

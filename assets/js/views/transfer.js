@@ -302,9 +302,15 @@
         VS.toast("Merged. Your words are on this device now.");
         setTimeout(() => location.reload(), 700);
       },
-      "qr-replace"() {
-        if (!confirm("Replace everything on this device with the other device's data? Words and progress here that the other device doesn't have will be lost.")) return;
-        if (!VS.store.importJSON(s.ready.text)) { VS.toast("That data couldn't be used."); return; }
+      "qr-replace": async () => {
+        const payload = s.ready.text;
+        const yes = await VS.confirm({
+          title: "Use the other device's data?",
+          body: "Words and progress here that the other device doesn't have will be lost. This can't be undone.",
+          confirmLabel: "Replace",
+        });
+        if (!yes) return;
+        if (!VS.store.importJSON(payload)) { VS.toast("That data couldn't be used."); return; }
         VS.toast("Replaced. This device now matches the other one.");
         setTimeout(() => location.reload(), 700);
       },

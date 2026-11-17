@@ -203,4 +203,61 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove("is-on"), 2200);
   };
+
+  /* ── Asking before something is lost ────────────────────────────
+     The browser's confirm() blocks the page, cannot be styled and
+     wears the browser's voice, not ours. Every destructive action asks
+     here instead: the app's own sheet, one sentence about what goes,
+     the safe choice holding the focus, and the action named in red.
+     `VS.confirm({...})` resolves true only when the learner says yes. */
+  let confirmDialog;
+  VS.confirm = function ({ title, body, confirmLabel = "Continue", cancelLabel = "Cancel" }) {
+    return new Promise((resolve) => {
+      if (!confirmDialog) {
+        confirmDialog = document.createElement("dialog");
+        confirmDialog.id = "confirm";
+        confirmDialog.className = "sheet confirm";
+        document.body.appendChild(confirmDialog);
+      }
+      const dlg = confirmDialog;
+      if (dlg.open) dlg.close("cancel");
+      dlg.setAttribute("role", "alertdialog");
+      dlg.setAttribute("aria-labelledby", "confirmTitle");
+      dlg.setAttribute("aria-describedby", "confirmBody");
+      dlg.innerHTML = `
+        <div class="confirm-body">
+          <h2 id="confirmTitle"></h2>
+          <p id="confirmBody"></p>
+        </div>
+        <div class="confirm-foot">
+          <button class="btn" type="button" data-confirm="no"></button>
+          <button class="btn btn-danger" type="button" data-confirm="yes"></button>
+        </div>`;
+      dlg.querySelector("#confirmTitle").textContent = title;
+      dlg.querySelector("#confirmBody").textContent = body;
+      dlg.querySelector('[data-confirm="no"]').textContent = cancelLabel;
+      dlg.querySelector('[data-confirm="yes"]').textContent = confirmLabel;
+
+      let answered = false;
+      const answer = (yes) => {
+        if (answered) return;
+        answered = true;
+        dlg.close();
+        resolve(yes);
+      };
+      dlg.onclick = (e) => {
+        const btn = e.target.closest("[data-confirm]");
+        if (btn) return answer(btn.dataset.confirm === "yes");
+        if (e.target === dlg) answer(false);        // the backdrop
+      };
+      dlg.onclose = () => {                         // Escape
+        if (answered) return;
+        answered = true;
+        resolve(false);
+      };
+      dlg.showModal();
+      // The safe choice holds the focus, so Enter never destroys anything.
+      dlg.querySelector('[data-confirm="no"]').focus();
+    });
+  };
 })();

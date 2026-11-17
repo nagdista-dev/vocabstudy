@@ -149,6 +149,13 @@ learner's notebook, not a stack of labelled cards.
   the example as an italic pull quote with a highlighter rule, and one tools
   row: `Hear the sentence` left, `More examples` right. The primary
   `Write a sentence` action follows.
+- **More examples.** The list opens under the quote, inside the same hairline:
+  each sentence is one block of text, never broken into flex fragments, with a
+  quiet speaker at its end; the Tatoeba credit closes the block, indented with
+  the sentences.
+- **One card at a time.** Opening a word closes the one already open, so the
+  library is always one reading column rather than a long stack of half-read
+  cards. `toggle` does not bubble; the listener runs in the capture phase.
 - **Memory.** Personal blocks wear the highlighter tint (where you met the
   word); the learner's own sentences follow, then teacher corrections when the
   word has a usage trap, then `Goes with` / `Similar`.
@@ -161,6 +168,16 @@ learner's notebook, not a stack of labelled cards.
   ghost buttons.
 - **Empty states keep the same order.** `No definition yet. Add a definition`,
   `Find a meaning`, `No example yet. Add an example`, then `More examples`.
+
+## Confirming a loss
+
+The browser's `confirm()` is never used: it blocks the page, wears the
+browser's voice and cannot be styled. `VS.confirm({ title, body,
+confirmLabel })` returns a promise and renders the app's own sheet:
+`role="alertdialog"`, the loss stated in one sentence, Cancel first with the
+focus, and the action named in red (`btn-danger`). Escape or the backdrop
+answers no. On phones it rises from the thumb edge like every other sheet; on
+wide screens it is a small centred page.
 
 ## Motion (`assets/css/motion.css`)
 

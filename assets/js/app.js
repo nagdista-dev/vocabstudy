@@ -320,8 +320,13 @@
       installPrompt.prompt();
       installPrompt.userChoice.finally(() => { installPrompt = null; redrawSettings(); });
     },
-    "reset-progress"() {
-      if (!confirm("Reset all progress? Your recall schedule, streak and scores will be deleted. This cannot be undone.")) return;
+    "reset-progress": async () => {
+      const yes = await VS.confirm({
+        title: "Reset all progress?",
+        body: "Your recall schedule, streak and scores will be deleted. This cannot be undone.",
+        confirmLabel: "Reset",
+      });
+      if (!yes) return;
       VS.store.resetProgress();
       VS.$("#settings").close();
       VS.toast("Progress reset.");
@@ -339,6 +344,15 @@
     if (name === "speak") e.preventDefault();
     handler.call(current.view.actions && current.view.actions[name] ? current.view.actions : GLOBAL, el, e);
   });
+
+  // One word open at a time: opening a card closes the one already open,
+  // so the library stays one reading column instead of a long stack.
+  // (toggle does not bubble; a capture listener still hears it.)
+  document.addEventListener("toggle", (e) => {
+    const row = e.target;
+    if (!row.classList || !row.classList.contains("word-row") || !row.open) return;
+    VS.$$(".word-row[open]").forEach((other) => { if (other !== row) other.open = false; });
+  }, true);
 
   // Quiz question types (Settings): keep at least one switched on.
   document.addEventListener("change", (e) => {

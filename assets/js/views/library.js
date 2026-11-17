@@ -472,16 +472,28 @@
         VS.toast("Backup reminder hidden for a week.");
         VS.app.render();
       },
-      "lib-reset"() {
+      "lib-reset": async () => {
         const ids = words().filter((w) => VS.store.status(w.id) !== "new").map((w) => w.id);
-        if (!confirm(`Start ${VS.plural(ids.length, "word")} over? Their recall schedule goes back to new. Notes are kept.`)) return;
+        if (!ids.length) return;
+        const yes = await VS.confirm({
+          title: `Start ${VS.plural(ids.length, "word")} over?`,
+          body: "Their recall schedule goes back to new. Notes are kept.",
+          confirmLabel: "Start over",
+        });
+        if (!yes) return;
         VS.store.resetWords(ids);
         VS.toast("Progress reset for " + VS.plural(ids.length, "word") + ".");
         VS.app.render();
       },
-      "lib-delete"() {
+      "lib-delete": async () => {
         const ids = words().map((w) => w.id);
-        if (!confirm(`Delete ${VS.plural(ids.length, "word")} from your library? Their progress and notes go too. This can't be undone.`)) return;
+        if (!ids.length) return;
+        const yes = await VS.confirm({
+          title: `Delete ${VS.plural(ids.length, "word")}?`,
+          body: "Their progress and notes go too. This can't be undone.",
+          confirmLabel: "Delete",
+        });
+        if (!yes) return;
         VS.store.deleteUserWords(ids);
         VS.toast(VS.plural(ids.length, "word") + " deleted.");
         VS.app.render();

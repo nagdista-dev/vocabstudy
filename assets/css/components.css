@@ -170,6 +170,10 @@
 .btn:disabled { opacity: .45; pointer-events: none; }
 .btn-primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+/* The one action that cannot be undone: named in red, so it is never
+   mistaken for the safe choice beside it. */
+.btn-danger { background: var(--bad); border-color: var(--bad); color: var(--on-brand); }
+.btn-danger:hover { background: color-mix(in srgb, var(--bad) 84%, black); border-color: color-mix(in srgb, var(--bad) 84%, black); }
 .btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
 .btn-quiet:hover { background: var(--surface-2); color: var(--ink); }
 /* A second-level action: clearly clickable, never competing with the one
@@ -402,6 +406,20 @@
   .sheet-foot { padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom)); }
   .sheet-foot .btn { flex: 1; }
 }
+
+/* Confirm — a question, not a form: one sentence, then two answers.
+   Quiet paper, the safe answer on the left, the loss named in red. */
+.confirm { width: min(420px, calc(100vw - 32px)); }
+.confirm-body { display: grid; gap: var(--s-2); padding: var(--s-6) var(--s-5) var(--s-5); }
+.confirm-body h2 { font-size: var(--text-xl); line-height: 1.3; text-wrap: balance; }
+.confirm-body p { max-width: 42ch; color: var(--ink-2); font-size: var(--text-md); line-height: 1.6; text-wrap: pretty; }
+.confirm-foot { display: flex; justify-content: flex-end; gap: var(--s-2); padding: 0 var(--s-5) var(--s-5); }
+@media (max-width: 640px) {
+  .confirm-body { padding: var(--s-5) var(--s-4) var(--s-4); }
+  .confirm-body h2 { font-size: var(--text-lg); }
+  .confirm-foot { padding: 0 var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom)); }
+  .confirm-foot .btn { flex: 1; }
+}
 .setting { display: grid; gap: var(--s-2); }
 .setting > b { font-size: var(--text-sm); }
 .setting .seg { width: fit-content; max-width: 100%; }
@@ -501,6 +519,7 @@ kbd {
 @media (pointer: coarse), (max-width: 640px) {
   .btn, .seg button, .icon-btn { min-height: var(--tap); }
   .speak-btn { width: var(--tap); height: var(--tap); }
+  .more-ex-items .speak-btn { width: 44px; height: 44px; }
   .brand { min-height: var(--tap); }
   .check { min-height: var(--tap); }
   .check input { width: 22px; height: 22px; }
@@ -590,8 +609,17 @@ kbd {
 /* More examples (Tatoeba), on request */
 .more-ex { display: grid; gap: var(--s-1); }
 .more-ex-list:empty { display: none; }
-.more-ex-items { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-2); }
-.more-ex-items li { display: flex; align-items: center; gap: var(--s-2); justify-content: space-between; font-style: italic; color: var(--ink-2); line-height: 1.5; }
-.more-ex-items .speak-btn { flex: none; }
-.more-ex-credit { font-size: var(--text-xs); }
+.more-ex-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.more-ex-items li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start;
+  gap: var(--s-3); font-style: italic; color: var(--ink-2); line-height: 1.6;
+}
+.more-ex-text { min-width: 0; overflow-wrap: anywhere; }
+.more-ex-items .speak-btn {
+  width: 30px; height: 30px; margin-top: 1px;
+  background: transparent; color: var(--ink-3);
+}
+.more-ex-items .speak-btn:hover { background: var(--brand-soft); color: var(--brand); }
+.more-ex-items .speak-btn .icon { width: 15px; height: 15px; }
+.more-ex-credit { margin-top: 12px; padding-inline-start: 15px; color: var(--ink-3); font-size: var(--text-xs); }
 .goes > span { color: var(--ink-3); }
