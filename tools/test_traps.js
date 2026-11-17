@@ -34,6 +34,9 @@ const CLEAN = [
   // The -ing trap must leave "to" + a noun alone.
   "I keep to the left on the road.",
   "He gave up to the police after an hour.",
+  "He keeps to himself at work.",
+  "She kept to herself all evening.",
+  "The thief gave up to police.",
   "I listen to podcasts on my way to work.",
   "It depends on the weather.",
   "She is married to a doctor and they live in Giza.",
@@ -85,6 +88,27 @@ traps.forEach((t) => {
   if (!fixed) return;
   fixes++;
   if (norm(fixed) !== norm(t.right)) fail(`"${t.keys[0]}": fixSentence gives "${fixed}", expected "${t.right}"`);
+});
+
+// Real learner sentences (from the V0/V1 review): the fix must be right — or there must be no fix.
+// "" means "show the rule only". A wrong "fixed" sentence is worse than none.
+const REAL = [
+  ["We arrived to the airport late.", "We arrived at the airport late."],
+  ["We arrived to Cairo late.", "We arrived in Cairo late."],
+  ["She married with her cousin.", ""],
+  ["She is married with a doctor.", "She is married to a doctor."],
+  ["I am interesting about history.", ""],
+  ["I am waiting you since an hour.", ""],
+  ["Remember me to buy milk.", "Remind me to buy milk."],
+  ["It depends of the weather tomorrow.", "It depends on the weather tomorrow."],
+  ["My father gave up to smoke.", "My father gave up smoking."],
+  ["I give up to smoke last year.", ""],
+  ["We discussed about the new project.", "We discussed the new project."],
+];
+REAL.forEach(([s, want]) => {
+  const t = VS.findUsageMistakes(s).find((x) => x.kind !== "tense");
+  const got = t ? VS.fixSentence(s, t) : "(no trap)";
+  if (got !== want) fail(`real sentence "${s}": fix gives "${got || "(rule only)"}", expected "${want || "(rule only)"}"`);
 });
 
 // Arabic must not start a sentence mid-line ("… . «حالياً» is…"): it reads out of order.

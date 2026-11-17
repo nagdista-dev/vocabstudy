@@ -112,7 +112,7 @@
     const control = o.options
       ? html`<select data-form-field="${name}"><option value="">${o.empty}</option>${o.options.map((v) => html`<option ${v === value ? VS.raw("selected") : ""}>${v}</option>`)}</select>`
       : o.long
-        ? html`<textarea data-form-field="${name}" rows="2" placeholder="${o.placeholder || ""}">${value}</textarea>`
+        ? html`<textarea data-form-field="${name}" rows="2" dir="auto" placeholder="${o.placeholder || ""}">${value}</textarea>`
         : html`<input data-form-field="${name}" value="${value}" placeholder="${o.placeholder || ""}" ${o.ar ? VS.raw('lang="ar" dir="rtl"') : ""} ${o.list ? VS.raw('list="' + o.list + '"') : ""} autocomplete="off"/>`;
     return html`<label class="form-field ${o.wide ? "is-wide" : ""}"><span>${label}</span>${control}</label>`;
   }
@@ -125,13 +125,15 @@
         <div class="add-line">
           <label class="field field-xl">
             <span class="sr-only">English word or phrase</span>
-            <input data-form-field="word" id="addWord" value="${st.form.word || ""}" placeholder="Word or phrase" aria-label="English word or phrase"
+            <input data-form-field="word" id="addWord" dir="auto" value="${st.form.word || ""}" placeholder="Word or phrase" aria-label="English word or phrase"
                    spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
           </label>
           <button class="btn btn-primary btn-lg" type="submit" aria-label="Add this word">${icon("plus", "icon-sm")}<span class="add-label">Add</span></button>
         </div>
         <p class="hint">${auto
-          ? "Press Enter. The app fills in the Arabic meaning, definition, example and pronunciation — only the word is sent online."
+          ? (navigator.onLine
+            ? "Press Add (or Enter). The app fills in the Arabic meaning, definition, example and pronunciation."
+            : "You're offline — the word is saved now, and its meaning is filled in when you're back online.")
           : html`Auto-fill is off (Settings), so nothing leaves this device. Add the details below.`}</p>
         <details class="add-more" ${!auto || filled || st.openDetails ? VS.raw("open") : ""}>
           <summary>${icon("chevron-right", "icon-sm")} More details <span class="hint">(optional)</span></summary>
@@ -232,6 +234,12 @@
   }
 
   /** Picked words; neighbours become one phrase ("run" + "out" + "of" → "run out of"). */
+  /** Are two picked words next to each other (only a space or hyphen between)? */
+  function adjacentPicks() {
+    const list = tokens(st.collect.text);
+    return [...st.collect.picked].some((i) => st.collect.picked.has(i + 2) && list[i + 1] && /^[\s-]{1,2}$/.test(list[i + 1].text));
+  }
+
   function pickedPhrases() {
     const c = st.collect;
     const list = tokens(c.text);
@@ -239,6 +247,8 @@
     let cur = null;
     list.forEach((t, i) => {
       if (t.word && c.picked.has(i)) {
+        // Neighbours become one phrase only when the learner asks ("Join…"): two unknown words side by side stay two.
+        if (cur && !c.join) { out.push(cur); cur = null; }
         if (cur) cur.text += cur.gap + t.text; else cur = { text: t.text, at: t.at };
         cur.gap = "";
       } else if (!t.word && cur && /^[\s-]+$/.test(t.text) && t.text.length <= 2) {
@@ -284,7 +294,9 @@
         const tail = ((list[i + 1] && !list[i + 1].word && list[i + 1].text.match(/^[^\s]+/)) || [""])[0];
         return html`<span class="tok-wrap"><button type="button" class="${VS.byId[VS.wordKey(t.text)] ? "tok is-known" : "tok"}" data-action="collect-tok" data-i="${i}" aria-pressed="${c.picked.has(i)}">${t.text}</button>${tail}</span>`;
       })}</p>
-      <p class="hint">Words next to each other become one phrase.${list.some((t) => t.word && VS.byId[VS.wordKey(t.text)]) ? " Dotted words are already in your library." : ""}</p>
+      ${adjacentPicks() ? html`<label class="check collect-join"><input type="checkbox" data-collect-join ${st.collect.join ? VS.raw("checked") : ""}>
+        <span>Join words next to each other into one phrase</span></label>` : ""}
+      <p class="hint">Tap each word you don't know.${list.some((t) => t.word && VS.byId[VS.wordKey(t.text)]) ? " Dotted words are already in your library." : ""}</p>
       ${phrases.length ? html`
         <div class="collect-picked">
           ${chipsMarkup(phrases)}
@@ -469,7 +481,7 @@
         <div class="page import-page ${st.tab === "type" ? "is-type" : ""} view-enter">
           <header class="page-head"><div>
             <h1>Add words</h1>
-            <p class="hint">Into your library — ${VS.plural(VS.allWords().length, "word")} so far. Everything stays on this device.</p>
+            <p class="hint">Into your library — ${VS.plural(VS.allWords().length, "word")} so far. Your words stay on this device; to fill in a meaning, only the English word is looked up online.</p>
           </div></header>
 
           <section class="card import-step import-main">
@@ -491,6 +503,14 @@
         st.collect.done = "";
         const box = VS.$("#collectPick");
         if (box) box.innerHTML = String(collectPick());
+      });
+      // "Join words next to each other into one phrase": the learner's choice, never a guess.
+      root.addEventListener("change", (e) => {
+        if (!e.target.matches || !e.target.matches("[data-collect-join]")) return;
+        st.collect.join = e.target.checked;
+        const box = VS.$("#collectPick");
+        if (box) box.innerHTML = String(collectPick());
+        glossPicked();
       });
       const text = VS.$("#importText", root);
       if (text) text.addEventListener("input", () => { st.text = text.value; });

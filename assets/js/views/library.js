@@ -64,21 +64,29 @@
           <button class="icon-btn" type="button" data-action="lib-panel-close" aria-label="Close filters">${icon("x")}</button>
         </div>
         <div class="sheet-body filter-body">
+          <!-- Three steps instead of eleven controls at once: sort, the four everyday
+               "show only" choices, then everything else behind one row. -->
           <div class="lib-panel-grid">
             ${select("sort", "Sort", Object.entries(F.SORTS))}
-            ${select("level", "Level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]].concat(levels.map((l) => [l, l]), [["none", "No level"]]))}
-            ${select("type", "Type", [["all", "All types"]].concat(types.map((t) => [t, t])))}
-            ${select("box", "Memory", [["all", "Any memory"]].concat(F.BOXES.map((b, i) => [String(i), i ? "Box " + i + " · waits " + b : "Not studied"])))}
-            ${select("added", "Added", Object.entries(F.ADDED))}
-            ${select("freq", "How common", [["all", "Any"], ["5", "Top 1,000"], ["4", "Top 3,000"], ["3", "Top 6,000"], ["2", "Top 12,000"], ["1", "Uncommon"], ["0", "Rare"]])}
-            ${select("tag", "Tag", [["all", "All tags"]].concat(tags.map((t) => [t.tag, "#" + t.tag + " (" + t.count + ")"]), [["none", "No tag"]]))}
+            ${tags.length ? select("tag", "Tag", [["all", "All tags"]].concat(tags.map((t) => [t.tag, "#" + t.tag + " (" + t.count + ")"]), [["none", "No tag"]])) : ""}
           </div>
+          <p class="filter-group-title">Show only</p>
           <div class="lib-toggles">
             ${toggle("note", "With my notes")}
             ${toggle("tricky", "Tricky words")}
             ${toggle("trap", "Sound traps")}
             ${toggle("usage", "Usage traps")}
           </div>
+          <details class="filter-more" ${["level", "type", "box", "added", "freq"].some((k) => f[k] !== "all") ? VS.raw("open") : ""}>
+            <summary>${icon("chevron-right", "icon-sm filter-more-chev")} More filters</summary>
+            <div class="lib-panel-grid">
+              ${select("box", "Comes back in", [["all", "Any time"]].concat(F.BOXES.map((b, i) => [String(i), i ? b + " (step " + i + " of 6)" : "Not studied yet"])))}
+              ${select("added", "Added", Object.entries(F.ADDED))}
+              ${select("freq", "How common", [["all", "Any"], ["5", "Top 1,000"], ["4", "Top 3,000"], ["3", "Top 6,000"], ["2", "Top 12,000"], ["1", "Uncommon"], ["0", "Rare"]])}
+              ${select("type", "Type", [["all", "All types"]].concat(types.map((t) => [t, t])))}
+              ${levels.length ? select("level", "Level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]].concat(levels.map((l) => [l, l]), [["none", "No level"]])) : ""}
+            </div>
+          </details>
         </div>
         <div class="sheet-foot filter-foot">
           <button class="btn btn-quiet" type="button" data-action="lib-clear" ${F.active(f) || f.q ? "" : VS.raw("disabled")}>Clear all</button>
@@ -116,15 +124,21 @@
       </div>`;
   }
 
+  /* Below five words the home screen stays one step: the plan, the add box and the
+     words. Search, status chips, filters and the Practise menu arrive with the fifth. */
+  const EARLY = 5;
+
   function results() {
     const list = words();
     const desc = F.describe(f);
     const shown = list.slice(0, limit);
+    // The first few words are a list, not a database: no count bar, no Practise menu (V2.1).
+    const early = VS.allWords().length < EARLY;
     return html`
-      <div class="lib-bar">
+      ${early ? "" : html`<div class="lib-bar">
         <p class="lib-count" aria-live="polite"><b>${VS.plural(list.length, "word")}</b>${desc ? html`<span class="lib-desc hint">${desc}</span>` : ""}</p>
         ${actions(list)}
-      </div>
+      </div>`}
       ${list.length
         ? html`<div class="word-list">
             ${shown.map((w) => VS.ui.wordRow(w))}
@@ -224,7 +238,7 @@
         ${quickReady ? html`
           <a class="rail-quick" href="#/quick">
             <span class="rail-quick-ico">${icon("bolt")}</span>
-            <span class="rail-quick-copy"><b>Quick 5</b><small>Five minutes. The 10 words that matter most.</small></span>
+            <span class="rail-quick-copy"><b>5-minute review</b><small>Your 10 most important words, in five minutes.</small></span>
             ${icon("arrow-right", "icon-sm")}
           </a>` : ""}
         <section class="rail-card">
@@ -249,7 +263,7 @@
           <p class="first-form-where" id="firstWhere">In a book, a series, at work — anywhere.</p>`}
         <div class="add-line">
           <span class="field field-xl">
-            <input id="quickWord" placeholder="${compact ? "Add a word or phrase" : "Type a word"}"
+            <input id="quickWord" dir="auto" placeholder="${compact ? "Add a word or phrase" : "Type a word"}"
               ${compact
                 ? VS.raw('aria-label="An English word or phrase you want to remember"')
                 : VS.raw('aria-describedby="firstWhere firstHow"')}
@@ -258,7 +272,7 @@
           <button class="btn ${compact ? "btn-tonal" : "btn-primary"} btn-lg" type="submit" aria-label="Add this word">${icon("plus", "icon-sm")}<span class="add-label">Add</span></button>
         </div>
         ${compact ? "" : html`<p class="first-form-how" id="firstHow">${VS.autofill.enabled()
-          ? html`<span class="first-how-key">Press Enter — or </span><span class="first-how-touch">Or </span><a href="#/add">paste a list or upload a file</a>.`
+          ? html`<span class="first-how-key">Press Add — or </span><span class="first-how-touch">Or </span><a href="#/add">paste a list or upload a file</a>.`
           : html`Auto-fill is off — <a href="#/add">add the details in Add words</a>.`}</p>`}
       </form>`;
   }
@@ -349,7 +363,7 @@
             ${firstRecall()}
             <footer class="first-foot">
               <p>Free and open source. No account, no server: <b>your words stay on this device</b>.</p>
-              <a href="about.html" hreflang="ar">About VocabStudy, in Arabic</a>
+              <a href="about.html" hreflang="ar" lang="ar" dir="rtl">اقرأ عن التطبيق بالعربي</a>
             </footer>
           </div>`;
       }
@@ -367,7 +381,7 @@
                 <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
               </header>
 
-              <div class="lib-tools">
+              ${s.total < EARLY ? "" : html`<div class="lib-tools">
                 <div class="lib-search-row">
                   <label class="field">
                     ${icon("search", "icon-sm")}
@@ -381,7 +395,7 @@
                 </div>
                 ${statusChips(s)}
                 ${panel()}
-              </div>
+              </div>`}
 
               <div id="libResults">${results()}</div>
             </div>
@@ -547,7 +561,8 @@
         if (!ids.length) return;
         // The whole library, or a big part of it, goes only after a backup file —
         // the same gate as Start over (#/reset). Small deletes keep one confirm + Undo.
-        const big = ids.length === VS.allWords().length || ids.length > 20;
+        const total = VS.allWords().length;
+        const big = ids.length > 20 || (ids.length === total && total >= 10);
         const yes = await VS.confirm({
           title: `Delete ${VS.plural(ids.length, "word")}?`,
           body: big

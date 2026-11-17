@@ -237,7 +237,6 @@
 .recall-hint .similar { color: var(--on-mark); }
 .verdict { display: grid; gap: var(--s-1); }
 .verdict.is-almost { color: var(--on-mark); }
-.verdict-diff { font-size: 1.35rem; }
 .action-bar .btn.is-suggested { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px currentColor; }
 .btn-undo { margin-inline-start: auto; min-height: var(--tap); min-width: var(--tap); padding: 0 var(--s-3); font-size: var(--text-sm); color: var(--ink-2); }
 .btn-undo + .count { margin-inline-start: var(--s-2); }
@@ -276,3 +275,22 @@
 
 /* "Keep it anyway" sits in the warning, so Skip stays in the action bar. */
 .write-keep .link-btn { font-weight: 600; }
+.count-again { color: var(--ink-3); font-weight: 500; }
+
+/* Results: the words that moved forward and when each comes back (views/shared.js summary). */
+.summary-moved { justify-self: stretch; text-align: start; }
+.summary-moved ul { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: grid; gap: var(--s-2); }
+.summary-moved li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3);
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); }
+.summary-moved li .mark { font-weight: 700; font-size: var(--text-md); }
+.summary-moved li span { color: var(--ink-2); font-size: var(--text-sm); }
+.q-no-listen { justify-self: center; margin-top: var(--s-2); min-height: var(--tap); }
+
+/* Spell: after a miss, type it once more (V2.10). The placeholder shows the length, one dot a letter. */
+.spell-retype { margin-top: var(--s-3); }
+.spell-retype input { font-size: 1.3rem; letter-spacing: .04em; text-align: start; }
+.spell-retype input.is-right { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+#spellInput::placeholder { text-align: start; }
+.match-how { font-weight: 600; color: var(--ink); }
+/* Tiles keep one height so the two columns line up even when the Arabic wraps. */
+.match-col { grid-auto-rows: minmax(64px, auto); }

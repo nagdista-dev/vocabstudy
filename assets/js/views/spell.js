@@ -76,13 +76,21 @@
                       <p class="spell-legend hint"><span class="ch-ok">green</span> = you had it · <span class="ch-bad">red</span> = missed or wrong · <span class="ipa">${w.ipa}</span></p>`}
                   ${VS.ui.soundTraps(w)}
                   ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
-                </div>`
+                </div>
+                ${ok ? "" : html`
+                  <form class="spell-retype" data-form="retype" autocomplete="off">
+                    <label class="form-field"><span>Now type it once more, the right way</span>
+                      <input id="retypeInput" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" lang="en"
+                             class="${s.retyped ? "is-right" : ""}" value="${s.retype || ""}" placeholder="${answer.replace(/[^\s]/g, "·")}"/>
+                    </label>
+                  </form>`}`
               : ""}
           </section>
           </div>
           <div class="action-bar">
             ${s.checked
-              ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="nextBtn">Next word <kbd>Enter</kbd></button>`
+              ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="nextBtn"
+                  ${ok || s.retyped ? "" : VS.raw("disabled")}>Next word <kbd>Enter</kbd></button>`
               : html`
                 <button class="btn btn-lg" type="button" data-action="hint" ${s.hints >= answer.length - 1 ? "disabled" : ""}>${icon("bulb", "icon-sm")} Hint</button>
                 <button class="btn btn-lg btn-primary" type="button" data-action="check">Check <kbd>Enter</kbd></button>`}
@@ -96,10 +104,25 @@
       const form = VS.$("[data-form='spell']");
       VS.ui.watchKeyboard(input);
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); s.checked ? VS.views.spell.actions.next() : VS.views.spell.actions.check(); });
+      // After a miss, the hand learns it: the word is typed once more before Next wakes up.
+      const retype = VS.$("#retypeInput");
+      if (retype) {
+        const answer = VS.normalise(VS.spellingOf(s.words[s.index]));
+        retype.addEventListener("input", () => {
+          s.retype = retype.value;
+          s.retyped = VS.normalise(retype.value) === answer;
+          retype.classList.toggle("is-right", s.retyped);
+          VS.$("#nextBtn").disabled = !s.retyped;
+          if (s.retyped) VS.sfx.play("right");
+        });
+        VS.$("[data-form='retype']").addEventListener("submit", (e) => { e.preventDefault(); if (s.retyped) VS.views.spell.actions.next(); });
+      }
       if (!s.checked) {
         input.focus();
         input.setSelectionRange(input.value.length, input.value.length);
         if (!s.typed && !s.hints) VS.speech.say(VS.spellingOf(s.words[s.index]));
+      } else if (retype && !s.retyped) {
+        retype.focus({ preventScroll: true });
       } else {
         VS.$("#nextBtn").focus({ preventScroll: true });
       }
@@ -111,7 +134,11 @@
         s.typed = VS.$("#spellInput").value.trim();
         if (!s.typed) { VS.toast("Type the word first — or use Hint."); return; }
         // Arabic letters mean the keyboard is in Arabic, not that you misspelled.
-        if (VS.isArabicTyping(s.typed)) { VS.toast("Your keyboard is in Arabic — switch it to English."); return; }
+        // Keyboard left on Arabic: read the keys pressed, and say so once.
+        if (VS.isArabicTyping(s.typed)) {
+          s.typed = VS.fromArabicKeys(s.typed);
+          VS.toast("Your keyboard is in Arabic — read as “" + s.typed + "”. Switch it to English next time.");
+        }
         s.checked = true;
         const ok = VS.normalise(s.typed) === VS.normalise(VS.spellingOf(w));
         // A word you needed hints for still counts as a miss for the schedule.
@@ -128,7 +155,10 @@
       },
       slow() { VS.speech.say(VS.spellingOf(s.words[s.index]), null, 0.55); },
       next() {
-        s.index++; s.typed = ""; s.checked = false; s.hints = 0;
+        const w = s.words[s.index];
+        const missed = s.checked && VS.normalise(s.typed) !== VS.normalise(VS.spellingOf(w));
+        if (missed && !s.retyped) return;
+        s.index++; s.typed = ""; s.checked = false; s.hints = 0; s.retype = ""; s.retyped = false;
         VS.app.render();
       },
       restart() { VS.views.spell.start(VS.app.params()); VS.app.render(); },
@@ -136,7 +166,7 @@
     },
 
     keys(e) {
-      if (s && s.checked && e.key === "Enter" && document.activeElement.id !== "nextBtn") { e.preventDefault(); this.actions.next(); }
+      if (s && s.checked && e.key === "Enter" && !["nextBtn", "retypeInput"].includes(document.activeElement.id)) { e.preventDefault(); this.actions.next(); }
     },
   };
 })();

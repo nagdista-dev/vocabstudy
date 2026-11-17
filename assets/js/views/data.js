@@ -48,7 +48,7 @@
 
   function lastBackupText() {
     const last = VS.store.lastBackup();
-    if (!last) return html`<b class="never-backed">Never backed up on this device.</b>`;
+    if (!last) return html`<b class="never-backed">Never backed up on this device.</b> If this browser's data is cleared, your words go with it.`;
     const days = Math.round((new Date(VS.todayKey()) - new Date(last)) / 864e5);
     return "Last backup: " + (days === 0 ? "today" : days === 1 ? "yesterday" : days + " days ago") + ".";
   }
@@ -69,7 +69,7 @@
 
           <section class="card file-card" aria-labelledby="backup-title">
             <div class="file-head">
-              <span class="file-type" aria-hidden="true">${icon("download", "icon-sm")}</span>
+              <span class="file-type">${icon("download", "icon-sm")}<span>Backup file</span></span>
               <div class="file-copy">
                 <h2 id="backup-title">Full backup</h2>
                 <p class="file-name">${VS.backup.fileName()}</p>

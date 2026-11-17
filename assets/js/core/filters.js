@@ -118,7 +118,7 @@
     if (f.level === "none") parts.push("No level");
     else if (f.level !== "all") parts.push(f.level.length === 1 ? f.level + "1–" + f.level + "2" : f.level);
     if (f.type !== "all") parts.push(f.type + "s");
-    if (f.box !== "all") parts.push("Box " + f.box);
+    if (f.box !== "all") parts.push(f.box === "0" ? "not studied yet" : "comes back in " + BOXES[Number(f.box)]);
     if (f.added !== "all") parts.push("Added " + ADDED[f.added].toLowerCase());
     if (f.freq !== "all") parts.push(FREQ[f.freq] || "");
     if (f.tag === "none") parts.push("No tag");

@@ -187,7 +187,8 @@
 }
 @media (max-width: 640px) {
   .print-controls h1 { font-size: var(--text-xl); }
-  .print-page { padding-top: var(--s-4); padding-bottom: calc(78px + var(--s-4)); }
+  /* Room for the fixed Download bar AND the tab bar under it, so the last layout card is never covered. */
+  .print-page { padding-top: var(--s-4); padding-bottom: calc(140px + env(safe-area-inset-bottom) + var(--s-4)); }
   /* Keep the action in reach while the learner scrolls the options. The
      paper preview can be long, but Download PDF never leaves the screen. */
   .print-go {
@@ -228,3 +229,8 @@
   .p-cards:last-child { break-after: auto; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* "More options" (V2.15): level, type, order and how many wait behind one row. */
+.print-more > summary { display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); cursor: pointer; list-style: none; font-weight: 600; color: var(--ink-2); }
+.print-more > summary::-webkit-details-marker { display: none; }
+.print-more[open] .print-more-chev { transform: rotate(90deg); }

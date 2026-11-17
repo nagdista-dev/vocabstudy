@@ -70,6 +70,12 @@
       markup: html`<mark class="mark">${VS.plural(n.count, "word")}</mark> to recall.`,
       line: "Bring each one back from memory before it fades.",
     };
+    // The very first word: name it, and say how long it takes.
+    if (n.key === "learn" && !p.t.started && VS.allWords().length === 1) return {
+      markup: html`<mark class="mark">${VS.allWords()[0].word}</mark> is in.`,
+      line: "Learn it now — it takes about a minute.",
+      cta: "Learn it now",
+    };
     if (n.key === "learn") return {
       markup: html`<mark class="mark">${VS.plural(n.count, "new word")}</mark> to learn.`,
       line: "Meet each one once: meaning, Arabic, example and sound.",
@@ -84,7 +90,8 @@
      On the dark hero it is one quiet line with a short track. */
   function goal(t) {
     const target = VS.store.settings().dailyGoal || 0;
-    if (!target || !t.words) return "";
+    // No goal before the first session: "0 / 50" on day one is a debt, not a goal.
+    if (!target || !t.words || !t.started) return "";
     const done = (t.today.answered || 0) + (t.today.met || 0);     // answers, plus new words met on cards
     const reached = done >= target;
     const pct = Math.min(100, Math.round((done / target) * 100));
@@ -112,7 +119,7 @@
           <li class="${s.done ? "is-done" : ""}">
             <a href="${s.href}">${icon(s.done ? "check" : s.icon, "icon-sm")}<span>${s.name}</span>${s.count ? html`<b>${s.count}</b>` : ""}</a>
           </li>`)}
-        ${quick ? html`<li class="is-quick"><a href="#/quick">${icon("bolt", "icon-sm")}<span>Quick 5</span></a></li>` : ""}
+        ${quick ? html`<li class="is-quick"><a href="#/quick">${icon("bolt", "icon-sm")}<span>5-minute review</span></a></li>` : ""}
       </ol>`;
   }
 
@@ -144,7 +151,8 @@
           ? html`<p class="hint">${icon("check", "icon-sm")} Daily reminder in your calendar (${added}).
               <button class="link-btn" type="button" data-action="daily-reminder">Add it again</button></p>`
           : html`<button class="btn btn-tonal" type="button" data-action="daily-reminder">${icon("clock", "icon-sm")}
-              Remind me every day at ${hourText(reminderAt())}</button>`}
+              Add a daily reminder to my calendar (${hourText(reminderAt())})</button>
+              <span class="hint">Saves a small calendar file — open it to add the reminder.</span>`}
       </div>`;
   }
 
@@ -179,7 +187,7 @@
     const p = plan();
     const h = headline(p);
     const streak = p.t.streak || 0;
-    const cta = p.next && (p.next.key === "recall" ? "Start recall"
+    const cta = h.cta || p.next && (p.next.key === "recall" ? "Start recall"
       : p.next.key === "learn" ? "Learn new words"
       : "Start " + p.next.name.toLowerCase());
     const goalMarkup = goal(p.t);

@@ -42,9 +42,9 @@
     return rows.length ? rows[rows.length - 1].mastered : 0;
   }
 
-  function numbers(start) {
+  function numbers(start, upto) {
     const r = range(start);
-    const rows = rowsBetween(r.start, r.end);
+    const rows = rowsBetween(r.start, upto && upto < r.end ? upto : r.end);
     const byDay = {};
     rows.forEach((row) => { byDay[row.date] = row; });
     const sum = (k) => rows.reduce((n, row) => n + (row[k] || 0), 0);
@@ -66,9 +66,18 @@
   VS.week = {
     range,
 
+    /**
+     * A week's numbers with last week's beside them. A week still running is
+     * compared with last week up to the same weekday ("so far"): Tuesday
+     * against a whole week reads as a loss that isn't one.
+     */
     summary(start) {
       const week = numbers(start);
-      week.last = numbers(VS.dateKey(new Date(at(week.start).getTime() - 7 * DAY)));
+      const lastStart = VS.dateKey(new Date(at(week.start).getTime() - 7 * DAY));
+      const today = VS.todayKey();
+      week.partial = week.end >= today && week.start <= today;
+      const upto = week.partial ? VS.dateKey(new Date(at(today).getTime() - 7 * DAY)) : "";
+      week.last = numbers(lastStart, upto);
       return week;
     },
 

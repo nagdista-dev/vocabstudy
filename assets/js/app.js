@@ -3,7 +3,7 @@
    ROUTES (the part after # in the address bar)
      #/                      home = the library: add a word, today's plan, your words
      #/recall                daily recall: the words due today
-     #/quick                 Quick 5: the 10 words that matter most, for five minutes
+     #/quick                 the 5-minute review: the 10 words that matter most, for five minutes
      #/new/cards             learn the next new words from your library
      #/today/quiz            practise the words you first studied today
      #/all/quiz              an activity over the whole library
@@ -151,7 +151,8 @@
   const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak", "write"];
 
   function navMarkup(due, cls) {
-    return NAV.filter((n) => cls === "tab" || n.id !== "home").map((n) => {
+    // Today is in both bars: on a desktop the logo was the only way home.
+    return NAV.map((n) => {
       const on = n.match.includes(current.name) && !(n.id === "recall" && current.params.scope === "day");
       const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>` : "";
       return html`<a class="${cls}-link" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
@@ -185,7 +186,7 @@
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
     crumbsEl.innerHTML = String(html`
-      ${crumbs.length ? html`<a href="#/">Words</a>` : ""}
+      ${crumbs.length ? html`<a href="#/">Today</a>` : ""}
       ${crumbs.map((c) => html`<span aria-hidden="true">/</span>${c.href ? html`<a href="${c.href}">${c.label}</a>` : html`<span aria-current="page">${c.label}</span>`}`)}`);
   }
 
@@ -362,10 +363,10 @@
           <span>Google Translate isn't answering right now. New words get what the other dictionaries have, and are
           finished when it's back — in about ${Math.max(1, Math.round((VS.google.pausedUntil() - Date.now()) / 60000))} min.</span></p>` : ""}
         <h3 class="sheet-group">Basics</h3>
-        <div class="setting"><b>Accent</b><div class="seg">${choice("voice", "us", "American")}${choice("voice", "uk", "British")}</div></div>
+        <div class="setting"><b>Voice</b><div class="seg">${choice("voice", "us", "American")}${choice("voice", "uk", "British")}</div></div>
         <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
           <span class="hint">How many new words “Learn” brings each day. The rest wait for tomorrow.</span></div>
-        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 150, "150")}${choice("dailyGoal", 300, "300")}${choice("dailyGoal", 600, "600")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day across all activities (each new word you meet counts too). Progress shows on today's plan.</span></div>
+        <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 20, "20")}${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 100, "100")}${choice("dailyGoal", 200, "200")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day across all activities (each new word you meet counts too). Progress shows on today's plan.</span></div>
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
 
         <h3 class="sheet-group">App &amp; data</h3>
@@ -529,6 +530,15 @@
   // (toggle does not bubble; a capture listener still hears it.)
   document.addEventListener("toggle", (e) => {
     const row = e.target;
+    // A word opened low on the screen comes up under the bar, so its page starts in view.
+    if (row.classList && row.classList.contains("word-row") && row.open) {
+      requestAnimationFrame(() => {
+        const top = row.getBoundingClientRect().top;
+        if (top < 56 || top > innerHeight * 0.45) {
+          row.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        }
+      });
+    }
     if (!row.classList || !row.classList.contains("word-row") || !row.open) return;
     VS.$$(".word-row[open]").forEach((other) => { if (other !== row) other.open = false; });
     hideNudge();                                  // the card must never cover an open word
@@ -599,6 +609,7 @@
   VS.store.onChange(() => current && renderBar());
   VS.autofill.resume();                          // words added offline get filled now
   VS.autofill.review();                          // words saved before the spelling check: typos get flagged
+  VS.autofill.migrateChecked();                  // words filled before their meaning was checked by hand get it now
   // Ask the browser to keep this site's data for good (Safari otherwise may clear
   // a site that hasn't been opened for a week). Installed apps are usually granted it.
   if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then((on) => on || navigator.storage.persist()).catch(() => {});

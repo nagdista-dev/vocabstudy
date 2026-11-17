@@ -53,9 +53,16 @@
 
     render() {
       if (!VS.listen.supported) {
-        return VS.ui.emptyActivity("#/", VS.listen.available
-          ? "Speak practice is off. Turn it on in Settings → Study."
-          : "This browser can't listen. Speak works in Chrome, Edge and Safari.");
+        // Off is one tap from here — not a trip to More settings → Study.
+        if (VS.listen.available) return html`
+          <div class="activity"><div class="empty">
+            <h2>Speak practice is off</h2>
+            <p>Say each word out loud and the app checks it. Your browser does the listening.</p>
+            <div class="row empty-actions">
+              <button class="btn btn-primary" type="button" data-action="speak-on">${icon("mic", "icon-sm")} Turn it on</button>
+              <a class="btn btn-quiet" href="#/">Go back</a>
+            </div></div></div>`;
+        return VS.ui.emptyActivity("#/", "This browser can't listen. Speak works in Chrome, Edge and Safari.");
       }
       if (!s.scope || !s.words.length) return VS.ui.emptyActivity("#/", "There are no words to say.");
       if (s.index >= s.words.length) return html`<div class="activity">${finish()}</div>`;
@@ -99,6 +106,11 @@
     },
 
     actions: {
+      "speak-on"() {
+        VS.store.setSetting("speak", true);
+        VS.views.speak.start(VS.app.params());
+        VS.app.render();
+      },
       slow() { VS.speech.say(VS.spellingOf(s.words[s.index]), null, 0.6); },
       async listen() {
         if (s.state === "listening") return;

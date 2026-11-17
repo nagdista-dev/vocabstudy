@@ -14,12 +14,14 @@
 
   let start = "";
 
-  /** "+12" / "−3" / "same" next to last week's number. */
+  /** "▲ 12" / "▼ 3" / "same" next to last week's number (in ink: green and red mean right and wrong only). */
+  let sofar = false;
   function delta(now, last, unit) {
     const d = now - last;
+    const when = sofar ? "last week so far" : "last week";
     if (!last && !now) return "";
-    if (!d) return html`<small class="wk-delta">same as last week</small>`;
-    return html`<small class="wk-delta ${d > 0 ? "is-up" : "is-down"}">${d > 0 ? "+" : "−"}${Math.abs(d)}${unit || ""} vs last week</small>`;
+    if (!d) return html`<small class="wk-delta">same as ${when}</small>`;
+    return html`<small class="wk-delta">${d > 0 ? "▲" : "▼"} ${Math.abs(d)}${unit || ""} vs ${when}</small>`;
   }
 
   /** The week as seven days, Saturday first: a filled dot for a day you studied. */
@@ -57,7 +59,7 @@
     if (w.end >= VS.todayKey() && day !== 4 && day !== 5) {
       return "The week runs until Friday — keep going. Your full report, with a note on next week, is ready on Thursday.";
     }
-    if (!w.studied) return "A quiet week happens. Five minutes today — Quick 5 — and the habit is back.";
+    if (!w.studied) return "A quiet week happens. Five minutes today — a 5-minute review — and the habit is back.";
     if (w.studied < 4) return "Short sessions on more days beat one long one: memory grows in the gaps. Aim for five days next week, even if some are five minutes.";
     if (w.answers >= 40 && acc < 65) return `${acc}% right this week — that's normal when the words are new: forgetting and remembering again is how they stick. Keep the recall days.`;
     if (!sentences) return "Next week, try Use it on three words: one sentence about your own life makes a word yours.";
@@ -80,6 +82,7 @@
 
     render() {
       const w = VS.week.summary(start);
+      sofar = !!w.partial;
       const thisWeek = VS.week.range().start;
       const prev = VS.dateKey(new Date(new Date(start + "T12:00:00").getTime() - 7 * 864e5));
       const next = VS.dateKey(new Date(new Date(start + "T12:00:00").getTime() + 7 * 864e5));
@@ -100,11 +103,11 @@
             ${strip(w)}
             <dl class="wk-numbers">
               <div><dt>Mastered</dt><dd>${w.mastered}</dd>${delta(w.mastered, w.last.mastered)}</div>
-              <div><dt>New words met</dt><dd>${w.met}</dd>${delta(w.met, w.last.met)}</div>
+              <div><dt>Words learned</dt><dd>${w.met}</dd>${delta(w.met, w.last.met)}</div>${w.added ? html`<div><dt>Words added</dt><dd>${w.added}</dd></div>` : ""}
               <div><dt>Answers</dt><dd>${w.answers.toLocaleString("en-GB")}${w.answers ? html`<small> · ${acc}% right</small>` : ""}</dd>${delta(w.answers, w.last.answers)}</div>
               <div><dt>Study time</dt><dd>${VS.formatDuration(w.seconds)}</dd>${delta(Math.round(w.seconds / 60), Math.round(w.last.seconds / 60), " min")}</div>
             </dl>
-            ${w.best ? html`<p class="hint wk-best">Best day: <b>${new Date(w.best.date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long" })}</b> — ${VS.plural(w.best.answered, "answer")}.${w.added ? " You added " + VS.plural(w.added, "word") + " this week." : ""}</p>` : ""}
+            ${w.best ? html`<p class="hint wk-best">Best day: <b>${new Date(w.best.date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long" })}</b> — ${VS.plural(w.best.answered, "answer")}.</p>` : ""}
             <p class="wk-note">${icon("bulb", "icon-sm")}<span>${note(w)}</span></p>
           </section>
 

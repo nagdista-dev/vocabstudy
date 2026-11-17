@@ -197,30 +197,60 @@
      the meaning?" question. When the learner met the word in a sentence
      ("The plane will take off at six"), that sentence picks the meaning:
      the one whose keys, definition or example share its words. */
+  /** The checked entry a word belongs to: itself, its British spelling, or its base ("gave up" → "give up"). */
+  const aliasOf = (word) => (window.VS_OVERRIDE_ALIASES || {})[VS.wordKey(word)] || "";
   function overrideSenses(word) {
-    const o = (window.VS_OVERRIDES || {})[VS.wordKey(word)];
+    const all = window.VS_OVERRIDES || {};
+    const o = all[VS.wordKey(word)] || all[aliasOf(word)];
     if (!o) return null;
     return (o.senses || [o]).map((m) => ({ type: m.type, pos: String(m.type || "").toLowerCase(), definition: m.definition,
       example: m.example, arabic: m.arabic, synonyms: m.synonyms || [], keys: m.keys || "", trusted: true }));
   }
-  function contextWords(text, word) {
-    const own = new Set(String(word).toLowerCase().split(/\s+/).map(stem));
-    return new Set(String(text || "").toLowerCase().split(/[^a-z']+/)
-      .filter((x) => x.length >= 3 && !STOP.has(x)).map(stem).filter((x) => !own.has(x)));
+  /* Words of a sentence, the same way on both sides: lower case, curly ' straightened, a plural
+     "s"/"es" taken off (planes = plane, shoes = shoe), and the word itself left out in all its
+     forms ("took", "gave", "broke" are the headword, never a clue). */
+  const PRONOUNS = new Set("i me my mine you your yours he him his she her hers it its we us our ours they them their theirs this that these those there here".split(" "));
+  const MORE_STOP = new Set("can could will would shall should may might must not get got gets new one two time day year last next very really just also".split(" "));
+  const norm = (x) => {
+    x = x.replace(/'s$/, "");
+    if (x.length <= 3) return x;
+    x = x.replace(/ies$/, "y").replace(/(?:ses|xes|ches|shes)$/, (m) => m.slice(0, -2));
+    return /[^s]s$/.test(x) ? x.slice(0, -1) : x;                    // no lookbehind: older iPhones can't parse it
+  };
+  function ownForms(word) {
+    return new Set(String(word).toLowerCase().split(/\s+/).flatMap((t) => [t].concat(VS.IRREGULAR[t] || [])
+      .concat(VS.wordForms ? VS.wordForms(t) : [])).map(norm));
   }
-  /** The meaning a sentence points to → its index, or -1 when nothing in the sentence decides. */
+  function contextWords(text, word) {
+    const own = ownForms(word);
+    return new Set(String(text || "").toLowerCase().replace(/[’‘]/g, "'").split(/[^a-z']+/)
+      .filter((x) => x.length >= 2 && !STOP.has(x) && !PRONOUNS.has(x) && !MORE_STOP.has(x)).map(norm).filter((x) => !own.has(x)));
+  }
+  /**
+   * The meaning a sentence points to → its index, or -1 ("ask the learner").
+   * Checked meanings vote only with their explicit `keys`; a tie is no answer.
+   * Dictionary meanings vote with their definition and similar words (never
+   * their example — its words are where wrong picks came from) and need two
+   * clues and a clear lead before the app decides alone.
+   */
   function senseFor(senses, context, word) {
     const ctx = contextWords(context, word);
     if (!ctx.size) return -1;
-    let best = -1, bestN = 0;
-    senses.slice(0, 8).forEach((m, i) => {
-      const keys = new Set([...keysOf(m, word)].concat(String(m.keys || "").split(/\s+/).filter(Boolean).map(stem))
-        .concat(contextWords(m.example, word).size ? [...contextWords(m.example, word)] : []));
-      const n = [...ctx].filter((x) => keys.has(x)).length;
-      if (n > bestN) { best = i; bestN = n; }
+    const checked = senses.length && senses.every((m) => m.trusted);
+    const scores = senses.slice(0, 8).map((m) => {
+      const keys = checked
+        ? new Set(String(m.keys || "").toLowerCase().split(/\s+/).filter(Boolean).map(norm))
+        : new Set([...keysOf(m, word)].filter((k) => !PRONOUNS.has(k) && !MORE_STOP.has(k)).map(norm));
+      return [...ctx].filter((x) => keys.has(x)).length;
     });
-    return best;
+    const best = Math.max(0, ...scores);
+    const at = scores.indexOf(best);
+    const second = Math.max(0, ...scores.filter((_, i) => i !== at));
+    if (!best || best === second) return -1;                         // no clue, or a tie: ask
+    if (!checked && (best < 2 || best - second < 2)) return -1;        // the dictionary must be clearly right
+    return at;
   }
+
   /** Similar words a learner can use: common (top 6,000), one or two words, three at most. */
   function commonSimilar(list) {
     return (list || []).filter((x) => {
@@ -525,7 +555,12 @@
     fields.type = first.type || dv.type || "";
     // A meaning's own Arabic; Google's one-line translation only when there are no meanings at all.
     fields.arabic = first.arabic || (first.definition ? "" : gv.translation) || "";
-    fields.synonyms = first.trusted ? (first.synonyms || []) : commonSimilar(first.synonyms);
+    // Checked meanings carry no similar words: borrow them from the dictionary's meaning of the
+    // same part of speech (the one whose Arabic agrees, if any), common words only.
+    const twin = first.trusted && (gv.senses.find((m) => m.pos === first.pos && m.arabic && shares(m.arabic, first.arabic)) ||
+      gv.senses.find((m) => m.pos === first.pos));
+    fields.synonyms = first.trusted ? ((first.synonyms || []).length ? first.synonyms : commonSimilar(twin && twin.synonyms))
+      : commonSimilar(first.synonyms);
     fields.ipa = dv.ipa || "";
     fields.audio = dv.audio || "";
     if (!fields.arabic) { try { fields.arabic = await myMemory(word); } catch (e) { /* offline */ } }
@@ -555,7 +590,10 @@
     // Meanings a learner would translate differently: ask which one they met —
     // unless a checked meaning or the learner's own sentence already settled it.
     else if (checked ? unsettled : !fromContext && ambiguous(senses, gv.entriesFor, word)) fields.check = { kind: "meaning" };
-    return { fields, senses, offline, googleDown, base: gv.base || "" };
+    // "gave up" is learned as "give up" (its base); "realise" keeps the learner's British spelling.
+    const alias = aliasOf(word);
+    const phraseBase = alias && /\s/.test(word) && /\s/.test(alias) ? alias : "";
+    return { fields, senses, offline, googleDown, base: gv.base || phraseBase || "" };
   }
 
   const enabled = () => VS.store.settings().autofill !== false;
@@ -608,6 +646,8 @@
     async senses(word, context) { return (await lookup(word, context)).senses; },
     /** The checked meanings of a word (assets/data/overrides.js), or null. */
     checked: (word) => overrideSenses(word),
+    /** Which meaning a sentence points to (index, or -1): exposed for tests and the review harness. */
+    senseFor: (senses, context, word) => senseFor(senses, context, word),
     /** Arabic for one meaning that has none yet (picked in Other meanings): "" if it can't be found. */
     async arabicOf(sense) {
       const m = Object.assign({ synonyms: [] }, sense, { arabic: "" });
@@ -623,6 +663,29 @@
       if (!enabled() || !navigator.onLine) return;
       ids.forEach((id) => { if (!queue.includes(id)) queue.push(id); });
       work();
+    },
+    /**
+     * At start-up: words auto-filled before their meaning was checked by hand
+     * ("persuade" = اقتنع, "commute" = خفف العقوبة) move to the checked meaning —
+     * the one their "Where you met it" sentence points to, else the first.
+     * Words whose Arabic the learner typed, or confirmed, are left alone.
+     */
+    migrateChecked() {
+      if (!window.VS_OVERRIDES) return 0;
+      let n = 0;
+      VS.allWords().forEach((w) => {
+        if (w.confirmed || w.trusted) return;
+        const checked = overrideSenses(w.word);
+        if (!checked) return;
+        const i = senseFor(checked, w.context, w.word);
+        const m = checked[i >= 0 ? i : 0];
+        if (core(m.arabic) && cores(w.arabic).includes(core(m.arabic.split(" - ")[0]))) {
+          if (VS.store.upgradeToChecked(w.id, Object.assign({}, m, { arabic: w.arabic }), i >= 0)) n++;   // same meaning: just mark it
+          return;
+        }
+        if (VS.store.upgradeToChecked(w.id, m, i >= 0)) n++;
+      });
+      return n;
     },
     /** At start-up and when the connection comes back: words added offline. */
     resume() {

@@ -76,7 +76,7 @@
     if (!days.some((d) => d.count)) return "";
     return html`
       <section class="forecast" aria-labelledby="fc-title">
-        <div class="section-title"><h2 id="fc-title">Recall this week</h2>
+        <div class="section-title"><h2 id="fc-title">Coming up</h2>
           <span class="hint">${VS.plural(days.reduce((n, d) => n + d.count, 0), "word")} in 7 days</span></div>
         <ol class="fc-bars card">
           ${days.map((d, i) => {

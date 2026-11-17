@@ -34,7 +34,7 @@
               : k === "level" ? html`<select name="level"><option value="">—</option>${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
               : k === "tags" ? html`<input name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
               : k === "synonyms" ? html`<input name="synonyms" value="${w.synonyms.join(", ")}" placeholder="delay, put off">`
-              : LONG_FIELDS.includes(k) ? html`<textarea name="${k}" rows="2">${w[k] || ""}</textarea>`
+              : LONG_FIELDS.includes(k) ? html`<textarea name="${k}" rows="2" dir="auto">${w[k] || ""}</textarea>`
               : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
           </label>`)}
         ${VS.ui.tagList()}
@@ -45,7 +45,7 @@
         </div>` : ""}
         <div class="row is-wide">
           <button class="btn btn-primary" type="button" data-action="word-save" data-id="${w.id}">Save changes</button>
-          <button class="btn btn-quiet" type="button" data-action="word-cancel">Cancel</button>
+          <button class="btn btn-quiet" type="button" data-action="word-cancel" data-id="${w.id}">Cancel</button>
         </div>
       </form>`);
   };
@@ -59,7 +59,20 @@
     if (result.error === "duplicate") { VS.toast("“" + result.word.word + "” is already in your library."); return; }
     location.reload();                 // rebuild every list with the new version
   };
-  VS.actions["word-cancel"] = () => VS.app.render();
+  // Cancel goes back to the word page, open where it was — not to a closed list.
+  VS.actions["word-cancel"] = (el) => { const id = el.dataset.id; if (id) refreshWord(id); else VS.app.render(); };
+  VS.actions["sentence-fix"] = (el) => {
+    const id = el.dataset.id, i = Number(el.dataset.index);
+    const w = VS.byId[id];
+    const m = w && w.mine[i];
+    const trap = m && VS.findUsageMistakes(m)[0];
+    const fixed = trap && VS.fixSentence(m, trap);
+    if (!fixed) return;
+    const snap = VS.store.snapshot([id]);
+    VS.store.replaceSentence(id, i, fixed);
+    refreshWord(id);
+    VS.toast("Sentence fixed — it can come back in Recall now.", { label: "Undo", run: () => { VS.store.restore(snap); refreshWord(id); } });
+  };
   /* More examples: one word in several real sentences builds more ways back to it.
      Tatoeba (tatoeba.org, free, no account) is a collection of sentences written
      by people; only the word is sent, and only when the learner taps. Its Arabic
@@ -175,16 +188,23 @@
     const w = VS.byId[el.dataset.id];
     const box = meaningBox(el);
     if (!w || !box) return;
-    if (box.dataset.open === "1") { box.innerHTML = ""; box.dataset.open = ""; return; }   // a second tap closes it
+    const opener = el.classList.contains("word-other") ? el : null;
+    if (box.dataset.open === "1") {                                                        // a second tap closes it
+      box.innerHTML = ""; box.dataset.open = "";
+      if (opener) { opener.setAttribute("aria-expanded", "false"); opener.textContent = w.definition ? "Other meanings" : "Find a meaning"; }
+      return;
+    }
     box.dataset.open = "1";
+    if (opener) { opener.setAttribute("aria-expanded", "true"); opener.textContent = "Hide meanings"; }
     box.innerHTML = String(html`<p class="hint">Looking up “${w.word}”…</p>`);
     let list = [];
     try { list = await VS.autofill.senses(w.word, w.context); } catch (e) { list = []; }
     // The same meaning can come from two dictionaries: keep the first of each definition.
     const seen = new Set();
     list = list.filter((m) => m.definition && !seen.has(m.definition.toLowerCase()) && seen.add(m.definition.toLowerCase())).slice(0, 6);
-    // Meanings checked by hand say all a learner needs; the dictionary's (a duel…) only add noise.
-    if (list.some((m) => m.trusted)) list = list.filter((m) => m.trusted);
+    // Checked meanings first; then at most three from the dictionary, apart, so a learner who met
+    // another meaning still finds it — without the dictionary's rarest ones (a duel…) on top.
+    if (list.some((m) => m.trusted)) list = list.filter((m) => m.trusted).concat(list.filter((m) => !m.trusted).slice(0, 3));
     meaningLists[w.id] = list;
     // Only the meaning already shown: say so, instead of listing it again.
     if (list.length === 1 && same(list[0].definition, w.definition)) {
@@ -194,13 +214,15 @@
     box.innerHTML = String(list.length
       ? html`<ol class="meaning-list">${list.map((m, i) => {
           const current = same(m.definition, w.definition);
-          return html`<li class="${current ? "is-current" : ""}">
+          const firstFromDictionary = !m.trusted && i > 0 && list[i - 1].trusted;
+          return html`${firstFromDictionary ? html`<li class="meaning-group" aria-hidden="true">From the dictionary</li>` : ""}<li class="${current ? "is-current" : ""}">
             <p class="meaning-head"><span class="meaning-type">${m.type}</span>${m.arabic ? html`<bdi class="meaning-ar" lang="ar" dir="rtl">${m.arabic}</bdi>` : ""}</p>
             <p class="meaning-def">${m.definition}</p>
             ${m.example ? html`<p class="meaning-ex">“${m.example}”</p>` : ""}
             ${current
               ? html`<p class="meaning-this">${icon("check", "icon-sm")} This one</p>`
-              : html`<button class="btn btn-tonal" type="button" data-action="meaning-use" data-id="${w.id}" data-index="${i}">Use this meaning</button>`}
+              : html`<button class="btn btn-tonal" type="button" data-action="meaning-use" data-id="${w.id}" data-index="${i}"
+                  aria-label="Use this meaning: ${m.arabic || m.definition}">Use this meaning</button>`}
           </li>`;
         })}</ol>`
       : html`<p class="hint">${navigator.onLine ? "No other meanings found." : "You're offline — try again when you're online."}</p>`);
@@ -212,24 +234,33 @@
     el.disabled = true;
     // A meaning without Arabic gets its own now — the old Arabic belongs to the old meaning.
     if (!m.arabic) m.arabic = await VS.autofill.arabicOf(m);
+    const snap = VS.store.snapshot([id]);
     VS.store.applySense(id, m);
-    VS.toast("Meaning changed.");
-    refreshWord(id);
+    refreshWord(id, ".word-definition");
+    VS.toast("Meaning changed.", { label: "Undo", run: () => { VS.store.restore(snap); refreshWord(id); } });
   };
   VS.actions["meaning-yes"] = (el) => {
     VS.store.confirmMeaning(el.dataset.id);
-    refreshWord(el.dataset.id);
+    refreshWord(el.dataset.id, ".word-definition, .flash-def");
+    VS.toast("Meaning confirmed.");
   };
   /** Redraw one word where it is: its open row in a list, or the whole activity. */
-  function refreshWord(id) {
+  function refreshWord(id, focusSel) {
     const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
     const w = VS.byId[id];
+    let scope = document;
     if (row && w) {
       row.outerHTML = String(VS.ui.wordRow(w));
       const again = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
-      if (again) again.open = true;
+      if (again) { again.open = true; scope = again; }
     } else {
       VS.app.render();
+    }
+    // Keep the keyboard and screen reader where the learner was, not lost on <body>.
+    const target = (focusSel && scope.querySelector(focusSel)) || (scope !== document && scope.querySelector("summary"));
+    if (target) {
+      if (!target.hasAttribute("tabindex") && !/^(A|BUTTON|SUMMARY|INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) target.setAttribute("tabindex", "-1");
+      target.focus({ preventScroll: true });
     }
   }
 
@@ -283,6 +314,16 @@
   /* Arabic keyboard left on: the most common "mistake" that isn't one. */
   const ARABIC = /[؀-ۿ]/;
   VS.isArabicTyping = (text) => ARABIC.test(text || "");
+
+  /* The keyboard was left on Arabic (V2.18): the learner pressed the right keys,
+     the phone wrote Arabic letters. "شؤفعشممغ" is "actually" on the standard
+     Arabic layout (Windows/Mac 101, the one Arab phones copy). Mapped back
+     key by key, so the answer counts and the learner learns why it looked odd. */
+  const AR_KEYS = { "ض": "q", "ص": "w", "ث": "e", "ق": "r", "ف": "t", "غ": "y", "ع": "u", "ه": "i", "خ": "o", "ح": "p",
+    "ج": "[", "د": "]", "ش": "a", "س": "s", "ي": "d", "ب": "f", "ل": "g", "ا": "h", "ت": "j", "ن": "k", "م": "l",
+    "ك": ";", "ط": "'", "ئ": "z", "ء": "x", "ؤ": "c", "ر": "v", "ى": "n", "ة": "m", "و": ",", "ز": ".", "ظ": "/" };
+  VS.fromArabicKeys = (text) => String(text || "").replace(/لا/g, "b")
+    .replace(/[\u0600-\u06FF]/g, (ch) => AR_KEYS[ch] || ch).replace(/[[\];',./]/g, "");
 
   VS.ui = {
     whenText,
@@ -474,8 +515,20 @@
           <ul>${w.mine.map((m, i) => {
             const hit = VS.findIn(w, m, true);
             const unsure = (w.unsure || []).includes(m);
-            return html`<li class="${unsure ? "is-unsure" : ""}"><span>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m}${unsure
-                ? html`<small class="mine-unsure">May have a mistake — not used in Recall</small>` : ""}</span>
+            // Kept against a warning: show the teacher's red pen on the mistake and the fix, one tap away.
+            const trap = unsure ? VS.findUsageMistakes(m)[0] : null;
+            const fixed = trap ? VS.fixSentence(m, trap) : "";
+            const found = trap && trap.bad.exec(" " + m + " ");
+            const bad = found ? found[0].trim() : "";
+            const at = bad ? m.indexOf(bad) : -1;
+            const body = unsure && at >= 0
+              ? html`${m.slice(0, at)}<del class="pen-wrong">${bad}</del>${m.slice(at + bad.length)}`
+              : hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m;
+            return html`<li class="${unsure ? "is-unsure" : ""}"><span>${body}${unsure
+                ? html`<small class="mine-unsure">${fixed
+                    ? html`One thing to fix: <b>${fixed}</b>`
+                    : trap ? html`${VS.ui.mixed(trap.why)}` : "May have a mistake — not used in Recall"}</small>
+                  ${fixed && removable ? html`<button class="link-btn mine-fix" type="button" data-action="sentence-fix" data-id="${w.id}" data-index="${i}">Use the fix</button>` : ""}` : ""}</span>
               ${removable ? html`<button class="icon-btn mine-del" type="button" data-action="sentence-remove" data-id="${w.id}" data-index="${i}" aria-label="Remove this sentence">${icon("x", "icon-sm")}</button>` : ""}</li>`;
           })}</ul>
         </div>`;
@@ -516,7 +569,7 @@
       return html`
         <label class="note">
           <span class="note-label">${icon("bulb", "icon-sm")} My note</span>
-          <textarea data-note="${w.id}" rows="2" maxlength="500"
+          <textarea data-note="${w.id}" rows="2" maxlength="500" dir="auto"
             placeholder="A memory trick: anything that helps you remember it">${note}</textarea>
         </label>`;
     },
@@ -602,12 +655,13 @@
 
               <div class="word-main">
                 ${VS.ui.checkLine(w)}
+                ${VS.ui.context(w)}
                 <div class="word-lead">
                   ${w.definition
                     ? html`<p class="word-definition">${w.definition}</p>`
                     : html`<p class="hint">No definition yet.
                         <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
-                  ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
+                  ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}" aria-expanded="false">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
                 </div>
                 <div class="meanings" aria-live="polite"></div>
 
@@ -625,19 +679,20 @@
                   </div>
                 </div>
 
+                ${VS.usageTraps(w).length ? html`<div class="word-usage">${VS.ui.usage(w)}</div>` : ""}
+                ${VS.ui.mine(w, true)}
                 <div class="word-practice">
                   <a class="btn btn-primary word-write" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}
                     ${w.mine.length ? "Another sentence" : "Write a sentence"}</a>
                 </div>
-
-                ${VS.ui.context(w)}
-                ${VS.ui.mine(w, true)}
-                ${VS.usageTraps(w).length ? html`<div class="word-usage">${VS.ui.usage(w)}</div>` : ""}
                 ${(w.goes && w.goes.length) || (w.synonyms && w.synonyms.length) ? html`
-                  <div class="word-related">
-                    ${VS.ui.goes(w)}
-                    ${VS.ui.similar(w)}
-                  </div>` : ""}
+                  <details class="word-more">
+                    <summary>${icon("chevron-right", "icon-sm word-more-chev")} More about this word</summary>
+                    <div class="word-related">
+                      ${VS.ui.goes(w)}
+                      ${VS.ui.similar(w)}
+                    </div>
+                  </details>` : ""}
               </div>
 
               <aside class="word-margin" aria-label="Notes and schedule for this word">
@@ -649,10 +704,10 @@
                     : html`
                       <span>Next recall <b>${whenText(e.due)}</b></span>
                       <span class="word-box-line">
-                        <span class="word-boxes" role="img" aria-label="Memory box ${e.box} of 6">
+                        <span class="word-boxes" role="img" aria-label="Step ${e.box} of 6">
                           ${[1, 2, 3, 4, 5, 6].map((n) => html`<i class="${n <= e.box ? "is-on" : ""}"></i>`)}
                         </span>
-                        <span class="word-box-label">Box ${e.box}/6</span>
+                        <span class="word-box-label">Step ${e.box} of 6</span>
                       </span>
                       <span class="word-score">${e.right} right · ${e.wrong} wrong</span>`}
                 </div>
@@ -693,11 +748,17 @@
     /** Top of every activity: one exit, a short title with its scope, and
         the round's progress. `undo`: show "Undo" — takes back a mis-tap.
         `sub`: the quiet scope line ("Whole library", "Due today"). */
-    activityHead({ back, title, sub, index, total, combo, undo }) {
+    /**
+     * One counter for every activity (V2.2): `total` is the words in the round and
+     * never grows; a word coming back is counted in `again` ("3 of 8 · 2 to try
+     * again"), and the bar only moves forward.
+     */
+    activityHead({ back, title, sub, index, total, combo, undo, again }) {
       const bump = combo !== VS.ui.lastCombo;   // pulse only when the streak just changed
       if (bump && combo >= 3) setTimeout(() => VS.sfx.play("combo", combo), 160);
       VS.ui.lastCombo = combo;
-      const pct = total ? Math.round((index / total) * 100) : 0;
+      const pos = Math.min(index, total);
+      const pct = total ? Math.round((pos / total) * 100) : 0;
       return html`
         <header class="activity-head">
           <div class="row">
@@ -708,9 +769,9 @@
             </div>
             ${combo >= 2 ? html`<span class="combo ${bump ? "bump" : ""}" title="Right answers in a row">${icon("flame", "icon-sm")} <b>${combo}</b><span class="combo-word"> in a row</span></span>` : ""}
             ${undo ? html`<button class="btn btn-quiet btn-undo" type="button" data-action="undo" title="Take back the last answer (U)" aria-label="Undo the last answer">${icon("undo", "icon-sm")}<span>Undo</span></button>` : ""}
-            <span class="count" aria-live="polite">${Math.min(index + 1, total)} / ${total}</span>
+            <span class="count" aria-live="polite">${index >= total && again ? html`Once more` : html`${Math.min(index + 1, total)} of ${total}`}${again ? html`<span class="count-again"> · ${again} to try again</span>` : ""}</span>
           </div>
-          <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${index}">
+          <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${pos}">
             <i style="--value:${pct}%"></i>
           </div>
         </header>`;
@@ -735,7 +796,7 @@
     },
 
     /** End-of-session screen. `stats` = [{ value, label, tone }], `words` = mistakes to show. */
-    summary({ title, message, stats, words, actions, back }) {
+    summary({ title, message, stats, words, actions, back, moved }) {
       // Always a way out: "Next: Quiz" is a suggestion, "Done" is a choice.
       actions = actions.filter(Boolean);
       if (!actions.some((a) => a.label === "Done")) actions.push({ href: back || "#/", label: "Done" });
@@ -754,7 +815,7 @@
           ${reached ? html`
             <div class="milestone-hit">
               ${icon("trophy", "icon-lg")}
-              <p><b>${reached === 1 ? (VS.milestones.firstWord() ? VS.milestones.firstWord() + " is yours now." : "Your first word mastered.") : reached.toLocaleString("en-GB") + " words mastered."}</b>
+              <p><b>${reached === 1 ? (VS.milestones.firstWord() ? "“" + VS.milestones.firstWord() + "” is yours now." : "Your first word mastered.") : reached.toLocaleString("en-GB") + " words mastered."}</b>
                 <span>${reached === 1 ? "You remembered it after two weeks or more — it's yours now."
                   : reached.toLocaleString("en-GB") + " words you remembered after two weeks or more — they're yours now."}</span></p>
             </div>` : ""}
@@ -763,6 +824,12 @@
           <div class="summary-stats">
             ${stats.map((s) => html`<div class="summary-stat ${s.tone ? "is-" + s.tone : ""}"><b>${s.value}</b><span>${s.label}</span></div>`)}
           </div>
+          ${moved && moved.length ? html`
+            <div class="summary-moved">
+              <h2 class="summary-sub">Moving forward</h2>
+              <ul>${moved.slice(0, 8).map((m) => html`<li><mark class="mark">${m.word}</mark><span>comes back ${m.when}</span></li>`)}</ul>
+              ${moved.length > 8 ? html`<p class="hint">and ${moved.length - 8} more</p>` : ""}
+            </div>` : ""}
           <div class="summary-actions">
             ${actions.filter(Boolean).map((a) =>
               a.href

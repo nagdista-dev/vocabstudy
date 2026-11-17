@@ -50,7 +50,8 @@
     if (key === lastRoute) return;
     lastRoute = key;
     opts.query = p.scope === "pick" ? p.query || "" : "";
-    opts.source = { pick: "pick", recall: "due", tricky: "tricky", today: "today", new: "new" }[p.scope] || "all";
+    // From "all", start with what's worth printing today: the words due, when there are any.
+    opts.source = { pick: "pick", recall: "due", tricky: "tricky", today: "today", new: "new" }[p.scope] || (VS.store.totals().due ? "due" : "all");
     if (p.layout && LAYOUTS.some((l) => l[0] === p.layout)) opts.layout = p.layout;
   }
 
@@ -270,12 +271,16 @@
           ${seg("source", (opts.query ? [["pick", "My list"]] : []).concat([["all", "All"], ["due", "Due today"], ["learning", "Learning"],
             ["tricky", "Tricky"], ["today", "Today's"], ["new", "New"]]))}
           ${opts.source === "pick" ? html`<p class="hint">From the library: ${sourceLabel()} · <a href="#/words?${opts.query}">change the list</a></p>` : ""}
-          <div class="ctl-grid">
-            <label><span>Level</span>${select("level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]])}</label>
-            <label><span>Type</span>${select("type", [["all", "All types"]].concat(types.map((t) => [t, t])))}</label>
-            <label><span>Order</span>${select("order", [["file", "As listed"], ["az", "A–Z"], ["random", "Random"], ["weakest", "Weakest first"]])}</label>
-            <label><span>How many</span>${select("limit", [["all", "All"], ["10", "10"], ["20", "20"], ["30", "30"], ["50", "50"]])}</label>
-          </div>
+          <!-- The usual sheet needs two choices (words, layout); the rest waits behind "More options". -->
+          <details class="print-more" ${opts.level !== "all" || opts.type !== "all" || opts.order !== "file" || opts.limit !== "all" ? VS.raw("open") : ""}>
+            <summary>${icon("chevron-right", "icon-sm print-more-chev")} More options</summary>
+            <div class="ctl-grid">
+              ${VS.allWords().some((w) => w.level) ? html`<label><span>Level</span>${select("level", [["all", "All levels"], ["A", "A1–A2"], ["B", "B1–B2"], ["C", "C1–C2"]])}</label>` : ""}
+              <label><span>Type</span>${select("type", [["all", "All types"]].concat(types.map((t) => [t, t])))}</label>
+              <label><span>Order</span>${select("order", [["file", "As listed"], ["az", "A–Z"], ["random", "Random"], ["weakest", "Weakest first"]])}</label>
+              <label><span>How many</span>${select("limit", [["all", "All"], ["10", "10"], ["20", "20"], ["30", "30"], ["50", "50"]])}</label>
+            </div>
+          </details>
         </fieldset>
 
         <fieldset><legend>Layout</legend>

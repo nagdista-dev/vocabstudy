@@ -62,6 +62,12 @@
     "lost|paid|sold|sent|slept|spoke|spent|taught|understood|woke|won|began|broke|brought|built|caught|chose|felt|kept|knew|ran|" +
     "sat|stood|swam|wore|became|fell|grew|heard|had|did|\\w*[^e\\s]ed)";
 
+  // Verbs a learner puts after "give up to / enjoy to…": only these fire the -ing trap, so
+  // "keeps to himself" and "gave up to the police" (to + a noun) are never marked wrong.
+  const GERUNDABLE = "(?:smoke|eat|drink|go|work|study|play|travel|read|wait|watch|do|try|run|swim|drive|cook|write|talk|" +
+    "speak|sleep|learn|sing|dance|walk|use|buy|see|meet|help|answer|call|clean|wake|get|make|take|come|leave|live|stay|" +
+    "spend|visit|listen|look|think|exercise|shop|chat|practise|practice|argue|complain|lie|stop|start|open|close)";
+
   const ME = "\\b(?:i\\s*'?m|i\\s+am|i\\s+was|i\\s+feel|i\\s+felt|we\\s+are|we\\s+were|we're)\\s+(?:so\\s+|very\\s+|really\\s+|a\\s+bit\\s+)?";
 
   /* [keys, kind, wrong, right, why, bad?] — keys are "|"-separated. */
@@ -301,7 +307,7 @@
       "Let someone do — no to.", `\\blet\\s+${PRON}\\s+to\\b`],
     ["give up|enjoy|avoid|finish|mind|keep|practise|practice|consider|suggest", "grammar", "My father gave up to smoke.", "My father gave up smoking.",
       "After give up, enjoy, avoid, finish, mind and keep, the next verb takes -ing: gave up smoking, enjoy reading. Arabic says «بطّل يدخّن»; English doesn't use to here.",
-      "\\b(?:g(?:ive|ives|ave|iven|iving)\\s+up|enjoy(?:s|ed|ing)?|avoid(?:s|ed|ing)?|finish(?:es|ed|ing)?|mind(?:s|ed)?|keep(?:s|ing)?|kept)\\s+to\\s+(?!the\\b|a\\b|an\\b|my\\b|your\\b|his\\b|her\\b|our\\b|their\\b|me\\b|him\\b|them\\b|us\\b|it\\b|this\\b|that\\b)[a-z]+\\b"],
+      "\\b(?:g(?:ive|ives|ave|iven|iving)\\s+up|enjoy(?:s|ed|ing)?|avoid(?:s|ed|ing)?|finish(?:es|ed|ing)?|mind(?:s|ed)?|keep(?:s|ing)?|kept)\\s+to\\s+" + GERUNDABLE + "\\b"],
     ["enjoy", "grammar", "We enjoyed in the party.", "We enjoyed the party. (We enjoyed ourselves.)",
       "Enjoy needs an object: enjoy it, enjoy yourself, enjoy + -ing.", "\\benjoy(?:s|ed|ing)?\\s+(?:in|with)\\b"],
     ["suggest|recommend", "grammar", "He suggested me to go.", "He suggested that I go. (He suggested going.)",
@@ -376,14 +382,18 @@
     return { from: from[0] || "", to: to[0] || "", before: a[i - 1] || "" };
   }
   /** smoke → smoking, stop → stopping, lie → lying, read → reading. */
-  const ing = (v) => /ie$/.test(v) ? v.slice(0, -2) + "ying"
+  const DOUBLE = new Set("begin admit prefer refer occur forget regret permit commit control travel cancel".split(" "));
+  const ing = (v) => DOUBLE.has(v) ? v + v.slice(-1) + "ing"                     // beginning, travelling (British)
+    : /ie$/.test(v) ? v.slice(0, -2) + "ying"
     : /[^aeiou]e$/.test(v) && v !== "be" ? v.slice(0, -1) + "ing"
     : /^[^aeiou]*[aeiou][bdgmnprt]$/.test(v) && v.length <= 4 ? v + v.slice(-1) + "ing" : v + "ing";
-  VS.fixSentence = function (text, trap) {
-    if (!trap || !trap.bad || trap.kind === "tense") return "";
-    const t = " " + String(text || "").replace(/[’‘]/g, "'") + " ";
+  /** One fix inside a sentence (the first place the trap matches), or "" when the trap has no safe fix. */
+  function fixOnce(t, trap) {
     const m = trap.bad.exec(t);
     if (!m) return "";
+    const found = m[0];
+    const keys = trap.keys.join(" ");
+    let fixed = "";
     // "give up to smoke" → "give up smoking": the -ing trap is two words, not one.
     // Only when the right sentence has the -ing of the very verb after "to" ("to smoke" → "smoking"),
     // so "attended to the meeting" is never turned into "attended thing meeting".
@@ -391,21 +401,44 @@
     if (toVerb && new RegExp("\\b" + ing(toVerb[1].toLowerCase()) + "\\b", "i").test(trap.right)) {
       // "look forward to meet" keeps its "to" (→ to meeting); "give up to smoke" loses it (→ smoking).
       const keepTo = new RegExp("\\bto\\s+" + ing(toVerb[1].toLowerCase()) + "\\b", "i").test(trap.right);
-      const fixedIng = m[0].replace(/\bto\s+([a-z]+)/i, (_, v) => (keepTo ? "to " : "") + ing(v.toLowerCase()));
-      return fixedIng === m[0] ? "" : (t.slice(0, m.index) + fixedIng + t.slice(m.index + m[0].length)).replace(/\s+/g, " ").trim();
-    }
-    const e = oneEdit(trap);
-    if (!e) return "";
-    const found = m[0];
-    let fixed;
-    if (e.from && e.to) fixed = found.replace(new RegExp("\\b" + e.from + "\\b", "i"), e.to);           // swap
-    else if (e.from) fixed = found.replace(new RegExp("\\s*\\b" + e.from + "\\b", "i"), "");          // remove
-    else {                                                                                       // add after the word before
-      const w = /^(\s*\S+)/.exec(found);
-      fixed = w ? w[1] + " " + e.to + found.slice(w[1].length) : "";
+      fixed = found.replace(/\bto\s+([a-z]+)/i, (_, v) => (keepTo ? "to " : "") + ing(v.toLowerCase()));
+    } else if (/\barrive\b/.test(keys)) {
+      // Arrive at a place, arrive in a city or country: a capital after "to" is a name (Cairo), anything else is a place.
+      const next = (/^\s*(\S+)/.exec(t.slice(m.index + found.length)) || [])[1] || "";
+      fixed = found.replace(/\bto\b/i, /^[A-Z]/.test(next) && next !== "The" ? "in" : "at");
+    } else if (/\bmarried\b/.test(keys) && !/\b(?:is|am|are|was|were|be|been|get|got|getting)\s+married\b/i.test(t)) {
+      return "";                                    // "She married with her cousin" → "married her cousin": not a one-word swap
+    } else {
+      const e = oneEdit(trap);
+      if (!e) return "";
+      if (e.from && e.to) fixed = found.replace(new RegExp("\\b" + e.from + "\\b", "i"), (x) => keepCase(x, e.to));   // swap
+      else if (e.from) fixed = found.replace(new RegExp("\\s*\\b" + e.from + "\\b", "i"), "");                      // remove
+      else {                                                                                                         // add after the word before
+        const w = /^(\s*\S+)/.exec(found);
+        fixed = w ? w[1] + " " + e.to + found.slice(w[1].length) : "";
+      }
     }
     if (!fixed || fixed === found) return "";
-    return (t.slice(0, m.index) + fixed + t.slice(m.index + found.length)).replace(/\s+/g, " ").trim();
+    return t.slice(0, m.index) + fixed + t.slice(m.index + found.length);
+  }
+  /** "Remember" → "Remind": a fix keeps the capital of the word it replaces. */
+  const keepCase = (was, now) => (/^[A-Z]/.test(was) ? now.charAt(0).toUpperCase() + now.slice(1) : now);
+
+  VS.fixSentence = function (text, trap) {
+    if (!trap || !trap.bad || trap.kind === "tense") return "";
+    let t = " " + String(text || "").replace(/[’‘]/g, "'") + " ";
+    // Every place the trap matches ("afraid of the dark and of dogs"), three at most.
+    let changed = false;
+    for (let i = 0; i < 3; i++) {
+      const next = fixOnce(t, trap);
+      if (!next) break;
+      t = next;
+      changed = true;
+    }
+    if (!changed) return "";
+    const fixed = t.replace(/\s+/g, " ").trim();
+    // A corrected sentence that is still wrong does more harm than the rule alone: re-check it.
+    return VS.findUsageMistakes(fixed).length ? "" : fixed;
   };
 
   VS.usageTrapsCount = TRAPS.length;

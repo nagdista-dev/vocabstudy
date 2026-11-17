@@ -454,3 +454,13 @@
 /* The weekly report on the home screen (Thursday, Friday): a reward, so it wears the highlighter */
 .week-ready { background: var(--mark-soft); border-color: transparent; }
 .week-ready .recall-strip-main > .icon:first-child { color: var(--on-mark); }
+
+/* Filters in three steps (V2.15): sort · show only · more filters. */
+.filter-group-title { margin: var(--s-2) 0 0; font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); }
+.filter-more > summary { display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); cursor: pointer; list-style: none; font-weight: 600; color: var(--ink-2); }
+.filter-more > summary::-webkit-details-marker { display: none; }
+.filter-more[open] .filter-more-chev { transform: rotate(90deg); }
+.filter-more .lib-panel-grid { margin-top: var(--s-2); }
+
+/* An opened word scrolls up to sit just under the app bar, not behind it (app.js toggle). */
+.word-row { scroll-margin-top: calc(var(--bar-h) + var(--s-2)); }

@@ -41,8 +41,8 @@
     weekSeen: "",                                  // the Saturday of the last weekly report opened (core/week.js)
     milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
-    settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 150, effects: true,
-                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "en", newPerDay: 10, autofill: true, grammar: true, speak: false,
+    settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 50, effects: true,
+                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "ar", newPerDay: 10, autofill: true, grammar: true, speak: false,
                 quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 
@@ -51,9 +51,13 @@
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
-      return Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), saved, {
+      const st = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), saved, {
         settings: Object.assign({}, DEFAULTS.settings, saved.settings),
       });
+      // Daily goal choices are 20 / 50 / 100 / 200 now: an old 150, 300 or 600 moves to the nearest one.
+      const g = st.settings.dailyGoal;
+      if (g && ![20, 50, 100, 200].includes(g)) st.settings.dailyGoal = g < 75 ? 50 : g < 150 ? 100 : g <= 150 ? 100 : 200;
+      return st;
     } catch (e) {
       return JSON.parse(JSON.stringify(DEFAULTS));
     }
@@ -422,6 +426,7 @@
       if (i < 0) return { error: "missing" };
       const next = Object.assign({}, state.library[i], changes);
       delete next.check;                 // edited by hand: the learner has checked it
+      if ("context" in changes && changes.context !== state.library[i].context) delete next.fromContext;
       const newId = VS.wordKey(next.word, next.sense);
       if (newId !== id && VS.byId[newId]) return { error: "duplicate", word: VS.byId[newId] };
       state.library[i] = next;
@@ -473,8 +478,9 @@
       if (filled.size) raw.filled = [...filled];
       // "Check the spelling" / "Which meaning did you meet?" (core/autofill.js).
       if (fields.check) { raw.check = Object.assign({}, fields.check); w.check = raw.check; }
-      // A meaning checked by hand (assets/data/overrides.js) needs no "Is this the meaning?" question.
-      if (fields.trusted) raw.trusted = w.trusted = true;
+      // A meaning checked by hand (assets/data/overrides.js) needs no "Is this the meaning?" question —
+      // but only when its Arabic is the one shown: Arabic the learner typed keeps no "trusted" badge.
+      if (fields.trusted && raw.arabic === fields.arabic) raw.trusted = w.trusted = true;
       if (fields.fromContext) raw.fromContext = w.fromContext = true;     // the meaning came from "Where you met it"
       // "wednesday" → "Wednesday": only the capital changes, so the id stays.
       if (fields.word && VS.wordKey(fields.word) === VS.wordKey(raw.word) && fields.word !== raw.word) {
@@ -522,6 +528,29 @@
       return newId;
     },
 
+    /**
+     * A word filled before its meaning was checked by hand gets the checked one
+     * (core/autofill.js migrateChecked): Arabic, definition, example and type
+     * change together — only the ones auto-fill wrote; what the learner typed stays.
+     */
+    upgradeToChecked(id, m, fromContext) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      if (!raw || !m) return false;
+      const filled = new Set(raw.filled || []);
+      if (!filled.has("arabic")) return false;                          // the learner's own Arabic: leave the word alone
+      ["arabic", "definition", "example", "type"].forEach((k) => {
+        if (!m[k] || (raw[k] && !filled.has(k))) return;
+        raw[k] = m[k]; if (w) w[k] = m[k]; filled.add(k);
+      });
+      raw.filled = [...filled];
+      if (raw.goes) { delete raw.goes; if (w) w.goes = []; }            // collocations of the old meaning
+      raw.trusted = true; if (w) w.trusted = true;
+      if (fromContext) { raw.fromContext = true; if (w) w.fromContext = true; }
+      save();
+      return true;
+    },
+
     /** The learner says the meaning shown is the one they met ("Yes" on the Meet card). */
     confirmMeaning(id) {
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
@@ -541,8 +570,9 @@
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
       const w = VS.byId[id];
       if (!raw || !m) return;
+      // "goes" belongs to the old meaning too ("heavy fine" is not "I'm fine"): it goes with it.
       const next = { arabic: m.arabic || "", definition: m.definition || "", example: m.example || "",
-                     type: m.type || raw.type || "", synonyms: (m.synonyms || []).slice(0, 3) };
+                     type: m.type || raw.type || "", synonyms: (m.synonyms || []).slice(0, 3), goes: [] };
       Object.keys(next).forEach((k) => {
         const v = next[k];
         if (v && (!Array.isArray(v) || v.length)) { raw[k] = v; if (w) w[k] = Array.isArray(v) ? v.slice() : v; }
@@ -584,6 +614,18 @@
       w.unsure = (raw.unsure || []).slice();
       save();
     },
+    /** A sentence corrected ("Use the fix"): same place, no longer unsure, so Recall may use it. */
+    replaceSentence(id, index, text) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      const clean = String(text || "").trim().slice(0, 300);
+      if (!raw || !raw.mine || !raw.mine[index] || !clean) return;
+      const old = raw.mine[index];
+      raw.mine[index] = clean;
+      if (raw.unsure) { raw.unsure = raw.unsure.filter((s) => s !== old); if (!raw.unsure.length) delete raw.unsure; }
+      if (w) { w.mine = raw.mine.slice(); w.unsure = (raw.unsure || []).slice(); }
+      save();
+    },
     removeSentence(id, index) {
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
       const w = VS.byId[id];
@@ -615,13 +657,19 @@
     },
     restore(snap) {
       snap.slice().sort((a, b) => a.i - b.i).forEach(({ id, i, raw, prog, note }) => {
+        // Whatever is there now (edited since, or gone) is replaced by the word as it was, in its old place —
+        // in storage and in the list in memory, so both agree.
         const at = state.library.findIndex((x) => VS.wordKey(x.word, x.sense) === id);
-        if (at >= 0) {
-          state.library[at] = raw;
-          if (VS.byId[id]) { VS.byId[id].mine = (raw.mine || []).slice(); VS.byId[id].unsure = (raw.unsure || []).slice(); }
-        } else {
-          state.library.splice(Math.min(i, state.library.length), 0, raw);
-          VS.addWords([raw]);
+        if (at >= 0) state.library.splice(at, 1);
+        if (VS.byId[id]) VS.removeWords([id]);
+        const pos = Math.min(i, state.library.length);
+        state.library.splice(pos, 0, raw);
+        const added = VS.addWords([raw]).added[0];
+        if (added) {
+          VS.words.splice(VS.words.indexOf(added), 1);
+          const before = state.library[pos + 1] && VS.byId[VS.wordKey(state.library[pos + 1].word, state.library[pos + 1].sense)];
+          const k = before ? VS.words.indexOf(before) : -1;
+          VS.words.splice(k >= 0 ? k : VS.words.length, 0, added);
         }
         if (prog) state.words[id] = prog.slice(); else delete state.words[id];
         if (note) state.notes[id] = note; else delete state.notes[id];

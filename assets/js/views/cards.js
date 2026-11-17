@@ -49,20 +49,21 @@
           <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
           ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
           ${w.definition ? html`<p class="flash-def">${w.definition}</p>` : ""}
+
+          ${VS.ui.context(w, "flash-met")}
+          ${w.example && !w.context ? html`<div class="flash-example">
+            <p>${VS.ui.quote(w)}</p>
+            ${VS.ui.speakButton(w.example, "Hear the example")}
+          </div>` : ""}
           ${!w.trusted && !w.confirmed && w.arabic && VS.autofill.enabled() ? html`
             <div class="meaning-ask">
-              <p class="meaning-ask-q">Is this the meaning you met?</p>
+              <p class="meaning-ask-q">${w.context ? "Is this the meaning you met?" : "Is this the meaning you need?"}</p>
               <div class="row meaning-ask-actions">
                 <button class="btn btn-tonal" type="button" data-action="meaning-yes" data-id="${w.id}">${icon("check", "icon-sm")} Yes</button>
                 <button class="btn btn-quiet" type="button" data-action="meaning-list" data-id="${w.id}">Another meaning</button>
               </div>
               <div class="meanings" aria-live="polite"></div>
             </div>` : ""}
-          ${VS.ui.context(w, "flash-met")}
-          ${w.example && !w.context ? html`<div class="flash-example">
-            <p>${VS.ui.quote(w)}</p>
-            ${VS.ui.speakButton(w.example, "Hear the example")}
-          </div>` : ""}
           ${VS.ui.soundTraps(w, "flash-traps")}
           ${VS.ui.usage(w, 1, "flash-usage")}
           ${VS.ui.goes(w, "flash-similar")}
@@ -71,7 +72,8 @@
   }
 
   function card(w) {
-    if (VS.store.settings().cardFront === "ar") {
+    // After Meet, the check always starts from the Arabic: recall the English, don't recognise it.
+    if (VS.store.settings().cardFront === "ar" || s.met.length) {
       return html`<div class="flash ${s.flipped ? "is-flipped" : ""}" data-action="flip" role="button" tabindex="0"
         aria-label="${s.flipped ? "Card back" : "Card front. Press space to see the word"}">${arabicFront(w)}</div>`;
     }
@@ -203,16 +205,15 @@
       return html`
         <div class="activity">
           ${VS.ui.activityHead({ back: s.scope.back, title: s.met.length ? "Check yourself" : "Study",
-            sub: s.index >= s.base ? "Once more — the words you're still learning"
-              : s.met.length ? "Step 2 of 2 · do you remember it?" : s.scope.title,
-            index: Math.min(s.index, s.base - 1), total: s.base, undo: !!s.undo })}
+            sub: s.met.length ? "Step 2 of 2 · do you remember it?" : s.scope.title,
+            index: s.index, total: s.base, again: Math.max(0, s.queue.length - Math.max(s.index, s.base)), undo: !!s.undo })}
           <div class="activity-stage stage-center">
             ${card(w)}
           </div>
           <div class="action-bar">
-            <button class="btn btn-lg btn-bad" type="button" data-action="grade" data-grade="again">
+            <button class="btn btn-lg btn-bad" type="button" data-action="grade" data-grade="again" ${s.flipped ? "" : VS.raw("disabled")}>
               ${icon("arrow-left", "icon-sm")} Still learning <kbd>1</kbd></button>
-            <button class="btn btn-lg btn-good" type="button" data-action="grade" data-grade="good">
+            <button class="btn btn-lg btn-good" type="button" data-action="grade" data-grade="good" ${s.flipped ? "" : VS.raw("disabled")}>
               I know it ${icon("arrow-right", "icon-sm")} <kbd>2</kbd></button>
           </div>
         </div>`;
@@ -263,10 +264,22 @@
         VS.sfx.play("flip");
         if (s.flipped && VS.store.settings().cardFront === "ar") VS.speech.auto(s.queue[s.index].word);
         VS.$(".flash").classList.toggle("is-flipped", s.flipped);
+        // The answer comes after the check: the two buttons wake up once the card is turned.
+        VS.$$('[data-action="grade"]').forEach((b) => { b.disabled = !s.flipped; });
         VS.$$(".flash-face").forEach((f) => f.setAttribute("aria-hidden", f.classList.contains("flash-back") ? !s.flipped : s.flipped));
       },
       grade(el) {
         if (s.busy) return;
+        // A grade before the card is turned (a swipe, a key) turns it first: you check, then answer.
+        if (!s.flipped) {
+          const swiped = s.suppressFlip;          // a swipe: flip now, and swallow the click that follows it
+          s.suppressFlip = false;
+          this.flip();
+          s.suppressFlip = swiped;
+          const card = VS.$(".flash");
+          if (card) card.style.transform = "";
+          return;
+        }
         const w = s.queue[s.index];
         const grade = el.dataset.grade;
         // Remember the round as it was, so Undo can put this card back.

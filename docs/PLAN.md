@@ -964,47 +964,91 @@ Memrise/Quizlet: محتوى منظّف ومراجَع. إحنا أقوى منه�
 - **تأكيد الحذف:** "Its progress, note and your sentences go too."
 
 ### V2 — الوضوح والتدفق (P1)
-- [ ] **V2.1 أول 5 كلمات = خطوة واحدة:** تحت 5 كلمات: من غير status chips/filters/Practise/…، من غير goal لحد
+- [x] **V2.1 أول 5 كلمات = خطوة واحدة:** تحت 5 كلمات: من غير status chips/filters/Practise/…، من غير goal لحد
       أول جلسة. بعد أول كلمة: "achieve is in. Learn it now (1 min)" وكارتها مفتوح تحت.
-- [ ] **V2.2 عداد واحد لكل الأنشطة:** "3 of 8 · 2 to try again"، الشريط لقدام بس (Recall، Quick، Check، Quiz).
-- [ ] **V2.3 Recall:** إجابة مكتوبة صح = "Got it ✓" وزرار Continue واحد (Enter) + لينك "It was hard"؛ نفس مجموعة
+- [x] **V2.2 عداد واحد لكل الأنشطة:** "3 of 8 · 2 to try again"، الشريط لقدام بس (Recall، Quick، Check، Quiz).
+- [x] **V2.3 Recall:** إجابة مكتوبة صح = "Got it ✓" وزرار Continue واحد (Enter) + لينك "It was hard"؛ نفس مجموعة
       التقييم في كل الحالات (Forgot · Hard · Got it)؛ "Almost" يعرض الكلمة مرة واحدة والغلطة جواها؛ العربي في
       gap cue يظهر بعد Hint بس (أو setting)؛ نهاية الجلسة تسمّي الكلمات اللي طلعت خطوة ("deadline → back in 3
       days") وعدد بكرة؛ الـ Undo عليه كلمة على الديسكتوب.
-- [ ] **V2.4 المعاني inline:** "Other meanings" / "Show the others" يفتحوا قايمة تحت التعريف، المعنى الحالي عليه ✓
+- [x] **V2.4 المعاني inline:** "Other meanings" / "Show the others" يفتحوا قايمة تحت التعريف، المعنى الحالي عليه ✓
       "This one"، والباقي "Use this meaning" — من غير فورم الـ Edit.
-- [ ] **V2.5 Learn/Check:** Check عربي الأول، والمتعلم يكتب الكلمة (أو يقولها لو Speak شغال) — مش "فاكرها؟". أزرار
+- [x] **V2.5 Learn/Check:** Check عربي الأول، والمتعلم يكتب الكلمة (أو يقولها لو Speak شغال) — مش "فاكرها؟". أزرار
       التقييم مقفولة لحد ما يقلب. `cardFront` default = `ar`. تحديث about.html يطابق.
-- [ ] **V2.6 صفحة الكلمة مرتبة (chunking):** الترتيب: الكلمة + الصوت + Sound tips في سطر واحد → **Where you met it
+- [x] **V2.6 صفحة الكلمة مرتبة (chunking):** الترتيب: الكلمة + الصوت + Sound tips في سطر واحد → **Where you met it
       أول حاجة** (لو موجودة) → المعنى (عربي + تعريف) → مثال → فخ العرب → جملك → (More: Similar، Goes with، Other
       meanings) → الملاحظة والجدول. أقصى 6 بلوكات ظاهرة؛ الباقي تحت "More". الصف يعمل `scrollIntoView` لما يتفتح.
       Cancel في الـ Edit يرجع لصفحة الكلمة. جملة unsure: الغلطة مشطوبة بالأحمر جوه الجملة + "Fix it".
-- [ ] **V2.7 قاموس الأسماء (glossary) واحد في كل التطبيق:** Today (مش Words) في الـ nav والـ crumbs، وعنصر Today
+- [x] **V2.7 قاموس الأسماء (glossary) واحد في كل التطبيق:** Today (مش Words) في الـ nav والـ crumbs، وعنصر Today
       في nav الديسكتوب؛ "Quick 5" → "5-minute review"؛ Settings "Accent" (نطق) → "Voice"؛ Practise في كل حتة؛ "Box
       1/6" → "Step 1 of 6" أو "Comes back in 3 days"؛ "Memory: Box 3 · waits 1 week" → "Comes back in 1 week"؛
       "Cards" = "Learn". اكتب الـ glossary في `docs/DESIGN.md`.
-- [ ] **V2.8 الهدف اليومي:** اختيارات 20/50/100/200/Off، default 50؛ اشرح الحد اليومي ("7 today · limit 10/day").
-- [ ] **V2.9 Quiz:** "Can't listen now" بيبدّل سؤال الاستماع لنص للجولة؛ الاختيارات الغلط بنفس صيغة الإجابة
+- [x] **V2.8 الهدف اليومي:** اختيارات 20/50/100/200/Off، default 50؛ اشرح الحد اليومي ("7 today · limit 10/day").
+- [x] **V2.9 Quiz:** "Can't listen now" بيبدّل سؤال الاستماع لنص للجولة؛ الاختيارات الغلط بنفس صيغة الإجابة
       (relieved ↔ improved)؛ الاختيارات قريبة من الإبهام في الموبايل؛ feedback الغلط = عربي + سطر تعريف؛
       `aria-label="Option A: …"`.
-- [ ] **V2.10 Spell:** "Type it once more" إجباري بعد الغلط؛ placeholder على الشمال؛ أيقونة "Slower" سلحفاة.
-- [ ] **V2.11 Match:** سطر تعليمات "Tap a word, then its meaning."؛ الساعة مخفية (تظهر في النتيجة بس)؛ ارتفاع
+- [x] **V2.10 Spell:** "Type it once more" إجباري بعد الغلط؛ placeholder على الشمال؛ أيقونة "Slower" سلحفاة.
+- [x] **V2.11 Match:** سطر تعليمات "Tap a word, then its meaning."؛ الساعة مخفية (تظهر في النتيجة بس)؛ ارتفاع
       الكروت متساوي.
-- [ ] **V2.12 Speak مقفول:** عنوان "Speak practice is off" + زرار "Turn it on" بيشغّله مكانه.
-- [ ] **V2.13 Add:** "Press Add (or Enter)"؛ "Your words stay on this device. To fill in meanings, only the English word
+- [x] **V2.12 Speak مقفول:** عنوان "Speak practice is off" + زرار "Turn it on" بيشغّله مكانه.
+- [x] **V2.13 Add:** "Press Add (or Enter)"؛ "Your words stay on this device. To fill in meanings, only the English word
       is looked up online."؛ `dir="auto"` في كل خانات الكتابة (الكلمة، الملاحظة، الجمل، where you met it)؛ Text
       tab: الـ textarea تتقفل لسطر "Edit text" بعد اللصق؛ دمج الكلمات المتجاورة بس بـ long-press/drag؛ أوفلاين:
       "You're offline — the word is saved now and filled in when you're back."
-- [ ] **V2.14 Progress / Week:** "Recall this week" → "Coming up: 19 words in the next 7 days"؛ الأسبوع يقارن بنفس
+- [x] **V2.14 Progress / Week:** "Recall this week" → "Coming up: 19 words in the next 7 days"؛ الأسبوع يقارن بنفس
       اليوم من الأسبوع اللي فات أو يخبّي الفرق لحد الخميس؛ الفرق بالحبر + ▲▼ مش أخضر؛ "Added" و"Learned".
-- [ ] **V2.15 الفلاتر والطباعة:** فلاتر = Sort + "Show only" + "More filters"؛ Memory بلغة "Comes back in…"؛ الطباعة:
+- [x] **V2.15 الفلاتر والطباعة:** فلاتر = Sort + "Show only" + "More filters"؛ Memory بلغة "Comes back in…"؛ الطباعة:
       default Word sheet + Due today، والباقي تحت "More options"، Level يختفي لو مفيش كلمة ليها level، padding
       تحت قد شريط Download.
-- [ ] **V2.16 التذكير:** "Add a daily reminder to my calendar (6 PM)" + اختيار الساعة؛ وقول إن ملف هيتنزّل.
-- [ ] **V2.17 العربي لضعاف الإنجليزي:** لينك About مكتوب بالعربي "اقرأ عن التطبيق بالعربي" (`lang=ar`)؛ أول تشغيل:
+- [x] **V2.16 التذكير:** "Add a daily reminder to my calendar (6 PM)" + اختيار الساعة؛ وقول إن ملف هيتنزّل.
+- [x] **V2.17 العربي لضعاف الإنجليزي:** لينك About مكتوب بالعربي "اقرأ عن التطبيق بالعربي" (`lang=ar`)؛ أول تشغيل:
       تابات Recall/Progress فاضية عليها hint "after your first word".
-- [ ] **V2.18 الكيبورد العربي:** حوّل الحروف المكتوبة بالعربي لمكانها على الكيبورد الإنجليزي (شؤفعشممغ → actually)
+- [x] **V2.18 الكيبورد العربي:** حوّل الحروف المكتوبة بالعربي لمكانها على الكيبورد الإنجليزي (شؤفعشممغ → actually)
       واعرض "Did you mean actually?" في Recall وSpell وAdd. (ميزة محدش عنده.)
+
+#### النقاش مع المراجع المستقل على V0/V1 (وإيه اللي اتغيّر بسببه)
+agent مستقل راجع V0 وV1 ضد الخطة ولقى **4 P0** و**5 P1** حقيقيين. كلهم اتصلحوا واتجرّبوا:
+- **Toast الـ Undo كان بيسيب زرار غير مرئي شغال** (بيرجّع كلمة اتمسحت لو لمست مكانه). دلوقتي `hideToast()` بيشيل
+  الزرار والحالة؛ تغييرين ورا بعض = "· 2 changes" والـ Undo بيرجّع الاتنين (مفيش حاجة بتضيع بصمت)؛ الوقت
+  بيقف لما الصباع أو الكيبورد عليه؛ Ctrl/Cmd+Z؛ الـ Undo وشريط التحديث مش فوق بعض.
+- **فخ الـ -ing كان بيعلّم إنجليزي صح غلط** ("keeps to himself" ← "himselfing"): دلوقتي بس قبل فعل من قايمة صريحة.
+- **"your sentence, fixed" كان أحيانًا بيطلع جملة غلط** (arrived in the airport، interested about): بعد أي تصحيح
+  الجملة **بتتفحص تاني**، ولو لسه فيها غلط بتظهر القاعدة بس؛ كل الأماكن بتتصلح؛ الحرف الكابيتال بيفضل؛ arrive = at
+  للمكان / in للمدينة؛ married بس بعد is/got. اتضاف اختبار بجمل حقيقية من المراجعة.
+- **اختيار المعنى من الجملة كان بيغلط** ("I took off my coat" ← الطيارة) لأن "took" في أمثلة الجدول كانت بتتحسب
+  دليل: دلوقتي المعاني المراجَعة بتتحسب بالـ `keys` بس، والتعادل = نسأل المتعلم؛ apostrophe الآيفون والجمع بيتوحدوا؛
+  معاني القاموس محتاجة دليلين وفرق واضح. **اتجرّب 15 جملة: كلها صح** (والملتبس بيسأل).
+- **الجدول:** 114 كلمة (138 معنى) — اتصلح العربي اللي قال عليه (run out of، remind، take place، manage…)،
+  اتضافت be/get used to = متعود على، be supposed to = المفروض، والكلمات اللي اقترحها (nervous، lately، fabric،
+  experiment…)، و29 alias (realise، gave up ← give up…). `check.py` بيرفض key ضمير وalias لـ entry مش موجود.
+- **ترحيل المكتبات القديمة:** `migrateChecked()` عند الفتح — persuade=اقتنع القديمة بتبقى يقنع (اللي الـ auto-fill
+  كتبه بس، مش اللي المتعلم كتبه). "trusted" بس لو العربي اللي ظاهر هو بتاع الجدول.
+- **الكلمات المراجَعة رجعلها Similar** من معنى القاموس بنفس نوع الكلمة. **"Use this meaning" عليه Undo** وبيشيل
+  collocations المعنى القديم. **الـ focus** بيروح لمكان منطقي بعد الحذف/التأكيد/التغيير.
+- **قايمة المعاني:** المراجَع الأول، وبعده "From the dictionary" (3 بالكتير) — عمرها ما تقول "مفيش غيره" وفيه.
+- **حماية:** `check.py` بيرفض أي regex lookbehind (بيكسر iOS قبل 16.4 — حصل مرتين وأنا بكتب).
+- **مختلفين فيه:** المراجع اقترح إن "trusted" ميلغيش السؤال خالص؛ قررت: كلمة مراجَعة بمعنى واحد = مفيش سؤال،
+  بأكتر من معنى ومفيش جملة تحسم = "Which meaning?" — نفس روح اقتراحه من غير ما نسأل على كلمات معناها واحد.
+
+#### اللي اتعمل في V2
+- **أسماء موحّدة:** 5-minute review، Voice، Today (في الـ nav والـ crumbs، والديسكتوب بقى فيه Today)، "Comes back in"
+  و"Step 2 of 6" بدل Box؛ Practise (فعل) / Practice (اسم) صح الاتنين بالإنجليزي البريطاني فاتسابوا.
+- **أول 5 كلمات:** من غير chips/فلاتر/بحث/Practise؛ من غير هدف لحد أول جلسة؛ أول كلمة: "achieve is in. Learn it now".
+- **عداد واحد:** "2 of 5 · 1 to try again"، الشريط لقدام بس (Recall وLearn).
+- **Recall:** إجابة صح = Continue واحد؛ Forgot · Got it في كل حالة (Easy على زرار 3)؛ "Almost" الكلمة مرة واحدة والغلط
+  جواها؛ العربي في سؤال الجملة بعد أول Hint؛ النهاية بتسمّي الكلمات اللي اتحركت ("comes back in 3 days").
+- **Learn/Check:** عربي الأول بعد Meet، والأزرار مقفولة لحد ما الكارت يتقلب (السحب بيقلب الأول)؛ default الكروت عربي.
+- **صفحة الكلمة:** Where you met it الأول، والفخ قبل جملك، وSimilar/Goes with تحت "More about this word"؛ الصف بيطلع
+  تحت الشريط لما يتفتح؛ Cancel بيرجع للكلمة؛ جملة unsure: الغلط بالقلم الأحمر + "Use the fix".
+- **Goal** 20/50/100/200 (default 50، والقديم بيتنقل للأقرب). **Speak** بيتشغّل من مكانه. **التذكير** بيقول إنه ملف تقويم.
+  **لينك About** بالعربي.
+- **Quiz:** "Can't listen now"؛ اختيارات fill-the-gap بنفس صيغة الإجابة (relieved / improved)؛ feedback أقصر؛
+  aria-label "Option A: …". **Spell:** لازم تكتبها صح مرة بعد الغلط. **Match:** تعليمات ومن غير ساعة شغالة.
+- **Add:** "Press Add (or Enter)"، رسالة أوفلاين، `dir="auto"`، وFrom text مبيدمجش الكلمات المتجاورة غير لو المتعلم
+  اختار "Join". **Progress/Week:** "Coming up"، المقارنة بنفس اليوم من الأسبوع اللي فات، ▲▼ بالحبر، Words learned/added.
+  **الفلاتر:** Sort · Show only · More filters، وLevel يختفي لو مفيش. **الطباعة:** More options، default المستحق
+  النهارده، وpadding تحت قد الشريطين.
+- **الكيبورد العربي:** "شؤفعشممغ" = actually في Recall وSpell وAdd (اتجرّب: actually، borrow، make a decision).
 
 ### V3 — نظام التصميم والراحة للعين (P1/P2) — "مرتب ومريح"
 - [ ] **V3.1 Breakpoints:** 3 بس كـ tokens: phone < 600، tablet 600–1023، desktop ≥ 1024 (و wide ≥ 1440 للمسافات

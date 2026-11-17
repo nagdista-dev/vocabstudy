@@ -10,7 +10,7 @@
   /**
    * Which words an activity works on, from the route: #/<scope>/<mode>?filters
      recall   words due today                    #/recall
-     quick    the 10 words that matter most      #/quick   (Quick 5: five minutes)
+     quick    the 10 words that matter most      #/quick   (the 5-minute review)
      new      the next new words to learn        #/new/cards
      today    words you first studied today      #/today/quiz
      tricky   words you keep missing             #/tricky/spell
@@ -21,7 +21,7 @@
     const home = "#/";
     switch (params.scope) {
       case "recall": return { kind: "recall", title: "Daily recall", back: home, words: VS.store.dueWords() };
-      case "quick": return { kind: "quick", title: "Quick 5", back: home, words: VS.store.quickWords(10) };
+      case "quick": return { kind: "quick", title: "5-minute review", back: home, words: VS.store.quickWords(10) };
       case "tricky": return { kind: "tricky", title: "Tricky words", back: home, words: VS.store.trickyWords() };
       case "all": return { kind: "all", title: "Whole library", back: "#/words", words: VS.allWords() };
       case "new": return { kind: "new", title: "New words", back: home, words: VS.store.newWords().slice(0, VS.newLeftToday()) };

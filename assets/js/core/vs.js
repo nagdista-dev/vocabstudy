@@ -195,32 +195,66 @@
   };
 
   let toastTimer;
+  let undos = [];          // what "Undo" will take back, newest last (several changes in a row add up)
+  /** Put the toast away completely: no invisible button left behind, nothing left to undo. */
+  function hideToast() {
+    const el = VS.$("#toast");
+    clearTimeout(toastTimer);
+    undos = [];
+    document.body.classList.remove("has-undo");
+    if (!el) return;
+    el.classList.remove("is-on", "has-action");
+    const b = el.querySelector(".toast-action");
+    if (b) b.remove();
+  }
+  function undoAll() {
+    const list = undos.slice().reverse();
+    hideToast();
+    list.forEach((run) => run());
+  }
   /**
    * A short message at the bottom. With `action` ({ label, run }) it carries one
-   * button — "Undo" after anything that removes or resets — and stays 10 seconds
-   * so a thumb can reach it; the button works once.
+   * "Undo" button and stays 10 seconds — paused while a finger or the keyboard
+   * is on it. A second change before then joins the first ("2 changes"): Undo
+   * takes back both, so nothing is lost silently. Ctrl/Cmd+Z works too.
    */
   VS.toast = function (message, action) {
     const el = VS.$("#toast");
     if (!el) return;
-    el.textContent = message;
+    if (!action) hideToast();
+    if (action) undos.push(action.run);
+    el.textContent = action && undos.length > 1 ? message + " · " + undos.length + " changes" : message;
     el.classList.toggle("has-action", !!action);
+    document.body.classList.toggle("has-undo", !!action);
     if (action) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "toast-action";
       b.textContent = action.label || "Undo";
-      b.addEventListener("click", () => {
-        el.classList.remove("is-on");
-        clearTimeout(toastTimer);
-        action.run();
-      }, { once: true });
+      b.addEventListener("click", undoAll, { once: true });
       el.append(" ", b);
     }
     el.classList.add("is-on");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove("is-on"), action ? 10000 : 2200);
+    toastTimer = setTimeout(hideToast, action ? 10000 : 2200);
   };
+  document.addEventListener("DOMContentLoaded", () => {
+    const el = VS.$("#toast");
+    if (!el) return;
+    const pause = () => { if (undos.length) clearTimeout(toastTimer); };
+    const resume = () => { if (undos.length) { clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 4000); } };
+    el.addEventListener("pointerenter", pause);
+    el.addEventListener("focusin", pause);
+    el.addEventListener("pointerleave", resume);
+    el.addEventListener("focusout", resume);
+  });
+  // Ctrl/Cmd+Z takes back the last change while its Undo is on screen (not inside a text field).
+  document.addEventListener("keydown", (e) => {
+    if (!undos.length || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z" || e.shiftKey) return;
+    if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName)) return;
+    e.preventDefault();
+    undoAll();
+  });
 
   /* ── Asking before something is lost ────────────────────────────
      The browser's confirm() blocks the page, cannot be styled and

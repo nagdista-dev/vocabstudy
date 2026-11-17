@@ -161,7 +161,7 @@
         const b = e.target.closest("[data-pick]");
         if (!b) return;
         e.stopPropagation();
-        if (b.dataset.pick === "open") { close(null); location.hash = "#/words?q=" + encodeURIComponent(have.word); return; }
+        if (b.dataset.pick === "open") { close(null); openWord(have); return; }
         if (b.dataset.pick === "keep") keptWords.add(typed.toLowerCase());
         close(b.dataset.pick === "fix" ? fix : typed);
       });
@@ -210,7 +210,11 @@
     if (checking === ar) return null;
     checking = ar;
     let list = [], failed = false;
-    try { list = await english(ar); } catch (e) { failed = true; } finally { checking = ""; }
+    // The keyboard may just be left on Arabic: "شؤفعشممغ" is "actually" typed on the Arabic layout.
+    const keys = VS.fromArabicKeys(ar);
+    const typo = /^[a-z' -]{3,}$/i.test(keys) && keys.split(/\s+/).every((t) => known(t)) ? keys : "";
+    try { list = await english(ar); } catch (e) { failed = !typo; } finally { checking = ""; }
+    if (typo) list = [{ word: typo, hint: "", keys: true }].concat(list.filter((o) => o.word.toLowerCase() !== typo.toLowerCase()));
     if (failed) {
       VS.toast(VS.google.status() === "paused"
         ? "The translation service is busy. Try again in a few minutes — or type the word in English."
@@ -227,7 +231,7 @@
         <p class="spell-check-q">${icon("book", "icon-sm")}<span><bdi lang="ar" dir="rtl">${ar}</bdi> in English — which one do you mean?</span></p>
         <div class="ar-pick-list">
           ${list.map((o, i) => html`<button class="ar-pick-opt ${i ? "" : "is-first"}" type="button" data-pick="${i}">
-            <b>${o.word}</b>${VS.byId[VS.wordKey(o.word)] ? html`<small class="ar-pick-have">In your library</small>` : ""}${o.hint ? html`<bdi lang="ar" dir="rtl">${o.hint}</bdi>` : ""}</button>`)}
+            <b>${o.word}</b>${o.keys ? html`<small class="ar-pick-have">Your keyboard was in Arabic</small>` : ""}${VS.byId[VS.wordKey(o.word)] ? html`<small class="ar-pick-have">In your library</small>` : ""}${o.hint ? html`<bdi lang="ar" dir="rtl">${o.hint}</bdi>` : ""}</button>`)}
         </div>
         <p class="hint">Not here? Type it in English.</p>`);
       box.addEventListener("click", (e) => {
@@ -236,7 +240,7 @@
         e.stopPropagation();
         const pick = list[Number(b.dataset.pick)].word;
         // Already in the library: open it rather than "already in your library" after the tap.
-        if (VS.byId[VS.wordKey(pick)]) { close(null); location.hash = "#/words?q=" + encodeURIComponent(pick); return; }
+        if (VS.byId[VS.wordKey(pick)]) { close(null); openWord(VS.byId[VS.wordKey(pick)]); return; }
         close(pick);
       });
       anchor.after(box);
@@ -247,6 +251,17 @@
       const first = box.querySelector("[data-pick]");
       if (first) first.focus({ preventScroll: true });
     });
+  }
+
+  /** Show a word that's already in the library: its search, with its page open. */
+  function openWord(w) {
+    const hash = "#/words?q=" + encodeURIComponent(w.word);
+    const show = () => setTimeout(() => {
+      const row = VS.$(`.word-row[data-id="${CSS.escape(w.id)}"]`);
+      if (row) row.open = true;
+    }, 60);
+    if (location.hash === hash) { VS.app.render(); show(); }
+    else { window.addEventListener("hashchange", show, { once: true }); location.hash = hash; }
   }
 
   // Leaving the screen (or typing something else) closes the question.

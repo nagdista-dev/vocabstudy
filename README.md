@@ -28,7 +28,7 @@ words and progress stay on your device, and it works offline.
    **Recall** what's due → **Learn new words** (10 a day by default) →
    practise today's words with **Quiz, Spell and Match** → **Use it**: write
    a sentence of your own — and **Speak** when you turn it on in Settings.
-   Only five minutes? **Quick 5** brings the 10 words that matter most.
+   Only five minutes? the **5-minute review** brings the 10 words that matter most.
 3. **Your library is the brain.** Search, filter and sort every word, tag them
    your way (IELTS, Work, Travel…), then practise, print or export exactly the
    list you're looking at.

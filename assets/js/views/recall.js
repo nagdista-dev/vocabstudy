@@ -47,7 +47,8 @@
      when the meaning is settled — checked by hand, confirmed by the learner,
      or picked from that very sentence — or when the cue is the dictionary
      example, which belongs to the definition. */
-  const arabicFits = (w, cue) => !cue.own || !!(w.trusted || w.confirmed || (w.fromContext && cue.text === w.context));
+  const oneChecked = (w) => { const c = VS.autofill.checked(w.word); return !!c && c.length === 1; };
+  const arabicFits = (w, cue) => !cue.own || !!(w.confirmed || (w.fromContext && cue.text === w.context) || (w.trusted && oneChecked(w)));
 
   function gapText(w) {
     const hit = VS.findIn(w, s.cues[s.index].text);
@@ -76,12 +77,11 @@
 
   function verdictMarkup(w) {
     if (!s.verdict) return "";
-    if (s.verdict === "right") return html`<p class="verdict is-right">${icon("check", "icon-sm")} You typed it right.</p>`;
+    if (s.verdict === "right") return html`<p class="verdict is-right">${icon("check", "icon-sm")} You typed it right.${s.arabicKeys ? html` <span class="hint">(Your keyboard was in Arabic — switch it to English next time.)</span>` : ""}</p>`;
     if (s.verdict === "form") return html`<p class="verdict is-right">${icon("check", "icon-sm")} Right — “${s.typed}” is a form of “${w.word}”.</p>`;
     return html`
       <div class="verdict is-${s.verdict}">
-        <p>${s.verdict === "almost" ? html`<b>Almost.</b> You typed “${s.typed}” — one slip:` : html`You typed “${s.typed}”.`}</p>
-        <p class="spell-diff verdict-diff" aria-label="Correct spelling: ${w.word}">${VS.ui.letters(s.typed, VS.spellingOf(w))}</p>
+        <p>${s.verdict === "almost" ? html`<b>Almost.</b> You typed “${s.typed}” — one slip, marked below.` : html`You typed “${s.typed}”. The letters you missed are marked below.`}</p>
       </div>`;
   }
 
@@ -95,7 +95,9 @@
         ${gap
           ? html`<p class="q-label">${cue.own ? html`${icon(cue.own === "Your sentence" ? "pen" : "bulb", "icon-sm")} ${cue.own} — which word fits?` : "Which word fits the sentence?"}</p>
                  <p class="recall-gap">${gapText(w)}</p>
-                 ${arabicFits(w, cue) ? html`<p class="recall-ar recall-ar-sm" lang="ar">${w.arabic}</p>` : ""}`
+                 ${arabicFits(w, cue) && (s.hints || s.revealed)
+                   // The sentence is the cue; the Arabic would hand over the answer. It comes with the first hint.
+                   ? html`<p class="recall-ar recall-ar-sm" lang="ar">${w.arabic}</p>` : ""}`
           : html`<p class="recall-ar" lang="ar">${w.arabic}</p>
                  ${w.definition ? html`<p class="recall-def">${w.definition}</p>` : ""}`}
         ${w.sense ? html`<p class="hint">Sense: ${w.sense}</p>` : ""}
@@ -106,7 +108,10 @@
             <div class="recall-answer view-enter">
               ${verdictMarkup(w)}
               <div class="row">
-                <p class="recall-word"><span class="mark">${w.word}</span></p>
+                <p class="recall-word"><span class="mark">${s.verdict === "almost" || s.verdict === "wrong"
+                  // The word once, with the slip marked inside it — not a diff and then the word again.
+                  ? html`<span class="spell-diff" aria-label="Correct spelling: ${w.word}">${VS.ui.letters(s.typed, VS.spellingOf(w))}</span>`
+                  : w.word}</span></p>
                 ${VS.ui.speakButton(w.word)}
               </div>
               ${VS.ui.ipa(w)}
@@ -127,16 +132,20 @@
   /** The honest grade for what was typed: the button that Enter presses. */
   const suggested = () => (s.verdict === "wrong" ? "again" : "good");
 
+  /* The same two answers on every card: Forgot · Got it ("Easy" stays on the 3 key
+     for people who know it — one less choice for everyone else). A word typed right
+     needs no second decision: one Continue, and a quiet way to say it was luck. */
   function gradeBar() {
+    if (s.verdict === "right" || s.verdict === "form") return html`
+      <button class="btn btn-lg btn-quiet" type="button" data-action="grade" data-grade="again">Actually, I forgot <kbd>1</kbd></button>
+      <button class="btn btn-lg btn-primary is-suggested" type="button" data-action="grade" data-grade="good" id="suggestedGrade">${icon("check", "icon-sm")} Continue <kbd>Enter</kbd></button>`;
     const pick = suggested();
-    const easy = !s.hints && s.verdict !== "almost";
     const btn = (grade, tone, label, key) => html`
       <button class="${["btn btn-lg", tone, pick === grade ? "is-suggested" : ""].join(" ")}" type="button" data-action="grade" data-grade="${grade}"
         ${pick === grade ? VS.raw('id="suggestedGrade"') : ""}>${label} <kbd>${key}</kbd></button>`;
     return html`
       ${btn("again", "btn-bad", "Forgot", "1")}
-      ${btn("good", "btn-good", "Got it", "2")}
-      ${easy ? btn("easy", "", "Easy", "3") : ""}`;
+      ${btn("good", "btn-good", "Got it", "2")}`;
   }
 
   function finish() {
@@ -146,6 +155,9 @@
     if (!counts.again && s.results.size >= 5) setTimeout(VS.ui.celebrate, 150);
     const next = VS.store.nextReview();
     const due = VS.store.totals().due;
+    // The end names what moved: each word remembered, and when it comes back (peak-end).
+    const moved = [...s.results].filter(([, g]) => g !== "again").map(([id]) => VS.byId[id]).filter(Boolean)
+      .map((w) => ({ word: w.word, when: VS.ui.whenText(VS.store.word(w.id).due) }));
     if (s.scope.kind === "quick") return VS.ui.summary({
       title: "Five minutes, well spent",
       message: due ? html`${VS.plural(due, "word")} still due today — finish them when you have more time.` : "Nothing else is due today.",
@@ -155,11 +167,12 @@
         { value: counts.again, label: "forgot", tone: "bad" },
       ],
       words: forgot,
+      moved,
       actions: [due ? { href: "#/recall", label: "Recall the rest", primary: true } : { href: s.scope.back, label: "Done", primary: true },
                 due ? { href: s.scope.back, label: "Stop for now" } : null],
     });
     return VS.ui.summary({
-      title: "Recall done",
+      title: counts.again ? "Recall done" : "Every word came back",
       message: next
         ? html`Next recall: ${VS.plural(next.count, "word")} ${VS.ui.whenText(next.date)}.`
         : "Nothing else is scheduled yet.",
@@ -169,6 +182,7 @@
         { value: counts.again, label: "forgot", tone: "bad" },
       ],
       words: forgot,
+      moved,
       actions: s.more
         ? [{ action: "restart", label: "Next " + Math.min(s.more, RECALL_BATCH) + " words", primary: true }, { href: s.scope.back, label: "Stop for now" }]
         : [{ href: s.scope.back, label: "Done", primary: true }],
@@ -192,14 +206,15 @@
       s = { scope, queue, cues: queue.map(pickCue),
             more: quick ? 0 : Math.max(0, words.length - RECALL_BATCH),
             index: 0, revealed: false, typed: "", draft: "", verdict: "", hints: 0, results: new Map(), combo: 0, undo: null };
+      s.base = s.queue.length;           // the round's words; forgotten ones come back as "to try again"
     },
 
     render() {
       if (!s.scope) return VS.ui.emptyActivity("#/", "This list was not found.");
       if (!s.queue.length && s.scope.kind === "quick") {
         return html`<div class="activity"><div class="empty">
-          <h2>Nothing for Quick 5 yet</h2>
-          <p>Quick 5 brings back words you've started learning. Meet a few new words first — it takes about five minutes too.</p>
+          <h2>Nothing for a 5-minute review yet</h2>
+          <p>The 5-minute review brings back words you've started learning. Meet a few new words first — it takes about five minutes too.</p>
           <div class="row empty-actions">
             <a class="btn btn-primary" href="#/new/cards">${icon("cards", "icon-sm")} Learn new words</a>
             <a class="btn btn-quiet" href="#/">Go back</a>
@@ -242,7 +257,7 @@
       const w = s.queue[s.index];
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: s.scope.kind === "quick" ? "Quick 5" : "Recall", sub: s.scope.kind === "quick" ? "The 10 words that matter most" : s.scope.title, index: s.index, total: s.queue.length, combo: s.combo, undo: !!s.undo })}
+          ${VS.ui.activityHead({ back: s.scope.back, title: s.scope.kind === "quick" ? "5-minute review" : "Recall", sub: s.scope.kind === "quick" ? "The 10 words that matter most" : s.scope.title, index: s.index, total: s.base, again: Math.max(0, s.queue.length - Math.max(s.index, s.base)), combo: s.combo, undo: !!s.undo })}
           <div class="activity-stage stage-center">
             ${prompt(w)}
           </div>
@@ -286,7 +301,9 @@
         const w = s.queue[s.index];
         const input = VS.$("#recallInput");
         s.typed = input ? input.value.trim() : "";
-        if (VS.isArabicTyping(s.typed)) s.typed = "";      // Arabic keyboard: judge from memory only, not the typing
+        // Arabic keyboard left on: read the keys the learner pressed ("شؤفعشممغ" = actually).
+        s.arabicKeys = VS.isArabicTyping(s.typed);
+        if (s.arabicKeys) s.typed = VS.fromArabicKeys(s.typed);
         const answer = VS.spellingOf(w);
         // Any real form is right: "took off" fills "Yesterday the plane ___" better than "take off".
         s.verdict = !s.typed ? "" : VS.normalise(s.typed) === VS.normalise(answer) ? "right"

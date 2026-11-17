@@ -81,7 +81,8 @@
           ${VS.ui.activityHead({ back: s.scope.back, title: "Match", sub: s.scope.title, index: s.board, total: s.boards.length })}
           <div class="activity-stage">
           <div class="match-bar">
-            <span>${icon("clock", "icon-sm")} <b id="matchClock">${VS.formatTime(s.start ? Date.now() - s.start : 0)}</b></span>
+            <!-- No running clock: time pressure fights a calm study tool. The time shows in the results. -->
+            <span class="match-how">Tap a word, then its meaning.</span>
             <span class="hint">${s.matched.size} / ${s.en.length} pairs · ${VS.plural(s.misses, "miss", "misses")}</span>
           </div>
           <p class="sr-only" aria-live="polite" id="matchLive"></p>

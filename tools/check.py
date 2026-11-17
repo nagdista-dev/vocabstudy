@@ -83,6 +83,14 @@ def check_traps(errors: list[str]) -> None:
         errors.extend(line.strip() for line in run.stdout.splitlines() if "FAIL" in line)
 
 
+def check_old_safari(errors: list[str]) -> None:
+    """No regex lookbehind in the app's JS: Safari before 16.4 can't parse it and the whole file stops working."""
+    for f in sorted((ROOT / "assets" / "js").rglob("*.js")):
+        for n, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+            if "(?<=" in line or "(?<!" in line:
+                errors.append(f"{f.relative_to(ROOT)}:{n}: regex lookbehind breaks older iPhones")
+
+
 def check_overrides(errors: list[str]) -> None:
     """Every hand-checked meaning (assets/data/overrides.js) is complete: no half entries reach a learner."""
     node = shutil.which("node")
@@ -95,7 +103,10 @@ def check_overrides(errors: list[str]) -> None:
         "for(const m of (o.senses||[o])){for(const k of ['type','arabic','definition','example'])"
         "if(!m[k]||!String(m[k]).trim())bad.push(w+': missing '+k);"
         "if(!/[\\u0600-\\u06FF]/.test(m.arabic||''))bad.push(w+': arabic is not Arabic');"
-        "if((m.example||'').split(/\\s+/).length>14)bad.push(w+': example over 14 words');}}"
+        "if((m.example||'').split(/\\s+/).length>14)bad.push(w+': example over 14 words');"
+        "for(const k of String(m.keys||'').split(/\\s+/).filter(Boolean)){if(k.length<2)bad.push(w+': key too short: '+k);"
+        "if(/^(i|me|my|you|your|he|him|his|she|her|it|its|we|us|our|they|them|their|the|a|an|to|of|and)$/.test(k))bad.push(w+': key is a pronoun or a little word: '+k);}}}"
+        "for(const [a,b] of Object.entries(window.VS_OVERRIDE_ALIASES||{}))if(!window.VS_OVERRIDES[b])bad.push('alias '+a+' points to a missing entry '+b);"
         "console.log(bad.join('\\n'));"
     )
     run = subprocess.run([node, "-e", script], capture_output=True, text=True)
@@ -110,6 +121,7 @@ def main(argv: list[str]) -> int:
     check_styles(errors)
     check_traps(errors)
     check_overrides(errors)
+    check_old_safari(errors)
     for e in errors:
         print(f"  ERROR    {e}")
     print(f"check {'FAILED' if errors else 'OK'}: {len(errors)} error(s)")
