@@ -47,6 +47,9 @@ words and progress stay on your device, and it works offline.
 - **Goes with**: the words English puts with yours — *heavy* rain, *final*
   decision, *subtle* differences — because "strong rain" is exactly where
   Arab learners slip. **More examples** brings real sentences from Tatoeba.
+- **Know it in Arabic? Type it in Arabic.** «تحدي» → challenge, «طيارة» →
+  plane: the add box shows the English words, each with its Arabic, and
+  you pick one. The interface stays English; Arabic is only the way in.
 - **Did you mean…?** A typo is caught before it becomes a lesson: type
   "recieve" and the app asks "Did you mean **receive**?" (online, or offline
   from its own list of common words). Words already saved with a likely typo
@@ -138,6 +141,7 @@ no key), and each one is optional:
 | --- | --- | --- |
 | Auto-fill (when you add a word) | only the English word | Google Translate (free web endpoint), dictionaryapi.dev, api.datamuse.com (the words it goes with), mymemory.translated.net (fallback) |
 | Spelling check (when you add a word that isn't one of the 30,000 most used) | only that word | Google Translate's spelling correction; offline, the app's own word list |
+| Arabic → English (when you type an Arabic word in an add box and press Add) | only that Arabic text | Google Translate (free web endpoint) |
 | Grammar check (Use it, when you press Check) | only that sentence | api.languagetool.org |
 | More examples (when you tap it) | only the English word | api.tatoeba.org |
 | Recorded voice (Settings → Sound) | nothing — the recording is downloaded | dictionaryapi.dev |

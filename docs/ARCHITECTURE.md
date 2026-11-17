@@ -58,7 +58,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/study-time.js` | active study time + break reminder |
 | `core/importer.js` | `VS.importer` — parse pasted tables and word files |
 | `core/autofill.js` | `VS.autofill` — fills a new word's details in the background (incl. `goes`: collocations from Datamuse); `senses(word)` for Other meanings. Each meaning gets its own Arabic (matched through Google's back-translations), and a word is flagged `check: { kind: "spelling" \| "meaning" }` when it is a likely typo or its meanings translate differently; `review()` flags typos saved before the check existed |
-| `core/spelling.js` | `VS.spelling` — "Did you mean receive?" before a word is added: words outside the 30,000-word list are checked with Google's spelling correction, or offline by edit distance against that list; `confirm(text, el)` asks under the add box |
+| `core/spelling.js` | `VS.spelling` — "Did you mean receive?" before a word is added: words outside the 30,000-word list are checked with Google's spelling correction, or offline by edit distance against that list; `confirm(text, el)` asks under the add box; `chooseEnglish(ar, el)` turns Arabic typed in an add box into English choices (Google, ar→en), each with its Arabic back-translation |
 | `core/grammar.js` | `VS.grammar.check(text)` — LanguageTool for Use it: grammar and spelling, online and optional; skipped quietly when offline |
 | `views/shared.js` | `VS.ui.*` — word row, tags, note box, activity header, results, keyboard guard |
 | `views/home.js` | `VS.today` — today's plan, shown at the top of the library |

@@ -24,6 +24,8 @@
      VS.spelling.confirm(text, el) → Promise of the word to add, or null
                                      (shows "Did you mean …?" under el)
      VS.spelling.kept(word)        → did the learner choose "Keep" for it?
+     VS.spelling.chooseEnglish(ar, el) → Arabic typed in an add box: the
+                                     English words for it, picked under el
    ------------------------------------------------------------------ */
 (function () {
   "use strict";
@@ -169,9 +171,86 @@
     });
   }
 
+  /* ── Arabic in the add box: find the English word ──────────────
+     A learner often knows the word in Arabic and wants the English one
+     («تحدي» → challenge). The app's interface stays English and the word
+     saved is English — Arabic is only the way in. Google's translation
+     comes first; its dictionary adds a few more, each with the Arabic it
+     means, so the learner can tell "plane" from "pilot" (طيار) or see that
+     «حالياً» is currently, not actually. Only the Arabic text is sent. */
+  const ARTICLE = /^(?:a|an|the|to)\s+/i;
+  async function english(text) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    try {
+      const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=ar&tl=en&dj=1&dt=t&dt=bd&q=" + encodeURIComponent(text);
+      const res = await fetch(url, { signal: ctrl.signal });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      const out = [];
+      const add = (word, hint) => {
+        const w = String(word || "").replace(/[.!?]+$/, "").trim().replace(ARTICLE, "");
+        if (!w || /[^A-Za-z' -]/.test(w) || w.split(/\s+/).length > 4) return;
+        const lw = w.charAt(0) === w.charAt(0).toUpperCase() && w.slice(1) === w.slice(1).toLowerCase() ? w.toLowerCase() : w;
+        if (!out.some((o) => o.word.toLowerCase() === lw.toLowerCase())) out.push({ word: lw, hint: hint || "" });
+      };
+      add((data.sentences || []).map((x) => x.trans || "").join(""), "");
+      (data.dict || []).forEach((d) => (d.entry || []).forEach((e) => {
+        if ((e.score || 0) >= 0.001) add(e.word, (e.reverse_translation || []).slice(0, 3).join("، "));
+      }));
+      return out.slice(0, 4);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /**
+   * Arabic typed in an add box → resolve with the English word picked, or
+   * null. Offline (or auto-fill off): a toast, as before.
+   */
+  async function chooseEnglish(text, anchor) {
+    const ar = String(text || "").trim();
+    close(null);
+    if (!VS.autofill.enabled() || !navigator.onLine) {
+      VS.toast(navigator.onLine ? "That's Arabic — switch your keyboard to English." : "That's Arabic. Finding the English word needs the internet — or switch your keyboard.");
+      return null;
+    }
+    if (checking === ar) return null;
+    checking = ar;
+    let list = [];
+    try { list = await english(ar); } catch (e) { list = []; } finally { checking = ""; }
+    if (!list.length) { VS.toast("No English word found for that. Try another Arabic word — or type it in English."); return null; }
+    if (!anchor || !anchor.isConnected) return null;
+    return new Promise((resolve) => {
+      const box = document.createElement("div");
+      box.className = "spell-check ar-pick";
+      box.setAttribute("role", "alert");
+      box.innerHTML = String(html`
+        <p class="spell-check-q">${icon("book", "icon-sm")}<span><bdi lang="ar" dir="rtl">${ar}</bdi> in English — which one do you mean?</span></p>
+        <div class="ar-pick-list">
+          ${list.map((o, i) => html`<button class="ar-pick-opt ${i ? "" : "is-first"}" type="button" data-pick="${i}">
+            <b>${o.word}</b>${o.hint ? html`<bdi lang="ar" dir="rtl">${o.hint}</bdi>` : ""}</button>`)}
+        </div>
+        <p class="hint">Not here? Type it in English.</p>`);
+      box.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-pick]");
+        if (!b) return;
+        e.stopPropagation();
+        close(list[Number(b.dataset.pick)].word);
+      });
+      anchor.after(box);
+      // The "Arabic? Press Add" note has done its job: the choices replace it.
+      const warn = anchor.parentElement && anchor.parentElement.querySelector(":scope > .kb-warn");
+      if (warn) warn.hidden = true;
+      open = { typed: ar, resolve, box };
+      const first = box.querySelector("[data-pick]");
+      if (first) first.focus({ preventScroll: true });
+    });
+  }
+
   // Leaving the screen (or typing something else) closes the question.
   window.addEventListener("hashchange", () => close(null));
 
-  VS.spelling = { known, local, suggest, confirm, isOpen: () => !!open, cancel: () => close(null),
+  VS.spelling = { known, local, suggest, confirm, chooseEnglish, english, isOpen: () => !!open, cancel: () => close(null),
                   kept: (word) => keptWords.has(String(word || "").trim().toLowerCase()) };
 })();

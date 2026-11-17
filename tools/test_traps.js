@@ -71,6 +71,11 @@ traps.forEach((t) => {
   if (t.bad.test(" " + t.right + " ")) fail(`"${t.keys[0]}": pattern fires on its right sentence: ${t.right}`);
 });
 
+// Arabic must not start a sentence mid-line ("… . «حالياً» is…"): it reads out of order.
+traps.forEach((t) => {
+  if (/[.!?]\s+«/.test(t.why)) fail(`"${t.keys[0]}": Arabic starts a sentence after a full stop in "why" — write "For «…», say …"`);
+});
+
 CLEAN.forEach((s) => {
   const hits = VS.findUsageMistakes(s);
   if (hits.length) fail(`clean sentence flagged (${hits.map((h) => h.keys[0]).join(", ")}): ${s}`);

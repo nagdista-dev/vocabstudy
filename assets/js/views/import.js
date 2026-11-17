@@ -482,7 +482,7 @@
           if (el.dataset.formField === "word") VS.spelling.cancel();
         });
       });
-      VS.ui.watchKeyboard(VS.$("#addWord", root));
+      VS.ui.watchKeyboard(VS.$("#addWord", root), { lookup: true });
       VS.ui.watchDuplicate(VS.$("#addWord", root), VS.$("#addWord", root) && VS.$("#addWord", root).closest(".add-line"));
       const form = VS.$("[data-form='one-word']", root);
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); VS.views.import.actions["form-add"](); });
@@ -525,10 +525,18 @@
       },
 
       async "form-add"() {
+        const input = VS.$("#addWord");
+        // Arabic typed: find the English word first («تحدي» → challenge).
+        const fromArabic = VS.isArabicTyping(st.form.word);
+        if (fromArabic) {
+          const en = await VS.spelling.chooseEnglish(st.form.word, input && input.closest(".add-line"));
+          if (!en) return;
+          st.form.word = en;
+          if (input) input.value = en;
+        }
         if (!VS.addWordReady(st.form.word, st.form.sense)) return;
         // A typo would be taught as the right answer: ask first (core/spelling.js).
-        const input = VS.$("#addWord");
-        const word = await VS.spelling.confirm(st.form.word, input && input.closest(".add-line"));
+        const word = fromArabic ? st.form.word : await VS.spelling.confirm(st.form.word, input && input.closest(".add-line"));
         if (!word) return;
         st.form.word = word;
         if (!VS.addWord(st.form)) return;

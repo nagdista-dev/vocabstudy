@@ -14,7 +14,10 @@
              sentence may be kept anyway, but not as a Recall cue)
      wrong   what Arab learners typically say or write
      right   what a native speaker says
-     why     one short line: the rule, and where the mistake comes from
+     why     one short line: the rule, and where the mistake comes from.
+             Arabic goes in «» (shown as an isolated chip) and never starts a
+             sentence after a full stop: "For «حالياً», say currently", not
+             "… . «حالياً» is currently" — mid-line, that reads out of order.
      bad     (optional) a pattern that finds the mistake inside a sentence,
              so "Use it" (views/write.js) can catch it in the learner's own
              writing — like a teacher's red pen, but kind.
@@ -220,13 +223,13 @@
 
     /* ── Meaning traps: looks like a word you know ─────────────── */
     ["actually", "meaning", "Actually, I work in a bank. (= now)", "Currently, I work in a bank.",
-      "Actually = في الحقيقة، في الواقع. «حالياً» is currently or at the moment."],
+      "Actually = «في الحقيقة، في الواقع». For «حالياً», say currently or at the moment."],
     ["eventually", "meaning", "We may eventually be late. (= maybe)", "We may be late. / We eventually arrived.",
       "Eventually = في الآخر، بعد وقت طويل. It never means «ممكن»."],
     ["sympathetic|sympathy", "meaning", "He's very sympathetic, everyone likes him.", "He's very nice — everyone likes him.",
-      "Sympathetic = متعاطف (understands your pain). «لطيف، دمه خفيف» is nice, friendly, fun."],
+      "Sympathetic = «متعاطف» (understands your pain). For «لطيف، دمه خفيف», say nice, friendly or fun."],
     ["agenda|diary|planner", "meaning", "I wrote it in my agenda.", "I wrote it in my diary (or planner).",
-      "An agenda is the list of topics for a meeting. «الأجندة» you write in is a diary or a planner."],
+      "An agenda is the list of topics for a meeting. For the «أجندة» you write in, say a diary or a planner."],
     ["library|bookshop|bookstore", "meaning", "I bought it from the library.", "I bought it from the bookshop.",
       "A library lends books «تستلف منها». A bookshop sells them «تشتري منها»."],
     ["recipe|receipt|prescription", "meaning", "The doctor gave me a recipe.", "The doctor gave me a prescription.",
@@ -268,7 +271,7 @@
     ["traffic", "with", "The traffic was very crowded.", "The traffic was very heavy. (The street was crowded.)",
       "Heavy traffic, a traffic jam. People and places are crowded.", "\\b(?:strong|crowded)\\s+traffic\\b|\\btraffic\\s+(?:is|was)\\s+(?:very\\s+|so\\s+)?crowded\\b"],
     ["coffee|tea|strong", "with", "I like my coffee heavy.", "I like my coffee strong.",
-      "Strong coffee, strong tea. «تقيل» is strong here.", "\\bheavy\\s+(?:coffee|tea)\\b|\\b(?:coffee|tea)\\s+(?:is\\s+)?heavy\\b"],
+      "Strong coffee, strong tea — that's what «تقيل» means here.", "\\bheavy\\s+(?:coffee|tea)\\b|\\b(?:coffee|tea)\\s+(?:is\\s+)?heavy\\b"],
     ["price|expensive|cheap", "with", "The price is very expensive.", "The price is very high. (It's very expensive.)",
       "A price is high or low. The thing is expensive or cheap.", "\\bprices?\\s+(?:is|are|was|were)\\s+(?:very\\s+|so\\s+|too\\s+)?(?:expensive|cheap)\\b"],
     ["crime|commit", "with", "He made a crime.", "He committed a crime.",

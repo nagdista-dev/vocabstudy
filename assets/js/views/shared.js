@@ -204,20 +204,25 @@
      * ("Your keyboard is in Arabic") instead of letting the answer fail.
      * Returns a function that tells whether the current text is Arabic.
      */
-    watchKeyboard(input) {
+    watchKeyboard(input, opts) {
       if (!input) return () => false;
       input.setAttribute("lang", "en");
       let note = input.closest("label, form, .field-wrap");
-      note = note && note.parentElement && note.parentElement.querySelector(".kb-warn");
+      note = input.closest(".add-line") ? input.closest(".add-line").parentElement.querySelector(":scope > .kb-warn")
+        : note && note.parentElement && note.parentElement.querySelector(".kb-warn");
       if (!note) {
         note = document.createElement("p");
         note.className = "kb-warn";
         note.setAttribute("role", "status");
-        (input.closest("label") || input).insertAdjacentElement("afterend", note);
+        // Under the whole add line, not inside the field: inside, it covered what was typed.
+        (input.closest(".add-line") || input.closest("label") || input).insertAdjacentElement("afterend", note);
       }
       const update = () => {
         const on = ARABIC.test(input.value);
-        note.textContent = on ? "Your keyboard is in Arabic — switch it to English to type this word." : "";
+        // In an add box Arabic is a way in: Add finds the English word (core/spelling.js).
+        note.textContent = !on ? ""
+          : opts && opts.lookup && VS.autofill.enabled() ? "Arabic? Press Add and pick the English word."
+          : "Your keyboard is in Arabic — switch it to English to type this word.";
         note.hidden = !on;
       };
       input.addEventListener("input", update);

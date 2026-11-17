@@ -407,7 +407,7 @@
       }
       const add = VS.$("#quickWord", root);
       if (add) {
-        VS.ui.watchKeyboard(add);
+        VS.ui.watchKeyboard(add, { lookup: true });
         VS.ui.watchDuplicate(add, add.closest(".add-line"));
         // The highlighter grows under exactly what you type (canvas measures the text).
         const ctx = document.createElement("canvas").getContext("2d");
@@ -430,10 +430,18 @@
           location.hash = "#/add?tab=text";
           return;
         }
+        // Arabic typed: find the English word first («تحدي» → challenge).
+        let text = add.value;
+        const fromArabic = VS.isArabicTyping(text);
+        if (fromArabic) {
+          text = await VS.spelling.chooseEnglish(text, add.closest(".add-line"));
+          if (!text) return;
+          add.value = text;
+        }
         // A typo would be taught as the right answer: ask first (core/spelling.js).
-        const typed = VS.addWordReady(add.value);
+        const typed = VS.addWordReady(text);
         if (!typed) return;
-        const word = await VS.spelling.confirm(typed, add.closest(".add-line"));
+        const word = fromArabic ? typed : await VS.spelling.confirm(typed, add.closest(".add-line"));
         if (!word) return;
         const wasEmpty = !VS.allWords().length;
         const w = VS.addWord({ word });

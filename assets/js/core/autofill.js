@@ -40,7 +40,9 @@
                  conjunction: "Conjunction", pronoun: "Pronoun", interjection: "Interjection", determiner: "Determiner",
                  exclamation: "Interjection", article: "Determiner", abbreviation: "Noun" };
   const hasArabic = (s) => /[؀-ۿ]/.test(s || "");
-  const MAX_ARABIC = 3;
+  // Two meanings at most: a learner reads the first and remembers one. Three
+  // ("جميل - حسن - مليح") mostly adds a rare word.
+  const MAX_ARABIC = 2;
   const MAX_SIMILAR = 4;
 
   async function getJSON(url) {
@@ -111,7 +113,10 @@
     // ("beautiful": جميل before وسيم, which only matches "handsome").
     const hits = (entries || []).filter((e) => (e.reverse_translation || []).join(" ").toLowerCase()
       .split(/[^a-z]+/).filter(Boolean).map(stem).some((x) => keys.has(x)));
-    return arabicList(hits.map((e) => e.word), 2);
+    // Common words first: Google scores how often each Arabic word is the
+    // translation. A rare one ("مليح") is kept only when nothing common fits.
+    const common = hits.filter((e) => (e.score || 0) >= 0.001);
+    return arabicList((common.length ? common : hits).map((e) => e.word));
   }
 
   /* Arabic words compared by their core: "تلقى" = "تلقي" = "يتلقى", "التحدي" = "تحدى". */
@@ -152,11 +157,13 @@
 
   /** Several Arabic meanings, written the app's way: «في الواقع - فعلاً - حقاً». */
   function arabicList(list, max) {
-    const out = [];
+    const out = [], seen = new Set();
     list.forEach((t) => {
       String(t || "").replace(/[.。]+$/, "").split(/[,،;؛]/).forEach((part) => {
         const p = part.trim().replace(/^(أن|ان)\s+/, "");
-        if (hasArabic(p) && !out.includes(p) && p.length <= 40) out.push(p);
+        // One form of a word is enough: "يحقق - حقق" is the same verb twice.
+        const key = core(p);
+        if (hasArabic(p) && !seen.has(key) && p.length <= 40) { seen.add(key); out.push(p); }
       });
     });
     return out.slice(0, max || MAX_ARABIC).join(" - ");
@@ -217,7 +224,7 @@
     // for "the action of becoming airborne".
     const one = clean(translation);
     if (senses[0] && hasArabic(one) && senses[0].arabic && shares(one, senses[0].arabic)) {
-      senses[0].arabic = arabicList([one].concat(senses[0].arabic.split(" - ")), 3);
+      senses[0].arabic = arabicList([one].concat(senses[0].arabic.split(" - ")));
     }
     // A first meaning nothing matched ("receive: be given, presented with…")
     // takes Google's own most common Arabic for its part of speech.
