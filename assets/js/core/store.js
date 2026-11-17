@@ -517,22 +517,32 @@
     },
 
     /** A sentence the learner wrote with a word ("Use it"): newest first, the last five kept. */
-    addSentence(id, text) {
+    addSentence(id, text, opts) {
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
       const w = VS.byId[id];
       const clean = String(text || "").trim().slice(0, 300);
       if (!raw || !w || !clean) return;
       raw.mine = [clean].concat((raw.mine || []).filter((s) => s !== clean)).slice(0, 5);
       w.mine = raw.mine.slice();
+      // Kept against a warning: listed in `unsure`, so Recall never shows it as a cue.
+      const unsure = (raw.unsure || []).filter((s) => s !== clean && raw.mine.includes(s));
+      if (opts && opts.unsure) unsure.push(clean);
+      if (unsure.length) raw.unsure = unsure; else delete raw.unsure;
+      w.unsure = (raw.unsure || []).slice();
       save();
     },
     removeSentence(id, index) {
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
       const w = VS.byId[id];
       if (!raw || !w || !raw.mine) return;
-      raw.mine.splice(index, 1);
+      const [gone] = raw.mine.splice(index, 1);
       if (!raw.mine.length) delete raw.mine;
       w.mine = (raw.mine || []).slice();
+      if (raw.unsure) {
+        raw.unsure = raw.unsure.filter((s) => s !== gone);
+        if (!raw.unsure.length) delete raw.unsure;
+        w.unsure = (raw.unsure || []).slice();
+      }
       save();
     },
 
@@ -582,7 +592,7 @@
   function plain(w) {
     const out = {};
     ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "context", "source",
-     "mine", "audio", "goes", "tags", "added", "auto"].forEach((k) => {
+     "mine", "unsure", "audio", "goes", "tags", "added", "auto"].forEach((k) => {
       if (w.given && (k === "type" || k === "level") && !w.given[k]) return;     // a display default, not your choice
       if (w[k] !== undefined && w[k] !== "" && !(Array.isArray(w[k]) && !w[k].length)) out[k] = w[k];
     });

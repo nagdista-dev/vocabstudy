@@ -203,6 +203,34 @@
     return "";
   }
 
+  /**
+   * The real forms of a word, for judging a typed answer — strict, unlike
+   * findIn: "take off" → take off, takes off, took off, taken off, taking off;
+   * "decide" → decides, decided, deciding; "study" → studies, studied. A
+   * phrase changes its first word only ("made a decision"). Never "user" for
+   * "use": only these endings, and the irregular forms in core/word-forms.js.
+   */
+  VS.wordForms = function (word) {
+    const parts = String(word || "").toLowerCase().replace(/’/g, "'").trim().split(/\s+/);
+    const head = parts[0], rest = parts.slice(1).join(" ");
+    const out = new Set([head, head + "s", head + "ed", head + "ing"]);
+    if (/(s|x|z|ch|sh|o)$/.test(head)) out.add(head + "es");
+    if (/e$/.test(head)) { out.add(head + "d"); out.add(head.slice(0, -1) + "ing"); }
+    if (/ie$/.test(head)) out.add(head.slice(0, -2) + "ying");
+    if (/[^aeiou]y$/.test(head)) { out.add(head.slice(0, -1) + "ies"); out.add(head.slice(0, -1) + "ied"); }
+    if (/^[^aeiou]*[aeiou][bdgklmnprt]$/.test(head) || /[^aeiou][aeiou][bdgmnprt]$/.test(head) && head.length <= 4) {
+      out.add(head + head.slice(-1) + "ed"); out.add(head + head.slice(-1) + "ing");
+    }
+    (VS.IRREGULAR[head] || []).forEach((f) => out.add(f));
+    return [...out].map((f) => (rest ? f + " " + rest : f));
+  };
+
+  /** Is `typed` the word, or one of its real forms? ("took off" for "take off") */
+  VS.isWordForm = (typed, word) => {
+    const t = VS.normalise(typed);
+    return !!t && VS.wordForms(word).some((f) => VS.normalise(f) === t);
+  };
+
   /** The word as the learner should type it in Spell (no sense label). */
   VS.spellingOf = (w) => w.word.trim();
 

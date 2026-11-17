@@ -49,10 +49,10 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/speech.js` | `VS.speech.say()` — browser voices |
 | `core/listen.js` | `VS.listen.hear()` — speech recognition for Speak |
 | `core/sfx.js` | `VS.sfx.play()` — synthesised sound effects (Web Audio) |
-| `core/practice.js` | `VS.scope`, `VS.finishStep`, `VS.sessionWords`, `VS.distractors`, `VS.findInExample` |
+| `core/practice.js` | `VS.scope`, `VS.finishStep`, `VS.sessionWords`, `VS.distractors`, `VS.findInExample`, `VS.wordForms` / `VS.isWordForm` (strict forms for judging a typed answer: "took off" for "take off", never "user" for "use") |
 | `core/filters.js` | `VS.filters` — the library's filters and sorts, shared by every screen |
 | `core/sound-traps.js` | `VS.soundTraps(word)` — P/B, V/F, silent letters, -ed, th…; `VS.stress(ipa)` — syllables and the stressed one |
-| `core/usage-traps.js` | `VS.usageTraps(word)`, `VS.findUsageMistakes(text)` — 108 hand-written Arab-learner mistakes, each with a pattern (tested by `tools/test_traps.js`) |
+| `core/usage-traps.js` | `VS.usageTraps(word)`, `VS.findUsageMistakes(text)` — 111 hand-written Arab-learner mistakes, each with a pattern (tested by `tools/test_traps.js`); the `tense` ones (yesterday + a present verb, "didn't went") are soft |
 | `core/frequency.js` | `VS.frequency` — loads `assets/data/frequency.js` after start-up; `rank(word)` (best rank of the word's forms), `band(word)` → Top 1,000 … Rare |
 | `core/week.js` | `VS.week` — the Saturday–Friday week, its numbers and when the report is due; `VS.milestones` |
 | `core/study-time.js` | active study time + break reminder |
@@ -144,7 +144,15 @@ written in **Use it**, newest first, five kept; `store.addSentence`).
 Recall's gap questions prefer these over the dictionary example.
 `VS.checkSentence(word, text)` (core/practice.js) marks a sentence on the
 device: the word in any form (`VS.findIn`), at least four words, not a copy,
-and every usage-trap pattern over the whole sentence.
+and every usage-trap pattern over the whole sentence. When only soft (tense)
+traps fire, the learner may "Keep it anyway": the sentence is saved and also
+listed in the word's `unsure`, and Recall never uses an `unsure` sentence as
+a cue — a mistake shown back as a reminder gets learned.
+
+**Learn new words** (views/cards.js) teaches before it tests: *Meet* shows
+each word open on one card with a single "Next" (nothing graded), then
+*Check* runs the flip cards that feed the schedule. The counter counts words;
+a word shown again says "Once more".
 
 ## Moving between devices (views/transfer.js)
 

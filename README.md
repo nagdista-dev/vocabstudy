@@ -35,13 +35,13 @@ words and progress stay on your device, and it works offline.
 
 ## Made for Arabic speakers
 
-- **The teacher's margin: 108 usage traps.** The mistakes Arab learners make
+- **The teacher's margin: 111 usage traps.** The mistakes Arab learners make
   with a word, and the fix: *depend ~~of~~ on*, *~~borrow~~ lend me*,
   *~~before~~ three years ago*, *I ~~did~~ made a mistake*, *an ~~advice~~*,
   *actually ≠ حالياً*. Written by hand, shipped with the app, no internet.
 - **Use it**: write a sentence about your own life with the word. The app
   marks it like a teacher — on your device: the word is there (any form),
-  it's a full sentence, it isn't copied, and none of the 108 traps is hiding
+  it's a full sentence, it isn't copied, and none of the 111 traps is hiding
   in it ("depends of — you wrote"). Online, LanguageTool also reads its
   grammar ("She don't", "I didn't went"). Your sentences come back in Recall.
 - **Goes with**: the words English puts with yours — *heavy* rain, *final*
@@ -92,6 +92,8 @@ words and progress stay on your device, and it works offline.
   words mastered.
 
 **Learn**
+- New words are taught before they're tested: **Meet** shows each word open
+  (meaning, Arabic, example, sound), then **Check yourself** with flip cards.
 - Study cards (English-first or Arabic-first), swipe on phones, with similar words.
 - Quiz with 5 question types incl. **listening**; every answer shows the full
   word, and a wrong pick shows what *that* word means — the difference is the lesson.

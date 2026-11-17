@@ -40,6 +40,9 @@
 }
 .flash-example p { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .flash-word-small { color: var(--ink-3); font-size: var(--text-sm); }
+/* Meet: the card opens flat — no flip, everything on one face (views/cards.js). */
+.flash-teach { cursor: default; min-height: 0; perspective: none; }
+.flash-teach .flash-open { transform: none; backface-visibility: visible; -webkit-backface-visibility: visible; align-content: start; }
 
 /* ── Recall ────────────────────────────────────────────────────── */
 .recall { display: grid; min-width: 0; gap: var(--s-3); padding: clamp(20px, 4vw, 36px); }
@@ -270,3 +273,6 @@
 .write-ok .feedback-title { display: flex; align-items: center; gap: var(--s-1); }
 .write-check .usage-wrong small { margin-inline-start: auto; font-size: var(--text-xs); color: var(--ink-3); text-decoration: none; }
 .write-privacy { font-size: var(--text-xs); margin-top: calc(var(--s-2) * -1); }
+
+/* "Keep it anyway" sits in the warning, so Skip stays in the action bar. */
+.write-keep .link-btn { font-weight: 600; }

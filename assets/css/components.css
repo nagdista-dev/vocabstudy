@@ -702,3 +702,6 @@ kbd {
 .more-ex-items .speak-btn .icon { width: 15px; height: 15px; }
 .more-ex-credit { margin-top: 12px; padding-inline-start: 15px; color: var(--ink-3); font-size: var(--text-xs); }
 .goes > span { color: var(--ink-3); }
+
+/* A sentence kept against a warning (views/write.js "Keep it anyway"): shown, never a Recall cue. */
+.mine-unsure { display: block; margin-top: 2px; color: var(--ink-2); font-size: var(--text-xs); }

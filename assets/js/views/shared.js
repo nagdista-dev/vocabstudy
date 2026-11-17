@@ -364,7 +364,9 @@
           <p class="mine-head">Your sentences</p>
           <ul>${w.mine.map((m, i) => {
             const hit = VS.findIn(w, m, true);
-            return html`<li><span>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m}</span>
+            const unsure = (w.unsure || []).includes(m);
+            return html`<li class="${unsure ? "is-unsure" : ""}"><span>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m}${unsure
+                ? html`<small class="mine-unsure">May have a mistake — not used in Recall</small>` : ""}</span>
               ${removable ? html`<button class="icon-btn mine-del" type="button" data-action="sentence-remove" data-id="${w.id}" data-index="${i}" aria-label="Remove this sentence">${icon("x", "icon-sm")}</button>` : ""}</li>`;
           })}</ul>
         </div>`;

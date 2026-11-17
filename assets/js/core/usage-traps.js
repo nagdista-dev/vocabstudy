@@ -10,7 +10,8 @@
    Each trap:
      keys    the words it belongs to ("depend", "look forward"); inflected
              forms match too (depends, depended, depending).
-     kind    prep | mix | meaning | count | with | grammar
+     kind    prep | mix | meaning | count | with | grammar | tense (soft: a
+             sentence may be kept anyway, but not as a Recall cue)
      wrong   what Arab learners typically say or write
      right   what a native speaker says
      why     one short line: the rule, and where the mistake comes from
@@ -31,12 +32,33 @@
     count: "Not countable",
     with: "Goes with",
     grammar: "Grammar",
+    tense: "Tense",
   };
 
   const PRON = "(?:me|him|her|us|them)";
   const NUM = "(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|a\\s+few|few|many|several)";
   const TIME = "(?:minutes?|hours?|days?|weeks?|months?|years?)";
   const DAY = "(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)";
+  /* Tense: Arabic keeps the verb as it is after «امبارح» (امبارح الطيارة بتطير متأخر),
+     English moves it to the past. These patterns look for a past-time word and a
+     present verb in the same clause. They are "soft" (kind: tense): a learner may
+     keep the sentence, because a pattern can be wrong — but a sentence kept against
+     the warning is never used as a Recall cue (views/write.js). */
+  const PAST = "(?:yesterday|last\\s+(?:night|week|weekend|month|year|summer|winter|spring|autumn|time|" + "monday|tuesday|wednesday|thursday|friday|saturday|sunday)|" +
+    "(?:\\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|a\\s+few|few|many|several)\\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\\s+ago|" +
+    "when\\s+i\\s+was\\s+(?:a\\s+)?(?:child|kid|boy|girl|young|little|student))";
+  const SUBJ = "(?:i|you|we|they|he|she|the\\s+[a-z]+|my\\s+[a-z]+|our\\s+[a-z]+|his\\s+[a-z]+|her\\s+[a-z]+|their\\s+[a-z]+)";
+  // Verbs whose present and past differ, and that are rarely nouns ("the bus stop" is not a verb).
+  // No state verbs (think, know, like, want): "I think he left yesterday" is right.
+  const DO = "(?:go|come|take|make|have(?!\\s+to\\b)|do|see|eat|buy|get|give|find|leave|meet|tell|say|write|drink|drive|fly|forget|" +
+    "lose|pay|sell|send|sleep|speak|spend|teach|wake|win|begin|break|bring|build|catch|choose|keep|run|sit|stand|swim|wear|" +
+    "become|fall|grow|hear|decide|arrive|finish|stay|travel|visit|watch|study|cook|play|walk|move|return|receive|happen)";
+  // A clause, not a whole paragraph: no full stop, and no "and / but / because" (…and I love it — still true now).
+  const GAP = "(?:(?!\\b(?:and|but|because|so|now|today|still|than|since|until)\\b)[^.;!?\\n]){0,50}?";
+  const PASTFORM = "(?:went|ate|saw|took|made|came|bought|got|gave|found|left|met|told|said|thought|wrote|drank|drove|flew|forgot|" +
+    "lost|paid|sold|sent|slept|spoke|spent|taught|understood|woke|won|began|broke|brought|built|caught|chose|felt|kept|knew|ran|" +
+    "sat|stood|swam|wore|became|fell|grew|heard|had|did|\\w*[^e\\s]ed)";
+
   const ME = "\\b(?:i\\s*'?m|i\\s+am|i\\s+was|i\\s+feel|i\\s+felt|we\\s+are|we\\s+were|we're)\\s+(?:so\\s+|very\\s+|really\\s+|a\\s+bit\\s+)?";
 
   /* [keys, kind, wrong, right, why, bad?] — keys are "|"-separated. */
@@ -258,6 +280,17 @@
     ["question|ask", "with", "Can I make a question?", "Can I ask a question?",
       "Ask a question.", "\\b(?:make|made|do|did)\\s+a\\s+question\\b"],
 
+    /* ── Tense: the past needs a past verb (soft: see PAST above) ── */
+    ["yesterday|ago|last", "tense", "Yesterday the plane take off late.", "Yesterday the plane took off late.",
+      "Yesterday, last week, two days ago = the past: the verb goes to the past too (take → took). Arabic keeps «بتطير»; English doesn't.",
+      `\\b${PAST}\\b,?\\s+${GAP}\\b${SUBJ}\\s+${DO}(?:s|es)?\\b|\\b(?:i|you|we|they|he|she)\\s+${DO}(?:s|es)?\\b[^.,;!?\\n]{0,40}?\\b${PAST}\\b`],
+    ["yesterday|ago|last", "tense", "Yesterday I am very tired.", "Yesterday I was very tired.",
+      "Am / is / are are now. Yesterday, last week, two days ago: was / were.",
+      `\\b${PAST}\\b,?\\s+${GAP}\\b(?:i\\s+am|i'm|(?:he|she|it)\\s+is|(?:we|you|they)\\s+are|(?:we|you|they)'re|the\\s+[a-z]+\\s+(?:is|are))\\b`],
+    ["did|didn't", "tense", "I didn't went to work.", "I didn't go to work.",
+      "Did / didn't already says the past: the verb after it stays as it is — didn't go, didn't eat, did you see.",
+      `\\b(?:didn't|didnt|did\\s+not)\\s+${PASTFORM}\\b|\\bdid\\s+(?:you|he|she|they|we|it)\\s+${PASTFORM}\\b`],
+
     /* ── Grammar that belongs to the word ─────────────────────── */
     ["can|must|should|could|might", "grammar", "I can to swim.", "I can swim.",
       "No to after can, must, should, could, might, will.", "\\b(?:can|could|must|should|will|would|might|may)\\s+to\\s+(?!be\\s+honest)\\w+"],
@@ -280,7 +313,7 @@
   ];
 
   const TRAPS = DATA.map(([keys, kind, wrong, right, why, bad]) => ({
-    keys: keys.split("|"), kind, label: KIND[kind], wrong, right, why,
+    keys: keys.split("|"), kind, label: KIND[kind], wrong, right, why, soft: kind === "tense",
     bad: bad ? new RegExp(bad, "i") : null,
   }));
 

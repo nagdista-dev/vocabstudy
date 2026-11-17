@@ -645,15 +645,35 @@
   ("Dispute the truth or validity of"). جوجل بيرجّع 429 من السيرفرات (اتشاف من التيرمنال) — ده T56.
 
 ### P1 — التعلّم الصح
-- [ ] **T43 Use it أصدق.** قواعد محلية لغلطات الزمن عند العرب (yesterday/last/ago + فعل مضارع،
+- [x] **T43 Use it أصدق.** قواعد محلية لغلطات الزمن عند العرب (yesterday/last/ago + فعل مضارع،
       I am + زمن ماضي، he/she + فعل من غير s) قبل LanguageTool. الجملة متتخزنش كتذكير إلا لو
       سليمة، أو تتخزن معلّمة "مش متراجعة" ومتستخدمش كـ fill-the-gap.
-- [ ] **T44 Recall يقبل التصريف الصح.** `core/word-forms.js` يصرّف أول كلمة في العبارة (take → took/
+- [x] **T44 Recall يقبل التصريف الصح.** `core/word-forms.js` يصرّف أول كلمة في العبارة (take → took/
       taken/taking، make → made) وقائمة الأفعال الشاذة الشائعة. "took off" = صح.
-- [ ] **T45 Learn = تعليم الأول.** أول لقاء: الكارت مفتوح بالكامل (معنى، مثال، صوت، فخ) وزرار
+- [x] **T45 Learn = تعليم الأول.** أول لقاء: الكارت مفتوح بالكامل (معنى، مثال، صوت، فخ) وزرار
       واحد "Next". بعد ما يخلّص كله: جولة سريعة "فاكر؟". "I know it" من غير قلب الكارت يتسمّى
       "I already knew this" ويودّي الكلمة لفترة أطول بشكل واضح. والعداد ثابت: "6 words · 2 to
       repeat".
+
+#### اللي اتعمل في P1 (17 نوفمبر 2026) — والمقاسات
+- **T43:** 3 فخاخ جديدة نوعها `tense` في `core/usage-traps.js` (بقوا 111): كلمة ماضي (yesterday،
+  last week، two days ago، when I was a child) + فعل مضارع في نفس الجملة الفرعية؛ "Yesterday I am"؛
+  "didn't went / did you saw". **اتقاس:** 10/11 جملة غلط اتمسكت و 0/16 إنذار غلط على جمل صح
+  ("Last week I bought a car and I love it"، "I think he left yesterday"، "It is colder than
+  yesterday"، "I didn't need it"). الجمل الصح الصعبة اتضافت لـ `tools/test_traps.js` عشان تفضل محمية.
+  الفخاخ دي "soft": المتعلم يقدر يضغط "Keep it anyway" (جوه التحذير، و Skip رجع مكانه في الشريط بعد ما
+  كان بيختفي)، بس الجملة بتتحفظ في `unsure` و **Recall عمره ما يستخدمها كتلميح**، وصفحة الكلمة بتكتب
+  تحتها "May have a mistake — not used in Recall". اتجرّب 10 جولات Recall: الجملة دي مظهرتش ولا مرة.
+  الحالة اللي فاتت: "My friend buy a car last month" (فاعل اسم + الكلمة بعد الفعل) — متعمّد عشان
+  منطلعش إنذارات غلط على الأسماء.
+- **T44:** `VS.wordForms` / `VS.isWordForm` في `core/practice.js`: الصيغ الحقيقية بس (s، ed، ing، حذف
+  e، y → ies/ied، تضعيف الحرف، الشاذ من `word-forms.js`)، وفي العبارة بيتغير أول كلمة بس. Recall: "took
+  off" = «Right — "took off" is a form of "take off"» واقتراح Got it. **اتقاس:** 17/17 حالة صح، منها
+  user ≠ use و taker ≠ take.
+- **T45:** Learn new words بقت خطوتين: **Meet the words** (Step 1 of 2) — الكارت مفتوح كله (العربي،
+  التعريف، المثال، الصوت، الفخ) وزرار "Next word" و "I already know it"، من غير تقييم. بعدها **Check
+  yourself** (Step 2 of 2) — الفليب كاردز العادية من غير الكلمات المعروفة. العداد بيعد كلمات: الكلمة
+  اللي بترجع بيتكتب فوقها "Once more" والعداد يفضل 2/2 بدل ما يكبر. النتيجة بتقول "3 words" مش "cards".
 
 ### P2 — التوجيه والإحساس
 - [ ] **T46 مفيش شاشة بتحبس.** كل شاشة (Recall الفاضية، النتايج) فيها هيدر أو زرار إغلاق واضح؛

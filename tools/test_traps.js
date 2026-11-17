@@ -23,6 +23,14 @@ vm.runInContext(fs.readFileSync(path.join(root, "assets/js/core/usage-traps.js")
 const VS = ctx.window.VS;
 
 const CLEAN = [
+  // Tense traps (soft) must leave real past-and-present English alone.
+  "Last week I bought a car and I love it.",
+  "I think he left yesterday.",
+  "It is colder than yesterday.",
+  "I have to finish the report I started last week.",
+  "I'm still tired from yesterday.",
+  "We met last year, and now we are friends.",
+  "I didn't need it, and I didn't feed the cat.",
   "I listen to podcasts on my way to work.",
   "It depends on the weather.",
   "She is married to a doctor and they live in Giza.",

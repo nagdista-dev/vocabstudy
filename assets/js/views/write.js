@@ -16,6 +16,8 @@
         no checker is always right.
    A sentence that passes is kept with the word ("Your sentences") and
    comes back in Recall as a gap — the strongest cue there is: your life.
+   A sentence kept against a warning ("Keep it anyway") is saved but never
+   used as a Recall cue: a mistake shown back as a reminder gets learned.
    ------------------------------------------------------------------ */
 (function () {
   "use strict";
@@ -37,7 +39,9 @@
           <p class="feedback-title">${icon("check", "icon-sm")} Kept with the word</p>
           <p class="write-saved">${VS.ui.mixed(r.clean)}</p>
           ${r.tips.length ? html`<p class="hint">${r.tips.join(" ")} (Fixed in the saved copy.)</p>` : ""}
-          <p class="hint">It comes back in Recall as a gap — your own life is the strongest reminder.</p>
+          <p class="hint">${r.unsure
+            ? "Kept as you wrote it. It may have a mistake, so Recall won't use it — write another one later."
+            : "It comes back in Recall as a gap — your own life is the strongest reminder."}</p>
           ${r.grammarSkipped && VS.grammar.enabled() ? html`<p class="hint">Grammar wasn't checked this time (offline).</p>` : ""}
         </div>`;
     }
@@ -58,14 +62,16 @@
                      <span class="usage-why">${p.text}</span>`
               : html`<span>${VS.ui.mixed(p.text)}</span>`}</li>`)}
         </ul>
-        ${r.canKeep ? html`<p class="hint">Sure it's right? A grammar checker can be wrong too — you can keep it.</p>` : ""}
+        ${r.canKeep ? html`<p class="hint write-keep">Sure it's right? A checker can be wrong too.
+          <button class="link-btn" type="button" data-action="keep">Keep it anyway</button>
+          — it stays with the word, but Recall won't use it as a reminder.</p>` : ""}
       </div>`;
   }
 
   /* A sentence that passed (or that the learner chose to keep): saved with the word. */
   function keep(w, result) {
     s.result = Object.assign(result, { ok: true });
-    VS.store.addSentence(w.id, result.clean);
+    VS.store.addSentence(w.id, result.clean, { unsure: !!result.unsure });
     VS.store.grade(w.id, "good");      // using a word is a real right answer
     s.written.push(w.id);
     VS.sfx.play("right");
@@ -143,7 +149,7 @@
               ? html`<button class="btn btn-lg btn-primary" type="button" data-action="next" id="writeNext">
                   ${s.index + 1 < s.words.length ? "Next word" : "See results"} <kbd>Enter</kbd></button>`
               : html`
-                <button class="btn btn-lg btn-quiet" type="button" data-action="${s.result && s.result.canKeep ? "keep" : "skip"}">${s.result && s.result.canKeep ? "Keep it" : "Skip"}</button>
+                <button class="btn btn-lg btn-quiet" type="button" data-action="skip">Skip</button>
                 <button class="btn btn-lg btn-primary" type="button" data-action="check" ${s.checking ? VS.raw("disabled") : ""}>${s.checking ? "Checking…" : "Check"} <kbd>Enter</kbd></button>`}
           </div>
         </div>`;
@@ -181,7 +187,13 @@
         s.draft = input ? input.value : s.draft;
         if (!s.draft.trim()) { VS.toast("Write a sentence first — or Skip."); return; }
         const local = VS.checkSentence(w, s.draft);
-        if (!local.ok) { s.result = local; VS.sfx.play("wrong"); VS.app.render(); return; }
+        // Only tense patterns found (soft, core/usage-traps.js): the learner may keep it.
+        if (!local.ok) {
+          s.result = Object.assign(local, { canKeep: local.problems.every((p) => p.trap && p.trap.soft) });
+          VS.sfx.play("wrong");
+          VS.app.render();
+          return;
+        }
         // The word is used well: now the general grammar, online (core/grammar.js).
         s.checking = true;
         VS.app.render();
@@ -197,8 +209,10 @@
         keep(w, Object.assign(local, { grammarSkipped: g.skipped }));
       },
       keep() {
+        // Kept against a warning: saved, but never shown back as a Recall cue —
+        // a mistake repeated as a reminder is a mistake learned.
         const w = s.words[s.index];
-        keep(w, Object.assign(VS.checkSentence(w, s.draft), { ok: true }));
+        keep(w, Object.assign(VS.checkSentence(w, s.draft), { ok: true, unsure: true }));
       },
       skip() { s.skipped++; this.next(); },
       next() { s.index++; s.draft = ""; s.result = null; VS.app.render(); window.scrollTo({ top: 0 }); },

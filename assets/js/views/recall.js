@@ -31,7 +31,9 @@
      back to it — that is what makes it last. The learner's own sentences
      come first: where they met the word, or one they wrote (Use it). */
   function pickCue(w) {
-    const own = (w.mine || []).concat(w.context ? [w.context] : []).filter((t) => VS.findIn(w, t));
+    // Sentences kept against a warning ("Keep it anyway") are never a cue: a mistake repeated is a mistake learned.
+    const own = (w.mine || []).filter((t) => !(w.unsure || []).includes(t))
+      .concat(w.context ? [w.context] : []).filter((t) => VS.findIn(w, t));
     if (own.length && Math.random() < 0.7) {
       const text = own[Math.floor(Math.random() * own.length)];
       return { style: "gap", text, own: w.mine.includes(text) ? "Your sentence" : "Where you met it" };
@@ -68,6 +70,7 @@
   function verdictMarkup(w) {
     if (!s.verdict) return "";
     if (s.verdict === "right") return html`<p class="verdict is-right">${icon("check", "icon-sm")} You typed it right.</p>`;
+    if (s.verdict === "form") return html`<p class="verdict is-right">${icon("check", "icon-sm")} Right — “${s.typed}” is a form of “${w.word}”.</p>`;
     return html`
       <div class="verdict is-${s.verdict}">
         <p>${s.verdict === "almost" ? html`<b>Almost.</b> You typed “${s.typed}” — one slip:` : html`You typed “${s.typed}”.`}</p>
@@ -269,8 +272,10 @@
         s.typed = input ? input.value.trim() : "";
         if (VS.isArabicTyping(s.typed)) s.typed = "";      // Arabic keyboard: judge from memory only, not the typing
         const answer = VS.spellingOf(w);
+        // Any real form is right: "took off" fills "Yesterday the plane ___" better than "take off".
         s.verdict = !s.typed ? "" : VS.normalise(s.typed) === VS.normalise(answer) ? "right"
-          : VS.isAlmost(s.typed, answer) ? "almost" : "wrong";
+          : VS.isWordForm(s.typed, answer) ? "form"
+          : VS.wordForms(answer).some((f) => VS.isAlmost(s.typed, f)) ? "almost" : "wrong";
         s.revealed = true;
         VS.sfx.play(s.verdict === "wrong" ? "wrong" : "flip");
         VS.app.render();
