@@ -53,6 +53,7 @@
 .today-goal-label .icon { width: 13px; height: 13px; flex: none; }
 .today-goal-sep { color: var(--ink-3); opacity: .6; }
 .today-goal-extra { color: var(--ink-3); }
+.today-goal-unit { color: var(--ink-3); }   /* "150" alone said nothing: answers, not minutes or words */
 .today-goal-track { width: 52px; height: 4px; border-radius: var(--r-pill); background: rgb(20 27 45 / .10); overflow: hidden; flex: none; }
 .today-goal-track i { display: block; height: 100%; border-radius: inherit; background: var(--mark); box-shadow: inset 0 0 0 1px rgb(20 27 45 / .12); transition: width 420ms var(--ease); }
 .today-goal.is-done .today-goal-label,
@@ -517,3 +518,10 @@
 .rail-stats > div:first-child { padding-top: 0; border-top: 0; }
 .rail-stats dt { color: var(--ink-3); font-size: var(--text-2xs); }
 .rail-stats dd { margin: 0; font-family: var(--font-display); font-size: var(--text-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* "Tomorrow: 6 words · about 2 min" + the daily calendar reminder (views/home.js). */
+.today-tomorrow { display: grid; gap: var(--s-2); margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid rgb(20 27 45 / .10); }
+.today-tomorrow p { margin: 0; color: var(--ink-2); }
+.today-tomorrow b { color: var(--ink); }
+.today-tomorrow .btn { justify-self: start; min-height: var(--tap); }
+.today-tomorrow .hint .icon { vertical-align: -2px; color: var(--good); }

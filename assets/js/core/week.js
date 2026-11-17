@@ -19,7 +19,8 @@
   "use strict";
 
   const DAY = 864e5;
-  const MILESTONES = [100, 500, 1000, 2000, 5000, 10000];
+  // The first ones come early: on day 1, "100 words mastered" is a wall, not a goal.
+  const MILESTONES = [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2000, 5000, 10000];
   const at = (iso) => new Date(iso + "T12:00:00");
 
   /** Saturday … Friday around a date. getDay(): Sunday 0 … Saturday 6. */
@@ -92,6 +93,13 @@
       return f(r.start) + " – " + f(r.end);
     },
   };
+
+  /* Accuracy after 7 answers on day 1 ("29%") says more about luck than about
+     the learner. It shows from 30 answers on; before that, how many are left. */
+  const ACCURACY_FROM = 30;
+  VS.accuracyText = (right, answered) => answered >= ACCURACY_FROM
+    ? Math.round((right / answered) * 100) + "%"
+    : VS.html`<span class="muted-num" title="Shown after ${ACCURACY_FROM} answers">after ${ACCURACY_FROM}</span>`;
 
   VS.milestones = {
     LIST: MILESTONES,

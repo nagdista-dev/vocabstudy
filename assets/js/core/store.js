@@ -37,6 +37,7 @@
     lastBackup: "",                                // date of the last full backup download
     backupNudgeIgnored: "",                        // date the learner hid the weekly backup reminder
     installNudgeDismissed: "",                     // date the learner said "not now" to installing the app
+    reminder: "",                                  // "9 PM": the daily calendar reminder the learner added (views/home.js)
     weekSeen: "",                                  // the Saturday of the last weekly report opened (core/week.js)
     milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
@@ -335,6 +336,8 @@
     backupNudgeIgnored: () => state.backupNudgeIgnored,
     installNudgeDismissed: () => state.installNudgeDismissed || "",
     dismissInstallNudge() { state.installNudgeDismissed = VS.todayKey(); save(); },
+    reminder: () => state.reminder || "",
+    setReminder(at) { state.reminder = at; save(); },
     weekSeen: () => state.weekSeen || "",
     setWeekSeen(start) { if (state.weekSeen !== start) { state.weekSeen = start; save(); } },
     milestoneSeen: () => state.milestone || 0,

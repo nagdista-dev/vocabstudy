@@ -88,8 +88,13 @@ words and progress stay on your device, and it works offline.
 - Recall **forecast** for the next 7 days.
 - **Your week**, Saturday to Friday, ready every **Thursday**: words that
   stuck, days studied, new words, answers and time next to last week's,
-  and one note on what to do next. **Milestones** at 100, 500 and 1,000
-  words mastered.
+  and one note on what to do next. **Milestones** from your first word
+  mastered (then 5, 10, 25, 50, 100, 500, 1,000…). Accuracy shows from 30
+  answers on — a first day's 7 answers say more about luck than about you.
+- **A reason to come back tomorrow**: once today's recall and new words are
+  done, Today says what tomorrow holds ("2 words · about 1 min") and adds a
+  daily reminder to your own calendar in one tap (an .ics file — no server,
+  no notifications permission).
 
 **Learn**
 - New words are taught before they're tested: **Meet** shows each word open

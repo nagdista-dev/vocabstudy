@@ -625,7 +625,10 @@
     },
 
     /** End-of-session screen. `stats` = [{ value, label, tone }], `words` = mistakes to show. */
-    summary({ title, message, stats, words, actions }) {
+    summary({ title, message, stats, words, actions, back }) {
+      // Always a way out: "Next: Quiz" is a suggestion, "Done" is a choice.
+      actions = actions.filter(Boolean);
+      if (!actions.some((a) => a.label === "Done")) actions.push({ href: back || "#/", label: "Done" });
       VS.sfx.play("done");
       // Results are a new screen. Start at the top even if the smooth scroll
       // from the last answer is still running (it would otherwise leave the
@@ -641,8 +644,9 @@
           ${reached ? html`
             <div class="milestone-hit">
               ${icon("trophy", "icon-lg")}
-              <p><b>${reached.toLocaleString("en-GB")} words mastered.</b>
-                <span>${reached.toLocaleString("en-GB")} words you remembered after two weeks or more — they're yours now.</span></p>
+              <p><b>${reached === 1 ? "Your first word mastered." : reached.toLocaleString("en-GB") + " words mastered."}</b>
+                <span>${reached === 1 ? "You remembered it after two weeks or more — it's yours now."
+                  : reached.toLocaleString("en-GB") + " words you remembered after two weeks or more — they're yours now."}</span></p>
             </div>` : ""}
           <h1>${title}</h1>
           <p class="muted">${message}</p>

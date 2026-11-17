@@ -210,6 +210,15 @@
               <a class="btn btn-quiet" href="${s.scope.back}">Go back</a>
             </div></div></div>`;
         }
+        // An empty library: Quiz and Spell would only say "needs two words".
+        if (!VS.allWords().length) {
+          return html`<div class="activity"><div class="empty">
+            <h2>Nothing to recall yet</h2>
+            <p>Words you add and learn come back here on the days you're about to forget them.</p>
+            <div class="row empty-actions">
+              <a class="btn btn-primary" href="#/">${icon("plus", "icon-sm")} Add your first word</a>
+            </div></div></div>`;
+        }
         return html`<div class="activity"><div class="empty">
           <h2>Nothing to recall right now</h2>
           <p>${next

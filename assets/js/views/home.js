@@ -90,7 +90,7 @@
     const pct = Math.min(100, Math.round((done / target) * 100));
     return html`
       <div class="today-goal ${reached ? "is-done" : ""}">
-        <span class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span><span class="today-goal-extra">Daily </span>Goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}</span>
+        <span class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span><span class="today-goal-extra">Daily </span>Goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}<span class="today-goal-unit"> answers</span></span>
         <span class="today-goal-track" role="progressbar" aria-label="Daily goal: ${done} of ${target} answers"
              aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(done, target)}">
           <i style="width:${pct}%"></i>
@@ -116,6 +116,65 @@
       </ol>`;
   }
 
+  /* ── A reason to come back tomorrow ──────────────────────────────
+     The whole method is "come back on the right day", and nothing used to
+     say so once the day was done. Now the card says what tomorrow holds,
+     and one tap adds a daily reminder to the learner's own calendar: an
+     .ics file (iPhone, Android, Outlook all read it). No server, no
+     account, no notifications permission — the calendar does the reminding. */
+  const reminderAt = () => {               // the hour they study now: "same time tomorrow"
+    const h = new Date().getHours();
+    return h < 7 ? 20 : h >= 23 ? 21 : h + 1;
+  };
+  const hourText = (h) => (h % 12 || 12) + (h < 12 ? " AM" : " PM");
+  const reminderAdded = () => VS.store.reminder();
+
+  function tomorrow(p) {
+    // Once recall and today's new words are done: practice is a bonus, tomorrow is the plan.
+    if (!p.t.started || (p.next && (p.next.key === "recall" || p.next.key === "learn"))) return "";
+    const n = (VS.store.forecast()[1] || {}).count || 0;
+    const min = Math.max(1, Math.round((n * 20) / 60));     // about 20 seconds a word in Recall
+    const added = reminderAdded();
+    return html`
+      <div class="today-tomorrow">
+        <p>${n
+          ? html`Tomorrow: <b>${VS.plural(n, "word")}</b> to recall · about ${min} min.`
+          : html`Nothing due tomorrow — a good day to add new words.`}</p>
+        ${added
+          ? html`<p class="hint">${icon("check", "icon-sm")} Daily reminder in your calendar (${added}).
+              <button class="link-btn" type="button" data-action="daily-reminder">Add it again</button></p>`
+          : html`<button class="btn btn-tonal" type="button" data-action="daily-reminder">${icon("clock", "icon-sm")}
+              Remind me every day at ${hourText(reminderAt())}</button>`}
+      </div>`;
+  }
+
+  /** A daily calendar event with an alert, as a file the calendar app opens. */
+  VS.actions["daily-reminder"] = () => {
+    const h = reminderAt();
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    const pad = (x) => String(x).padStart(2, "0");
+    const day = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+    const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+    const url = location.origin + location.pathname;
+    const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//VocabStudy//Daily reminder//EN", "BEGIN:VEVENT",
+      "UID:vocabstudy-daily-" + day + "@vocabstudy", "DTSTAMP:" + now,
+      "DTSTART:" + day + "T" + pad(h) + "0000", "DURATION:PT10M", "RRULE:FREQ=DAILY",
+      "SUMMARY:VocabStudy — recall your words",
+      "DESCRIPTION:A few minutes today keeps them for good. Open VocabStudy: " + url,
+      "URL:" + url,
+      "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Time for VocabStudy", "TRIGGER:PT0M", "END:VALARM",
+      "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+    a.download = "vocabstudy-daily-reminder.ics";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    VS.store.setReminder(hourText(h));
+    VS.toast("Open the file to add the reminder to your calendar.");
+    VS.app.render();
+  };
+
   function strip() {
     const p = plan();
     const h = headline(p);
@@ -139,6 +198,7 @@
           <span>${cta}</span><span class="today-cta-ico">${icon("arrow-right", "icon-sm")}</span>
         </a>` : ""}
         ${shortcuts(p)}
+        ${tomorrow(p)}
       </section>`;
   }
 

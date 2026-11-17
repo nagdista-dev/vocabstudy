@@ -60,6 +60,7 @@
    * the next step as { href, label } (or null when there is none).
    */
   VS.finishStep = function (scope, mode) {
+    VS.roundsDone = (VS.roundsDone || 0) + 1;     // the install card waits for one (app.js)
     if (!scope) return null;
     if (scope.kind === "new" && mode === "cards") {
       VS.store.markDone("today", "learn");

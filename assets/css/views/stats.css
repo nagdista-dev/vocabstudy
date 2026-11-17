@@ -142,3 +142,6 @@
 
 .stats-week { display: grid; gap: var(--s-3); padding: var(--s-4) var(--s-5); margin-bottom: var(--s-2); }
 .wk-best { margin-top: calc(var(--s-2) * -1); }
+
+/* Accuracy before 30 answers (core/week.js VS.accuracyText): a quiet "after 30", not a number. */
+.muted-num { color: var(--ink-3); font-size: var(--text-sm); font-weight: 500; }

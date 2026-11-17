@@ -44,7 +44,7 @@
     const m = VS.milestones.next();
     return html`
       <div class="wk-milestone">
-        <p>${icon("trophy", "icon-sm")} <span>Next milestone: <b>${m.at.toLocaleString("en-GB")} words mastered</b> — ${m.left.toLocaleString("en-GB")} to go</span></p>
+        <p>${icon("trophy", "icon-sm")} <span>Next milestone: <b>${m.at === 1 ? "your first word mastered" : m.at.toLocaleString("en-GB") + " words mastered"}</b>${m.at === 1 ? "" : html` — ${m.left.toLocaleString("en-GB")} to go`}</span></p>
         <div class="wk-track" role="progressbar" aria-label="Toward ${m.at} words mastered" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${m.pct}"><i style="width:${m.pct}%"></i></div>
       </div>`;
   }

@@ -232,7 +232,7 @@
           <dl class="rail-stats">
             <div><dt>Streak</dt><dd>${t.streak} ${t.streak === 1 ? "day" : "days"}</dd></div>
             <div><dt>Mastered</dt><dd>${t.mastered} / ${t.words}</dd></div>
-            <div><dt>Accuracy</dt><dd>${answered ? Math.round((right / answered) * 100) + "%" : "—"}</dd></div>
+            <div><dt>Accuracy</dt><dd>${VS.accuracyText(right, answered)}</dd></div>
           </dl>
         </section>
       </aside>`;

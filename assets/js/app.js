@@ -176,7 +176,11 @@
     appBadge(due);
     const crumbsEl = VS.$("#crumbs");
     if (!crumbsEl) return;
-    document.body.dataset.mode = ACTIVITIES.includes(current.name) ? "activity" : "browse";
+    // An activity hides the bars so nothing distracts — but only while there is
+    // something to do. Its empty state and its results show them again, so no
+    // screen is a dead end ("Nothing to recall right now" had no way home).
+    const resting = viewRoot.querySelector(".activity > .empty, .activity > .summary");
+    document.body.dataset.mode = ACTIVITIES.includes(current.name) && !resting ? "activity" : "browse";
     const barNav = VS.$("#barNav"), tabBar = VS.$("#tabBar");
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
@@ -217,8 +221,9 @@
   });
 
   /* ── A quiet invitation to install ─────────────────────────────
-     Phones only, and only after the learner has a word of their own:
-     the first-run lesson is never covered. This is a card, not a
+     Phones only, and only after the learner has finished a round and is
+     back on Today: the first-run lesson is never covered, and it never
+     appears within 2.5 s of a touch or scroll (it used to eat a tap). This is a card, not a
      modal — it takes no focus and the app stays usable behind it.
      "Not now" (or the ×) hides it for 30 days; Settings keeps the
      permanent install entry for anyone who wants it sooner. */
@@ -236,7 +241,9 @@
 
   function nudgeWanted() {
     const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-    return !isStandalone() && !installedNow && phoneOnly() && !nudgeSnoozed()
+    // Only after a finished round, back on Today: the learner has seen what the
+    // app does, and isn't in the middle of adding or reading a word.
+    return !isStandalone() && !installedNow && phoneOnly() && !nudgeSnoozed() && VS.roundsDone > 0
       && current && current.name === "library" && VS.allWords().length > 0 && !typing
       && !document.querySelector("#settings[open], dialog[open], .update-bar, .toast.is-on, .word-row[open]");
   }
@@ -276,8 +283,14 @@
       </div>`;
   }
 
+  // A card that appears under a moving finger steals the tap meant for the page.
+  let lastTouch = 0;
+  document.addEventListener("pointerdown", () => { lastTouch = Date.now(); }, { capture: true, passive: true });
+  document.addEventListener("scroll", () => { lastTouch = Date.now(); }, { capture: true, passive: true });
+
   function showNudge() {
     if (!nudgeWanted() || document.visibilityState === "hidden" || VS.$("#installNudge")) return;
+    if (Date.now() - lastTouch < 2500) { nudgeTimer = setTimeout(() => { nudgeTimer = 0; showNudge(); }, 2500); return; }
     nudgeShown = true;
     const el = document.createElement("aside");
     el.id = "installNudge";

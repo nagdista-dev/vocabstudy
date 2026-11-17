@@ -128,7 +128,7 @@
           <dl class="stat-tiles card">
             <div><dt>${icon("clock", "icon-sm")} Study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>
             <div><dt>${icon("flame", "icon-sm")} Days studied</dt><dd>${history.length} <small>${t.streak}-day streak</small></dd></div>
-            <div><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${answered ? Math.round((right / answered) * 100) + "%" : "—"} <small>${answered.toLocaleString("en-GB")} answers</small></dd></div>
+            <div><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${VS.accuracyText(right, answered)} <small>${answered.toLocaleString("en-GB")} answers</small></dd></div>
             <div><dt>${icon("star", "icon-sm")} Mastered</dt><dd>${t.mastered} <small>of ${t.words}</small></dd></div>
           </dl>
 
