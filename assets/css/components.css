@@ -435,17 +435,32 @@ kbd {
 .sheet-group { font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; letter-spacing: .02em;
   padding-top: var(--s-3); border-top: 1px solid var(--line); margin-bottom: calc(var(--s-2) * -1); }
 .sheet-body > .sheet-group:first-child { border-top: 0; padding-top: 0; }
-/* Six accents, all visible: a grid, not a scroller that hides the last two
-   options. Two columns on a phone, three once the sheet is wide enough. */
+/* Ten accents, all visible: a grid, not a scroller that hides the last
+   options. Two columns on a phone (five full rows), three once the sheet
+   is wide enough; the tenth is centred beneath the 3×3 grid. */
 .seg.swatches {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-1); overflow: visible;
 }
-@media (min-width: 520px) { .seg.swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 520px) {
+  .seg.swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .seg.swatches > button:last-child:nth-child(3n+1) { grid-column: 1 / -1; justify-self: center; }
+}
 .swatches button { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding-inline: var(--s-2); }
 .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
-.sw-blue { background: #2b48d6; } .sw-teal { background: #0a6f6a; } .sw-violet { background: #6a3fc4; } .sw-rose { background: #b8325f; }
-.sw-plum { background: #8a2f6b; } .sw-cocoa { background: #7a4a2b; }
+.sw-blue { background: #2b48d6; } .sw-teal { background: #0a6f6a; } .sw-sky { background: #0e6688; } .sw-violet { background: #6a3fc4; }
+.sw-plum { background: #8a2f6b; } .sw-rose { background: #b8325f; } .sw-cocoa { background: #7a4a2b; } .sw-amber { background: #8a5600; }
+.sw-graphite { background: #3d4452; }
+/* The glass swatch is a bead, not a flat dot: a cool rim, a highlight and
+   a shaded underside keep it visible on both the grey track and the white
+   selected pill. */
+.sw-glass {
+  background:
+    radial-gradient(circle at 32% 26%, #fff 0 15%, rgb(255 255 255 / 0) 46%),
+    linear-gradient(150deg, #eef8ff, #d7e9f6 55%, #a9c6dc);
+  border: 1px solid rgb(83 122 155 / .55);
+  box-shadow: 0 1px 2px rgb(20 27 45 / .28), inset 0 1px 1px #fff, inset 0 -1px 2px rgb(20 27 45 / .22);
+}
 .danger-link { color: var(--bad); font-weight: 600; font-size: var(--text-sm); justify-self: start; padding: var(--s-2) 0; }
 
 /* ── Entrance: one quiet fade when a screen changes ────────────── */

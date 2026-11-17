@@ -104,8 +104,12 @@
 
 /* Accent colours (Settings → Look). Only the action colour changes;
    the highlighter, right and wrong keep their meaning. All pass AA. */
-:root[data-accent="teal"]   { --brand: #0a6f6a; --brand-hover: #085a56; --brand-soft: #d9f1ef; }
-:root[data-accent="violet"] { --brand: #6a3fc4; --brand-hover: #5631a6; --brand-soft: #ece4fb; }
-:root[data-accent="rose"]   { --brand: #b8325f; --brand-hover: #98264d; --brand-soft: #fbe3eb; }
-:root[data-accent="plum"]   { --brand: #8a2f6b; --brand-hover: #702557; --brand-soft: #f7e4f1; }
-:root[data-accent="cocoa"]  { --brand: #7a4a2b; --brand-hover: #643b21; --brand-soft: #f6ebe2; }
+:root[data-accent="teal"]     { --brand: #0a6f6a; --brand-hover: #085a56; --brand-soft: #d9f1ef; }
+:root[data-accent="sky"]      { --brand: #0e6688; --brand-hover: #0a5270; --brand-soft: #dceff7; }
+:root[data-accent="violet"]   { --brand: #6a3fc4; --brand-hover: #5631a6; --brand-soft: #ece4fb; }
+:root[data-accent="plum"]     { --brand: #8a2f6b; --brand-hover: #702557; --brand-soft: #f7e4f1; }
+:root[data-accent="rose"]     { --brand: #b8325f; --brand-hover: #98264d; --brand-soft: #fbe3eb; }
+:root[data-accent="cocoa"]    { --brand: #7a4a2b; --brand-hover: #643b21; --brand-soft: #f6ebe2; }
+:root[data-accent="amber"]    { --brand: #8a5600; --brand-hover: #6f4600; --brand-soft: #fcecd4; }
+:root[data-accent="graphite"] { --brand: #3d4452; --brand-hover: #2f3541; --brand-soft: #e9ebef; }
+:root[data-accent="glass"]    { --brand: #26384a; --brand-hover: #17283a; --brand-soft: #eef4f8; }

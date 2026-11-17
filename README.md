@@ -146,7 +146,7 @@ node tools/test_traps.js  # every usage trap catches its own mistake and leaves 
 
 ```text
 index.html, sw.js         generated — don't edit (tools/build.py)
-assets/css/               tokens → base → components → screens → motion
+assets/css/               tokens → base → components → screens → motion → glass
 assets/js/core/           library, progress (spaced repetition), filters, auto-fill, speech, importer
 assets/fonts, assets/vendor  self-hosted fonts, PDF maker and QR libraries (tools/vendor.py)
 assets/data/frequency.js  the 30,000 most used English words (tools/frequency.py, wordfreq, CC BY-SA 4.0)

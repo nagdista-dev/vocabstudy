@@ -47,6 +47,8 @@ JavaScript عادي، وكل ملف صغير وليه وظيفة واحدة. ا�
 3. `components.css` — أزرار، كروت، شرايح. كل component بيستخدم tokens بس.
 4. `views/*.css` — كل شاشة بتركّب components، مش بتعيد تعريفها.
 5. `motion.css` — كل الأنيميشن في ملف واحد. ابدأ بـ `mark-draw`.
+6. `glass.css` — الـ accent العاشر: طبقة Liquid Glass، كل قواعدها محصورة في
+   `[data-accent="glass"]`، ومعاها fallbacks للشفافية والـ forced colors.
 
 **اتعلمت:** design tokens، الـ cascade، mobile-first بـ `@media`، وإزاي
 تحط الأنيميشن في خدمة المستخدم.

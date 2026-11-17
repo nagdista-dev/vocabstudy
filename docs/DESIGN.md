@@ -6,9 +6,12 @@ The learner is an adult (B1–C1 words) who may study for **six hours a day**.
 Everything serves long, focused sessions:
 
 - **Light only.** A bright, calm page keeps attention up; no dark mode to maintain.
-- **One action accent at a time** — ink blue by default, plus five alternates in
-  Settings → Look (teal, violet, rose, plum, cocoa) — and **one for memory**
-  (highlighter yellow). All six pass AA on their soft tints.
+- **One action accent at a time** — ink blue by default, plus nine alternates in
+  Settings → Look (teal, sky, violet, plum, rose, cocoa, amber, graphite, glass) —
+  and **one for memory** (highlighter yellow). The nine flat colours and the
+  Liquid Glass material all pass AA on their surfaces. The picker is a 3×3 grid
+  at ≥520px, with the tenth (Glass) centred beneath; on a phone it is two
+  columns — five full rows.
 - **Green / red only for right / wrong.** Never decoration.
 - **Motion answers the learner** and finishes in under a second. Nothing loops —
   except the mic while it is listening (Speak), which is a live status.
@@ -24,10 +27,36 @@ Everything serves long, focused sessions:
 | `--surface` | `#ffffff` | cards |
 | `--ink` / `--ink-2` / `--ink-3` | `#141b2d` / `#465066` / `#56617a` | text, secondary, hints |
 | `--brand` | `#2b48d6` | actions, links, current step |
-| accent sets | teal `#0a6f6a`, violet `#6a3fc4`, rose `#b8325f`, plum `#8a2f6b`, cocoa `#7a4a2b` | optional action colours; each brings its own hover and soft tint |
+| accent sets | teal `#0a6f6a`, sky `#0e6688`, violet `#6a3fc4`, plum `#8a2f6b`, rose `#b8325f`, cocoa `#7a4a2b`, amber `#8a5600`, graphite `#3d4452` | optional action colours; each brings its own hover and soft tint |
+| `--brand` (glass) | `#26384a` · hover `#17283a` · soft `#eef4f8` | the tenth accent; swaps the action surfaces for the Liquid Glass material (`glass.css`) |
 | `--mark` | `#ffe066` | the highlighter: words being learned, due counts, rewards |
 | `--good` / `--bad` | `#0f744f` / `#b3302f` | right / wrong (≥ 5:1 on their soft fills) |
 | `--lvl-a/b/c` | teal / blue / violet | CEFR level badges |
+
+## Liquid Glass (`assets/css/glass.css`)
+
+The tenth choice in Settings → Look is a material, not another hue. It is
+scoped under `:root[data-accent="glass"]`, so the other nine accents are
+untouched.
+
+- **What turns to glass:** the app bar, the phone tab bar and its current-tab
+  pill, today's plan and its practice chips, the primary actions
+  (`.btn-primary`, `.today-cta`, `.mic`), tonal buttons, speaker buttons and the
+  swatch itself.
+- **What never does:** cards, text surfaces, the word being learned, the
+  highlighter, and green / red. Meaning never becomes transparent.
+- **How it is made:** a cool blue-grey tint, a top specular highlight, a white
+  rim with a cool inner hairline, and a short soft shadow. Blur is used only
+  where content can pass underneath — the two bars and the primary actions.
+- **Contrast:** labels on clear glass are `--lg-ink` `#12263a`, never white.
+  The deepest primary tint is `#a9cde9` (hover `#9ec6e2`); ink on it is 9.2:1,
+  or 8.5:1 on hover. White appears only on the dark state fills: the listening
+  mic and the "speaking" button use the dark `--brand` fill at 12:1.
+- **Focus** stays the global 3px `--brand` ring; a field also gets a dark border
+  and a cool ring, so pale glass can never swallow focus.
+- **Fallbacks:** without `backdrop-filter` the bars become opaque paper and
+  surface. `prefers-reduced-transparency: reduce` drops blur and uses opaque
+  tints. `forced-colors: active` replaces the material with Canvas / CanvasText.
 
 ## Type
 
@@ -67,11 +96,13 @@ its fix is right.
 
 ## The signature
 
-Home opens with one tinted paper index card, never a dark block. Its tint is
-the chosen action accent (`--brand-soft`), so the hero belongs to the same ink
-as every button: the next action in a sentence, the count in a solid
-highlighter chip ("**9 words** to recall."), one solid brand CTA with a white
-label, and the practice chips as white pills. Under it, a slim capture bar:
+Home opens with one index card, never a dark block. Its tint follows the
+chosen action accent (`--brand-soft`), so the hero belongs to the same ink as
+every button: the next action in a sentence, the count in a solid highlighter
+chip ("**9 words** to recall."), one primary CTA — solid brand with a white
+label, or under Glass a blue-tinted glass surface with an ink label — and the
+practice chips as white pills. Under Glass the card itself is clear glass
+instead of a tint. Under it, a slim capture bar:
 type a word and a highlighter band draws under exactly what you typed (its
 width is measured in `views/library.js`) — you are marking the word to keep.
 
@@ -103,7 +134,8 @@ JS). It keeps the same desk without imitating an app screen:
 
 - Content max 1120px; activities max 720px — one task, centred.
 - 4px spacing grid (`--s-1` … `--s-8`).
-- App bar: 56px on phones, 64px from 1024px; opaque paper, 1px line. Desktop
+- App bar: 56px on phones, 64px from 1024px; opaque paper with a 1px line
+  (under Glass: blurred glass). Desktop
   navigation lives in the bar; ≤1023px uses the bottom tab bar (Today, Recall,
   Progress, Add) so the thumb reaches every destination.
 - Activities ≤1023px hide the app bar and show their own header: exit, title,
@@ -208,5 +240,7 @@ is already visible.
 
 ## Files
 
-`tokens.css` → `base.css` → `components.css` → `views/*.css` → `motion.css`.
-Screens combine components; they never restyle them.
+`tokens.css` → `base.css` → `components.css` → `views/*.css` → `motion.css`
+→ `glass.css`. Screens combine components; they never restyle them.
+`glass.css` is the one material layer: every rule is scoped to
+`[data-accent="glass"]`, so no other accent matches it.

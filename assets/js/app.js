@@ -261,9 +261,11 @@
 
         <h3 class="sheet-group">Look</h3>
         <div class="setting"><b>Accent colour</b><div class="seg swatches">
-          ${[["blue", "Ink blue"], ["teal", "Teal"], ["violet", "Violet"], ["rose", "Rose"], ["plum", "Plum"], ["cocoa", "Cocoa"]].map(([v, l]) =>
+          ${[["blue", "Ink blue"], ["teal", "Teal"], ["sky", "Sky"], ["violet", "Violet"], ["plum", "Plum"], ["rose", "Rose"], ["cocoa", "Cocoa"], ["amber", "Amber"], ["graphite", "Graphite"], ["glass", "Glass"]].map(([v, l]) =>
             html`<button type="button" data-action="setting" data-name="accent" data-value="${v}" aria-pressed="${st.accent === v}"><i class="swatch sw-${v}"></i>${l}</button>`)}
-        </div></div>
+          </div>
+          ${st.accent === "glass" ? html`<span class="hint">Liquid Glass is a material, not a tint: actions, bars and today's plan turn translucent while the text stays dark ink.</span>` : ""}
+        </div>
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
 
         <h3 class="sheet-group">App &amp; data</h3>

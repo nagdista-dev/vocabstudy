@@ -35,6 +35,7 @@ STYLES = [
     "assets/css/views/import.css",
     "assets/css/views/data.css",
     "assets/css/motion.css",
+    "assets/css/glass.css",         # the tenth accent: Liquid Glass material
 ]
 SCRIPTS = [
     "assets/js/core/vs.js",          # must come first: defines VS.addWords
