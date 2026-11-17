@@ -56,6 +56,7 @@ SCRIPTS = [
     "assets/js/core/week.js",          # the Saturday–Friday week and milestones
     "assets/js/core/importer.js",
     "assets/js/core/autofill.js",
+    "assets/js/core/spelling.js",      # "Did you mean receive?" before a typo becomes a lesson
     "assets/js/core/grammar.js",       # grammar check for Use it (LanguageTool, online, optional)
     "assets/js/views/shared.js",
     "assets/js/views/home.js",

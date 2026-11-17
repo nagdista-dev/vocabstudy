@@ -418,6 +418,7 @@
       const i = state.library.findIndex((x) => VS.wordKey(x.word, x.sense) === id);
       if (i < 0) return { error: "missing" };
       const next = Object.assign({}, state.library[i], changes);
+      delete next.check;                 // edited by hand: the learner has checked it
       const newId = VS.wordKey(next.word, next.sense);
       if (newId !== id && VS.byId[newId]) return { error: "duplicate", word: VS.byId[newId] };
       state.library[i] = next;
@@ -456,14 +457,19 @@
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
       const w = VS.byId[id];
       if (!raw || !w) return;
+      // What auto-fill wrote is remembered, so a corrected spelling can be filled again from scratch.
+      const filled = new Set(raw.filled || []);
       ["ipa", "definition", "example", "type", "level", "arabic"].forEach((k) => {
-        if (fields[k] && !raw[k]) { raw[k] = fields[k]; w[k] = fields[k]; }
+        if (fields[k] && !raw[k]) { raw[k] = fields[k]; w[k] = fields[k]; filled.add(k); }
       });
-      if (fields.audio && !raw.audio) { raw.audio = fields.audio; w.audio = fields.audio; }
-      if (fields.goes && fields.goes.length && !(raw.goes && raw.goes.length)) { raw.goes = fields.goes.slice(); w.goes = fields.goes.slice(); }
+      if (fields.audio && !raw.audio) { raw.audio = fields.audio; w.audio = fields.audio; filled.add("audio"); }
+      if (fields.goes && fields.goes.length && !(raw.goes && raw.goes.length)) { raw.goes = fields.goes.slice(); w.goes = fields.goes.slice(); filled.add("goes"); }
       if (fields.synonyms && fields.synonyms.length && !(raw.synonyms && raw.synonyms.length)) {
-        raw.synonyms = fields.synonyms.slice(); w.synonyms = fields.synonyms.slice();
+        raw.synonyms = fields.synonyms.slice(); w.synonyms = fields.synonyms.slice(); filled.add("synonyms");
       }
+      if (filled.size) raw.filled = [...filled];
+      // "Check the spelling" / "Which meaning did you meet?" (core/autofill.js).
+      if (fields.check) { raw.check = Object.assign({}, fields.check); w.check = raw.check; }
       // "wednesday" → "Wednesday": only the capital changes, so the id stays.
       if (fields.word && VS.wordKey(fields.word) === VS.wordKey(raw.word) && fields.word !== raw.word) {
         raw.word = fields.word; w.word = fields.word;
@@ -471,6 +477,43 @@
       if (auto) raw.auto = w.auto = auto;
       else { delete raw.auto; delete w.auto; }
       save();
+    },
+
+    /**
+     * The learner has looked at a flagged word ("Keep it", or picked a
+     * meaning): the "check" line goes away.
+     */
+    clearCheck(id) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      if (!raw || !raw.check) return;
+      delete raw.check;
+      if (w) delete w.check;
+      save();
+    },
+
+    /**
+     * "recieve" → "receive": rename the word, forget everything auto-fill
+     * wrote for the misspelling (what the learner typed stays), and mark it
+     * to be filled again. Returns the new id, or "" if the spelling is taken.
+     */
+    respellUserWord(id, word) {
+      const newId = this.renameUserWord(id, word);
+      if (!newId) return "";
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === newId);
+      const w = VS.byId[newId];
+      (raw.filled || []).forEach((k) => {
+        delete raw[k];
+        if (w) w[k] = Array.isArray(w[k]) ? [] : "";
+      });
+      if (w && !w.type) w.type = /\s/.test(w.word) ? "Phrase" : "Noun";
+      delete raw.filled;
+      delete raw.check;
+      if (w) delete w.check;
+      raw.auto = "todo";
+      if (w) w.auto = "todo";
+      save();
+      return newId;
     },
 
     /** A sentence the learner wrote with a word ("Use it"): newest first, the last five kept. */

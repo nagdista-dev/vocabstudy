@@ -47,6 +47,14 @@ words and progress stay on your device, and it works offline.
 - **Goes with**: the words English puts with yours — *heavy* rain, *final*
   decision, *subtle* differences — because "strong rain" is exactly where
   Arab learners slip. **More examples** brings real sentences from Tatoeba.
+- **Did you mean…?** A typo is caught before it becomes a lesson: type
+  "recieve" and the app asks "Did you mean **receive**?" (online, or offline
+  from its own list of common words). Words already saved with a likely typo
+  get a "Check spelling" line with the fix.
+- **One meaning, one Arabic.** The Arabic, definition, example and similar
+  words always describe the same meaning — "take off" is never "اخلع" next to
+  "becoming airborne". When a word's meanings translate differently (*take
+  off*, *fine*, *bank*), the app asks which one you met.
 - **Where you met it**: the sentence you found the word in, and the source.
   Recall asks with your own sentences first — the strongest cue there is.
 - **Stress you can see**: ○●○○ for pro·CRAS·ti·nate, read from the IPA —
@@ -122,6 +130,7 @@ no key), and each one is optional:
 | Feature | What is sent | Where |
 | --- | --- | --- |
 | Auto-fill (when you add a word) | only the English word | Google Translate (free web endpoint), dictionaryapi.dev, api.datamuse.com (the words it goes with), mymemory.translated.net (fallback) |
+| Spelling check (when you add a word that isn't one of the 30,000 most used) | only that word | Google Translate's spelling correction; offline, the app's own word list |
 | Grammar check (Use it, when you press Check) | only that sentence | api.languagetool.org |
 | More examples (when you tap it) | only the English word | api.tatoeba.org |
 | Recorded voice (Settings → Sound) | nothing — the recording is downloaded | dictionaryapi.dev |

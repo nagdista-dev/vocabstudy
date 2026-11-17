@@ -562,6 +562,7 @@
   applySettings();
   VS.store.onChange(() => current && renderBar());
   VS.autofill.resume();                          // words added offline get filled now
+  VS.autofill.review();                          // words saved before the spelling check: typos get flagged
   // Ask the browser to keep this site's data for good (Safari otherwise may clear
   // a site that hasn't been opened for a week). Installed apps are usually granted it.
   if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then((on) => on || navigator.storage.persist()).catch(() => {});

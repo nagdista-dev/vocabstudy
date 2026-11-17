@@ -12,6 +12,7 @@
 
      VS.frequency.load()     → loads the list after the app has started
      VS.frequency.rank(word) → 0-based rank, or Infinity (rare / unknown)
+     VS.frequency.words()    → the list itself, most common first
      VS.frequency.band(word) → { level 0–5, label, line } or null
    ------------------------------------------------------------------ */
 (function () {
@@ -27,6 +28,7 @@
   ];
 
   let ranks = null;          // word → rank
+  let list = null;           // the words, most common first (core/spelling.js searches it)
   let loading = null;
 
   /** Every form a word may be counted under: borrow → borrows, borrowed, borrowing… and back. */
@@ -49,14 +51,19 @@
     /** Load the list in the background; resolves when it's ready (or failed quietly). */
     load() {
       if (!loading) {
-        loading = VS.loadScript("assets/data/frequency.js", "VS_FREQ").then((list) => {
+        loading = VS.loadScript("assets/data/frequency.js", "VS_FREQ").then((words) => {
           ranks = new Map();
-          String(list).split(" ").forEach((w, i) => { if (!ranks.has(w)) ranks.set(w, i); });
+          words = String(words).split(" ");
+          words.forEach((w, i) => { if (!ranks.has(w)) ranks.set(w, i); });
+          list = words;
           delete window.VS_FREQ;                  // the Map is all we need
         }).catch(() => { loading = null; });
       }
       return loading;
     },
+
+    /** Every word in the list, most common first (null until loaded). */
+    words: () => list,
 
     rank(word) {
       if (!ranks || !word || /\s/.test(String(word).trim())) return Infinity;

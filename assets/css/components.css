@@ -603,6 +603,23 @@ kbd {
 .dup-note a { font-weight: 600; }
 .dup-note[hidden] { display: none; }
 
+/* "Did you mean receive?" under an add box (core/spelling.js): a question, not an error. */
+.spell-check { margin-top: var(--s-2); padding: var(--s-3); border: 1px solid var(--mark); border-radius: var(--r-md);
+  background: var(--mark-soft); color: var(--on-mark); }
+.spell-check-q { display: flex; align-items: center; gap: var(--s-2); margin: 0; font-size: var(--text-md); }
+.spell-check-q b { color: var(--ink); font-weight: 700; }
+.spell-check-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
+.spell-check-actions .btn { min-height: var(--tap); }
+
+/* A word whose spelling or meaning should be checked (core/autofill.js): one line, one fix. */
+.word-check { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-3);
+  padding: var(--s-2) var(--s-3); border: 1px solid var(--mark); border-radius: var(--r-md); background: var(--mark-soft); color: var(--on-mark); }
+.word-check > span { flex: 1 1 14rem; }
+.word-check > span > .icon, .spell-check-q > .icon { flex: none; display: inline-block; vertical-align: -3px; margin-inline-end: var(--s-1); }
+.word-check b { color: var(--ink); }
+.word-check .btn { min-height: var(--tap); }
+.word-row-flag { color: var(--on-mark); background: var(--mark-soft); border-radius: var(--r-pill); padding: 0 var(--s-2); font-weight: 600; }
+
 /* A text-style button: a small secondary action inside running content */
 .link-btn { justify-self: start; padding: var(--s-2) 0; min-height: var(--tap); border: 0; background: none; font: inherit;
   font-size: var(--text-sm); font-weight: 600; color: var(--brand); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

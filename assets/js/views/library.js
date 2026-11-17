@@ -419,9 +419,10 @@
           add.style.backgroundPosition = (parseFloat(cs.paddingLeft) - 4) + "px 0";
         };
         add.addEventListener("input", mark);
+        add.addEventListener("input", () => VS.spelling.cancel());      // a new word: the old question is gone
       }
       const addForm = VS.$("[data-form='quick-add']", root);
-      if (addForm) addForm.addEventListener("submit", (e) => {
+      if (addForm) addForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         // Pasted a sentence? Let the learner tap the words they mean, and keep the sentence.
         if (add.value.trim().split(/\s+/).length >= 5) {
@@ -429,8 +430,13 @@
           location.hash = "#/add?tab=text";
           return;
         }
+        // A typo would be taught as the right answer: ask first (core/spelling.js).
+        const typed = VS.addWordReady(add.value);
+        if (!typed) return;
+        const word = await VS.spelling.confirm(typed, add.closest(".add-line"));
+        if (!word) return;
         const wasEmpty = !VS.allWords().length;
-        const w = VS.addWord({ word: add.value });
+        const w = VS.addWord({ word });
         if (!w) return;
         VS.toast(`“${w.word}” is in your library.`);
         VS.app.render();

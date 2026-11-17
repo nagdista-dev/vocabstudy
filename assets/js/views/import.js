@@ -39,6 +39,10 @@
       r.issues = r.issues.filter((i) => i.kind !== "dup");
       if (!r.word) return;
       const id = VS.wordKey(r.word, r.sense);
+      // A likely typo (core/spelling.js, from the common-words list, nothing sent): a warning, never a block.
+      r.issues = r.issues.filter((i) => !i.spell);
+      const fix = !r.definition && VS.spelling.local(r.word);
+      if (fix) r.issues.push({ kind: "warn", spell: true, text: `spelling? did you mean “${fix}”` });
       if (VS.byId[id]) r.issues.push({ kind: "dup", text: "already in your library" });
       else if (seen.has(id)) r.issues.push({ kind: "dup", text: "repeated in this list" });
       seen.add(id);
@@ -80,14 +84,25 @@
    */
   VS.addWord = function (fields) {
     const w = VS.importer.checkWord(fields);
-    if (!w.word) { VS.toast("Type a word first."); return null; }
-    if (VS.isArabicTyping(w.word)) { VS.toast("That's Arabic — switch your keyboard to English."); return null; }
-    const existing = VS.byId[VS.wordKey(w.word, w.sense)];
-    if (existing) { VS.toast(`“${existing.word}” is already in your library.`); return null; }
+    if (!VS.addWordReady(w.word, w.sense)) return null;
     if (!VS.autofill.enabled() && !w.arabic) { VS.toast("Add the Arabic meaning (auto-fill is off)."); return null; }
     const r = save([clean(Object.assign({}, w, { tags: fields.tags }))]);
     VS.sfx.play("pop");
     return r.added[0] || null;
+  };
+
+  /**
+   * The quick checks before a word is added (and before its spelling is
+   * checked): something typed, not Arabic, not in the library already.
+   * Returns the trimmed word, or "" with a toast saying why.
+   */
+  VS.addWordReady = function (word, sense) {
+    const t = String(word || "").trim();
+    if (!t) { VS.toast("Type a word first."); return ""; }
+    if (VS.isArabicTyping(t)) { VS.toast("That's Arabic — switch your keyboard to English."); return ""; }
+    const existing = VS.byId[VS.wordKey(t, sense)];
+    if (existing) { VS.toast(`“${existing.word}” is already in your library.`); return ""; }
+    return t;
   };
 
   /* ── Tab 1: type a word ───────────────────────────────────────── */
@@ -462,7 +477,10 @@
         VS.app.render();
       });
       VS.$$("[data-form-field]", root).forEach((el) => {
-        el.addEventListener("input", () => { st.form[el.dataset.formField] = el.value; });
+        el.addEventListener("input", () => {
+          st.form[el.dataset.formField] = el.value;
+          if (el.dataset.formField === "word") VS.spelling.cancel();
+        });
       });
       VS.ui.watchKeyboard(VS.$("#addWord", root));
       VS.ui.watchDuplicate(VS.$("#addWord", root), VS.$("#addWord", root) && VS.$("#addWord", root).closest(".add-line"));
@@ -506,7 +524,13 @@
         VS.toast("Drag this button to your bookmarks bar.");
       },
 
-      "form-add"() {
+      async "form-add"() {
+        if (!VS.addWordReady(st.form.word, st.form.sense)) return;
+        // A typo would be taught as the right answer: ask first (core/spelling.js).
+        const input = VS.$("#addWord");
+        const word = await VS.spelling.confirm(st.form.word, input && input.closest(".add-line"));
+        if (!word) return;
+        st.form.word = word;
         if (!VS.addWord(st.form)) return;
         st.form = st.form.tags ? { tags: st.form.tags } : {};        // keep the tags for the next word
         st.openDetails = false;

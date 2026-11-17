@@ -66,16 +66,92 @@
     return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
   };
 
-  /** Part of speech → the app's word type. "give up" as a verb is a phrasal verb. */
+  /* A phrasal verb is a verb and its particle: give up, take off, look after,
+     put up with. "make a decision" is a verb too, but it's a phrase (a
+     collocation): its second word isn't a particle. */
+  const PARTICLES = new Set(("up off on out in into away back down over through around round about along across " +
+    "by after for with apart aside ahead forward together under").split(" "));
+  const phrasalShape = (word) => {
+    const parts = String(word || "").toLowerCase().trim().split(/\s+/);
+    return parts.length >= 2 && parts.length <= 3 && !PARTICLES.has(parts[0]) && parts.slice(1).every((x) => PARTICLES.has(x));
+  };
+
+  /** Part of speech → the app's word type. */
   function typeOf(pos, word) {
     const type = TYPE[String(pos || "").toLowerCase()];
     if (!type) return "";
-    if (/\s/.test(word)) return type === "Verb" ? "Phrasal Verb" : "Phrase";
+    if (/\s/.test(word)) return type === "Verb" && phrasalShape(word) ? "Phrasal Verb" : "Phrase";
     return type;
   }
 
+  /* ── One meaning, one Arabic ─────────────────────────────────────
+     Google lists Arabic words per part of speech, not per meaning, and
+     each Arabic word comes with the English words it translates back to
+     ("خلع" ← take off, strip, slip off; "طار" ← fly, rise). A meaning gets
+     the Arabic words whose back-translations share a word with its own
+     definition and similar words — so "take off: the action of becoming
+     airborne" is never shown as "اخلع". A meaning nothing matches gets its
+     Arabic later, from its closest similar word (translateTerms). */
+  const STOP = new Set(("the and for that with from this into onto have has had are was were been being your their " +
+    "which what when where who whom whose such than then them they there these those very more most some any about " +
+    "someone something somebody often usually especially particular quickly become becoming make made cause").split(" "));
+  const stem = (w) => (w.length > 4 ? w.replace(/(?:ations?|ments?|ings?|ies|ied|ed|es|ly|s)$/, "") : w);
+  function keysOf(m, word) {
+    const own = new Set(String(word).toLowerCase().split(/\s+/).map(stem));
+    const keys = new Set();
+    [m.definition].concat(m.synonyms || []).join(" ").toLowerCase().split(/[^a-z]+/).forEach((x) => {
+      if (x.length >= 3 && !STOP.has(x) && !own.has(stem(x))) keys.add(stem(x));
+    });
+    return keys;
+  }
+  /** The Arabic words (of this part of speech) that belong to this meaning, best first. */
+  function arabicFor(m, word, entries) {
+    const keys = keysOf(m, word);
+    // Google lists its Arabic words most common first; a match keeps that order
+    // ("beautiful": جميل before وسيم, which only matches "handsome").
+    const hits = (entries || []).filter((e) => (e.reverse_translation || []).join(" ").toLowerCase()
+      .split(/[^a-z]+/).filter(Boolean).map(stem).some((x) => keys.has(x)));
+    return arabicList(hits.map((e) => e.word), 2);
+  }
+
+  /* Arabic words compared by their core: "تلقى" = "تلقي" = "يتلقى", "التحدي" = "تحدى". */
+  const core = (a) => {
+    let w = String(a || "").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
+      .trim().replace(/^ال/, "");
+    if (w.length > 3 && /[يا]$/.test(w)) w = w.slice(0, -1);           // تحدي → تحد
+    if (w.length > 3 && /^[يتان]/.test(w)) w = w.slice(1);              // يتلقى → تلق
+    return w;
+  };
+  const cores = (list) => String(list || "").split(" - ").map(core).filter(Boolean);
+  const shares = (a, b) => { const B = cores(b); return cores(a).some((x) => B.some((y) => x === y || x.includes(y) || y.includes(x))); };
+
+  /** Google's usual Arabic for a part of speech: its translation if it's one of them, then its top words. */
+  function mainArabic(translation, entries) {
+    const top = (entries || []).slice(0, 3).map((e) => e.word);
+    if (!top.length) return "";
+    return arabicList((translation && shares(translation, top.join(" - ")) ? [translation] : []).concat(top), 2);
+  }
+
+  /**
+   * Does the learner need to pick the meaning? Only when the word clearly
+   * has meanings that a learner would translate differently, or when the
+   * Arabic of the first meaning couldn't be confirmed:
+   *   • the first meaning's Arabic is only Google's usual guess, and the word
+   *     has many meanings ("bank": the dictionary starts with a river bank)
+   *   • a phrasal verb with meanings that share no Arabic ("take off": نزع / إقلاع)
+   *   • parts of speech that share no Arabic ("fine": رفيع / غرامة) — not "challenge" (تحدي / تحدى)
+   */
+  function ambiguous(senses, entriesFor, word) {
+    const s0 = senses[0];
+    if (!s0 || !s0.arabic || senses.length < 2) return false;
+    if (s0.unsure && senses.filter((m) => m.pos === s0.pos).length >= 3) return true;
+    const top = senses.slice(1, 5).filter((m) => m.arabic && !shares(m.arabic, s0.arabic));
+    if (phrasalShape(word) && top.length) return true;
+    return top.some((m) => m.pos !== s0.pos && entriesFor && (entriesFor[m.pos] || []).length);
+  }
+
   /** Several Arabic meanings, written the app's way: «في الواقع - فعلاً - حقاً». */
-  function arabicList(list) {
+  function arabicList(list, max) {
     const out = [];
     list.forEach((t) => {
       String(t || "").replace(/[.。]+$/, "").split(/[,،;؛]/).forEach((part) => {
@@ -83,7 +159,7 @@
         if (hasArabic(p) && !out.includes(p) && p.length <= 40) out.push(p);
       });
     });
-    return out.slice(0, MAX_ARABIC).join(" - ");
+    return out.slice(0, max || MAX_ARABIC).join(" - ");
   }
 
   /* ── Google: meanings, examples, Arabic, similar words ───────── */
@@ -99,8 +175,9 @@
     const data = await getJSON(url);
     if (!data || data.missing) return { senses: [], translation: "" };
     const translation = (data.sentences || []).map((s) => s.trans || "").join("").trim();
-    const arabicFor = {};
-    (data.dict || []).forEach((d) => { arabicFor[d.pos] = d.terms || (d.entry || []).map((e) => e.word); });
+    const entriesFor = {};
+    (data.dict || []).forEach((d) => { entriesFor[d.pos] = d.entry || (d.terms || []).map((t) => ({ word: t })); });
+    const clean = (t) => String(t || "").replace(/[.。]+$/, "").trim();
     // Similar words for each sense. Groups marked informal, archaic or rare
     // ("borrow" → "nab", "filch") are left out: a learner copies what they see.
     const synonymsFor = {};
@@ -117,22 +194,36 @@
     const examples = ((data.examples && data.examples.example) || []).map((e) => sentence(e.text));
     const senses = [];
     (data.definitions || []).forEach((group) => (group.entry || []).forEach((e) => {
-      senses.push({
+      const m = {
         type: typeOf(group.pos, word),
         pos: group.pos,
         definition: gloss(e.gloss),
         example: sentence(e.example),
         synonyms: similar(synonymsFor[group.pos + "|" + (e.definition_id || "")] || []),
-        arabic: arabicList([translation].concat(arabicFor[group.pos] || [])),
-      });
+      };
+      m.arabic = arabicFor(m, word, entriesFor[group.pos]);
+      senses.push(m);
     }));
     // The first sense gets an example from Google's list when its own has none.
     if (senses.length && !senses[0].example && examples.length) senses[0].example = examples[0];
     // No definitions (most phrases): still keep the part of speech and the Arabic.
-    if (!senses.length && (data.dict || []).length) {
-      const pos = data.dict[0].pos;
-      senses.push({ type: typeOf(pos, word), pos, definition: "", example: examples[0] || "", synonyms: [],
-                    arabic: arabicList([translation].concat(arabicFor[pos] || [])) });
+    const mainPos = ((data.dict || [])[0] || {}).pos || "";
+    if (!senses.length && mainPos) {
+      senses.push({ type: typeOf(mainPos, word), pos: mainPos, definition: "", example: examples[0] || "", synonyms: [],
+                    arabic: arabicList([translation].concat((entriesFor[mainPos] || []).map((e) => e.word))) });
+    }
+    // Google's one-line translation joins the first meaning only when it is
+    // one of that meaning's own Arabic words: "تلقي" for receive, never "اخلع"
+    // for "the action of becoming airborne".
+    const one = clean(translation);
+    if (senses[0] && hasArabic(one) && senses[0].arabic && shares(one, senses[0].arabic)) {
+      senses[0].arabic = arabicList([one].concat(senses[0].arabic.split(" - ")), 3);
+    }
+    // A first meaning nothing matched ("receive: be given, presented with…")
+    // takes Google's own most common Arabic for its part of speech.
+    if (senses[0] && !senses[0].arabic) {
+      senses[0].arabic = mainArabic(one, entriesFor[senses[0].pos]);
+      if (senses[0].arabic) senses[0].unsure = true;        // likely, not confirmed: see ambiguous()
     }
     // "postponed" → base "postpone": a learner should learn the verb, not one of its forms.
     const d0 = (data.dict || [])[0];
@@ -140,13 +231,41 @@
     const b = d0 && d0.pos === "verb" && d0.base_form ? d0.base_form.toLowerCase() : "";
     const base = b && b !== word.toLowerCase() && !/\s/.test(word) &&
       word.toLowerCase().startsWith(b.replace(/[ey]$/, "")) && /(?:s|ed|ing)$/i.test(word) ? b : "";
-    return { senses, translation: hasArabic(translation) ? arabicList([translation]) : "", base };
+    return { senses, translation: hasArabic(translation) ? arabicList([translation]) : "", base, mainPos, entriesFor,
+             found: !!((data.dict || []).length || (data.definitions || []).length) };
+  }
+
+  /**
+   * Arabic for meanings that have none yet, in one request: each meaning
+   * sends its closest similar word ("liftoff" → "إقلاع"), or its definition
+   * without "To" and brackets ("leave the ground and begin flight").
+   */
+  async function translateTerms(senses) {
+    // A definition translated word by word reads badly ("النزاع على صحة أو صحة"):
+    // only the first meaning, which must have Arabic, falls back to it.
+    const todo = senses.slice(0, 6).filter((m, i) => !m.arabic && ((m.synonyms || []).length || (i === 0 && m.definition)));
+    if (!todo.length) return;
+    // "To leave the ground…" is sent with its "to": Arabic answers "لمغادرة الأرض…",
+    // and the "ل" comes off → "مغادرة الأرض" (a meaning, not an order: "اترك الأرض").
+    const term = (m) => {
+      const one = (m.synonyms || []).find((x) => !/\s/.test(x)) || (m.synonyms || [])[0];
+      return (one || m.definition.replace(/\([^)]*\)/g, "").trim().split(/[;:]/)[0]).replace(/[.\n]+/g, " ").trim();
+    };
+    const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dj=1&dt=t&q=" +
+      encodeURIComponent(todo.map(term).join("\n"));
+    const data = await getJSON(url);
+    const lines = ((data && data.sentences) || []).map((x) => x.trans || "").join("").split("\n");
+    todo.forEach((m, i) => {
+      let ar = lines[i] || "";
+      if (/^to\s/i.test(term(m))) ar = ar.trim().replace(/^ل(?=[ء-ي]{3})/, "");
+      if (hasArabic(ar)) m.arabic = arabicList([ar]);
+    });
   }
 
   /* ── dictionaryapi.dev: IPA, and a definition when Google has none ── */
 
-  /** A real transcription: "/ˈæk.(t)ʃu.ə.li/", not a fragment like "/-ɪ/". */
-  const goodIPA = (t) => /[a-zɑ-ʒˈˌəɪʊæɛɔʌθðŋʃʒ]{2}/i.test(String(t || "").replace(/[-./\s]/g, "")) && !/^\/?-/.test(t || "");
+  /** A real transcription: "/ˈæk.(t)ʃu.ə.li/", not a fragment like "/-ɪ/" or "/bi-/". */
+  const goodIPA = (t) => /[a-zɑ-ʒˈˌəɪʊæɛɔʌθðŋʃʒ]{2}/i.test(String(t || "").replace(/[-./\s]/g, "")) && !/^\/?-|-\/?$/.test(t || "");
   const slashed = (t) => "/" + String(t).trim().replace(/^[\/\[]|[\/\]]$/g, "") + "/";
 
   async function dictionary(word) {
@@ -174,9 +293,12 @@
     // rare noun is listed first); its FIRST sense is the most common one.
     const byType = {};
     data.flatMap((e) => e.meanings || []).forEach((m) => {
+      // Only each definition's own similar words: the list under a part of speech
+      // covers all its meanings ("take off": remove, flourish…) and would mix them.
       (byType[m.partOfSpeech] = byType[m.partOfSpeech] || []).push(...(m.definitions || []));
     });
-    const main = Object.keys(byType).sort((a, b) => byType[b].length - byType[a].length)[0];
+    const order = Object.keys(byType).sort((a, b) => byType[b].length - byType[a].length);
+    const main = order[0];
     const d = main && byType[main][0];
     if (d) {
       out.definition = gloss(d.definition);
@@ -184,6 +306,13 @@
       out.type = typeOf(main, word);
       out.pos = main;
     }
+    out.found = true;
+    // Its meanings too, a few per part of speech: Google has none for many
+    // phrasal verbs ("take off" as a verb), and these fill that gap.
+    out.senses = order.flatMap((pos) => byType[pos].slice(0, 4).map((x) => ({
+      type: typeOf(pos, word), pos, definition: gloss(x.definition), example: x.example ? sentence(x.example) : "",
+      synonyms: [...new Set(x.synonyms || [])].filter((y) => !/\s.*\s/.test(y)).slice(0, MAX_SIMILAR),
+    })));
     return out;
   }
 
@@ -232,16 +361,42 @@
    */
   async function lookup(word) {
     const [g, d] = await Promise.allSettled([google(word), dictionary(word)]);
-    const gv = g.status === "fulfilled" ? g.value : { senses: [], translation: "" };
+    const gv = g.status === "fulfilled" ? g.value : { senses: [], translation: "", entriesFor: {} };
     const dv = d.status === "fulfilled" ? d.value : {};
-    const senses = gv.senses.slice();
+    let senses = gv.senses.slice();
+    // The part of speech Google translates first is the word's main one
+    // ("take off" → verb: اخلع). When Google has no meanings for it, the
+    // dictionary's go first — with Arabic chosen for each of them.
+    const main = gv.mainPos;
+    if (main && !senses.some((m) => m.pos === main) && dv.senses) {
+      const extra = dv.senses.filter((m) => m.pos === main);
+      extra.forEach((m) => { m.arabic = arabicFor(m, word, gv.entriesFor[main]); });
+      if (extra[0] && !extra[0].arabic) {
+        extra[0].arabic = mainArabic(gv.translation, gv.entriesFor[main]);
+        if (extra[0].arabic) extra[0].unsure = true;
+      }
+      senses = extra.concat(senses);
+    }
+    if (!senses.length && dv.senses) senses = dv.senses.slice();
+    // Google has the Arabic but no definition ("look after": اعتني): take the
+    // dictionary meaning that Arabic belongs to ("to take care of"), not just
+    // its first one ("to follow with the eyes").
+    if (senses[0] && !senses[0].definition && senses[0].arabic && dv.senses) {
+      const own = (gv.entriesFor[senses[0].pos] || []).filter((e) => shares(e.word, senses[0].arabic));
+      const fit = dv.senses.find((m) => (m.pos === senses[0].pos || !senses[0].pos) && arabicFor(m, word, own));
+      if (fit) senses[0] = Object.assign({}, fit, { arabic: senses[0].arabic, example: fit.example || senses[0].example });
+      else senses[0].unsure = true;
+    }
+    try { await translateTerms(senses); } catch (e) { /* offline or blocked: those meanings stay without Arabic */ }
     const first = senses[0] || {};
     const fields = {};
-    fields.definition = first.definition || dv.definition || "";
+    // The definition belongs to the Arabic shown: the dictionary's first one only when nothing else is known.
+    fields.definition = first.definition || (first.arabic && !first.unsure ? "" : dv.definition) || "";
     // An example belongs to its definition: use the dictionary's only with its own definition.
     fields.example = first.definition ? first.example : (dv.example || first.example || "");
     fields.type = first.type || dv.type || "";
-    fields.arabic = first.arabic || gv.translation || "";
+    // A meaning's own Arabic; Google's one-line translation only when there are no meanings at all.
+    fields.arabic = first.arabic || (first.definition ? "" : gv.translation) || "";
     fields.synonyms = first.synonyms || [];
     fields.ipa = dv.ipa || "";
     fields.audio = dv.audio || "";
@@ -253,6 +408,18 @@
     Object.keys(fields).forEach((k) => { if (!fields[k] || (Array.isArray(fields[k]) && !fields[k].length)) delete fields[k]; });
     if (!senses.length && dv.definition) senses.push({ type: dv.type, definition: dv.definition, example: dv.example || "", synonyms: [], arabic: fields.arabic || "" });
     const offline = g.status === "rejected" && d.status === "rejected";
+    // Neither dictionary knows it, and it isn't a common word: probably a typo
+    // ("recieve"). The word gets a "Check the spelling" line with the fix.
+    await VS.frequency.load();
+    const unknown = (word.toLowerCase().match(/[a-z]+/g) || []).some((t) => !VS.spelling.known(t));
+    if (!offline && !gv.found && !dv.found && unknown) {
+      let fix = "";
+      if (!VS.spelling.kept(word)) { try { fix = await VS.spelling.suggest(word); } catch (e) { /* no suggestion */ } }
+      // "Keep it as typed" is remembered with the word, so it is never asked again.
+      fields.check = VS.spelling.kept(word) ? { kind: "ok" } : { kind: "spelling", fix };
+    }
+    // Meanings a learner would translate differently: ask which one they met.
+    else if (ambiguous(senses, gv.entriesFor, word)) fields.check = { kind: "meaning" };
     return { fields, senses, offline, base: gv.base || "" };
   }
 
@@ -294,6 +461,12 @@
     enabled,
     /** Every meaning of a word, most common first (Edit → Other meanings). */
     async senses(word) { return (await lookup(word)).senses; },
+    /** Arabic for one meaning that has none yet (picked in Other meanings): "" if it can't be found. */
+    async arabicOf(sense) {
+      const m = Object.assign({ synonyms: [] }, sense, { arabic: "" });
+      try { await translateTerms([m]); } catch (e) { /* offline */ }
+      return m.arabic;
+    },
     /** Called with (id, oldId) each time a word has been filled; the id changes when a verb form became its base. */
     onFill(fn) { listeners.push(fn); },
     /** Is this word still waiting to be filled? */
@@ -308,6 +481,23 @@
     resume() {
       if (!enabled()) return;
       VS.autofill.fill(VS.allWords().filter((w) => w.auto === "todo").map((w) => w.id));
+    },
+    /**
+     * At start-up: words saved before the spelling check existed. A word with
+     * no definition that isn't a common word is looked at once; a likely typo
+     * gets the "Check the spelling" line, the rest are marked as looked at.
+     */
+    async review() {
+      if (!enabled() || !navigator.onLine) return;
+      await VS.frequency.load();
+      const todo = VS.allWords().filter((w) => !w.check && !w.definition && w.auto !== "todo" &&
+        (w.word.toLowerCase().match(/[a-z]+/g) || []).some((t) => !VS.spelling.known(t))).slice(0, 10);
+      for (const w of todo) {
+        let fix = "";
+        try { fix = await VS.spelling.suggest(w.word); } catch (e) { return; }
+        VS.store.fillUserWord(w.id, { check: fix ? { kind: "spelling", fix } : { kind: "ok" } }, w.auto || "");
+        listeners.forEach((fn) => fn(w.id, w.id));
+      }
     },
   };
 

@@ -124,7 +124,7 @@
     box.innerHTML = String(senses.length
       ? html`<ol class="senses">${senses.slice(0, 8).map((m, i) => html`
           <li><button type="button" class="sense-opt" data-action="word-sense-pick" data-index="${i}" aria-pressed="false">
-            <span class="sense-type">${m.type}${m.arabic && (!i || senses[i - 1].type !== m.type) ? html` · <span lang="ar">${m.arabic}</span>` : ""}</span>
+            <span class="sense-type">${m.type}${m.arabic ? html` · <bdi lang="ar" dir="rtl">${m.arabic}</bdi>` : ""}</span>
             <b>${m.definition || "(no definition)"}</b>
             ${m.example ? html`<i>“${m.example}”</i>` : ""}
           </button></li>`)}</ol>`
@@ -137,10 +137,17 @@
     const btn = body && body.querySelector('[data-action="word-senses"]');
     if (btn) { VS.actions["word-senses"](btn); btn.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
   };
-  VS.actions["word-sense-pick"] = (el) => {
+  VS.actions["word-sense-pick"] = async (el) => {
     const m = senses[Number(el.dataset.index)];
     const form = el.closest("form");
     if (!m || !form) return;
+    // A meaning without Arabic gets its own now — the old Arabic belongs to the old meaning.
+    if (!m.arabic) {
+      el.disabled = true;
+      m.arabic = await VS.autofill.arabicOf(m);
+      el.disabled = false;
+      if (!m.arabic) form.elements.arabic.value = "";
+    }
     const set = (name, value) => { if (form.elements[name] && value) form.elements[name].value = value; };
     // A sense replaces everything it describes: definition, example, type, Arabic, similar words.
     form.elements.example.value = m.example || "";
@@ -151,6 +158,26 @@
     VS.$$(".sense-opt", form).forEach((b) => b.setAttribute("aria-pressed", String(b === el)));
     // One tap is the choice: save it (with any other change made in the form).
     VS.actions["word-save"](form.querySelector('[data-action="word-save"]'));
+  };
+  /* A flagged word (VS.ui.checkLine): fix the spelling, or say it's right. */
+  const reopen = (id) => {
+    const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
+    if (row) row.open = true;
+  };
+  VS.actions["word-respell"] = (el) => {
+    const id = VS.store.respellUserWord(el.dataset.id, el.dataset.fix);
+    if (!id) { VS.toast(`“${el.dataset.fix}” is already in your library.`); return; }
+    VS.toast(`Changed to “${el.dataset.fix}”. Filling in its meaning…`);
+    VS.autofill.fill([id]);
+    VS.app.render();
+    reopen(id);
+  };
+  VS.actions["word-check-ok"] = (el) => {
+    VS.store.clearCheck(el.dataset.id);
+    const box = el.closest(".word-check");
+    if (box) box.remove();
+    const flag = VS.$(`.word-row[data-id="${CSS.escape(el.dataset.id)}"] .word-row-flag`);
+    if (flag) flag.remove();
   };
   VS.actions["word-delete"] = async (el) => {
     const w = VS.byId[el.dataset.id];
@@ -386,6 +413,39 @@
     /** Tags as small chips that open the library filtered by that tag. */
     tags: (w) => w.tags.map((t) => html`<a class="tag" href="#/words?tag=${encodeURIComponent(t)}">#${t}</a>`),
 
+    /** The small tag on a word row that needs a look: "Check spelling" / "2+ meanings". */
+    checkFlag(w) {
+      const k = w.check && w.check.kind;
+      if (k === "spelling") return html`<span class="word-row-flag">Check spelling</span>`;
+      if (k === "meaning") return html`<span class="word-row-flag">Which meaning?</span>`;
+      return "";
+    },
+
+    /**
+     * The line at the top of a flagged word (core/autofill.js sets the flag):
+     * a probable typo with its fix, or a word whose meanings differ in Arabic.
+     * Everything the app teaches is built on this word, so it asks first.
+     */
+    checkLine(w) {
+      const c = w.check;
+      if (!c || (c.kind !== "spelling" && c.kind !== "meaning")) return "";
+      if (c.kind === "spelling") return html`
+        <div class="word-check" role="note">
+          ${c.fix
+            ? html`<span>${icon("bulb", "icon-sm")} No dictionary knows “${w.word}”. Did you mean <b>${c.fix}</b>?</span>
+                   <button class="btn btn-primary" type="button" data-action="word-respell" data-id="${w.id}" data-fix="${c.fix}">Change to “${c.fix}”</button>`
+            : html`<span>${icon("bulb", "icon-sm")} No dictionary knows “${w.word}”. Check the spelling before you learn it.</span>
+                   <button class="btn btn-tonal" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>`}
+          <button class="btn btn-quiet" type="button" data-action="word-check-ok" data-id="${w.id}">It's right</button>
+        </div>`;
+      return html`
+        <div class="word-check" role="note">
+          <span>${icon("book", "icon-sm")} “${w.word}” has more than one meaning. Is this the one you met?</span>
+          <button class="btn btn-tonal" type="button" data-action="word-meanings" data-id="${w.id}">Show the others</button>
+          <button class="btn btn-quiet" type="button" data-action="word-check-ok" data-id="${w.id}">Yes, this one</button>
+        </div>`;
+    },
+
     /** One expandable row in a word list. */
     wordRow(w) {
       const s = VS.store.status(w.id);
@@ -403,8 +463,9 @@
               : html`<span class="word-row-ar hint">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No meaning yet"}</span>`}
             <span class="word-row-meta">
               <span class="word-row-state" data-s="${s}">${state}</span><span class="word-row-sep" aria-hidden="true">·</span>
-              <span>${w.type}${w.level ? " · " + w.level : ""}</span>
-              ${VS.frequency.band(w) ? html`<span class="word-row-freq">${VS.frequency.band(w).label}</span>` : ""}
+              ${w.check && w.check.kind === "spelling" ? "" : html`<span>${w.type}${w.level ? " · " + w.level : ""}</span>`}
+              ${w.check && w.check.kind === "spelling" ? "" : VS.frequency.band(w) ? html`<span class="word-row-freq">${VS.frequency.band(w).label}</span>` : ""}
+              ${VS.ui.checkFlag(w)}
               ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
             </span>
             <span class="word-row-badges">${VS.ui.statusBadge(w)}${VS.ui.levelBadge(w)}</span>
@@ -429,6 +490,7 @@
               </div>
 
               <div class="word-main">
+                ${VS.ui.checkLine(w)}
                 <div class="word-lead">
                   ${w.definition
                     ? html`<p class="word-definition">${w.definition}</p>`
