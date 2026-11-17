@@ -135,7 +135,10 @@ Keyboard: `n` new word · `/` search · `Space` flip / reveal / speak · `1`–`
 Everything lives in your browser (localStorage). The app has no server and
 loads nothing from anyone else — fonts, the PDF maker, the QR libraries and the
 word-frequency list ship with it. These use free online services (no account,
-no key), and each one is optional:
+no key), and each one is optional. Google's endpoint is not an official API:
+when it refuses (too many requests), the app pauses it for a few minutes, fills
+new words from the other dictionaries, says so in Settings, and finishes those
+words when Google answers again:
 
 | Feature | What is sent | Where |
 | --- | --- | --- |

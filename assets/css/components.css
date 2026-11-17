@@ -728,3 +728,8 @@ kbd {
 /* Same rhythm as the basics above it (.sheet-body is a grid with a gap; <details> isn't). */
 .more-settings-body { display: grid; gap: var(--s-5); padding-bottom: var(--s-2); }
 @media (max-width: 640px) { .more-settings-body { gap: var(--s-4); } }
+
+/* A service that isn't answering (Settings → Auto-fill, core/autofill.js VS.google): said plainly, not as an error. */
+.setting-status { display: flex; align-items: flex-start; gap: var(--s-2); margin: 0; padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md); background: var(--mark-soft); color: var(--on-mark); font-size: var(--text-sm); line-height: 1.5; }
+.setting-status .icon { flex: none; margin-top: 3px; }

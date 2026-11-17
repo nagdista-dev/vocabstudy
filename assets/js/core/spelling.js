@@ -31,7 +31,6 @@
   "use strict";
   const { html, icon } = VS;
 
-  const GOOGLE = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dj=1&dt=t&dt=qca&q=";
   const TIMEOUT = 2500;            // a slow answer must not hold up adding a word
   const tokens = (text) => String(text || "").toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) || [];
 
@@ -91,17 +90,9 @@
   }
 
   async function google(text) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
-    try {
-      const res = await fetch(GOOGLE + encodeURIComponent(text), { signal: ctrl.signal });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      const fix = data && data.spell && data.spell.spell_res;
-      return fix ? String(fix).trim() : "";
-    } finally {
-      clearTimeout(timer);
-    }
+    const data = await VS.google.json({ sl: "en", tl: "ar", dt: ["t", "qca"], q: text }, TIMEOUT);
+    const fix = data && data.spell && data.spell.spell_res;
+    return fix ? String(fix).trim() : "";
   }
 
   /** A better spelling for a word or phrase, or "" when it looks right. */
@@ -180,28 +171,19 @@
      «حالياً» is currently, not actually. Only the Arabic text is sent. */
   const ARTICLE = /^(?:a|an|the|to)\s+/i;
   async function english(text) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 6000);
-    try {
-      const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=ar&tl=en&dj=1&dt=t&dt=bd&q=" + encodeURIComponent(text);
-      const res = await fetch(url, { signal: ctrl.signal });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      const out = [];
-      const add = (word, hint) => {
-        const w = String(word || "").replace(/[.!?]+$/, "").trim().replace(ARTICLE, "");
-        if (!w || /[^A-Za-z' -]/.test(w) || w.split(/\s+/).length > 4) return;
-        const lw = w.charAt(0) === w.charAt(0).toUpperCase() && w.slice(1) === w.slice(1).toLowerCase() ? w.toLowerCase() : w;
-        if (!out.some((o) => o.word.toLowerCase() === lw.toLowerCase())) out.push({ word: lw, hint: hint || "" });
-      };
-      add((data.sentences || []).map((x) => x.trans || "").join(""), "");
-      (data.dict || []).forEach((d) => (d.entry || []).forEach((e) => {
-        if ((e.score || 0) >= 0.001) add(e.word, (e.reverse_translation || []).slice(0, 3).join("، "));
-      }));
-      return out.slice(0, 4);
-    } finally {
-      clearTimeout(timer);
-    }
+    const data = await VS.google.json({ sl: "ar", tl: "en", dt: ["t", "bd"], q: text }, 6000);
+    const out = [];
+    const add = (word, hint) => {
+      const w = String(word || "").replace(/[.!?]+$/, "").trim().replace(ARTICLE, "");
+      if (!w || /[^A-Za-z' -]/.test(w) || w.split(/\s+/).length > 4) return;
+      const lw = w.charAt(0) === w.charAt(0).toUpperCase() && w.slice(1) === w.slice(1).toLowerCase() ? w.toLowerCase() : w;
+      if (!out.some((o) => o.word.toLowerCase() === lw.toLowerCase())) out.push({ word: lw, hint: hint || "" });
+    };
+    add((data.sentences || []).map((x) => x.trans || "").join(""), "");
+    (data.dict || []).forEach((d) => (d.entry || []).forEach((e) => {
+      if ((e.score || 0) >= 0.001) add(e.word, (e.reverse_translation || []).slice(0, 3).join("، "));
+    }));
+    return out.slice(0, 4);
   }
 
   /**
@@ -217,8 +199,14 @@
     }
     if (checking === ar) return null;
     checking = ar;
-    let list = [];
-    try { list = await english(ar); } catch (e) { list = []; } finally { checking = ""; }
+    let list = [], failed = false;
+    try { list = await english(ar); } catch (e) { failed = true; } finally { checking = ""; }
+    if (failed) {
+      VS.toast(VS.google.status() === "paused"
+        ? "The translation service is busy. Try again in a few minutes — or type the word in English."
+        : "Couldn't reach the translation service. Try again — or type the word in English.");
+      return null;
+    }
     if (!list.length) { VS.toast("No English word found for that. Try another Arabic word — or type it in English."); return null; }
     if (!anchor || !anchor.isConnected) return null;
     return new Promise((resolve) => {

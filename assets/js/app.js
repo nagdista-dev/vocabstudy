@@ -347,6 +347,9 @@
     if (e.target.classList && e.target.classList.contains("more-settings")) moreSettingsOpen = e.target.open;
   }, true);
 
+  // Google paused or back (core/autofill.js): an open settings sheet says so at once.
+  VS.google.onStatus(() => { const dlg = VS.$("#settings"); if (dlg && dlg.open) redrawSettings(); });
+
   function settingsMarkup() {
     const st = VS.store.settings();
     const choice = (name, value, label) =>
@@ -355,6 +358,9 @@
       <div class="sheet-head"><h2 id="settingsTitle">Settings</h2>
         <button class="icon-btn" type="button" data-action="close-settings" aria-label="Close">${icon("x")}</button></div>
       <div class="sheet-body">
+        ${st.autofill !== false && VS.google.status() === "paused" ? html`<p class="setting-status" role="status">${icon("clock", "icon-sm")}
+          <span>Google Translate isn't answering right now. New words get what the other dictionaries have, and are
+          finished when it's back — in about ${Math.max(1, Math.round((VS.google.pausedUntil() - Date.now()) / 60000))} min.</span></p>` : ""}
         <h3 class="sheet-group">Basics</h3>
         <div class="setting"><b>Accent</b><div class="seg">${choice("voice", "us", "American")}${choice("voice", "uk", "British")}</div></div>
         <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>

@@ -456,7 +456,7 @@
      * fields are filled — what you typed is never replaced. `auto` "todo"
      * keeps the word marked for another try (it was added offline).
      */
-    fillUserWord(id, fields, auto) {
+    fillUserWord(id, fields, auto, opts) {
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
       const w = VS.byId[id];
       if (!raw || !w) return;
@@ -477,6 +477,11 @@
       if (fields.word && VS.wordKey(fields.word) === VS.wordKey(raw.word) && fields.word !== raw.word) {
         raw.word = fields.word; w.word = fields.word;
       }
+      // A word filled while Google was down is "partial"; it is tried again
+      // (VS.autofill.resume) up to three times, then left as it is.
+      if (opts && opts.partial) { raw.partial = w.partial = true; raw.tries = w.tries = (raw.tries || 0) + 1; }
+      else if (!auto) { delete raw.partial; delete w.partial; delete raw.tries; delete w.tries; }
+      if (raw.tries > 3) auto = "";
       if (auto) raw.auto = w.auto = auto;
       else { delete raw.auto; delete w.auto; }
       save();
@@ -503,20 +508,29 @@
     respellUserWord(id, word) {
       const newId = this.renameUserWord(id, word);
       if (!newId) return "";
+      this.clearAutoFields(newId);
       const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === newId);
       const w = VS.byId[newId];
-      (raw.filled || []).forEach((k) => {
-        delete raw[k];
-        if (w) w[k] = Array.isArray(w[k]) ? [] : "";
-      });
-      if (w && !w.type) w.type = /\s/.test(w.word) ? "Phrase" : "Noun";
-      delete raw.filled;
       delete raw.check;
       if (w) delete w.check;
       raw.auto = "todo";
       if (w) w.auto = "todo";
       save();
       return newId;
+    },
+
+    /** Forget what auto-fill wrote for a word (what the learner typed stays), so it can be filled afresh. */
+    clearAutoFields(id) {
+      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const w = VS.byId[id];
+      if (!raw) return;
+      (raw.filled || []).forEach((k) => {
+        delete raw[k];
+        if (w) w[k] = Array.isArray(w[k]) ? [] : "";
+      });
+      if (w && !w.type) w.type = /\s/.test(w.word) ? "Phrase" : "Noun";
+      delete raw.filled;
+      save();
     },
 
     /** A sentence the learner wrote with a word ("Use it"): newest first, the last five kept. */
@@ -595,7 +609,7 @@
   function plain(w) {
     const out = {};
     ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "context", "source",
-     "mine", "unsure", "audio", "goes", "tags", "added", "auto"].forEach((k) => {
+     "mine", "unsure", "audio", "goes", "tags", "added", "auto", "partial", "tries"].forEach((k) => {
       if (w.given && (k === "type" || k === "level") && !w.given[k]) return;     // a display default, not your choice
       if (w[k] !== undefined && w[k] !== "" && !(Array.isArray(w[k]) && !w[k].length)) out[k] = w[k];
     });

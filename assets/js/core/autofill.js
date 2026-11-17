@@ -52,6 +52,67 @@
     return res.json();
   }
 
+  /* ── Google Translate, shared and careful ──────────────────────
+     Auto-fill, the spelling check, Arabic → English and From text all use
+     Google's free web endpoint. It is not an official API: it can answer
+     429 ("too many requests") or stop answering. Every call goes through
+     here so the app reacts once, in one way:
+       • a refusal (429, 403, 5xx) or a dead connection while online pauses
+         Google for 10 minutes, then 30 — no hammering a closed door
+       • while paused, calls fail at once: callers fall back (the spelling
+         check to its word list, auto-fill to dictionaryapi.dev + MyMemory,
+         and the word is filled again later — VS.autofill.resume)
+       • VS.google.status() → "ok" | "paused" | "offline", for Settings
+     ------------------------------------------------------------------ */
+  const GOOGLE_URL = "https://translate.googleapis.com/translate_a/single?client=gtx&dj=1";
+  const PAUSES = [10, 30];                 // minutes, then 30 for every refusal after
+  let pausedUntil = 0, refusals = 0;
+  const statusListeners = [];
+  const tellStatus = () => statusListeners.forEach((fn) => { try { fn(VS.google.status()); } catch (e) { /* a view went away */ } });
+
+  VS.google = {
+    status: () => (!navigator.onLine ? "offline" : Date.now() < pausedUntil ? "paused" : "ok"),
+    /** When Google will be tried again (ms since epoch), or 0. */
+    pausedUntil: () => (Date.now() < pausedUntil ? pausedUntil : 0),
+    onStatus(fn) { statusListeners.push(fn); },
+    /**
+     * One request: { sl, tl, dt: [...], q } → the JSON. Throws when paused,
+     * offline, slow (timeout ms) or refused.
+     */
+    async json({ sl, tl, dt, q }, timeout) {
+      if (!navigator.onLine) throw new Error("offline");
+      if (Date.now() < pausedUntil) throw new Error("paused");
+      const url = GOOGLE_URL + "&sl=" + sl + "&tl=" + tl + dt.map((d) => "&dt=" + d).join("") + "&q=" + encodeURIComponent(q);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeout || 8000);
+      let res;
+      try {
+        res = await fetch(url, { signal: ctrl.signal });
+      } catch (e) {
+        clearTimeout(timer);
+        // Aborted on our own timer: slow, not refused. A failed fetch while online: treated as refused.
+        if (e.name !== "AbortError" && navigator.onLine) refuse();
+        throw e;
+      }
+      clearTimeout(timer);
+      if (res.status === 429 || res.status === 403 || res.status >= 500) { refuse(); throw new Error("HTTP " + res.status); }
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      if (refusals) { refusals = 0; tellStatus(); }
+      return res.json();
+    },
+  };
+  function refuse() {
+    const wait = PAUSES[Math.min(refusals, PAUSES.length - 1)] * 60000;
+    pausedUntil = Date.now() + wait;
+    refusals++;
+    tellStatus();
+    // When the pause ends: say so, and finish the words that waited.
+    clearTimeout(refuse.timer);
+    refuse.timer = setTimeout(() => { tellStatus(); if (VS.autofill) VS.autofill.resume(); }, wait + 1000);
+  }
+  window.addEventListener("online", tellStatus);
+  window.addEventListener("offline", tellStatus);
+
   /* ── Small text helpers ──────────────────────────────────────── */
 
   /** "<b>eventually</b>, after midnight, I arrived" → "Eventually, after midnight, I arrived." */
@@ -177,10 +238,8 @@
    * plus `translation`, its one-line Arabic translation of the word.
    */
   async function google(word) {
-    const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dj=1" +
-      "&dt=t&dt=bd&dt=md&dt=ex&dt=ss&q=" + encodeURIComponent(word);
-    const data = await getJSON(url);
-    if (!data || data.missing) return { senses: [], translation: "" };
+    const data = await VS.google.json({ sl: "en", tl: "ar", dt: ["t", "bd", "md", "ex", "ss"], q: word });
+    if (!data) return { senses: [], translation: "" };
     const translation = (data.sentences || []).map((s) => s.trans || "").join("").trim();
     const entriesFor = {};
     (data.dict || []).forEach((d) => { entriesFor[d.pos] = d.entry || (d.terms || []).map((t) => ({ word: t })); });
@@ -258,9 +317,7 @@
       const one = (m.synonyms || []).find((x) => !/\s/.test(x)) || (m.synonyms || [])[0];
       return (one || m.definition.replace(/\([^)]*\)/g, "").trim().split(/[;:]/)[0]).replace(/[.\n]+/g, " ").trim();
     };
-    const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dj=1&dt=t&q=" +
-      encodeURIComponent(todo.map(term).join("\n"));
-    const data = await getJSON(url);
+    const data = await VS.google.json({ sl: "en", tl: "ar", dt: ["t"], q: todo.map(term).join("\n") });
     const lines = ((data && data.sentences) || []).map((x) => x.trans || "").join("").split("\n");
     todo.forEach((m, i) => {
       let ar = lines[i] || "";
@@ -415,11 +472,15 @@
     Object.keys(fields).forEach((k) => { if (!fields[k] || (Array.isArray(fields[k]) && !fields[k].length)) delete fields[k]; });
     if (!senses.length && dv.definition) senses.push({ type: dv.type, definition: dv.definition, example: dv.example || "", synonyms: [], arabic: fields.arabic || "" });
     const offline = g.status === "rejected" && d.status === "rejected";
+    // Google didn't answer but the dictionary did: the word gets what there is
+    // now, and is filled again properly when Google is back (work → partial).
+    const googleDown = g.status === "rejected" && !offline;
     // Neither dictionary knows it, and it isn't a common word: probably a typo
     // ("recieve"). The word gets a "Check the spelling" line with the fix.
     await VS.frequency.load();
     const unknown = (word.toLowerCase().match(/[a-z]+/g) || []).some((t) => !VS.spelling.known(t));
-    if (!offline && !gv.found && !dv.found && unknown) {
+    // Only when both dictionaries answered: a silent Google is not "no dictionary knows it".
+    if (!offline && !googleDown && !gv.found && !dv.found && unknown) {
       let fix = "";
       if (!VS.spelling.kept(word)) { try { fix = await VS.spelling.suggest(word); } catch (e) { /* no suggestion */ } }
       // "Keep it as typed" is remembered with the word, so it is never asked again.
@@ -427,10 +488,11 @@
     }
     // Meanings a learner would translate differently: ask which one they met.
     else if (ambiguous(senses, gv.entriesFor, word)) fields.check = { kind: "meaning" };
-    return { fields, senses, offline, base: gv.base || "" };
+    return { fields, senses, offline, googleDown, base: gv.base || "" };
   }
 
   const enabled = () => VS.store.settings().autofill !== false;
+  let toldBusy = false;                    // "the meaning service is busy": once a visit
   const queue = [];
   let running = 0;
   const listeners = [];
@@ -443,6 +505,9 @@
       running++;
       let now = id;
       try {
+        // Filled while Google was down, and not studied yet: start again from
+        // scratch, so the Arabic and the definition come from one meaning.
+        if (w.partial && VS.store.status(id) === "new") VS.store.clearAutoFields(id);
         let found = await lookup(w.word);
         // An inflected verb ("postponed", "went") becomes its base form, unless
         // that word is already in the library. The sentence it came with stays.
@@ -450,9 +515,15 @@
           const moved = VS.store.renameUserWord(id, found.base);
           if (moved) { now = moved; found = await lookup(found.base); }
         }
-        const { fields, offline } = found;
+        const { fields, offline, googleDown } = found;
         // Offline: keep it marked, and try again next time the app is online.
-        VS.store.fillUserWord(now, fields, offline && !Object.keys(fields).length ? "todo" : "");
+        // Google down: keep what the other dictionaries gave, marked to finish later.
+        VS.store.fillUserWord(now, fields, (offline && !Object.keys(fields).length) || googleDown ? "todo" : "",
+          { partial: googleDown });
+        if (googleDown && !toldBusy) {
+          toldBusy = true;
+          VS.toast("Saved. The meaning service is busy — the details will be finished in a few minutes.");
+        }
       } catch (e) {
         VS.store.fillUserWord(now, {}, "todo");
       } finally {

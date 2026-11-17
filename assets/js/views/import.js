@@ -259,9 +259,7 @@
     if (!todo.length) return;
     todo.forEach((w) => { gloss[w] = ""; });
     try {
-      const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dj=1&dt=t&q=" + encodeURIComponent(todo.join("\n"));
-      const res = await fetch(url);
-      const data = res.ok ? await res.json() : {};
+      const data = await VS.google.json({ sl: "en", tl: "ar", dt: ["t"], q: todo.join("\n") });
       const lines = (data.sentences || []).map((x) => x.trans || "").join("").split("\n");
       todo.forEach((w, i) => { gloss[w] = String(lines[i] || "").replace(/[.。]+$/, "").trim(); });
     } catch (e) { todo.forEach((w) => delete gloss[w]); return; }
