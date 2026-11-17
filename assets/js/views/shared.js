@@ -103,11 +103,11 @@
   };
 
   VS.actions["sentence-remove"] = (el) => {
-    VS.store.removeSentence(el.dataset.id, Number(el.dataset.index));
-    const row = el.closest(".word-row");
-    const w = VS.byId[el.dataset.id];
-    if (row && w) { row.outerHTML = String(VS.ui.wordRow(w)); const again = VS.$(`.word-row[data-id="${CSS.escape(w.id)}"]`); if (again) again.open = true; }
-    VS.toast("Sentence removed.");
+    const id = el.dataset.id;
+    const snap = VS.store.snapshot([id]);
+    VS.store.removeSentence(id, Number(el.dataset.index));
+    refreshWord(id);
+    VS.toast("Sentence removed.", { label: "Undo", run: () => { VS.store.restore(snap); refreshWord(id); } });
   };
 
   /* Other meanings: a word has many senses, and the dictionary's first one may
@@ -258,12 +258,26 @@
     if (!w) return;
     const yes = await VS.confirm({
       title: `Delete “${w.word}”?`,
-      body: "Its progress and note go too. This can't be undone.",
+      body: "Its progress, note and your sentences go too.",
       confirmLabel: "Delete",
     });
     if (!yes) return;
+    // No reload: the list redraws, and Undo puts the word back where it was (V1.1).
+    const snap = VS.store.snapshot([w.id]);
     VS.store.deleteUserWords([w.id]);
-    location.reload();
+    VS.app.render();
+    VS.toast(`“${w.word}” deleted.`, { label: "Undo", run: () => { VS.store.restore(snap); VS.app.render(); refreshWord(w.id); } });
+  };
+  /* "Reset to new" on one word: its schedule starts again; Undo gives it back. ("Start over" is
+     only the whole app's, #/reset.) */
+  VS.actions["forget"] = (el) => {
+    const id = el.dataset.id;
+    const w = VS.byId[id];
+    if (!w) return;
+    const snap = VS.store.snapshot([id]);
+    VS.store.forget(id);
+    refreshWord(id);
+    VS.toast(`“${w.word}” reset to new.`, { label: "Undo", run: () => { VS.store.restore(snap); refreshWord(id); } });
   };
 
   /* Arabic keyboard left on: the most common "mistake" that isn't one. */
@@ -643,7 +657,7 @@
                       <span class="word-score">${e.right} right · ${e.wrong} wrong</span>`}
                 </div>
                 <div class="word-manage">
-                  ${s === "new" ? "" : html`<button class="word-manage-btn" type="button" data-action="forget" data-id="${w.id}">Start over</button>`}
+                  ${s === "new" ? "" : html`<button class="word-manage-btn" type="button" data-action="forget" data-id="${w.id}">Reset to new</button>`}
                   <button class="word-manage-btn" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>
                   <button class="word-manage-btn danger" type="button" data-action="word-delete" data-id="${w.id}">Delete</button>
                 </div>
@@ -740,7 +754,7 @@
           ${reached ? html`
             <div class="milestone-hit">
               ${icon("trophy", "icon-lg")}
-              <p><b>${reached === 1 ? "Your first word mastered." : reached.toLocaleString("en-GB") + " words mastered."}</b>
+              <p><b>${reached === 1 ? (VS.milestones.firstWord() ? VS.milestones.firstWord() + " is yours now." : "Your first word mastered.") : reached.toLocaleString("en-GB") + " words mastered."}</b>
                 <span>${reached === 1 ? "You remembered it after two weeks or more — it's yours now."
                   : reached.toLocaleString("en-GB") + " words you remembered after two weeks or more — they're yours now."}</span></p>
             </div>` : ""}

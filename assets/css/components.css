@@ -415,6 +415,11 @@
   max-width: calc(100vw - 32px);
 }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+.toast.has-action { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); pointer-events: auto;
+  width: min(440px, calc(100vw - 32px)); padding-block: var(--s-1); padding-inline-end: var(--s-1); }
+.toast-action { min-height: var(--tap); padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent;
+  color: var(--mark); font: inherit; font-weight: 700; cursor: pointer; }
+.toast-action:hover { background: rgb(255 255 255 / .08); }
 @media (max-width: 640px) { .toast { bottom: calc(72px + env(safe-area-inset-bottom)); } }
 
 .sheet {
@@ -754,3 +759,4 @@ kbd {
 .meaning-ask-q { margin: 0; font-weight: 600; color: var(--ink); }
 .meaning-ask-actions { gap: var(--s-2); }
 .meaning-ask-actions .btn { min-height: var(--tap); }
+.ar-pick-have { color: var(--good); font-size: var(--text-xs); font-weight: 600; }

@@ -101,6 +101,9 @@
     ? Math.round((right / answered) * 100) + "%"
     : VS.html`<span class="muted-num" title="Shown after ${ACCURACY_FROM} answers">after ${ACCURACY_FROM}</span>`;
 
+  // Words already mastered when the app opened: only milestones past this are celebrated.
+  const startMastered = VS.store.totals().mastered;
+
   VS.milestones = {
     LIST: MILESTONES,
 
@@ -112,14 +115,26 @@
       return { at: nextAt, left: nextAt - m, pct: Math.round(((m - prev) / (nextAt - prev)) * 100), mastered: m };
     },
 
-    /** A milestone reached and not yet celebrated → its number (marked as celebrated). */
+    /**
+     * A milestone crossed in THIS visit and not yet celebrated → its number
+     * (marked as celebrated). Milestones already behind the learner when the
+     * app opened — a restore, an older version, a seeded library — are
+     * marked quietly: "Your first word mastered" never greets someone with 3.
+     */
     claim() {
       const m = VS.store.totals().mastered;
-      const reached = MILESTONES.filter((x) => x <= m);
+      const before = MILESTONES.filter((x) => x <= startMastered).pop() || 0;
+      if (before > VS.store.milestoneSeen()) VS.store.setMilestoneSeen(before);
+      const reached = MILESTONES.filter((x) => x <= m && x > startMastered);
       const top = reached[reached.length - 1];
       if (!top || VS.store.milestoneSeen() >= top) return 0;
       VS.store.setMilestoneSeen(top);
       return top;
+    },
+    /** The word mastered, when there is exactly one ("postpone is yours now"). */
+    firstWord() {
+      const w = VS.allWords().filter((x) => VS.store.status(x.id) === "mastered");
+      return w.length === 1 ? w[0].word : "";
     },
   };
 })();

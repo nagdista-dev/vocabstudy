@@ -599,6 +599,36 @@
       save();
     },
 
+    /**
+     * Undo for everything that removes or resets (V1.1). `snapshot(ids)` keeps
+     * each word as it is now — its library entry, its place in the list, its
+     * progress and note; `restore(snap)` puts back exactly that: a deleted
+     * word returns where it was, a reset word gets its schedule back, a
+     * removed sentence comes back.
+     */
+    snapshot(ids) {
+      return ids.map((id) => {
+        const i = state.library.findIndex((x) => VS.wordKey(x.word, x.sense) === id);
+        return { id, i, raw: i >= 0 ? JSON.parse(JSON.stringify(state.library[i])) : null,
+                 prog: state.words[id] ? state.words[id].slice() : null, note: state.notes[id] };
+      }).filter((x) => x.raw);
+    },
+    restore(snap) {
+      snap.slice().sort((a, b) => a.i - b.i).forEach(({ id, i, raw, prog, note }) => {
+        const at = state.library.findIndex((x) => VS.wordKey(x.word, x.sense) === id);
+        if (at >= 0) {
+          state.library[at] = raw;
+          if (VS.byId[id]) { VS.byId[id].mine = (raw.mine || []).slice(); VS.byId[id].unsure = (raw.unsure || []).slice(); }
+        } else {
+          state.library.splice(Math.min(i, state.library.length), 0, raw);
+          VS.addWords([raw]);
+        }
+        if (prog) state.words[id] = prog.slice(); else delete state.words[id];
+        if (note) state.notes[id] = note; else delete state.notes[id];
+      });
+      save();
+    },
+
     /** Delete words from the library, with their progress and notes. */
     deleteUserWords(ids) {
       const gone = new Set(ids.filter((id) => VS.byId[id]));

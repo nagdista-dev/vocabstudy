@@ -532,27 +532,38 @@
         const ids = words().filter((w) => VS.store.status(w.id) !== "new").map((w) => w.id);
         if (!ids.length) return;
         const yes = await VS.confirm({
-          title: `Start ${VS.plural(ids.length, "word")} over?`,
-          body: "Their recall schedule goes back to new. Notes are kept.",
-          confirmLabel: "Start over",
+          title: `Reset progress for ${VS.plural(ids.length, "word")}?`,
+          body: "Their recall schedule goes back to new. Notes and sentences are kept.",
+          confirmLabel: "Reset progress",
         });
         if (!yes) return;
+        const snap = VS.store.snapshot(ids);
         VS.store.resetWords(ids);
-        VS.toast("Progress reset for " + VS.plural(ids.length, "word") + ".");
         VS.app.render();
+        VS.toast("Progress reset for " + VS.plural(ids.length, "word") + ".", { label: "Undo", run: () => { VS.store.restore(snap); VS.app.render(); } });
       },
       "lib-delete": async () => {
         const ids = words().map((w) => w.id);
         if (!ids.length) return;
+        // The whole library, or a big part of it, goes only after a backup file —
+        // the same gate as Start over (#/reset). Small deletes keep one confirm + Undo.
+        const big = ids.length === VS.allWords().length || ids.length > 20;
         const yes = await VS.confirm({
           title: `Delete ${VS.plural(ids.length, "word")}?`,
-          body: "Their progress and notes go too. This can't be undone.",
-          confirmLabel: "Delete",
+          body: big
+            ? "Their progress, notes and sentences go too. A backup file is saved first, so you can bring them back."
+            : "Their progress, notes and sentences go too.",
+          confirmLabel: big ? "Save a backup and delete" : "Delete",
         });
         if (!yes) return;
+        if (big) {
+          try { await VS.backup.save(); }
+          catch (err) { if (!(err && err.name === "AbortError")) VS.toast(VS.backup.errorText(err)); return; }
+        }
+        const snap = VS.store.snapshot(ids);
         VS.store.deleteUserWords(ids);
-        VS.toast(VS.plural(ids.length, "word") + " deleted.");
         VS.app.render();
+        VS.toast(VS.plural(ids.length, "word") + " deleted.", { label: "Undo", run: () => { VS.store.restore(snap); VS.app.render(); } });
       },
     },
 

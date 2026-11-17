@@ -113,3 +113,6 @@
 .transfer-done > span { display: grid; }
 .transfer-ready .btn-block { max-width: 360px; }
 .transfer-error { display: grid; gap: var(--s-3); }
+
+/* "Never backed up" is the one line on this screen that asks for action (views/data.js). */
+.never-backed { color: var(--ink); font-weight: 700; }

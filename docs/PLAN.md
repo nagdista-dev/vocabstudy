@@ -934,18 +934,34 @@ Memrise/Quizlet: محتوى منظّف ومراجَع. إحنا أقوى منه�
 - **أول تشغيل صادق:** resilient في الجدول = صامد - مرن بنفس التعريف والمثال اللي في كارت أول تشغيل.
 
 ### V1 — الأمان والتحكم (P1)
-- [ ] **V1.1 Undo لكل حذف:** حذف كلمة/كلمات/جملة/reset كلمة → toast فيه "Undo" لمدة 10 ثواني (soft-delete في
+- [x] **V1.1 Undo لكل حذف:** حذف كلمة/كلمات/جملة/reset كلمة → toast فيه "Undo" لمدة 10 ثواني (soft-delete في
       `core/store.js`). **ممنوع** `location.reload()` بعد الحذف (re-render والـ focus يروح لمكان منطقي).
-- [ ] **V1.2 أسماء الأفعال الخطيرة:** "Start over" تبقى لـ `#/reset` بس. الكلمة: "Reset to new" + Undo. الـ bulk:
+- [x] **V1.2 أسماء الأفعال الخطيرة:** "Start over" تبقى لـ `#/reset` بس. الكلمة: "Reset to new" + Undo. الـ bulk:
       عنوان "Reset progress for 20 words?" وزرار "Reset progress".
-- [ ] **V1.3 بوابة الحذف الكبير:** لو الحذف = المكتبة كلها أو > 20 كلمة → نفس بوابة الـ backup بتاعة `#/reset`.
-- [ ] **V1.4 Backup:** "Replace everything" شكل danger وتحتها "Replace erases what's on this device"؛ "JSON" →
+- [x] **V1.3 بوابة الحذف الكبير:** لو الحذف = المكتبة كلها أو > 20 كلمة → نفس بوابة الـ backup بتاعة `#/reset`.
+- [x] **V1.4 Backup:** "Replace everything" شكل danger وتحتها "Replace erases what's on this device"؛ "JSON" →
       "Backup file"؛ "Never backed up" أوضح.
-- [ ] **V1.5 milestones (bug من P2):** الاحتفال بس باللي اتعدّى **في الجلسة دي** (احفظ عدد الـ mastered عند البداية)،
+- [x] **V1.5 milestones (bug من P2):** الاحتفال بس باللي اتعدّى **في الجلسة دي** (احفظ عدد الـ mastered عند البداية)،
       وسمّي الكلمة ("postpone is yours now"). متعلم قديم أو restore → backfill بصمت.
-- [ ] **V1.6 الاقتراح الإملائي يشوف المكتبة:** "recieve" وreceive موجودة → "receive is already in your library. Open it".
+- [x] **V1.6 الاقتراح الإملائي يشوف المكتبة:** "recieve" وreceive موجودة → "receive is already in your library. Open it".
       والبحث بالعربي يعلّم "in your library" على الاختيار الموجود.
-- [ ] **V1.7 تأكيد الحذف:** "Its progress, note and your sentences go too."
+- [x] **V1.7 تأكيد الحذف:** "Its progress, note and your sentences go too."
+
+#### اللي اتعمل في V1 (والمقاسات)
+- **Undo لكل حاجة بتمسح:** `VS.store.snapshot(ids)` / `restore(snap)` (الكلمة بمكانها في القايمة وتقدمها
+  وملاحظتها وجملها)، و`VS.toast(msg, { label: "Undo", run })` — زرار أصفر، 10 ثواني، عرض ثابت. على: Delete
+  (من غير `location.reload()`)، Reset to new، حذف جملة، Reset progress والحذف الجماعي. **اتجرّب:** borrow
+  (خطوة 2، 3 صح/1 غلط، جملة) — اتمسحت ورجعت بنفس التقدم والجملة ومتسجلة في التخزين.
+- **الأسماء:** "Start over" بقت لـ `#/reset` بس؛ الكلمة "Reset to new"؛ الجماعي "Reset progress for N words?".
+- **بوابة الحذف الكبير:** المكتبة كلها أو > 20 كلمة → "Save a backup and delete" (`VS.backup.save()` الأول؛ لو
+  اتلغى مفيش حذف).
+- **Backup:** Replace بشكل danger وجملة "erases what's on this device"؛ "JSON" → أيقونة؛ "Never backed up" بالخط
+  الغامق.
+- **Milestones:** بتحتفل باللي اتعدّى في الزيارة دي بس (`startMastered`)؛ اللي ورا المتعلم بيتعلّم بصمت؛ أول كلمة
+  بتتسمّى ("postpone is yours now"). **اتجرّب:** متعلم عنده 3 mastered ← `claim()` = 0.
+- **الإملاء والمكتبة:** "recieve" وreceive موجودة ← "It's already in your library. Open “receive”"؛ البحث بالعربي
+  بيعلّم "In your library" وبيفتحها.
+- **تأكيد الحذف:** "Its progress, note and your sentences go too."
 
 ### V2 — الوضوح والتدفق (P1)
 - [ ] **V2.1 أول 5 كلمات = خطوة واحدة:** تحت 5 كلمات: من غير status chips/filters/Practise/…، من غير goal لحد

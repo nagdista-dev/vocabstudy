@@ -446,7 +446,6 @@
   Object.assign(GLOBAL, {
     speak(el) { VS.speech.say(el.dataset.say, el); },
     reload() { location.reload(); },
-    forget(el) { VS.store.forget(el.dataset.id); VS.toast("Word reset to new."); render(); },
     "open-settings"() {
       const dlg = VS.$("#settings");
       dlg.innerHTML = String(settingsMarkup());

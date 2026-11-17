@@ -195,13 +195,31 @@
   };
 
   let toastTimer;
-  VS.toast = function (message) {
+  /**
+   * A short message at the bottom. With `action` ({ label, run }) it carries one
+   * button — "Undo" after anything that removes or resets — and stays 10 seconds
+   * so a thumb can reach it; the button works once.
+   */
+  VS.toast = function (message, action) {
     const el = VS.$("#toast");
     if (!el) return;
     el.textContent = message;
+    el.classList.toggle("has-action", !!action);
+    if (action) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "toast-action";
+      b.textContent = action.label || "Undo";
+      b.addEventListener("click", () => {
+        el.classList.remove("is-on");
+        clearTimeout(toastTimer);
+        action.run();
+      }, { once: true });
+      el.append(" ", b);
+    }
     el.classList.add("is-on");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove("is-on"), 2200);
+    toastTimer = setTimeout(() => el.classList.remove("is-on"), action ? 10000 : 2200);
   };
 
   /* ── Asking before something is lost ────────────────────────────

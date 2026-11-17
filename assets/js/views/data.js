@@ -48,7 +48,7 @@
 
   function lastBackupText() {
     const last = VS.store.lastBackup();
-    if (!last) return "Never backed up on this device.";
+    if (!last) return html`<b class="never-backed">Never backed up on this device.</b>`;
     const days = Math.round((new Date(VS.todayKey()) - new Date(last)) / 864e5);
     return "Last backup: " + (days === 0 ? "today" : days === 1 ? "yesterday" : days + " days ago") + ".";
   }
@@ -69,7 +69,7 @@
 
           <section class="card file-card" aria-labelledby="backup-title">
             <div class="file-head">
-              <span class="file-type" aria-hidden="true">JSON</span>
+              <span class="file-type" aria-hidden="true">${icon("download", "icon-sm")}</span>
               <div class="file-copy">
                 <h2 id="backup-title">Full backup</h2>
                 <p class="file-name">${VS.backup.fileName()}</p>
@@ -91,11 +91,11 @@
             <div class="data-row">
               <div class="data-row-head">
                 <h2>Restore a backup</h2>
-                <p><b>Merge</b> keeps the stronger memory of each word from both; <b>Replace</b> makes this device exactly like the file.</p>
+                <p><b>Merge</b> keeps the stronger memory of each word from both. <b>Replace</b> erases what's on this device and puts the file's words in their place.</p>
               </div>
               <div class="row data-actions">
                 <label class="btn">Merge with this device<input type="file" accept=".json,application/json" data-restore="merge" hidden></label>
-                <label class="btn">Replace everything<input type="file" accept=".json,application/json" data-restore="replace" hidden></label>
+                <label class="btn btn-danger-quiet">Replace everything<input type="file" accept=".json,application/json" data-restore="replace" hidden></label>
               </div>
             </div>
 
