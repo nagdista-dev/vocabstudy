@@ -1,0 +1,11 @@
+{
+  "name": "vocabstudy-mcp",
+  "version": "1.0.0",
+  "description": "Lets Claude, opencode or another AI app on this computer add and edit words in VocabStudy. Local only: no server, no account.",
+  "license": "MIT",
+  "author": "Nagdista (https://nagdista.com)",
+  "bin": { "vocabstudy-mcp": "server.js" },
+  "files": ["server.js", "README.md"],
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node test.js" }
+}

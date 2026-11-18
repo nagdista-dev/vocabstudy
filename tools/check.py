@@ -83,6 +83,20 @@ def check_traps(errors: list[str]) -> None:
         errors.extend(line.strip() for line in run.stdout.splitlines() if "FAIL" in line)
 
 
+def check_mcp(errors: list[str]) -> None:
+    """The AI messenger (mcp/server.js) speaks MCP, offers no delete, and refuses other websites."""
+    node = shutil.which("node")
+    if not node:
+        return
+    try:
+        run = subprocess.run([node, str(ROOT / "mcp" / "test.js")], capture_output=True, text=True, timeout=40)
+    except subprocess.TimeoutExpired:
+        errors.append("mcp/test.js: timed out")
+        return
+    if run.returncode:
+        errors.extend("mcp: " + line.strip() for line in run.stdout.splitlines() if "FAIL" in line)
+
+
 def check_old_safari(errors: list[str]) -> None:
     """No regex lookbehind in the app's JS: Safari before 16.4 can't parse it and the whole file stops working."""
     for f in sorted((ROOT / "assets" / "js").rglob("*.js")):
@@ -120,6 +134,7 @@ def main(argv: list[str]) -> int:
     check_pages(errors)
     check_styles(errors)
     check_traps(errors)
+    check_mcp(errors)
     check_overrides(errors)
     check_old_safari(errors)
     for e in errors:

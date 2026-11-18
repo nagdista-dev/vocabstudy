@@ -353,7 +353,19 @@
     document.documentElement.style.setProperty("--text-scale", st.textScale);
     document.documentElement.dataset.accent = st.accent || "blue";
     applyTheme();
+    if (VS.aiBridge) VS.aiBridge.sync();
   }
+
+  /* AI assistant (core/ai-bridge.js): its live status, in words. */
+  const AI_STATUS = {
+    off: "",
+    waiting: "Waiting for the helper on this computer — start Claude, opencode or Cursor with VocabStudy connected.",
+    connected: "Connected. Your AI app can add and edit words here; each change shows with Undo.",
+  };
+  if (VS.aiBridge) VS.aiBridge.onStatus((s) => {
+    const el = document.querySelector("[data-ai-status]");
+    if (el) { el.textContent = AI_STATUS[s]; el.dataset.state = s; }
+  });
 
   const QUIZ_TYPES = [["meaning", "Definition → word"], ["arabic", "Arabic → English"], ["english", "English → Arabic"],
                       ["gap", "Fill the gap"], ["listen", "Listening"]];
@@ -398,6 +410,9 @@
           <div class="row"><a class="btn" href="#/data" data-action="close-settings">Backup &amp; export</a>
           <a class="btn" href="#/transfer" data-action="close-settings">${icon("qr", "icon-sm")} Move to another device</a></div>
         </div>
+        <div class="setting"><b>AI assistant</b><div class="seg">${choice("aiBridge", true, "On")}${choice("aiBridge", false, "Off")}</div>
+          <span class="hint">Let Claude, opencode or Cursor on this computer add and edit your words. Your words stay on this device: the app talks only to a small helper on this computer — no server, no account. Computer only (Chrome or Edge). <a href="https://github.com/nagdista-dev/vocabstudy/blob/main/mcp/README.md" target="_blank" rel="noopener">How to set it up</a></span>
+          ${st.aiBridge === true ? html`<p class="setting-status" data-ai-status data-state="${VS.aiBridge.status()}">${AI_STATUS[VS.aiBridge.status()]}</p>` : ""}</div>
         <div class="setting"><b>About VocabStudy</b><p class="hint">What it does and why, in Arabic — a page to share with a friend.</p>
           <a class="btn" href="about.html">Read it in Arabic</a>
           <p class="hint">Made by ${VS.credit.link()} — free and open source.</p></div>

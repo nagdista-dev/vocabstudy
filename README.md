@@ -146,10 +146,17 @@ words when Google answers again:
 | Spelling check (when you add a word that isn't one of the 30,000 most used) | only that word | Google Translate's spelling correction; offline, the app's own word list |
 | Arabic → English (when you type an Arabic word in an add box and press Add) | only that Arabic text | Google Translate (free web endpoint) |
 | Meaning preview in From text (when you tap words to pick them) | only the picked words | Google Translate (free web endpoint) |
-| Grammar check (Use it, when you press Check) | only that sentence | api.languagetool.org |
+| Grammar check (Use it, when you press Check — asked once first) | only that sentence | api.languagetool.org |
+| AI assistant (Settings → App & data, off by default) | nothing leaves the computer — the app talks to a helper on `127.0.0.1` | [mcp/](mcp/README.md) |
 | More examples (when you tap it) | only the English word | api.tatoeba.org |
 | Recorded voice (Settings → Sound) | nothing — the recording is downloaded | dictionaryapi.dev |
 | Speak (Chrome / Edge) | your voice, by the browser itself | the browser's speech service |
+
+**AI assistant (computer only).** Claude Desktop, Claude Code, opencode or
+Cursor can add and edit your words through a small local messenger
+([mcp/README.md](mcp/README.md)): it runs on your computer, the open VocabStudy
+tab saves the changes with Undo, and there is no delete. Your words never go to
+a server.
 
 **Move to another device** by QR code: one device shows a moving code, the
 other reads it with its camera and merges — no internet, no account, nothing
@@ -187,6 +194,7 @@ docs/                     architecture, design, learning guide
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | understand how the app boots, routes and schedules recall |
 | [DESIGN.md](DESIGN.md) | change colours, fonts, spacing, motion or sounds safely |
 | [docs/LEARN.md](docs/LEARN.md) | learn web development from this codebase (Arabic) |
+| [mcp/README.md](mcp/README.md) | connect Claude, opencode or Cursor (local MCP) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | send an improvement |
 
 ## Updating the app
