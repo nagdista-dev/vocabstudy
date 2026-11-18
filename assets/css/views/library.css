@@ -192,8 +192,9 @@
   text-align: start;
 }
 .word-entry { display: grid; gap: var(--s-3); min-width: 0; text-align: start; overflow-wrap: anywhere; }
-/* Reading lines stay a comfortable length; the bar (and its ⋯) spans the card. */
-.word-entry > :not(.word-bar) { max-width: 64ch; }
+/* Boxes span the card so every right edge lines up; only running text keeps a
+   comfortable line length. */
+.word-definition, .word-example { max-width: 68ch; }
 .word-entry > * { min-width: 0; }
 
 /* Sound + menu */
@@ -429,3 +430,20 @@
 }
 .word-secs { gap: 6px; }
 .word-sec { padding: 0 10px; }
+/* Nothing empty takes space in the card: the other-meanings slot and the
+   examples list only exist once they have something to show. */
+.word-entry > .meanings:empty { display: none; }
+/* The section buttons: one row, never a second line — on a narrow card the row
+   scrolls sideways (fading at the edge), like any app's filter chips. */
+.word-secs {
+  flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+  margin-inline: calc(var(--s-4) * -1); padding-inline: var(--s-4);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--s-4), #000 calc(100% - 28px), transparent);
+          mask-image: linear-gradient(to right, transparent 0, #000 var(--s-4), #000 calc(100% - 28px), transparent);
+}
+.word-secs::-webkit-scrollbar { display: none; }
+.word-sec { flex: none; }
+/* An open section is just its content — no frame around a framed box. */
+.word-panel { padding: 0; border: 0; background: none; }
+.word-panel.word-related, .word-panel[data-panel="note"] { padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); }
+.word-entry .met, .word-entry .word-check { max-width: none; width: 100%; }   /* every box ends on the card's edge */
