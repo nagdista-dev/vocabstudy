@@ -104,7 +104,7 @@
             <dl class="wk-numbers">
               <div><dt>Mastered</dt><dd>${w.mastered}</dd>${delta(w.mastered, w.last.mastered)}</div>
               <div><dt>Words learned</dt><dd>${w.met}</dd>${delta(w.met, w.last.met)}</div>${w.added ? html`<div><dt>Words added</dt><dd>${w.added}</dd></div>` : ""}
-              <div><dt>Answers</dt><dd>${w.answers.toLocaleString("en-GB")}${w.answers ? html`<small> · ${acc}% right</small>` : ""}</dd>${delta(w.answers, w.last.answers)}</div>
+              <div><dt>Answers</dt><dd>${w.answers.toLocaleString("en-GB")}${w.answers >= 30 ? html`<small> · ${acc}% right</small>` : ""}</dd>${delta(w.answers, w.last.answers)}</div>
               <div><dt>Study time</dt><dd>${VS.formatDuration(w.seconds)}</dd>${delta(Math.round(w.seconds / 60), Math.round(w.last.seconds / 60), " min")}</div>
             </dl>
             ${w.best ? html`<p class="hint wk-best">Best day: <b>${new Date(w.best.date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long" })}</b> — ${VS.plural(w.best.answered, "answer")}.</p>` : ""}

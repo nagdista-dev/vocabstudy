@@ -117,7 +117,7 @@
     if (!o) return "";
     return html`
       <p class="feedback-picked">${icon("x", "icon-sm")}
-        <span>You chose <b>${VS.ui.headword(o)}</b>${o.arabic ? html` (<bdi lang="ar" dir="rtl">${o.arabic.split(" - ")[0]}</bdi>)` : ""}${o.definition ? html`: ${short(o.definition)}` : ""}</span></p>`;
+        <span>You chose <b>${VS.ui.headword(o)}</b>${o.arabic ? html` <bdi class="ar-chip" lang="ar" dir="rtl">${o.arabic.split(" - ")[0]}</bdi>` : ""}${o.definition ? html`: ${short(o.definition)}` : ""}</span></p>`;
   }
   /** One line of a definition: up to its first ";" or about 70 characters. */
   function short(t) {
@@ -163,6 +163,10 @@
       s = { scope, index: 0, picked: null, right: 0, wrong: [], combo: 0,
             questions: words.map((w, i) => makeQuestion(w, chosen[i % chosen.length])).filter(Boolean) };
       s.questions = VS.shuffle(s.questions);
+      // Never open on a listening question: the learner may be on a bus.
+      // They meet audio once they are already in the round.
+      const first = s.questions.findIndex((q) => q.type !== "listen");
+      if (first > 0) [s.questions[0], s.questions[first]] = [s.questions[first], s.questions[0]];
     },
 
     render() {

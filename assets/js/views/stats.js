@@ -34,10 +34,12 @@
 
   const dayLabel = (iso, i, n) => {
     const d = new Date(iso + "T12:00:00");
-    if (i === n - 1) return "Today";
-    // Long charts label every 5th date, but never right next to "Today" (they'd overlap).
-    if (n > 14) return d.getDate() % 5 === 0 && i < n - 3 ? String(d.getDate()) : "";
-    return d.toLocaleDateString("en-GB", { weekday: "narrow" });
+    const back = n - 1 - i;
+    if (!back) return "Today";
+    // Long charts count back in weeks ("2 wk") — dates of the month read as noise.
+    if (n > 14) return back % 7 === 0 && back < n - 1 ? back / 7 + " wk" : "";
+    // Never a label right beside "Today": they ran together ("TToday").
+    return back === 1 ? "" : d.toLocaleDateString("en-GB", { weekday: "narrow" });
   };
   const longDate = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 
@@ -128,7 +130,7 @@
           <dl class="stat-tiles card">
             <div><dt>${icon("clock", "icon-sm")} Study time</dt><dd>${VS.formatDuration(totalSec)}</dd></div>
             <div><dt>${icon("flame", "icon-sm")} Days studied</dt><dd>${history.length} <small>${t.streak}-day streak</small></dd></div>
-            <div><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${VS.accuracyText(right, answered)} <small>${answered.toLocaleString("en-GB")} answers</small></dd></div>
+            <div><dt>${icon("target", "icon-sm")} Accuracy</dt><dd>${VS.accuracyText(right, answered)}${answered >= 30 ? html` <small>${answered.toLocaleString("en-GB")} answers</small>` : ""}</dd></div>
             <div><dt>${icon("star", "icon-sm")} Mastered</dt><dd>${t.mastered} <small>of ${t.words}</small></dd></div>
           </dl>
 
@@ -151,7 +153,7 @@
               id: "boxes", title: "Your words on the ruler",
               // Unstudied words aren't memory yet: they'd dwarf every other bar, so they go in the subtitle.
               sub: "How many days each word waits before it comes back · " + boxes[0] + " not studied yet",
-              items: boxes.slice(1).map((n, i) => ({ label: BOX_LABELS[i + 1], value: n, tone: "seq-" + (i + 1), tip: BOX_LABELS[i + 1] + ": " + VS.plural(n, "word") })),
+              items: boxes.slice(1).map((n, i) => ({ label: String([1, 3, 7, 14, 30, 60][i]), value: n, tone: "seq-" + (i + 1), tip: BOX_LABELS[i + 1] + ": " + VS.plural(n, "word") })),
             })}
           </div>
           <p class="hint stats-note">Remember a word on its day and it moves one step along the ruler. Mastered means it came back after a week or more, and now waits two weeks.</p>

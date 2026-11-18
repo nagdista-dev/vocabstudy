@@ -105,6 +105,20 @@ const REAL = [
   ["I give up to smoke last year.", ""],
   ["We discussed about the new project.", "We discussed the new project."],
 ];
+// The past with a base verb: soft traps, so they only need to be found.
+["Yesterday I borrow my friend car for going to work.", "Last week we discuss the plan.", "Two days ago she call me."]
+  .forEach((s) => { if (!VS.findUsageMistakes(s).some((t) => t.kind === "tense")) fail(`tense not found: ${s}`); });
+// …and fixed in the learner's own words: their verb to the past, nothing else.
+[["Yesterday I borrow my friend's car.", "Yesterday I borrowed my friend's car."],
+ ["Last week we discuss the plan.", "Last week we discussed the plan."],
+ ["Two days ago she call me.", "Two days ago she called me."],
+ ["Yesterday I am very tired.", "Yesterday I was very tired."],
+ ["Last year they travel to Aswan.", "Last year they travelled to Aswan."],
+ ["Yesterday I study for two hours.", "Yesterday I studied for two hours."]].forEach(([s, want]) => {
+  const t = VS.findUsageMistakes(s).find((x) => x.kind === "tense");
+  const got = t ? VS.fixSentence(s, t) : "(no trap)";
+  if (got !== want) fail(`tense fix "${s}": gives "${got}", expected "${want}"`);
+});
 REAL.forEach(([s, want]) => {
   const t = VS.findUsageMistakes(s).find((x) => x.kind !== "tense");
   const got = t ? VS.fixSentence(s, t) : "(no trap)";

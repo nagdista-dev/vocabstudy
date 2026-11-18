@@ -69,11 +69,11 @@
               ? html`<div class="feedback ${ok ? "is-right" : "is-wrong"}" role="status">
                   <p class="feedback-title">${ok ? "Correct" : "Not quite"}</p>
                   ${ok
-                    ? html`<p class="spell-line"><span class="feedback-word"><span class="mark">${answer}</span></span> <span class="ipa">${w.ipa}</span></p>`
+                    ? html`<p class="spell-line"><span class="feedback-word"><span class="mark">${answer}</span></span> <span class="ipa">${VS.ipaText(w)}</span></p>`
                     : html`
                       <p class="spell-line"><span class="hint">You wrote</span><span class="spell-typed">${s.typed}</span></p>
                       <p class="spell-line"><span class="hint">Correct</span><span class="spell-diff" aria-label="Correct spelling: ${answer}">${VS.ui.letters(s.typed, answer)}</span></p>
-                      <p class="spell-legend hint"><span class="ch-ok">green</span> = you had it · <span class="ch-bad">red</span> = missed or wrong · <span class="ipa">${w.ipa}</span></p>`}
+                      <p class="spell-legend hint"><span class="ch-ok">green</span> = you had it · <span class="ch-bad">red</span> = missed or wrong · <span class="ipa">${VS.ipaText(w)}</span></p>`}
                   ${VS.ui.soundTraps(w)}
                   ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
                 </div>

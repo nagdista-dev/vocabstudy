@@ -80,9 +80,13 @@ one of — one border, brand on hover, brand-soft when chosen.
 **Status:** one treatment at every width — a dot beside the word and
 "New / Learning / Mastered" leading its meta line. No status pill.
 
-**Yellow means memory.** The highlighter marks the word being learned and the
-due count — nothing else. Questions, warnings, flags and milestones use
-`--note`. Counts that are not due (Learn, streak) are neutral.
+**Yellow means memory.** The highlighter marks the word being learned, the
+due count, and what belongs to the learner's own memory: "Where you met it",
+their note's bulb, the ruler's reached days, a "Learning" status and words
+they keep from a text. Everything the *app* says — questions, warnings (the
+Arabic-keyboard line), hints, flags, the week's note, "saved but not checked"
+— uses `--note`. Counts that are not due (Learn, streak) are neutral; a
+right-answer streak (combo) is green.
 
 ## Words we use (glossary)
 

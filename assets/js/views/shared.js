@@ -479,7 +479,8 @@
     ipa(w) {
       if (!w.ipa) return "";
       const st = VS.stress(w.ipa);
-      return html`<span class="ipa">${w.ipa}</span>${st ? html`
+      // Dictionaries write the English r two ways (/ɹ/ and /r/): learners see one.
+      return html`<span class="ipa">${VS.ipaText(w)}</span>${st ? html`
         <span class="stress" role="img" title="Say the big one louder and longer"
           aria-label="Stress on syllable ${st.stressed + 1} of ${st.count}">${Array.from({ length: st.count }, (_, i) =>
             html`<i class="${i === st.stressed ? "is-on" : ""}"></i>`)}</span>` : ""}`;

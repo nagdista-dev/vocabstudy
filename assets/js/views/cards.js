@@ -99,7 +99,7 @@
           ${VS.ui.goes(w, "flash-similar")}
           ${VS.ui.similar(w, "flash-similar")}
           ${VS.ui.usage(w, 1, "flash-usage")}
-          <p class="flash-word-small">${VS.ui.headword(w)} <span class="ipa">${w.ipa}</span></p>
+          <p class="flash-word-small">${VS.ui.headword(w)} <span class="ipa">${VS.ipaText(w)}</span></p>
         </div>
       </div>`;
   }
@@ -162,8 +162,8 @@
   }
 
   VS.views.cards = {
-    title: () => "Study",
-    crumbs: (p) => VS.ui.crumbs(p, "Study"),
+    title: () => "Learn",
+    crumbs: (p) => VS.ui.crumbs(p, "Learn"),
 
     start(p) {
       const scope = VS.scope(p);
@@ -204,7 +204,7 @@
       const w = s.queue[s.index];
       return html`
         <div class="activity">
-          ${VS.ui.activityHead({ back: s.scope.back, title: s.met.length ? "Check yourself" : "Study",
+          ${VS.ui.activityHead({ back: s.scope.back, title: s.met.length ? "Check yourself" : "Learn",
             sub: s.met.length ? "Step 2 of 2 · do you remember it?" : s.scope.title,
             index: s.index, total: s.base, again: Math.max(0, s.queue.length - Math.max(s.index, s.base)), undo: !!s.undo })}
           <div class="activity-stage stage-center">

@@ -110,7 +110,7 @@
 /* Top-bar navigation: icon + label + count, all in flow (no overlap). */
 .bar-nav { display: flex; align-items: center; gap: 2px; }
 .bar-link {
-  display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 var(--s-3);
+  display: inline-flex; align-items: center; gap: 7px; height: var(--tap); padding: 0 var(--s-3);
   border-radius: var(--r-md); color: var(--ink-2); text-decoration: none; font-size: var(--text-sm); font-weight: 500;
   transition: background var(--fast), color var(--fast);
 }
@@ -227,7 +227,7 @@
 }
 .speak-btn {
   display: inline-grid; place-items: center; flex: none;
-  width: 40px; height: 40px; border-radius: 50%;
+  width: var(--tap); height: var(--tap); border-radius: 50%;
   background: var(--brand-soft); color: var(--brand);
   transition: transform var(--fast), background var(--fast);
 }
@@ -549,6 +549,8 @@ kbd {
   .update-bar span { flex: 1; }
   .update-bar .btn { flex: none; white-space: nowrap; }
 }
+.update-bar .icon-btn { color: var(--paper); }
+.update-bar .icon-btn:hover { background: color-mix(in srgb, var(--paper) 14%, transparent); color: var(--paper); }
 
 /* Break reminder (core/study-time.js) — calm, never blocks the screen. */
 .break-card {
@@ -575,7 +577,7 @@ kbd {
 .kb-warn {
   display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2);
   padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
-  background: var(--mark-soft); color: var(--on-mark); font-size: var(--text-sm); font-weight: 500;
+  background: var(--note-soft); color: var(--note-ink); border: 1px solid var(--note-line); font-size: var(--text-sm); font-weight: 500;
 }
 .kb-warn[hidden] { display: none; }
 
@@ -658,7 +660,7 @@ kbd {
 .usage-right .icon { color: var(--good); }
 .usage-why { font-size: var(--text-sm); color: var(--ink-2); margin-top: 2px; }
 /* Arabic quoted inside an English line: isolated, in the Arabic face, on a soft chip instead of «» */
-.ar-chip { font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); padding: 0 .3em; border-radius: 4px; background: color-mix(in srgb, var(--mark-soft) 70%, transparent); color: var(--ink); }
+.ar-chip { font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); padding: 0 .3em; border-radius: 4px; background: var(--note-soft); color: var(--ink); }
 
 /* ── Where you met it: personal memory, so it wears the highlighter's soft yellow ── */
 .met { display: grid; gap: var(--s-1); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--mark-soft); text-align: start; width: 100%; max-width: 56ch; overflow-wrap: anywhere; }

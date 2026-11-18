@@ -209,7 +209,8 @@
       bar.className = "update-bar";
       bar.setAttribute("role", "status");
       bar.innerHTML = String(html`<span>A new version is ready.</span>
-        <button class="btn btn-primary" type="button" data-action="reload">Update now</button>`);
+        <button class="btn btn-primary" type="button" data-action="reload">Update now</button>
+        <button class="icon-btn" type="button" data-action="update-later" aria-label="Later — update next time you open the app">${icon("x", "icon-sm")}</button>`);
       document.body.appendChild(bar);
     });
   }
@@ -399,8 +400,8 @@
           <div class="checks">${QUIZ_TYPES.map(([v, l]) => html`<label class="check"><input type="checkbox" data-quiz-type value="${v}" ${(st.quizTypes || []).includes(v) ? VS.raw("checked") : ""}><span>${l}</span></label>`)}</div></div>
         <div class="setting"><b>Auto-fill new words</b><div class="seg">${choice("autofill", true, "On")}${choice("autofill", false, "Off")}</div>
           <span class="hint">Fills in the Arabic, definition, example, pronunciation and the words it goes with, from free online dictionaries. Only the English word is sent. Off: no word leaves this device.</span></div>
-        <div class="setting"><b>Grammar check</b><div class="seg">${choice("grammar", true, "On")}${choice("grammar", false, "Off")}</div>
-          <span class="hint">In Use it, LanguageTool reads your sentence for grammar and spelling (“She don't”, “I didn't went”). Only that sentence is sent, when you press Check.</span></div>
+        <div class="setting"><b>Grammar check</b><div class="seg">${choice("grammarOnline", true, "On")}${choice("grammarOnline", false, "Off")}</div>
+          <span class="hint">In Use it, LanguageTool reads your sentence for grammar and spelling (“She don't”, “I didn't went”). Only that sentence is sent, when you press Check — and only after you say yes the first time.</span></div>
         ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>
           <span class="hint">Say words out loud and the app checks them. Your browser does the listening — Chrome and Edge use their online speech service.</span></div>` : ""}
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
@@ -448,6 +449,8 @@
   Object.assign(GLOBAL, {
     speak(el) { VS.speech.say(el.dataset.say, el); },
     reload() { location.reload(); },
+    // The new version also loads by itself next time the app opens.
+    "update-later"() { const bar = document.querySelector(".update-bar"); if (bar) bar.remove(); },
     "open-settings"() {
       const dlg = VS.$("#settings");
       dlg.innerHTML = String(settingsMarkup());

@@ -25,7 +25,11 @@
   const LABEL = { TYPOS: "Spelling", CONFUSED_WORDS: "Word choice", COLLOCATIONS: "Goes with" };
 
   VS.grammar = {
-    enabled: () => VS.store.settings().grammar !== false,
+    // It sends the learner's own sentence out, so it is asked once, in Use it, and never
+    // on by default (critique v10). A new key: older saves had "grammar" on without asking.
+    enabled: () => VS.store.settings().grammarOnline === true,
+    /** Not chosen yet: Use it asks once, beside the sentence it would send. */
+    undecided: () => VS.store.settings().grammarOnline === "ask",
 
     async check(text) {
       if (!this.enabled() || !navigator.onLine) return { issues: [], skipped: true };

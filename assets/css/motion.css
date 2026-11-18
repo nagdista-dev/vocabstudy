@@ -31,7 +31,7 @@
 
 /* 2. Arriving: one lift and fade for the screen itself (components.css),
    then its small pieces settle in a short cascade. */
-@keyframes view-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes view-in { from { opacity: .4; transform: translateY(4px); } }   /* never a see-through screen that reads as disabled */
 @keyframes rise-in { from { opacity: 0; transform: translateY(7px); } }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes grow-x { from { transform: scaleX(0); } }
@@ -115,11 +115,11 @@
 .combo {
   display: inline-flex; align-items: center; gap: 4px;
   height: 28px; padding: 0 10px; border-radius: var(--r-pill);
-  background: var(--mark-soft); color: var(--on-mark);
+  background: var(--good-soft); color: var(--good);
   font-size: var(--text-xs); font-weight: 700; white-space: nowrap;
 }
 .combo.bump { animation: bump var(--slow) var(--ease); }
-@keyframes bump { 30% { transform: scale(1.18); background: var(--mark); } }
+@keyframes bump { 30% { transform: scale(1.18); } }
 
 /* 7. Results arrive with their screen — no cascade over numbers you read. */
 

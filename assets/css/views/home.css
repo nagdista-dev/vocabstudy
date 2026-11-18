@@ -84,7 +84,7 @@
 .today-steps::-webkit-scrollbar { display: none; }
 .today-steps li { flex: none; }
 .today-steps a {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 11px;
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 var(--s-3);
   border-radius: var(--r-pill); border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--line));
   background: var(--surface);
   color: var(--ink-2); font-size: var(--text-xs); font-weight: 600; text-decoration: none; white-space: nowrap;
@@ -185,7 +185,7 @@
 .backup-copy b { font-size: var(--text-xs); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .backup-copy .hint { font-size: var(--text-2xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .backup-arrow { color: var(--ink-3); flex: none; }
-.backup-dismiss { width: 40px; height: 40px; flex: none; color: var(--ink-3); }
+.backup-dismiss { width: var(--tap); height: var(--tap); flex: none; color: var(--ink-3); }
 
 /* ── First run: the first card ──────────────────────────────────
    The screen a new learner meets is a three-act lesson, not an empty

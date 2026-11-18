@@ -42,7 +42,7 @@ words and progress stay on your device, and it works offline.
 - **Use it**: write a sentence about your own life with the word. The app
   marks it like a teacher — on your device: the word is there (any form),
   it's a full sentence, it isn't copied, and none of the 111 traps is hiding
-  in it ("depends of — you wrote"). Online, LanguageTool also reads its
+  in it ("depends of — you wrote"). If you say yes (it asks once), LanguageTool also reads its
   grammar ("She don't", "I didn't went"). Your sentences come back in Recall.
 - **Goes with**: the words English puts with yours — *heavy* rain, *final*
   decision, *subtle* differences — because "strong rain" is exactly where

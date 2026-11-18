@@ -107,7 +107,7 @@
     return html`
       <div class="lib-actions">
         <details class="lib-more">
-          <summary class="btn btn-tonal">${icon("play", "icon-sm")} Practise ${icon("chevron-right", "icon-sm")}</summary>
+          <summary class="btn btn-quiet">${icon("play", "icon-sm")} Practise ${icon("chevron-right", "icon-sm")}</summary>
           <div class="lib-more-menu">
             ${modes.map(([m, l]) => (m === "match" && n < 2) ? "" : html`<a class="btn btn-quiet" href="${pickHref(m)}">${icon(m === "speak" ? "mic" : m === "write" ? "pen" : m, "icon-sm")} ${l}</a>`)}
           </div>
@@ -159,9 +159,12 @@
     const counts = { all: s.total, new: s.new, learning: s.learning, mastered: s.mastered, due: s.due, started: s.started };
     return html`
       <div class="chip-row" role="group" aria-label="Filter by status">
-        ${Object.entries(F.STATUS).map(([v, l]) => html`
-          <button class="chip" type="button" data-action="lib-status" data-value="${v}" aria-pressed="${f.status === v}"
-            ${v !== "all" && !counts[v] ? VS.raw("disabled") : ""}>
+        ${Object.entries(F.STATUS)
+          // An empty status is not a choice: hide it (unless it is the one chosen).
+          // "Started" (learning + mastered) overlaps the two chips beside it: it lives in Filters.
+          .filter(([v]) => v === "all" || (counts[v] && v !== "started") || f.status === v)
+          .map(([v, l]) => html`
+          <button class="chip" type="button" data-action="lib-status" data-value="${v}" aria-pressed="${f.status === v}">
             ${l}<span class="chip-n">${counts[v]}</span>
           </button>`)}
       </div>`;

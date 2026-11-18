@@ -112,6 +112,11 @@
     const items = p.steps.filter((s) => keys.includes(s.key) &&
       (!p.next || s.key !== p.next.key) && (s.open || (s.done && s.key !== "learn")));
     const quick = p.t.started >= 3 && VS.store.quickWords(10).length >= 2;
+    // One next step, then at most three quiet alternatives (critique v10: the
+    // hero offered seven ways to start). Open steps before finished ones; the
+    // rest stay one tap away in the library's Practise menu.
+    items.sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0));
+    items.splice(quick ? 2 : 3);
     if (!items.length && !quick) return "";
     return html`
       <ol class="today-steps" aria-label="More ways to practise today's words">

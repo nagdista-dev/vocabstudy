@@ -1139,14 +1139,36 @@ agent مستقل راجع V0 وV1 ضد الخطة ولقى **4 P0** و**5 P1** �
 - **V4.7:** الكيبورد العربي اتعمل في V2.18، و"Words learned/added" في الأسبوع، والتذكير .ics في V2.16.
 
 ### V5 — التحقق الشامل (اللي محدش راجعه)
-- [ ] **V5.1** راجع واصلح: break card (بعد 50 دقيقة)، combo badge، confetti، كارت "Add words from any website"
+- [x] **V5.1** راجع واصلح: break card (بعد 50 دقيقة)، combo badge، confetti، كارت "Add words from any website"
       (bookmarklet)، مسار Share → VocabStudy (`#/add?from=share`)، الـ 7 layouts بتوع الطباعة واحدة واحدة،
       `#/tricky/*` و`#/pick/*` و`#/word/<mode>?id=`، keyboard shortcuts، الـ install card وupdate bar على موبايل حقيقي،
       كاميرا الـ transfer، restore من ملف، route مش موجود.
-- [ ] **V5.2** مصفوفة اختبار: 360/390/768/1024/1280/1440؛ phone landscape؛ Text size Large وLarger؛ الـ 10 accents
+- [x] **V5.2** مصفوفة اختبار: 360/390/768/1024/1280/1440؛ phone landscape؛ Text size Large وLarger؛ الـ 10 accents
       + Glass (تباين)؛ zoom 200%؛ keyboard-only؛ screen reader (VoiceOver/TalkBack أو NVDA)؛ reduced motion؛
       forced-colors؛ أوفلاين من أول فتح؛ كلمة/عبارة طويلة جدًا وعربي طويل؛ 1,000 كلمة.
-- [ ] **V5.3** شغّل `impeccable critique` تاني (dual-agent) — الهدف **≥ 34/40** ومفيش P0/P1.
+- [~] **V5.3** شغّل `impeccable critique` تاني (dual-agent) — الهدف **≥ 34/40** ومفيش P0/P1.
+
+**اتعمل في V5 (ملاحظات التنفيذ):**
+- **V5.1:** كل الـ routes اتفتحت (23 route، من غير أخطاء ولا overflow): الـ 7 layouts بتوع الطباعة، tricky/pick/word،
+  route مش موجود (بيرجع للرئيسية)، الكيبورد (1–4 في الـ Quiz شغالين)، الـ toast والـ break card فوق شريط الإجابة مش
+  عليه. اتصلح: كل شاشة فاضية بقى فيها h1، و"tricky" من غير كلمات بقت تقول "No tricky words — well done" بدل "no
+  meaning yet". الكاميرا والتثبيت على موبايل حقيقي محتاجين جهاز — متعملوش هنا.
+- **V5.2:** 360/768/1024/1280/1440 + Larger text + landscape: مفيش overflow، مفيش هدف < 44px (اتصلحت 5 حاجات كانت
+  40px على الديسكتوب)، مفيش خط < 13px غير أرقام الـ badges. الـ 10 accents كلهم ≥ 4.5:1. focus بالكيبورد ظاهر.
+  forced-colors اتضافله block (الـ highlighter = Mark، المسطرة = Highlight). 1,026 كلمة: الرئيسية بتترسم في 36ms
+  و1,336 عنصر بس (60 صف في المرة).
+- **V5.3 (3 جولات critique، كل جولة reviewers جداد):** 30 → 28 → 29 من 40. الـ detector نضيف في المتصفح في كل
+  route؛ ملاحظات الـ CLI على about.html false positives. كل P1 اتصلح بعد كل جولة:
+  - الجولة 1: badge الـ backup بيطلع برا، والرئيسية زحمة (اختصارات الـ hero بقت 3 بس، chips الصفر اتشالت)، الـ update
+    bar بقى ليه ×، الـ Quiz مبيبدأش بسؤال صوت، serendipity اتصلح معناها.
+  - الجولة 2: Use it كان بيقبل جملة غلط بعلامة خضرا → بقى يقول "grammar not checked" بلون الـ note، وفخ الزمن بقى
+  يمسك الأفعال العادية (borrow…)؛ والأصفر اتشال من التحذيرات (الكيبورد، الـ hint، ملاحظة الأسبوع) للـ `--note`.
+  - الجولة 3: Use it بقى يقول الجملة صح بكلام المتعلم نفسه ("Yesterday I borrowed…") + زرار "Use this sentence"؛
+  والـ grammar check بقى **بيسأل مرة واحدة** (مقفول افتراضيًا، key جديد `grammarOnline` عشان القدام يتسألوا كمان).
+  - تاني: Learn بدل Study، "Save backup file"، Practise بقى quiet، الـ fade مبقاش شفاف، محاور الـ charts بالأسابيع
+  وأيام المسطرة، تايلز الأسبوع، /ɹ/ = /r/، إنجليزي الـ Match أكبر.
+  - **الهدف 34 متحققش.** اللي فاضل متكرر عند الـ reviewers: الرئيسية + المكتبة في شاشة موبايل واحدة (تغيير هيكلي:
+  تاب "Your words" لوحده)، اختيارات الطباعة كتير، والـ charts عادية. هنعيد الـ critique بعد V6.
 
 ### V6 — الدارك مود (آخر مرحلة، بقرار صاحب التطبيق)
 - [ ] **V6.1** Night theme: tokens كاملة لكل لون، يتبع `prefers-color-scheme` + اختيار في الإعدادات (Light / Night /

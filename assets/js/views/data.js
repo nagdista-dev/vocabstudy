@@ -69,12 +69,12 @@
 
           <section class="card file-card" aria-labelledby="backup-title">
             <div class="file-head">
-              <span class="file-type">${icon("download", "icon-sm")}<span>Backup file</span></span>
+              <span class="file-type" aria-hidden="true">${icon("download")}</span>
               <div class="file-copy">
                 <h2 id="backup-title">Full backup</h2>
                 <p class="file-name">${VS.backup.fileName()}</p>
               </div>
-              <button class="btn btn-primary" type="button" data-action="data-backup">Export backup</button>
+              <button class="btn btn-primary" type="button" data-action="data-backup">Save backup file</button>
             </div>
             <p class="file-meta">Recall schedule, notes, history and settings — one file, opened on any device.</p>
           </section>
@@ -102,7 +102,7 @@
             <div class="data-row">
               <div class="data-row-head">
                 <h2>Export words</h2>
-                <p>A spreadsheet with status, memory box, next recall, right and wrong answers, and your notes.</p>
+                <p>A spreadsheet with status, place on the ruler, next recall, right and wrong answers, and your notes.</p>
               </div>
               <div class="row data-actions">
                 <div class="seg" role="group" aria-label="Which words">

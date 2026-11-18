@@ -42,7 +42,7 @@
     milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 50, effects: true,
-                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "ar", newPerDay: 10, autofill: true, grammar: true, speak: false,
+                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "ar", newPerDay: 10, autofill: true, grammarOnline: "ask", speak: false,
                 quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 

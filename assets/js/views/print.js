@@ -111,7 +111,7 @@
             ${words.map((w, i) => html`
               <tr>
                 <td class="p-n">${i + 1}</td>
-                <td class="p-word">${word(w)}${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}<span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span></td>
+                <td class="p-word">${word(w)}${has("ipa") ? html`<span class="p-ipa ipa">${VS.ipaText(w)}</span>` : ""}<span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span></td>
                 ${meaning ? html`<td class="p-def">${has("definition") ? w.definition : ""}${has("example") && w.example ? html`<i>${VS.ui.quote(w)}</i>` : ""}${note(w)}</td>` : ""}
                 ${has("arabic") ? html`<td class="p-ar" lang="ar">${w.arabic}</td>` : ""}
               </tr>`)}
@@ -123,7 +123,7 @@
       return html`
         <ol class="p-compact">
           ${words.map((w) => html`
-            <li>${word(w)}${has("ipa") ? html` <span class="ipa">${w.ipa}</span>` : ""}
+            <li>${word(w)}${has("ipa") ? html` <span class="ipa">${VS.ipaText(w)}</span>` : ""}
               ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}
               ${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}</li>`)}
         </ol>`;
@@ -192,7 +192,7 @@
         <ol class="p-write">
           ${words.map((w) => html`
             <li>
-              <div class="p-write-head">${word(w)}${has("ipa") ? html` <span class="ipa">${w.ipa}</span>` : ""}
+              <div class="p-write-head">${word(w)}${has("ipa") ? html` <span class="ipa">${VS.ipaText(w)}</span>` : ""}
                 ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}</div>
               ${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}
               ${has("example") && w.example ? html`<span class="p-meta"><i>e.g. “${w.example}”</i></span>` : ""}
@@ -223,7 +223,7 @@
                 <span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span>
                 <b class="p-w">${w.word}</b>
                 ${w.sense ? html`<span class="p-sense">(${w.sense.toLowerCase()})</span>` : ""}
-                ${has("ipa") ? html`<span class="p-ipa ipa">${w.ipa}</span>` : ""}
+                ${has("ipa") ? html`<span class="p-ipa ipa">${VS.ipaText(w)}</span>` : ""}
               </div>` : html`<div class="p-card p-empty"></div>`)}
           </div>
           <div class="p-cards p-backs">

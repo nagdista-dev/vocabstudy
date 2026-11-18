@@ -18,7 +18,7 @@ pasted or uploaded in the app and saved on the device — never in the build.
 
 **Local first.** The app has no server, no account and no CDN: fonts and the
 PDF maker ship with it. Every network call is optional and goes to a free
-service with no account: Use it sends the learner's sentence to LanguageTool
+service with no account: Use it sends the learner's sentence to LanguageTool only after asking once
 (Settings → Grammar check), "More examples" sends the word to Tatoeba, and
 auto-fill sends a new English word to free dictionaries — Google Translate's free endpoint for
 meanings, examples, Arabic, similar words and its spelling correction (only for a word that

@@ -107,6 +107,7 @@ window.VS_OVERRIDES = {
   "schedule": { type: "Noun", arabic: "جدول - مواعيد", definition: "A plan of when things will happen.", example: "My schedule is very busy this week." },
   "sensible": { type: "Adjective", arabic: "عاقل - منطقي", definition: "Doing what is reasonable and right.", example: "Saving some money is a sensible idea." },
   "sensitive": { type: "Adjective", arabic: "حسّاس", definition: "Easily upset, or easily affected by something.", example: "She is very sensitive about her weight." },
+  "serendipity": { type: "Noun", arabic: "صدفة حلوة - حظ سعيد غير متوقع", definition: "Finding something good by chance, without looking for it.", example: "Meeting my best friend on a train was pure serendipity." },
   "set up": { type: "Phrasal Verb", arabic: "يأسّس - يجهّز", definition: "To start a business or an organization, or to prepare equipment.", example: "They set up their own company in 2020." },
   "struggle": { type: "Verb", arabic: "يعاني - يبذل مجهود كبير", definition: "To try very hard to do something difficult.", example: "I struggled to understand the lecture." },
   "suggest": { type: "Verb", arabic: "يقترح", definition: "To give an idea for someone to think about.", example: "I suggest that we leave early." },

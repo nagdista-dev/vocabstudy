@@ -33,7 +33,7 @@
     mix: "Don't mix up",
     meaning: "Meaning trap",
     count: "Not countable",
-    with: "Goes with",
+    with: "Right partner word",
     grammar: "Grammar",
     tense: "Tense",
   };
@@ -55,7 +55,10 @@
   // No state verbs (think, know, like, want): "I think he left yesterday" is right.
   const DO = "(?:go|come|take|make|have(?!\\s+to\\b)|do|see|eat|buy|get|give|find|leave|meet|tell|say|write|drink|drive|fly|forget|" +
     "lose|pay|sell|send|sleep|speak|spend|teach|wake|win|begin|break|bring|build|catch|choose|keep|run|sit|stand|swim|wear|" +
-    "become|fall|grow|hear|decide|arrive|finish|stay|travel|visit|watch|study|cook|play|walk|move|return|receive|happen)";
+    "become|fall|grow|hear|decide|arrive|finish|stay|travel|visit|watch|study|cook|play|walk|move|return|receive|happen|" +
+    // Regular verbs learners use with "yesterday" (critique v10: "Yesterday I borrow…" passed).
+    "borrow|lend|ask|try|live|open|clean|wash|miss|learn|talk|listen|enjoy|remember|explain|carry|invite|reply|join|" +
+    "cry|laugh|steal|postpone|achieve|improve|suggest|persuade|afford|commute|depend|attend|discuss|marry|call)";
   // A clause, not a whole paragraph: no full stop, and no "and / but / because" (…and I love it — still true now).
   const GAP = "(?:(?!\\b(?:and|but|because|so|now|today|still|than|since|until)\\b)[^.;!?\\n]){0,50}?";
   const PASTFORM = "(?:went|ate|saw|took|made|came|bought|got|gave|found|left|met|told|said|thought|wrote|drank|drove|flew|forgot|" +
@@ -291,7 +294,7 @@
 
     /* ── Tense: the past needs a past verb (soft: see PAST above) ── */
     ["yesterday|ago|last", "tense", "Yesterday the plane take off late.", "Yesterday the plane took off late.",
-      "Yesterday, last week, two days ago = the past: the verb goes to the past too (take → took). Arabic keeps «بتطير»; English doesn't.",
+      "Yesterday, last week, two days ago = the past, so the verb goes to the past too (borrow → borrowed, take → took). In Arabic the verb can stay «امبارح الطيارة بتطير متأخر»; in English it can't.",
       `\\b${PAST}\\b,?\\s+${GAP}\\b${SUBJ}\\s+${DO}(?:s|es)?\\b|\\b(?:i|you|we|they|he|she)\\s+${DO}(?:s|es)?\\b[^.,;!?\\n]{0,40}?\\b${PAST}\\b`],
     ["yesterday|ago|last", "tense", "Yesterday I am very tired.", "Yesterday I was very tired.",
       "Am / is / are are now. Yesterday, last week, two days ago: was / were.",
@@ -424,8 +427,40 @@
   /** "Remember" → "Remind": a fix keeps the capital of the word it replaces. */
   const keepCase = (was, now) => (/^[A-Z]/.test(was) ? now.charAt(0).toUpperCase() + now.slice(1) : now);
 
+  /* Tense, fixed in the learner's own words (critique v10: the teacher struck the
+     sentence out but never said it back). Their verb goes to the past —
+     "Yesterday I borrow…" → "Yesterday I borrowed…", "I am" → "I was" —
+     and nothing else is touched. */
+  const IRREGULAR = { go: "went", come: "came", take: "took", make: "made", have: "had", do: "did", see: "saw", eat: "ate",
+    buy: "bought", get: "got", give: "gave", find: "found", leave: "left", meet: "met", tell: "told", say: "said", write: "wrote",
+    drink: "drank", drive: "drove", fly: "flew", forget: "forgot", lose: "lost", pay: "paid", sell: "sold", send: "sent",
+    sleep: "slept", speak: "spoke", spend: "spent", teach: "taught", wake: "woke", win: "won", begin: "began", break: "broke",
+    bring: "brought", build: "built", catch: "caught", choose: "chose", keep: "kept", run: "ran", sit: "sat", stand: "stood",
+    swim: "swam", wear: "wore", become: "became", fall: "fell", grow: "grew", hear: "heard", lend: "lent", steal: "stole" };
+  const pastOf = (v) => IRREGULAR[v] || (v === "travel" ? "travelled"
+    : /e$/.test(v) ? v + "d" : /[^aeiou]y$/.test(v) ? v.slice(0, -1) + "ied" : v + "ed");
+  const BE_PAST = { "i am": "I was", "i'm": "I was", "he is": "he was", "she is": "she was", "it is": "it was",
+    "we are": "we were", "you are": "you were", "they are": "they were", "we're": "we were", "you're": "you were", "they're": "they were" };
+  function fixTense(t) {
+    if (!new RegExp("\\b" + PAST + "\\b", "i").test(t)) return "";
+    const verb = new RegExp("\\b(" + SUBJ + ")\\s+(" + DO + ")(?:s|es)?\\b", "i").exec(t);
+    if (verb) {
+      const v = verb[2].toLowerCase();
+      return t.slice(0, verb.index) + verb[1] + " " + keepCase(verb[2], pastOf(v)) + t.slice(verb.index + verb[0].length);
+    }
+    const be = /\b(i\s+am|i'm|(?:he|she|it)\s+is|(?:we|you|they)\s+are|(?:we|you|they)'re)\b/i.exec(t);
+    if (!be) return "";
+    const now = BE_PAST[be[1].toLowerCase().replace(/\s+/g, " ")];
+    return now ? t.slice(0, be.index) + keepCase(be[1], now) + t.slice(be.index + be[0].length) : "";
+  }
+
   VS.fixSentence = function (text, trap) {
-    if (!trap || !trap.bad || trap.kind === "tense") return "";
+    if (!trap || !trap.bad) return "";
+    if (trap.kind === "tense") {
+      if (/didn't|did\b/i.test(trap.wrong)) return "";      // "didn't went": its own fix is not a past form
+      const fixed = fixTense(" " + String(text || "").replace(/[’‘]/g, "'") + " ").replace(/\s+/g, " ").trim();
+      return fixed && !VS.findUsageMistakes(fixed).some((x) => x.kind === "tense") ? fixed : "";
+    }
     let t = " " + String(text || "").replace(/[’‘]/g, "'") + " ";
     // Every place the trap matches ("afraid of the dark and of dogs"), three at most.
     let changed = false;

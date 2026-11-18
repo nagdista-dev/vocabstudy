@@ -34,15 +34,19 @@
     const r = s.result;
     if (!r) return "";
     if (r.ok) {
+      // Green only when something actually checked it. Offline, or with the
+      // online check off, the app can't vouch for the grammar — so it says so
+      // in the quiet note colour instead of a teacher's tick (critique v10).
+      const unchecked = !r.unsure && (r.grammarSkipped || !VS.grammar.enabled());
       return html`
-        <div class="feedback is-right write-ok" role="status">
-          <p class="feedback-title">${icon("check", "icon-sm")} Kept with the word</p>
+        <div class="feedback ${unchecked ? "is-note" : "is-right"} write-ok" role="status">
+          <p class="feedback-title">${icon(unchecked ? "bulb" : "check", "icon-sm")} ${unchecked ? "Saved — the word is used well; grammar not checked" : r.unsure ? "Kept with the word" : "Kept with the word — no mistakes found"}</p>
           <p class="write-saved">${VS.ui.mixed(r.clean)}</p>
           ${r.tips.length ? html`<p class="hint">${r.tips.join(" ")} (Fixed in the saved copy.)</p>` : ""}
           <p class="hint">${r.unsure
             ? "Kept as you wrote it. It may have a mistake, so Recall won't use it — write another one later."
             : "It comes back in Recall as a gap — your own life is the strongest reminder."}</p>
-          ${r.grammarSkipped && VS.grammar.enabled() ? html`<p class="hint">Grammar wasn't checked this time (offline).</p>` : ""}
+          ${unchecked ? html`<p class="hint">${VS.grammar.enabled() ? "You're offline, so the grammar check didn't run." : "The online grammar check is off in Settings."} Read it once more before you trust it.</p>` : ""}
         </div>`;
     }
     return html`
@@ -53,7 +57,8 @@
             <li>${p.trap
               ? html`<span class="usage-kind">${p.trap.label}</span>
                      ${p.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.found}</span><small>you wrote</small></span>` : ""}
-                     ${p.fixed ? html`<span class="usage-right">${icon("check", "icon-sm")}<span>${p.fixed}</span><small>your sentence, fixed</small></span>` : ""}
+                     ${p.fixed ? html`<span class="usage-right">${icon("check", "icon-sm")}<span>${p.fixed}</span><small>your sentence, fixed</small></span>
+                       <button class="btn btn-tonal write-use-fix" type="button" data-action="use-fix" data-fix="${p.fixed}">Use this sentence</button>` : ""}
                      <span class="usage-why">${VS.ui.mixed(p.text)}</span>`
               : p.grammar
               ? html`<span class="usage-kind">${p.grammar.label}</span>
@@ -140,7 +145,13 @@
                   placeholder="${IDEAS[(s.idea + s.index) % IDEAS.length]}" ${done ? VS.raw("readonly") : ""}>${s.draft}</textarea>
               </label>
             </form>
-            ${VS.grammar.enabled() && !done ? html`<p class="hint write-privacy">Grammar is checked online by LanguageTool — only this sentence is sent. (Settings → Grammar check)</p>` : ""}
+            ${done ? "" : VS.grammar.undecided() ? html`
+              <div class="write-ask" role="group" aria-label="Online grammar check">
+                <p><b>Check the grammar too?</b> LanguageTool, a free online checker, reads only this sentence when you press Check. Nothing else leaves your device.</p>
+                <div class="row"><button class="btn btn-tonal" type="button" data-action="grammar-yes">Yes, check online</button>
+                <button class="btn btn-quiet" type="button" data-action="grammar-no">No, keep it here</button></div>
+              </div>`
+              : VS.grammar.enabled() ? html`<p class="hint write-privacy">Grammar is checked online by LanguageTool — only this sentence is sent. (Settings → Grammar check)</p>` : ""}
             ${feedback()}
           </section>
           </div>
@@ -215,6 +226,17 @@
         keep(w, Object.assign(VS.checkSentence(w, s.draft), { ok: true, unsure: true }));
       },
       skip() { s.skipped++; this.next(); },
+      // Take the teacher's correction into the box; Check still has to pass it.
+      "use-fix"(el) {
+        s.draft = el.dataset.fix; s.result = null; VS.app.render();
+        const box = document.getElementById("writeInput"); if (box) box.focus();
+      },
+      "grammar-yes"() { VS.store.setSetting("grammarOnline", true); VS.app.render(); },
+      "grammar-no"() {
+        VS.store.setSetting("grammarOnline", false);
+        VS.toast("Kept on this device. You can turn it on in Settings → Grammar check.");
+        VS.app.render();
+      },
       next() { s.index++; s.draft = ""; s.result = null; VS.app.render(); window.scrollTo({ top: 0 }); },
       restart() { VS.views.write.start(VS.app.params()); VS.app.render(); },
     },

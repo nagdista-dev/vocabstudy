@@ -177,7 +177,7 @@ mark {
 }
 .mini-streak {
   padding: 2px 7px; border-radius: var(--r-pill);
-  background: var(--mark); color: var(--on-mark); font-weight: 700;
+  background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); font-weight: 700;
   white-space: nowrap;
 }
 .mini-goal b { color: var(--ink); }

@@ -49,3 +49,15 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .tab-bar { z-index: var(--z-bar); }
 .update-bar, .install-nudge, .break-card { z-index: var(--z-float); }
 .toast { z-index: var(--z-toast); }
+
+/* Forced colours (Windows contrast themes, V5.2): the system repaints every
+   background, so the marks that carry meaning use system colours instead —
+   the highlighter becomes Mark, the ruler's reached days Highlight, the
+   status dot plain text colour. */
+@media (forced-colors: active) {
+  .mark { forced-color-adjust: none; background: Mark; color: MarkText; }
+  .ruler-mini li.is-past, .ruler-mini li.is-now { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+  .ruler-mini li.is-past { opacity: .6; }
+  .word-row-dot { forced-color-adjust: none; background: CanvasText !important; }
+  .pen-wrong, .usage-wrong > span, .spell-typed { text-decoration-color: CanvasText; }
+}
