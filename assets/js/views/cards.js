@@ -28,7 +28,7 @@
         <p class="flash-tip">${icon("flip", "icon-sm")} Say the English word, then tap to check</p>
       </div>
       <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
-        <p class="flash-word"><span class="mark">${w.word}</span></p>
+        <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
         ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
         <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
         ${VS.ui.soundTraps(w, "flash-traps")}
@@ -44,7 +44,7 @@
       <div class="flash flash-teach">
         <div class="flash-face flash-open">
           <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>${VS.ui.freq(w)}</div>
-          <p class="flash-word"><span class="mark">${w.word}</span></p>
+          <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
           ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
           <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
           ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
@@ -82,7 +82,7 @@
            aria-label="${s.flipped ? "Card back" : "Card front. Press space to see the meaning"}">
         <div class="flash-face flash-front" aria-hidden="${s.flipped}">
           <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>${VS.ui.freq(w)}</div>
-          <p class="flash-word"><span class="mark">${w.word}</span></p>
+          <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
           ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
           <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
           ${VS.ui.soundTraps(w, "flash-traps")}

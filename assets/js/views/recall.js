@@ -112,7 +112,7 @@
                 <p class="recall-word"><span class="mark">${s.verdict === "almost" || s.verdict === "wrong"
                   // The word once, with the slip marked inside it — not a diff and then the word again.
                   ? html`<span class="spell-diff" aria-label="Correct spelling: ${w.word}">${VS.ui.letters(s.typed, VS.spellingOf(w))}</span>`
-                  : w.word}</span></p>
+                  : VS.cap(w.word)}</span></p>
                 ${VS.ui.speakButton(w.word)}
               </div>
               ${VS.ui.ipa(w)}
@@ -165,7 +165,7 @@
       .sort((a, b) => s.gaps.get(b.id) - s.gaps.get(a.id))[0];
     const gap = star ? s.gaps.get(star.id) : 0;
     const teacher = gap >= 3
-      ? html`<mark class="mark">${star.word}</mark> came back after ${gap} days — ${star.box >= 4 ? "it's yours now." : "it's sticking."}`
+      ? html`<mark class="mark">${VS.cap(star.word)}</mark> came back after ${gap} days — ${star.box >= 4 ? "it's yours now." : "it's sticking."}`
       : "";
     if (s.scope.kind === "quick") return VS.ui.summary({
       title: "Five minutes, well spent",

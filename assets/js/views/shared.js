@@ -533,7 +533,7 @@
 
     /** Headword + optional sense in brackets, e.g. Axe (tool) — the sense tells two meanings apart. */
     headword: (w, cls) =>
-      html`<span class="${cls || ""}">${w.word}</span>${w.sense ? html` <span class="sense">(${w.sense.toLowerCase()})</span>` : ""}`,
+      html`<span class="${cls || ""}">${VS.cap(w.word)}</span>${w.sense ? html` <span class="sense">(${w.sense.toLowerCase()})</span>` : ""}`,
 
     /** Pronunciation tips for Arabic speakers (core/sound-traps.js): P/B, V/F, silent letters… */
     soundTraps(w, cls) {
@@ -820,17 +820,16 @@
                 ${s === "new"
                   ? html`<p class="word-memory-line"><span>Not studied yet</span><span class="word-memory-sep" aria-hidden="true">·</span><span>added ${VS.ui.dateText(w.added)}</span></p>`
                   : html`<p class="word-memory-line"><span>Next recall</span> <b>${whenText(e.due)}</b></p>
-                    ${VS.ui.ruler(e.box, true)}
-                    <span class="word-memory-score" title="Right and wrong answers">${e.right} right · ${e.wrong} wrong</span>`}
+                    <span class="word-memory-right" title="${e.right} right · ${e.wrong} wrong">${VS.ui.ruler(e.box, true)}<span class="word-memory-score">${e.right} right · ${e.wrong} wrong</span></span>`}
               </div>
 
               <div class="word-secs" role="group" aria-label="More about this word">
-                ${traps.length ? sec("mistakes", "Common mistakes", traps.length, "bulb") : ""}
-                ${mine.length ? sec("mine", "Your sentences", mine.length, "pen")
-                  : html`<a class="word-sec" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}<span>Write a sentence</span></a>`}
-                ${related ? sec("related", "Goes with", 0, "link") : ""}
-                ${tips.length ? sec("sound", "Sound tips", tips.length, "volume") : ""}
-                ${sec("note", note ? "My note" : "Add a note", 0, "bulb")}
+                ${traps.length ? sec("mistakes", "Mistakes", traps.length, "target") : ""}
+                ${mine.length ? sec("mine", "Sentences", mine.length, "pen")
+                  : html`<a class="word-sec" href="#/word/write?id=${encodeURIComponent(w.id)}" title="Write a sentence with this word">${icon("pen", "icon-sm")}<span>Use it</span></a>`}
+                ${related ? sec("related", "Goes with", 0, "match") : ""}
+                ${tips.length ? sec("sound", "Sounds", tips.length, "volume") : ""}
+                ${sec("note", "Note", note ? "✓" : 0, "bulb")}
               </div>
               ${traps.length ? html`<div class="word-panel" data-panel="mistakes" hidden>${VS.ui.usage(w)}</div>` : ""}
               ${mine.length ? html`<div class="word-panel" data-panel="mine" hidden>
@@ -961,7 +960,7 @@
           ${moved && moved.length ? html`
             <div class="summary-moved">
               <h2 class="summary-sub">Moving forward</h2>
-              <ul>${moved.slice(0, 8).map((m) => html`<li><mark class="mark">${m.word}</mark>${VS.ui.ruler(m.box, true)}<span>comes back ${m.when}</span></li>`)}</ul>
+              <ul>${moved.slice(0, 8).map((m) => html`<li><mark class="mark">${VS.cap(m.word)}</mark>${VS.ui.ruler(m.box, true)}<span>comes back ${m.when}</span></li>`)}</ul>
               ${moved.length > 8 ? html`<p class="hint">and ${moved.length - 8} more</p>` : ""}
             </div>` : ""}
           <div class="summary-actions">

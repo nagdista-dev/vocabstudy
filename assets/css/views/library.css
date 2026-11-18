@@ -417,3 +417,15 @@
 .ai-fill-status { margin: 0; padding: 0 var(--s-3) var(--s-3); font-size: var(--text-sm); font-weight: 600; color: var(--good); }
 .ai-fill-status:empty { display: none; }
 .word-edit .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+
+/* Card polish (v11.3): flags never break mid-phrase; the memory line stays one line. */
+.word-row-flag { white-space: nowrap; display: inline-block; }
+.word-memory { flex-wrap: nowrap; justify-content: space-between; }
+.word-memory-line { flex-wrap: nowrap; white-space: nowrap; }
+.word-memory-right { display: inline-flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.word-memory .word-memory-score { margin: 0; }
+@container word-entry (max-width: 420px) {
+  .word-memory .word-memory-score { display: none; }     /* the ruler says it; the numbers wait in the tooltip */
+}
+.word-secs { gap: 6px; }
+.word-sec { padding: 0 10px; }

@@ -133,7 +133,7 @@
           <div class="activity-stage stage-center">
           <section class="write card">
             <div class="write-word">
-              <p class="write-headword"><span class="mark">${w.word}</span></p>
+              <p class="write-headword"><span class="mark">${VS.cap(w.word)}</span></p>
               <div class="row">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
               ${w.arabic ? html`<p class="write-ar" lang="ar">${w.arabic}</p>` : ""}
               ${w.definition ? html`<p class="write-def">${w.definition}</p>` : ""}

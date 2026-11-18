@@ -181,7 +181,7 @@
             const s = VS.store.status(w.id);
             return html`<li>
               <a class="recent-row ${w.word.length > 14 ? "is-long" : ""}" href="#/words?q=${encodeURIComponent(w.word)}">
-                <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b>${w.word}</b></span>
+                <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b>${VS.cap(w.word)}</b></span>
                 <span class="recent-ar" lang="ar">${w.arabic || (waiting ? "…" : "—")}</span>
                 <span class="recent-meta">${waiting ? html`<span>Filling in…</span>` : html`<span class="recent-state" data-s="${s}">${s === "new" ? "New" : s === "learning" ? "Learning" : "Mastered"}</span>`}${[w.type, w.level].filter(Boolean).map((x) => " · " + x).join("")}</span>
               </a>

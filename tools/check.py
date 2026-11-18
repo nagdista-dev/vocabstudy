@@ -97,6 +97,17 @@ def check_mcp(errors: list[str]) -> None:
         errors.extend("mcp: " + line.strip() for line in run.stdout.splitlines() if "FAIL" in line)
 
 
+def check_icons(errors: list[str]) -> None:
+    """Every icon("name") used in the app exists in core/icons.js (a missing one renders as an empty gap)."""
+    src = (ROOT / "assets" / "js" / "core" / "icons.js").read_text(encoding="utf-8")
+    known = set(re.findall(r"^\s+\"?([a-z][a-z-]*)\"?:\s*'", src, re.M))
+    for f in sorted((ROOT / "assets" / "js").rglob("*.js")):
+        for n, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+            for name in re.findall(r"icon\(\s*\"([a-z][a-z-]*)\"", line):
+                if name not in known:
+                    errors.append(f"{f.relative_to(ROOT)}:{n}: icon “{name}” doesn't exist in core/icons.js")
+
+
 def check_old_safari(errors: list[str]) -> None:
     """No regex lookbehind in the app's JS: Safari before 16.4 can't parse it and the whole file stops working."""
     for f in sorted((ROOT / "assets" / "js").rglob("*.js")):
@@ -137,6 +148,7 @@ def main(argv: list[str]) -> int:
     check_mcp(errors)
     check_overrides(errors)
     check_old_safari(errors)
+    check_icons(errors)
     for e in errors:
         print(f"  ERROR    {e}")
     print(f"check {'FAILED' if errors else 'OK'}: {len(errors)} error(s)")

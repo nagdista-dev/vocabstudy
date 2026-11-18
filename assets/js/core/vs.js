@@ -170,6 +170,8 @@
   VS.dateKey = (d) =>
     d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   VS.todayKey = () => VS.dateKey(new Date());
+  /** A word as a title: first letter capital ("Achieve", "Take off"). Display only — stored words and answer checks never change. */
+  VS.cap = (s) => { const t = String(s || ""); return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; };
   /** A word's IPA as learners see it: one way to write r (/ɹ/ → /r/), no
       dictionary syllable dots, and optional sounds written in, not in
       brackets (/ˈæk.(t)ʃu.ə.li/ → /ˈæktʃuəli/). The stress dots still read the original. */
