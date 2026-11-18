@@ -64,8 +64,9 @@
 }
 .chip-n { color: var(--ink-3); font-size: var(--text-badge); font-variant-numeric: tabular-nums; }
 .chip:hover { border-color: var(--line-strong); color: var(--ink); }
-.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
-.chip[aria-pressed="true"] .chip-n { color: color-mix(in srgb, var(--surface) 68%, transparent); }
+/* The chosen filter wears the action colour (it follows Settings → Accent), never black ink. */
+.chip[aria-pressed="true"] { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); font-weight: 700; }
+.chip[aria-pressed="true"] .chip-n { color: var(--brand); opacity: .8; }
 .chip:disabled { opacity: .4; pointer-events: none; }
 
 /* ── Filter sheet ───────────────────────────────────────────────
