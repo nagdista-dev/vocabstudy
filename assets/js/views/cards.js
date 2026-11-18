@@ -210,10 +210,14 @@
           <div class="activity-stage stage-center">
             ${card(w)}
           </div>
-          <div class="action-bar">
-            <button class="btn btn-lg btn-bad" type="button" data-action="grade" data-grade="again" ${s.flipped ? "" : VS.raw("disabled")}>
+          <!-- One clear step at a time: "Show" until the card is turned, then the two answers
+               (faded, disabled answers read as broken). -->
+          <div class="action-bar card-bar ${s.flipped ? "is-flipped" : ""}">
+            <button class="btn btn-lg btn-primary card-show" type="button" data-action="flip">
+              ${icon("flip", "icon-sm")} ${VS.store.settings().cardFront === "ar" || s.met.length ? "Show the English" : "Show the meaning"} <kbd>Space</kbd></button>
+            <button class="btn btn-lg btn-bad card-grade" type="button" data-action="grade" data-grade="again">
               ${icon("arrow-left", "icon-sm")} Still learning <kbd>1</kbd></button>
-            <button class="btn btn-lg btn-good" type="button" data-action="grade" data-grade="good" ${s.flipped ? "" : VS.raw("disabled")}>
+            <button class="btn btn-lg btn-good card-grade" type="button" data-action="grade" data-grade="good">
               I know it ${icon("arrow-right", "icon-sm")} <kbd>2</kbd></button>
           </div>
         </div>`;
@@ -264,8 +268,9 @@
         VS.sfx.play("flip");
         if (s.flipped && VS.store.settings().cardFront === "ar") VS.speech.auto(s.queue[s.index].word);
         VS.$(".flash").classList.toggle("is-flipped", s.flipped);
-        // The answer comes after the check: the two buttons wake up once the card is turned.
-        VS.$$('[data-action="grade"]').forEach((b) => { b.disabled = !s.flipped; });
+        // The answer comes after the check: "Show" gives way to the two answers once the card is turned.
+        const bar = VS.$(".card-bar");
+        if (bar) bar.classList.toggle("is-flipped", s.flipped);
         VS.$$(".flash-face").forEach((f) => f.setAttribute("aria-hidden", f.classList.contains("flash-back") ? !s.flipped : s.flipped));
       },
       grade(el) {

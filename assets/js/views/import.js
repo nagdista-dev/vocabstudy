@@ -173,11 +173,8 @@
       </section>`;
     return html`
       <section class="card import-step import-side" id="recentBox" aria-labelledby="recent-title">
-        <div class="section-title"><h2 id="recent-title">${st.recent.length ? "Just added" : "Latest words"}</h2>
-          <span class="row">
-            <a class="btn btn-quiet" href="#/words?sort=newest">See all</a>
-            <a class="btn btn-tonal" href="#/new/cards">${icon("cards", "icon-sm")} Learn</a>
-          </span></div>
+        <div class="section-title recent-head"><h2 id="recent-title">${st.recent.length ? "Just added" : "Newest words"}</h2>
+          <a class="recent-all" href="#/words">All words ${icon("arrow-right", "icon-sm")}</a></div>
         <ul class="recent-list" aria-live="polite">
           ${words.slice(0, 6).map((w) => {
             const waiting = VS.autofill.pending(w.id);
@@ -186,11 +183,12 @@
               <a class="recent-row ${w.word.length > 14 ? "is-long" : ""}" href="#/words?q=${encodeURIComponent(w.word)}">
                 <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b>${w.word}</b></span>
                 <span class="recent-ar" lang="ar">${w.arabic || (waiting ? "…" : "—")}</span>
-                <span class="recent-meta">${[w.type, w.level, waiting ? "filling in…" : s === "new" ? "new" : s].filter(Boolean).join(" · ")}</span>
+                <span class="recent-meta">${waiting ? html`<span>Filling in…</span>` : html`<span class="recent-state" data-s="${s}">${s === "new" ? "New" : s === "learning" ? "Learning" : "Mastered"}</span>`}${[w.type, w.level].filter(Boolean).map((x) => " · " + x).join("")}</span>
               </a>
             </li>`;
           })}
         </ul>
+        ${VS.newLeftToday() && VS.store.newWords().length ? html`<a class="btn btn-tonal recent-learn" href="#/new/cards">${icon("cards", "icon-sm")} Learn the new ones</a>` : ""}
       </section>`;
   }
 
@@ -481,7 +479,7 @@
         <div class="page import-page ${st.tab === "type" ? "is-type" : ""} view-enter">
           <header class="page-head"><div>
             <h1>Add words</h1>
-            <p class="hint">Into your library — ${VS.plural(VS.allWords().length, "word")} so far. Your words stay on this device; to fill in a meaning, only the English word is looked up online.</p>
+            <p class="hint">${VS.plural(VS.allWords().length, "word")} so far. Only the English word is looked up online — your words stay on this device.</p>
           </div></header>
 
           <section class="card import-step import-main">

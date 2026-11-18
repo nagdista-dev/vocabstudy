@@ -146,3 +146,10 @@
 
 /* Accuracy before 30 answers (core/week.js VS.accuracyText): a quiet "after 30", not a number. */
 .muted-num { color: var(--ink-3); font-size: var(--text-sm); font-weight: 500; }
+
+/* Progress, polish (v11.1): a countdown is not a number — quiet, body type; and on a
+   phone the charts are short enough that three fit in the time one used to. */
+.stat-tiles .muted-num { font: 500 var(--text-sm)/1.4 var(--font-body); color: var(--ink-3); }
+@media (max-width: 599px) {
+  .bars { height: 112px; padding-top: 18px; }
+}

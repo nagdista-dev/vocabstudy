@@ -321,3 +321,7 @@
   border-inline-start: 3px solid var(--note); color: var(--ink-2); font-size: var(--text-sm); }   /* a margin note, not a card in a card */
 .write-ask b { color: var(--note-ink); }
 .write-ask .row { gap: var(--s-2); }
+
+/* Learn: "Show" until the card turns, then the two answers in its place. */
+.card-bar:not(.is-flipped) .card-grade { display: none; }
+.card-bar.is-flipped .card-show { display: none; }

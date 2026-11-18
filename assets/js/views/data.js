@@ -125,7 +125,7 @@
           </section>
 
           <p class="hint data-foot">A CSV export can be added back with <a href="#/add">Add words</a> → Upload files.
-            Print sheets and PDFs are in the <a href="#/print/all">library print screen</a>.</p>
+            Word sheets and PDFs: <a href="#/print/all">Print &amp; PDF</a>.</p>
         </div>`;
     },
 

@@ -185,3 +185,12 @@
 .collect-chip { display: inline-flex; align-items: baseline; gap: var(--s-2); }
 .collect-chip bdi { font-family: var(--font-arabic); font-weight: 500; color: var(--ink-2); }
 .collect-join { margin-top: var(--s-2); }
+
+/* Add → the newest words: a small link to all of them, one clear way to learn the new ones. */
+.recent-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.recent-all { display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); font-size: var(--text-sm); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.recent-all:hover { text-decoration: underline; }
+.recent-state { font-weight: 600; }
+.recent-state[data-s="learning"] { color: var(--on-mark-soft); }
+.recent-state[data-s="mastered"] { color: var(--good); }
+.recent-learn { justify-self: start; margin-top: var(--s-3); }
