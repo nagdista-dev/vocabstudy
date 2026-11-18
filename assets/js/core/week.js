@@ -106,6 +106,7 @@
   /* Accuracy after 7 answers on day 1 ("29%") says more about luck than about
      the learner. It shows from 30 answers on; before that, how many are left. */
   const ACCURACY_FROM = 30;
+  VS.ACCURACY_FROM = ACCURACY_FROM;
   VS.accuracyText = (right, answered) => answered >= ACCURACY_FROM
     ? Math.round((right / answered) * 100) + "%"
     : VS.html`<span class="muted-num">shows at ${ACCURACY_FROM} answers (${answered} so far)</span>`;

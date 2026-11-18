@@ -155,9 +155,9 @@
         ${added
           ? html`<p class="hint">${icon("check", "icon-sm")} Daily reminder in your calendar (${added}).
               <button class="link-btn" type="button" data-action="daily-reminder">Add it again</button></p>`
-          : html`<button class="btn btn-tonal" type="button" data-action="daily-reminder">${icon("clock", "icon-sm")}
-              Add a daily reminder to my calendar (${hourText(reminderAt())})</button>
-              <span class="hint">Saves a small calendar file — open it to add the reminder.</span>`}
+          : html`<button class="btn today-remind" type="button" data-action="daily-reminder" aria-describedby="reminderNote">${icon("clock", "icon-sm")}
+              Daily reminder · ${hourText(reminderAt())}</button>
+              <span class="today-tomorrow-note" id="reminderNote">Adds a daily event to your calendar: it saves a small file — open it once.</span>`}
       </div>`;
   }
 

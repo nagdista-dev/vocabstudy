@@ -5,8 +5,9 @@
 The learner is an adult (B1–C1 words) who may study for **six hours a day**.
 Everything serves long, focused sessions:
 
-- **Light by default, Night for the dark room** (V6, Settings → Look → Theme:
-  Light / Night / Auto). Night is a navy desk, not black; every colour has a
+- **Light by default, Night for the dark room** (V6, Settings → Basics → Theme:
+  Light / Night / Auto). The app always opens Light; Night only when the
+  learner chooses it (or chooses Auto on a dark device). Night is a navy desk, not black; every colour has a
   night token in `tokens.css`, the ten accents get a light tint and mix their
   soft fill and hover from it, the highlighter becomes a muted yellow band
   behind the whole word with dark text, and green / red stay ≥ 4.5:1.

@@ -339,9 +339,9 @@
      changes with it (sunset on a phone set to automatic). The <head>
      script in tools/templates/page.html does the same before first paint. */
   const darkQuery = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
-  const nightNow = (theme) => theme === "night" || (theme !== "light" && !!(darkQuery && darkQuery.matches));
+  const nightNow = (theme) => theme === "night" || (theme === "auto" && !!(darkQuery && darkQuery.matches));
   function applyTheme() {
-    const night = nightNow(VS.store.settings().theme || "auto");
+    const night = nightNow(VS.store.settings().theme || "light");
     document.documentElement.dataset.theme = night ? "night" : "light";
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = night ? "#0f1420" : "#f3f5f9";
@@ -497,6 +497,7 @@
       const raw = el.dataset.value;
       const value = raw === "true" ? true : raw === "false" ? false : isNaN(raw) ? raw : Number(raw);
       VS.store.setSetting(el.dataset.name, value);
+      if (el.dataset.name === "theme") VS.store.setSetting("themeChosen", true);    // their choice: never reset to light
       applySettings();
       redrawSettings();
       if (el.dataset.name === "rate") VS.speech.say("This is how words will sound.");

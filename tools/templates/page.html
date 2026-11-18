@@ -24,8 +24,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>
 /* Night before the first paint (V6): same rule as applyTheme() in app.js. */
-try { var t = (JSON.parse(localStorage.getItem("vocabstudy") || "{}").settings || {}).theme || "auto";
-  if (t === "night" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.dataset.theme = "night";
+try { var s = JSON.parse(localStorage.getItem("vocabstudy") || "{}").settings || {}, t = s.theme || "light";
+  /* Light unless the learner chose Night, or chose Auto on a dark device. */
+  if (t === "night" || (t === "auto" && s.themeChosen && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.dataset.theme = "night";
 } catch (e) {}
 </script>
 {{STYLES}}

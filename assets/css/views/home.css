@@ -465,7 +465,7 @@
   .today-top { grid-area: top; }
   .today-copy { grid-area: copy; }
   .today-cta { grid-area: cta; align-self: center; }
-  .today-steps { grid-area: steps; }
+  .today-steps { grid-area: steps; grid-column: 1 / -1; }
   .today-copy h1 { font-size: 2rem; }
   .quick-add.is-compact { max-width: none; margin-top: var(--s-4); }
   .lib-head { margin-top: var(--s-6); }
@@ -480,9 +480,8 @@
   }
   .home-rail { display: grid; gap: var(--s-3); position: sticky; top: calc(var(--bar-h) + var(--s-4)); }
   .today-steps .is-quick { display: none; }
-  /* A word opened on a desktop reads at full width: the rail steps aside while it's open (V3.10). */
-  .home-grid:has(.word-row[open]), .words-page .home-grid { grid-template-columns: minmax(0, 1fr); }
-  .home-grid:has(.word-row[open]) .home-rail { display: none; }
+  /* The rail stays beside an open word: the week and progress never vanish (owner's call). */
+  .words-page .home-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ── Desktop rail ───────────────────────────────────────────────
@@ -532,10 +531,31 @@
 .rail-stats > div:first-child { padding-top: 0; border-top: 0; }
 .rail-stats dt { color: var(--ink-3); font-size: var(--text-2xs); }
 .rail-stats dd { margin: 0; font-family: var(--font-display); font-size: var(--text-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Not enough answers yet: a quiet countdown, not a bold sentence squeezed into a number's place. */
+.rail-stats .rail-later { font-family: var(--font-body); font-size: var(--text-2xs); font-weight: 500; color: var(--ink-3); white-space: nowrap; }
 
 /* "Tomorrow: 6 words · about 2 min" + the daily calendar reminder (views/home.js). */
-.today-tomorrow { display: grid; gap: var(--s-2); margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--hairline); }
+/* Tomorrow: one row across the whole card — what comes back, and the reminder
+   beside it; the small print under both. On a phone the button follows the line. */
+.today-tomorrow {
+  grid-column: 1 / -1; display: grid; gap: var(--s-2) var(--s-4); align-items: center;
+  padding-top: var(--s-4); border-top: 1px solid var(--hairline);
+}
 .today-tomorrow p { margin: 0; color: var(--ink-2); }
 .today-tomorrow b { color: var(--ink); }
-.today-tomorrow .btn { justify-self: start; min-height: var(--tap); }
+.today-tomorrow .btn { justify-self: start; min-height: var(--tap); white-space: nowrap; }
+/* On the tinted card a tonal button vanished into the tint: a white key, brand ink. */
+.today-remind { background: var(--surface); color: var(--brand); border-color: color-mix(in srgb, var(--brand) 22%, var(--line)); }
+.today-remind:hover { border-color: var(--brand); }
+.today-tomorrow .today-tomorrow-note { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--ink-3); }
 .today-tomorrow .hint .icon { vertical-align: -2px; color: var(--good); }
+@media (min-width: 600px) {
+  .today-tomorrow { grid-template-columns: minmax(0, 1fr) auto; }
+  .today-tomorrow .btn { justify-self: end; }
+}
+@media (max-width: 599px) {
+  .today-goal-unit { display: none; }      /* "Daily goal 2 / 100" fits beside the streak on one line */
+  .today-top { flex-wrap: nowrap; }
+  .today-goal { flex: 0 1 auto; min-width: 0; }
+  .today-goal-track { width: 40px; }
+}

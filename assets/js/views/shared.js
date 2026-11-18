@@ -720,16 +720,16 @@
                 ${w.tags.length ? html`<div class="word-tags">${VS.ui.tags(w)}</div>` : ""}
                 <div class="word-record">
                   ${s === "new"
-                    ? html`<span>Added ${VS.ui.dateText(w.added)} · not studied yet</span>`
+                    ? html`<p class="word-record-head"><span>Not studied yet</span><b>Added ${VS.ui.dateText(w.added)}</b></p>`
                     : html`
-                      <span>Next recall <b>${whenText(e.due)}</b></span>
+                      <p class="word-record-head"><span>Next recall</span><b>${whenText(e.due)}</b></p>
                       ${VS.ui.ruler(e.box)}
-                      <span class="word-score">${e.right} right · ${e.wrong} wrong</span>`}
+                      <p class="word-score"><span class="is-right">${e.right} right</span><span aria-hidden="true">·</span><span>${e.wrong} wrong</span></p>`}
                 </div>
-                <div class="word-manage">
-                  ${s === "new" ? "" : html`<button class="word-manage-btn" type="button" data-action="forget" data-id="${w.id}">Reset to new</button>`}
-                  <button class="word-manage-btn" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>
-                  <button class="word-manage-btn danger" type="button" data-action="word-delete" data-id="${w.id}">Delete</button>
+                <div class="word-manage" role="group" aria-label="Manage this word">
+                  <button class="word-manage-btn" type="button" data-action="word-edit" data-id="${w.id}">${icon("pen", "icon-sm")}<span>Edit</span></button>
+                  ${s === "new" ? "" : html`<button class="word-manage-btn" type="button" data-action="forget" data-id="${w.id}" title="Reset to new">${icon("review", "icon-sm")}<span>Reset</span></button>`}
+                  <button class="word-manage-btn danger" type="button" data-action="word-delete" data-id="${w.id}">${icon("x", "icon-sm")}<span>Delete</span></button>
                 </div>
               </aside>
             </div>

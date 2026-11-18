@@ -42,7 +42,7 @@
     milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 50, effects: true,
-                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "ar", newPerDay: 10, autofill: true, grammarOnline: "ask", theme: "auto", speak: false,
+                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "ar", newPerDay: 10, autofill: true, grammarOnline: "ask", theme: "light", speak: false,
                 quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 
@@ -55,6 +55,9 @@
         settings: Object.assign({}, DEFAULTS.settings, saved.settings),
       });
       // Daily goal choices are 20 / 50 / 100 / 200 now: an old 150, 300 or 600 moves to the nearest one.
+      // Light for everyone unless they chose Night or Auto themselves: an "auto" saved
+      // as the old default (before anyone picked it) goes back to light.
+      if (st.settings.theme === "auto" && !st.settings.themeChosen) st.settings.theme = "light";
       const g = st.settings.dailyGoal;
       if (g && ![20, 50, 100, 200].includes(g)) st.settings.dailyGoal = g < 75 ? 50 : g < 150 ? 100 : g <= 150 ? 100 : 200;
       return st;

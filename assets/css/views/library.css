@@ -247,8 +247,8 @@
   overflow-wrap: anywhere;
 }
 .word-ex-tools {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: 4px 16px; min-width: 0; max-width: 31rem;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start;
+  gap: 4px var(--s-5); min-width: 0;
 }
 .word-ex-tools .more-ex { display: contents; }
 .word-ex-tools .more-ex-list { flex: 1 1 100%; min-width: 0; }
@@ -293,23 +293,33 @@
 }
 .word-margin .note textarea { background: var(--surface); }
 .word-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.word-record { display: grid; gap: 3px; font-size: var(--text-xs); color: var(--ink-3); }
-.word-record b { color: var(--ink-2); font-weight: 600; }
-.word-score { white-space: nowrap; }
-.word-manage { display: flex; flex-wrap: wrap; align-items: center; }
-.word-manage-btn {
-  min-height: var(--tap); padding: 0 var(--s-3);
-  border: 0; background: none; font: inherit; cursor: pointer;
-  color: var(--ink-3); font-size: var(--text-xs); font-weight: 600;
+/* Where the word stands: one small box — when it comes back, the ruler, the score. */
+.word-record {
+  display: grid; gap: var(--s-2); padding: var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+  font-size: var(--text-xs); color: var(--ink-3);
 }
-.word-manage-btn:hover { color: var(--ink); }
-.word-manage-btn + .word-manage-btn { border-inline-start: 1px solid var(--line); }
+.word-record p { margin: 0; }
+.word-record-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-2); }
+.word-record-head b { color: var(--ink); font-weight: 700; font-size: var(--text-sm); }
+.word-record .ruler-mini { max-width: none; }
+.word-score { display: flex; gap: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.word-score .is-right { color: var(--good); font-weight: 600; }
+/* Edit · Reset · Delete: three equal, quiet buttons in one row. */
+.word-manage { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--s-2); }
+.word-manage-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: var(--tap); padding: 0 var(--s-2);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+  font: inherit; cursor: pointer; color: var(--ink-2); font-size: var(--text-xs); font-weight: 600; white-space: nowrap;
+}
+.word-manage-btn:hover { color: var(--ink); border-color: var(--line-strong); }
 .word-manage-btn.danger { color: var(--bad); }
-.word-manage-btn.danger:hover { color: color-mix(in srgb, var(--bad) 78%, black); }
+.word-manage-btn.danger:hover { border-color: var(--bad); background: var(--bad-soft); }
 
 @container word-entry (min-width: 620px) {
   .word-entry {
-    grid-template-columns: minmax(0, 1fr) clamp(180px, 30%, 220px);
+    grid-template-columns: minmax(0, 1fr) clamp(220px, 34%, 260px);
     column-gap: var(--s-5); align-items: start;
   }
   .word-sound { grid-column: 1 / -1; }
@@ -317,9 +327,12 @@
   .word-margin {
     grid-column: 2; margin-top: 0; padding-top: 0;
     border-top: 0; border-inline-start: 1px solid var(--line);
-    padding-inline-start: var(--s-4);
+    padding-inline-start: var(--s-5);
   }
   .word-write { width: auto; }
+  /* In the narrow margin the three actions stack as a short list, never broken mid-word. */
+  .word-manage { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--s-1); }
+  .word-manage-btn { justify-content: flex-start; padding: 0 var(--s-3); }
 }
 
 @media (pointer: coarse), (max-width: 599px) {
@@ -447,3 +460,18 @@
 
 /* An opened word scrolls up to sit just under the app bar, not behind it (app.js toggle). */
 .word-row { scroll-margin-top: calc(var(--bar-h) + var(--s-2)); }
+
+
+/* ── The open word's header (v10 final) ──────────────────────────
+   Opening a row turns its line into the page title: the word large in the
+   word face, the Arabic on its own line beneath — not two small labels. */
+.word-row[open] > summary {
+  grid-template-columns: minmax(0, 1fr) 20px;
+  grid-template-areas: "word chev" "ar chev" "meta chev";
+  row-gap: 4px; padding-block: var(--s-4) var(--s-3);
+}
+.word-row[open] .word-row-word b { font-size: clamp(1.45rem, 1.2rem + 1vw, 1.85rem); font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+.word-row[open] .word-row-dot { margin-top: .62em; width: 8px; height: 8px; }
+.word-row[open] .word-row-ar { max-width: none; justify-self: start; text-align: left; color: var(--ink); font-size: 1.2rem; line-height: 1.5; }   /* under the word, not across the card */
+.word-row[open] .word-row-ar.hint { font-size: var(--text-sm); color: var(--ink-3); }
+.word-row[open] .word-row-meta { white-space: normal; }

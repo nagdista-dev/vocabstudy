@@ -251,7 +251,8 @@
           <dl class="rail-stats">
             <div><dt>Streak</dt><dd>${t.streak} ${t.streak === 1 ? "day" : "days"}</dd></div>
             <div><dt>Mastered</dt><dd>${t.mastered} / ${t.words}</dd></div>
-            <div><dt>Accuracy</dt><dd>${VS.accuracyText(right, answered)}</dd></div>
+            <div><dt>Accuracy</dt><dd>${answered >= VS.ACCURACY_FROM ? VS.accuracyText(right, answered)
+              : html`<span class="rail-later">after ${VS.ACCURACY_FROM - answered} more ${VS.ACCURACY_FROM - answered === 1 ? "answer" : "answers"}</span>`}</dd></div>
           </dl>
         </section>
       </aside>`;
