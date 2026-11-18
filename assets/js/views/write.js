@@ -136,7 +136,7 @@
               ${VS.ui.goes(w)}
               <label class="form-field">
                 <span>Write a sentence about <b>your own life</b> with “${w.word}”</span>
-                <textarea id="writeInput" rows="3" maxlength="300" spellcheck="true" lang="en" enterkeyhint="done"
+                <textarea dir="auto" id="writeInput" rows="3" maxlength="300" spellcheck="true" lang="en" enterkeyhint="done"
                   placeholder="${IDEAS[(s.idea + s.index) % IDEAS.length]}" ${done ? VS.raw("readonly") : ""}>${s.draft}</textarea>
               </label>
             </form>

@@ -91,13 +91,13 @@
 .option kbd.opt-key {
   display: grid; place-items: center; flex: none; width: 27px; height: 27px; border-radius: 7px;
   background: var(--surface-2); color: var(--ink-2);
-  font: 700 .78rem/1 var(--font-body); letter-spacing: 0;
+  font: 700 var(--text-xs)/1 var(--font-body); letter-spacing: 0;
 }
 .opt-letter { display: none; }
 .option:disabled { cursor: default; }
 .option:disabled:not(.is-right):not(.is-wrong) { opacity: .55; }
 .option.is-right { border-color: var(--good); background: var(--good-soft); color: var(--good); }
-.option.is-wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); animation: shake 300ms; }
+.option.is-wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); animation: shake var(--slow); }
 .option.is-right kbd, .option.is-wrong kbd { background: transparent; color: inherit; }
 
 .feedback {
@@ -158,7 +158,7 @@
 }
 .tile:hover:not(:disabled) { border-color: var(--brand); }
 .tile.is-on { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.tile.is-wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); animation: shake 300ms; }
+.tile.is-wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); animation: shake var(--slow); }
 .tile.is-done { border-color: transparent; background: var(--good-soft); color: var(--good); opacity: .55; cursor: default; }
 .tile .sense { font-size: var(--text-sm); }
 
@@ -180,7 +180,7 @@
 .summary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-3); margin-top: var(--s-3); }
 
 /* ── Phones ────────────────────────────────────────────────────── */
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .options { grid-template-columns: 1fr; gap: 8px; }
   .option { min-height: 56px; padding: 10px 12px; gap: 10px; font-size: 1rem; border-width: 1px; }
   .option kbd.opt-key { width: 30px; height: 30px; border-radius: 8px; background: var(--paper); }
@@ -212,7 +212,7 @@
 .speak { display: grid; justify-items: center; gap: var(--s-3); padding: clamp(24px, 5vw, 44px) var(--s-5); text-align: center; }
 .speak-ar { font-size: 1.35rem; font-weight: 600; color: var(--ink-2); }
 .speak-word { font-family: var(--font-word); font-weight: 700; font-size: clamp(2.1rem, 1.4rem + 3.4vw, 3.3rem); line-height: 1.15; overflow-wrap: anywhere; }
-.speak-word .mark { animation: mark-draw 560ms var(--ease) 120ms both; background-repeat: no-repeat; }
+.speak-word .mark { animation: mark-draw var(--draw) var(--ease) var(--fast) both; background-repeat: no-repeat; }
 .speak-sound { justify-content: center; }
 .speak-sound .ipa { font-size: 1.15rem; }
 .speak .traps { padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface-2); }
@@ -240,7 +240,7 @@
 .action-bar .btn.is-suggested { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px currentColor; }
 .btn-undo { margin-inline-start: auto; min-height: var(--tap); min-width: var(--tap); padding: 0 var(--s-3); font-size: var(--text-sm); color: var(--ink-2); }
 .btn-undo + .count { margin-inline-start: var(--s-2); }
-@media (max-width: 420px) {
+@media (max-width: 599px) {
   .btn-undo span { display: none; }
 }
 

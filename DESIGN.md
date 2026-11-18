@@ -29,9 +29,74 @@ Everything serves long, focused sessions:
 | `--brand` | `#2b48d6` | actions, links, current step |
 | accent sets | teal `#0a6f6a`, sky `#0e6688`, violet `#6a3fc4`, plum `#8a2f6b`, rose `#b8325f`, cocoa `#7a4a2b`, amber `#8a5600`, graphite `#3d4452` | optional action colours; each brings its own hover and soft tint |
 | `--brand` (glass) | `#26384a` · hover `#17283a` · soft `#eef4f8` | the tenth accent; swaps the action surfaces for the Liquid Glass material (`glass.css`) |
-| `--mark` | `#ffe066` | the highlighter: words being learned, due counts, rewards |
+| `--mark` | `#ffe066` | the highlighter: **memory only** — the word being learned and the count that is due |
+| `--note` / `-soft` / `-line` / `-ink` | `#3b5b8c` / `#eef2f8` / `#c8d3e6` / `#22344f` | the app asking or warning: "Which meaning?", spelling checks, flags, status lines, milestones |
 | `--good` / `--bad` | `#0f744f` / `#b3302f` | right / wrong (≥ 5:1 on their soft fills) |
 | `--lvl-a/b/c` | teal / blue / violet | CEFR level badges |
+
+## The system (`assets/css/system.css`, v10 V3)
+
+One rule per concern, written once. Screens use them; they never restate them.
+
+**Breakpoints — three, and only these:**
+
+| Name | Width | Queries |
+| --- | --- | --- |
+| phone | < 600px | `max-width: 599px` (narrow phones: `max-width: 374px`) |
+| tablet | 600–1023px | `min-width: 600px` / `max-width: 1023px` |
+| desktop | ≥ 1024px | `min-width: 1024px` |
+
+`about.html` is a marketing page with its own reading widths and is exempt.
+
+**Layers (`--z-*`):** base 1 · sticky 10 · bar 20 · float 30 · sheet 40 ·
+toast 50 · dialog 60. No raw z-index numbers anywhere. The toast, update bar
+and install card float above the action bar, never over a primary button.
+
+**Type floor:** nothing you read is under 13px (`--text-2xs` = .8125rem).
+The one exception is a number inside a badge (`--text-badge` = .75rem).
+Reading text is 15–17px; a definition longer than a line is left-aligned.
+
+**Touch:** every control is ≥ 44×44 (`--tap`) on every screen, phone or
+desktop. Small inline links (#tags, rail links, crumbs) keep their look and
+get an invisible `::after` hit ring.
+
+**Focus:** `outline: 2px solid var(--brand)` with offset — ≥ 3:1 on paper
+and surface. Never a soft shadow alone.
+
+**Buttons — four kinds and one icon button:**
+
+| Kind | Class | Use |
+| --- | --- | --- |
+| Primary | `.btn.btn-primary` | the one main action on a screen |
+| Secondary | `.btn.btn-tonal` (or plain `.btn`) | every other real action |
+| Quiet | `.btn-quiet`, `.link-btn`, `.word-manage-btn` | small actions inside content |
+| Danger | `.btn-danger` (cannot undo) / `.btn-danger-quiet` (a door to it) | loss |
+| Icon | `.icon-btn` | one size, `--tap` square, always with `aria-label` |
+
+`.btn-good` / `.btn-bad` are answer buttons (Know / Again), not a fifth kind.
+**Choice cards** (`.choice`, `.sense-opt`, `.ar-pick-opt`) are rows you pick
+one of — one border, brand on hover, brand-soft when chosen.
+
+**Status:** one treatment at every width — a dot beside the word and
+"New / Learning / Mastered" leading its meta line. No status pill.
+
+**Yellow means memory.** The highlighter marks the word being learned and the
+due count — nothing else. Questions, warnings, flags and milestones use
+`--note`. Counts that are not due (Learn, streak) are neutral.
+
+## Words we use (glossary)
+
+| Say | Means | Never |
+| --- | --- | --- |
+| Learn | the flash cards: Meet, then Check | Cards, Flashcards |
+| Recall | remember the English from the Arabic | Review, Test |
+| Quiz / Spell / Match / Speak / Use it | the other activities | — |
+| Due | a word whose day on the ruler has come | Overdue, Late |
+| New / Learning / Mastered | a word's status | Box 3, Level 2 |
+| Your words | the library | Deck, Collection |
+| Where you met it | the learner's own sentence | Context, Source |
+| Checked by hand | a meaning from `overrides.js` | Verified, Official |
+| Backup file | the exported `.json` | Export, Dump |
 
 ## Liquid Glass (`assets/css/glass.css`)
 
@@ -67,7 +132,7 @@ untouched.
 | Arabic | IBM Plex Sans Arabic | Set a step larger than the English, which looks the same size |
 | IPA | Charis SIL | A dictionary face with full IPA coverage |
 
-Scale: tuned for phones — 12 / 13 / 15 / 17 / 20 / 24 / 30 / 32–48px.
+Scale: tuned for phones — 13 / 15 / 17 / 20 / 24 / 30 / 32–48px (12px only for numbers in badges).
 Settings → Text size multiplies everything (`--text-scale`: Normal, Large 1.12,
 Larger 1.25).
 
@@ -176,7 +241,7 @@ JS). It keeps the same desk without imitating an app screen:
   Progress, Add) so the thumb reaches every destination.
 - Activities ≤1023px hide the app bar and show their own header: exit, title,
   scope, count, 4px progress. Print stays a browse screen and keeps the tab bar.
-- Phones (≤ 640px): answer buttons sit in a fixed opaque bar under the thumb;
+- Phones (≤ 599px): answer buttons sit in a fixed opaque bar under the thumb;
   options stack. Print swaps that bar for Download PDF + an icon-only Print,
   fixed above the tab bar.
 - Add is two columns from 1024px: form left, a 380px Latest words column right.
@@ -192,13 +257,13 @@ with 22-letter words and long Arabic meanings:
 - Nothing scrolls sideways. An input never widens its page (`.field` and
   `.add-line .field` have `min-width: 0`).
 - Every control ≥ 44px; the hero CTA 48px, tab links 54px tall.
-- Meta lines, tab labels and badge counts use 12px (`--text-2xs`); every other
-  line is 13px or larger at Normal.
+- Meta lines and tab labels use 13px (`--text-2xs`); only badge numbers are
+  12px (`--text-badge`).
 - Every form field is 16px or more on touch screens, or iPhone zooms the page.
 - Textareas never resize by hand; they grow with the text.
 - Choices never hide off-screen: the status filter scrolls with an edge fade,
   and its sheet drops to one column when a select needs the width.
-- Word rows keep status, type, level and frequency on the collapsed line; tags
+- Word rows keep status (dot + word), type, level and frequency on the collapsed line; tags
   wait in the expanded margin. A long word, or any word at 320px with Larger
   text, stacks its Arabic and meta under the headword instead of breaking the
   word mid-way.
@@ -305,23 +370,27 @@ screen:
 
 ## Motion (`assets/css/motion.css`)
 
-Motion shows what just happened and is over in under a second. Nothing
+Motion shows what just happened and is over in under a second. Four
+durations and one easing, from `tokens.css`: `--fast` 140ms (hover, press),
+`--base` 240ms (opening, leaving, answering), `--slow` 320ms (a screen
+arriving), `--draw` 560ms (the highlighter and meters), all on `--ease`.
+**Text you are about to read never fades in piece by piece** — the screen
+lifts in once, and only marks that carry meaning draw. Nothing
 animates layout: only opacity and transform move (the highlighter's
 `background-size` and the mic's shadow are paint-only). No blur, no filters.
 
 | Moment | Animation |
 | --- | --- |
 | A new screen | one 320ms lift and fade (`.view-enter`). Re-rendering the same screen drops the class first, so typing, filtering and answering never replay it |
-| Home on arrival | streak chip pops, goal track fills, practice chips rise in an 80–200ms cascade |
-| First run | the headline and example word draw their highlighters; the six recall ticks arrive in a 120–370ms cascade |
-| Recent words, week dots, stat tiles | a short rise / dot cascade, only on arrival |
-| A new quiz question | card and options rise in reading order (`q-fresh`) |
+| Home on arrival | streak chip pops, goal track fills; the chips are already still |
+| First run | the headline and example word draw their highlighters; the six recall ticks arrive 50ms apart |
+| A new quiz question | question and options fade in together (`q-fresh`) |
 | A new spelling or recall card | card settles in (`spell-fresh`, `recall-fresh`); hints and the reveal animate on their own |
 | A new word | highlighter draws in (560ms) |
 | Study card answered | card flies right (know) / left (learning); swipe on phones |
 | Right / wrong | pop / shake; the option's icon pops |
 | Streak of right answers | combo pill pulses |
-| Results | stats arrive in order; a perfect round gets highlighter confetti |
+| Results | arrive with their screen; a perfect round gets highlighter confetti |
 | Sheets, menus, opened rows | sheet lifts from the bottom edge, a menu scales from its trigger, a row body fades down |
 | Charts and the progress ring | bars rise and the ring draws once from its base |
 | Presses | options and tiles sink 1.5% while held, nav icons 6%; the hero arrow leans on hover |
@@ -334,6 +403,6 @@ is already visible.
 ## Files
 
 `tokens.css` → `base.css` → `components.css` → `views/*.css` → `motion.css`
-→ `glass.css`. Screens combine components; they never restyle them.
+→ `system.css` → `glass.css`. Screens combine components; they never restyle them.
 `glass.css` is the one material layer: every rule is scoped to
 `[data-accent="glass"]`, so no other accent matches it.

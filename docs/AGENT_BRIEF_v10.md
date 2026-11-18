@@ -2,7 +2,7 @@ You are a senior product designer and front-end engineer (35+ years of UI/UX). Y
 
 ## Project
 - Repo: /home/nagdista/Documents/programming/vocabstudy — plain HTML/CSS/JS PWA, no framework, no build step beyond `python3 tools/build.py` (it generates index.html and sw.js; never edit those two by hand).
-- Read first, fully: `PRODUCT.md`, `docs/DESIGN.md`, `docs/ARCHITECTURE.md`, and in `docs/PLAN.md` the sections **v9** (what was just shipped and why) and **v10** (sections 17–19: the review, the discussion, and the task list V0–V6). The v10 task list is your spec. It was written by the reviewer; you review it too — if a task is wrong or there's a better way, decide, do it, and write why in PLAN.md.
+- Read first, fully: `PRODUCT.md`, `DESIGN.md`, `docs/ARCHITECTURE.md`, and in `docs/PLAN.md` the sections **v9** (what was just shipped and why) and **v10** (sections 17–19: the review, the discussion, and the task list V0–V6). The v10 task list is your spec. It was written by the reviewer; you review it too — if a task is wrong or there's a better way, decide, do it, and write why in PLAN.md.
 - Run the app: `.claude/launch.json` has "vocab" (python http.server on 127.0.0.1:8791). Use the browser preview tools to verify.
 - Realistic data for every check: run the body of `tools/seed_learner.js` in the page (needs internet; ~40 s). It gives a learner two weeks in (22 words, 8 due, 3 mastered, notes, own sentences, an unsure sentence, a "Which meaning?" word).
 

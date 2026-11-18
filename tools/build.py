@@ -36,6 +36,7 @@ STYLES = [
     "assets/css/views/data.css",
     "assets/css/views/reset.css",
     "assets/css/motion.css",
+    "assets/css/system.css",        # the floors: 44px targets, visible focus, one stacking order (v10)
     "assets/css/glass.css",         # the tenth accent: Liquid Glass material
 ]
 SCRIPTS = [

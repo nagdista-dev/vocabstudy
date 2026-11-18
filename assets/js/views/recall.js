@@ -123,7 +123,7 @@
             <form class="recall-form" data-form="reveal" autocomplete="off">
               <label class="field">
                 <span class="sr-only">Type the English word (optional)</span>
-                <input id="recallInput" type="text" value="${s.draft || ""}" placeholder="Type the word… (optional)" spellcheck="false" autocapitalize="off" autocorrect="off"/>
+                <input dir="auto" id="recallInput" type="text" value="${s.draft || ""}" placeholder="Type the word… (optional)" spellcheck="false" autocapitalize="off" autocorrect="off"/>
               </label>
             </form>`}
       </article>`;

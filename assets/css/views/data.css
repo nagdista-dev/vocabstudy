@@ -8,9 +8,9 @@
 .file-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-4); }
 .file-type {
   display: grid; place-items: center; width: 46px; height: 54px; flex: none;
-  border-radius: 6px 12px 12px 6px; background: var(--mark-soft); color: var(--on-mark);
+  border-radius: 6px 12px 12px 6px; background: var(--note-soft); color: var(--note-ink);
   font-family: var(--font-display); font-size: var(--text-2xs); font-weight: 700; letter-spacing: .05em;
-  border-inline-start: 4px solid var(--mark);
+  border-inline-start: 4px solid var(--note);
 }
 .file-copy { display: grid; gap: 1px; min-width: 0; }
 .file-copy h2 { font-size: var(--text-lg); }
@@ -42,16 +42,16 @@
 }
 .data-start h2 { font-size: var(--text-md); }
 .data-start p { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; max-width: 58ch; }
-@media (min-width: 760px) {
+@media (min-width: 600px) {
   .data-start { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-6); }
 }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .data-start .btn { width: 100%; }
 }
 
 /* Wide screens: text on the left, its actions on the right, like a
    settings page. The hint under "Export words" still spans the row. */
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .data-row {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center; column-gap: var(--s-7);
@@ -62,7 +62,7 @@
   .data-row > .data-count { grid-column: 1 / -1; }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .file-card { padding: var(--s-4); }
   .file-head { grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); }
   .file-head > .btn { grid-column: 1 / -1; width: 100%; }

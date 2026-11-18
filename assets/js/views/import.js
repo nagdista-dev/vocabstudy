@@ -301,7 +301,7 @@
         <div class="collect-picked">
           ${chipsMarkup(phrases)}
           <label class="form-field"><span>Source (optional)</span>
-            <input id="collectSource" value="${c.source}" placeholder="A series, an article, an email…" autocomplete="off"></label>
+            <input dir="auto" id="collectSource" value="${c.source}" placeholder="A series, an article, an email…" autocomplete="off"></label>
           <div class="row">
             <button class="btn btn-primary btn-lg" type="button" data-action="collect-save">${icon("plus", "icon-sm")}
               Add ${VS.plural(phrases.filter((p) => !VS.byId[VS.wordKey(p.word)]).length, "word")}</button>
@@ -332,7 +332,7 @@
     return html`
       <p class="muted">Paste a paragraph — from an article, subtitles, an email — then <b>tap the words you don't know</b>. Each one keeps the sentence it came from: the best reminder there is.</p>
       <label class="form-field"><span class="sr-only">English text</span>
-        <textarea id="collectText" class="collect-input" rows="${c.text ? 2 : 4}" spellcheck="false" lang="en" placeholder="Paste or type some English here">${c.text}</textarea></label>
+        <textarea dir="auto" id="collectText" class="collect-input" rows="${c.text ? 2 : 4}" spellcheck="false" lang="en" placeholder="Paste or type some English here">${c.text}</textarea></label>
       ${c.source ? html`<p class="hint">From ${c.source}</p>` : ""}
       <div id="collectPick">${collectPick()}</div>
       ${c.done ? html`<p class="import-done" role="status">${icon("check", "icon-sm")} ${c.done} <a href="#/new/cards">Learn them</a></p>` : ""}
@@ -363,7 +363,7 @@
       <p class="muted">Copy rows from Excel, Google Sheets or Notion — with the header row — and paste them here.
         Columns can be in any order: <b>word</b>, <b>arabic</b>, <b>definition</b>, <b>example</b>, <b>type</b>, <b>level</b>, <b>ipa</b>, <b>tags</b>.
         Only the word is required — a list of words, one per line, works too.</p>
-      <textarea id="importText" class="import-text" rows="8" spellcheck="false" placeholder="${TEMPLATE}">${st.text}</textarea>
+      <textarea dir="auto" id="importText" class="import-text" rows="8" spellcheck="false" placeholder="${TEMPLATE}">${st.text}</textarea>
       <div class="row">
         <button class="btn btn-primary" type="button" data-action="import-read">Read the list</button>
         <button class="btn btn-quiet" type="button" data-action="import-sample">Show an example</button>
@@ -445,7 +445,7 @@
       <section class="card import-step">
         <h2><span class="step-n">3</span> Save</h2>
         <label class="form-field"><span>Tags for all of them (optional)</span>
-          <input id="pasteTags" value="${st.pasteTags || ""}" placeholder="IELTS, work" list="tagList" autocomplete="off"></label>
+          <input dir="auto" id="pasteTags" value="${st.pasteTags || ""}" placeholder="IELTS, work" list="tagList" autocomplete="off"></label>
         ${VS.ui.tagList()}
         <div class="row">
           <button class="btn btn-primary btn-lg" type="button" data-action="import-save" ${n ? "" : VS.raw("disabled")}>

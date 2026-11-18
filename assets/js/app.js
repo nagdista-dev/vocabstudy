@@ -232,7 +232,7 @@
   let nudgeTimer = 0;
   let installedNow = false;
   const NUDGE_DAYS = 30;
-  const phoneOnly = () => matchMedia("(max-width: 700px), ((pointer: coarse) and (max-width: 1023px))").matches;
+  const phoneOnly = () => matchMedia("(max-width: 599px), ((pointer: coarse) and (max-width: 1023px))").matches;
 
   function nudgeSnoozed() {
     const last = VS.store.installNudgeDismissed();
@@ -276,7 +276,7 @@
           <p class="install-nudge-kicker">VocabStudy</p>
           <p class="install-nudge-title">${title}</p>
         </div>
-        <button class="install-nudge-x" type="button" data-action="install-later" aria-label="Not now">${icon("x", "icon-sm")}</button>
+        <button class="icon-btn" type="button" data-action="install-later" aria-label="Not now">${icon("x", "icon-sm")}</button>
       </div>
       <p class="install-nudge-text">${text}</p>
       <div class="install-nudge-actions">
@@ -530,8 +530,9 @@
   // (toggle does not bubble; a capture listener still hears it.)
   document.addEventListener("toggle", (e) => {
     const row = e.target;
-    // A word opened low on the screen comes up under the bar, so its page starts in view.
+    // A word's page is built when it opens (VS.ui.fillRow), then brought up under the bar if it opened low.
     if (row.classList && row.classList.contains("word-row") && row.open) {
+      VS.ui.fillRow(row);
       requestAnimationFrame(() => {
         const top = row.getBoundingClientRect().top;
         if (top < 56 || top > innerHeight * 0.45) {

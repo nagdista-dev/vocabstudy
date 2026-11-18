@@ -35,6 +35,12 @@
   /* Highlighter — the signature: marks the word being learned, rewards */
   --mark:      #ffe066;
   --mark-soft: #fff5c7;
+  /* Notes and questions ("Did you mean…?", "Which meaning?", a service that isn't answering):
+     a calm slate, so yellow keeps ONE meaning — the word you're learning (v10, V3.7). */
+  --note:      #3b5b8c;   /* icon / accent line */
+  --note-soft: #eef2f8;   /* background */
+  --note-line: #c8d3e6;   /* border */
+  --note-ink:  #22344f;   /* text: 11.6:1 on --note-soft */
   --on-mark:   #4a3900;
 
   /* Feedback */
@@ -66,7 +72,8 @@
 
   /* Type scale — tuned for reading on a phone first.
      13 / 15 / 17 / 20 / 24 / 30 / 32–48. */
-  --text-2xs: .75rem;      /* 12px: tab labels and badge counts only */
+  --text-2xs: .8125rem;    /* 13px: no readable text is smaller (V3.4) */
+  --text-badge: .75rem;    /* 12px: ONLY numerals inside a small circle or chip (counts) */
   --text-xs:  .8125rem;    /* 13px: meta, hints, chips */
   --text-sm:  .9375rem;    /* 15px: buttons, secondary copy */
   --text-md:  1.0625rem;   /* 17px body: easier on the eyes for long sessions */
@@ -92,14 +99,26 @@
 
   /* Motion */
   --ease: cubic-bezier(.2, .7, .2, 1);
-  --fast: 140ms;
-  --slow: 320ms;
+  /* Motion (V3.14): four durations and one easing. Nothing else. */
+  --fast: 140ms;   /* hover, press, colour */
+  --base: 240ms;   /* a thing opening, a card leaving, an answer */
+  --slow: 320ms;   /* a whole screen arriving */
+  --draw: 560ms;   /* the highlighter and the meters: drawn once */
 
   /* Layout */
   --content-max: 1120px;
   --activity-max: 720px;
   --bar-h: 64px;
   --tap: 44px;             /* minimum touch target */
+
+  /* One stacking order (assets/css/system.css). Before v10 there were 16 loose numbers. */
+  --z-base: 1;             /* raised bits inside a card */
+  --z-sticky: 10;          /* sticky headers and action bars inside a page */
+  --z-bar: 20;             /* the app bar and the phone tab bar */
+  --z-float: 30;           /* update bar, install card, break card: above the page, below messages */
+  --z-sheet: 40;           /* side sheets that are not modal */
+  --z-toast: 50;           /* toasts, the Undo — above every bar */
+  --z-dialog: 60;          /* modal dialogs (they use the top layer anyway) */
 }
 
 /* Accent colours (Settings → Look). Only the action colour changes;

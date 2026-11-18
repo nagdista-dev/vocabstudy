@@ -199,7 +199,7 @@
             ${goalMarkup}
           </div>` : ""}
         <div class="today-copy">
-          <h2 id="today-title">${h.markup}</h2>
+          <h1 id="today-title">${h.markup}</h1>
           <p class="today-line">${h.line}</p>
         </div>
         ${p.next ? html`<a class="today-cta" href="${p.next.href}">

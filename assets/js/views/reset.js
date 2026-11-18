@@ -97,7 +97,7 @@
               </div>
               <div class="reset-confirm">
                 <label class="reset-label" for="resetWord">Type <b>RESET</b></label>
-                <input class="reset-word" id="resetWord" name="resetWord" type="text" inputmode="text"
+                <input dir="auto" class="reset-word" id="resetWord" name="resetWord" type="text" inputmode="text"
                   autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
                   aria-describedby="resetHint">
               </div>

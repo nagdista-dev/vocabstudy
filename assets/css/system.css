@@ -1,0 +1,51 @@
+/* system.css — the floors every screen keeps (v10, V3). Loaded after the views, so
+   a rule here wins over a view that forgot. Each rule is a promise, not a style:
+
+     • every control a finger can press is at least 44×44 px (WCAG 2.5.8 / Apple / Material)
+     • keyboard focus is always visible, at least 3:1 against what is around it
+     • nothing animates in while the learner is about to read it, if they asked for less motion
+     • layers stack in one order (tokens.css --z-*): page < sticky < bars < sheet < toast < dialog
+
+   Small inline links (tags, the rail's "Open") keep their look: an invisible ring
+   around them takes the extra touch area, so the type stays quiet and the target big. */
+
+/* ── Touch floor: 44 px ─────────────────────────────────────────── */
+.today-steps a, .chip, .bar-link, .seg button, .word-manage-btn, .word-other, .word-hear,
+.speak-btn, .icon-btn, .backup-dismiss, .tab-btn, .import-tabs button, .import-tabs a,
+.lib-actions > summary, .lib-bar summary, .lib-filter-btn, .meaning-list .btn, .mine-del,
+.summary-actions .btn, .empty-actions .btn, .row-actions .btn {
+  min-height: var(--tap);
+}
+.speak-btn, .icon-btn, .backup-dismiss, .mine-del, .word-manage-btn { min-width: var(--tap); }
+.skip-link:focus { min-height: var(--tap); display: inline-flex; align-items: center; }
+.brand { min-height: var(--tap); display: inline-flex; align-items: center; }
+
+/* Inline links that stay small to the eye: the touch area grows invisibly around them. */
+.tag, .rail-head a, .crumbs a, .first-foot a, .hint a, .word-row-flag {
+  position: relative;
+}
+.tag::after, .rail-head a::after, .crumbs a::after {
+  content: ""; position: absolute; inset: 50% auto auto 50%;
+  width: max(100%, var(--tap)); height: max(100%, var(--tap)); transform: translate(-50%, -50%);
+}
+
+/* ── Focus you can always see ───────────────────────────────────── */
+/* Fields used a pale --brand-soft glow (about 1.2:1 on white): now a solid ring in the action colour. */
+.field:focus-within,
+.form-field input:focus-visible, .form-field select:focus-visible, .form-field textarea:focus-visible,
+.note textarea:focus-visible, .import-text:focus-visible, .reset-word:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+.field input:focus-visible { outline: none; }      /* the field around it carries the ring */
+
+/* ── Less motion means no entrance at all ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .view-enter, .enter, .flash, .summary, .toast, .sheet { animation: none !important; transition: none !important; }
+}
+
+/* ── One stacking order ─────────────────────────────────────────── */
+.app-bar { z-index: var(--z-bar); }
+.tab-bar { z-index: var(--z-bar); }
+.update-bar, .install-nudge, .break-card { z-index: var(--z-float); }
+.toast { z-index: var(--z-toast); }

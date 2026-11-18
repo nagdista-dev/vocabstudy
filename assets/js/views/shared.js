@@ -5,7 +5,6 @@
   "use strict";
   const { html, icon } = VS;
 
-  const STATUS_LABEL = { new: "New", learning: "Learning", mastered: "Mastered" };
 
   /** "2026-11-18" → "in 3 days" / "today" / "tomorrow" */
   function whenText(date) {
@@ -32,8 +31,8 @@
           <label class="form-field ${LONG_FIELDS.includes(k) ? "is-wide" : ""}"><span>${label}</span>
             ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
               : k === "level" ? html`<select name="level"><option value="">—</option>${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
-              : k === "tags" ? html`<input name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
-              : k === "synonyms" ? html`<input name="synonyms" value="${w.synonyms.join(", ")}" placeholder="delay, put off">`
+              : k === "tags" ? html`<input dir="auto" name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
+              : k === "synonyms" ? html`<input dir="auto" name="synonyms" value="${w.synonyms.join(", ")}" placeholder="delay, put off">`
               : LONG_FIELDS.includes(k) ? html`<textarea name="${k}" rows="2" dir="auto">${w[k] || ""}</textarea>`
               : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
           </label>`)}
@@ -252,7 +251,7 @@
     if (row && w) {
       row.outerHTML = String(VS.ui.wordRow(w));
       const again = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
-      if (again) { again.open = true; scope = again; }
+      if (again) { again.open = true; VS.ui.fillRow(again); scope = again; }
     } else {
       VS.app.render();
     }
@@ -267,7 +266,7 @@
   /* A flagged word (VS.ui.checkLine): fix the spelling, or say it's right. */
   const reopen = (id) => {
     const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
-    if (row) row.open = true;
+    if (row) { row.open = true; VS.ui.fillRow(row); }
   };
   VS.actions["word-respell"] = (el) => {
     const id = VS.store.respellUserWord(el.dataset.id, el.dataset.fix);
@@ -400,11 +399,6 @@
         : [{ label: name }];
     },
     levelBadge: (w) => (w.level ? html`<span class="badge ${VS.levelGroup(w.level)}" title="CEFR level">${w.level}</span>` : ""),
-
-    statusBadge(w) {
-      const s = VS.store.status(w.id);
-      return s === "new" ? "" : html`<span class="badge is-${s}">${STATUS_LABEL[s]}</span>`;
-    },
 
     speakButton: (text, label) =>
       html`<button class="speak-btn" type="button" data-action="speak" data-say="${text}" aria-label="${label || "Hear " + text}">${icon("volume", "icon-sm")}</button>`,
@@ -613,9 +607,7 @@
     /** One expandable row in a word list. */
     wordRow(w) {
       const s = VS.store.status(w.id);
-      const e = VS.store.word(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
-      const tips = VS.soundTraps(w);
       return html`
         <details class="word-row ${w.word.length > 14 ? "is-long" : ""}" data-status="${s}" data-id="${w.id}">
           <summary>
@@ -632,9 +624,21 @@
               ${VS.ui.checkFlag(w)}
               ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
             </span>
-            <span class="word-row-badges">${VS.ui.statusBadge(w)}${VS.ui.levelBadge(w)}</span>
             ${icon("chevron-right", "icon-sm word-row-chev")}
           </summary>
+          <div class="word-row-body" data-lazy="1"></div>
+        </details>`;
+    },
+
+    /**
+     * A word's page — built when its row opens (VS.ui.fillRow), not with the list:
+     * 23 closed words used to carry 2,505 elements; 1,000 would freeze a phone.
+     */
+    wordBody(w) {
+      const s = VS.store.status(w.id);
+      const e = VS.store.word(w.id);
+      const tips = VS.soundTraps(w);
+      return html`
           <div class="word-row-body">
             <div class="word-entry">
               <div class="word-sound">
@@ -718,8 +722,15 @@
                 </div>
               </aside>
             </div>
-          </div>
-        </details>`;
+          </div>`;
+    },
+
+    /** Fill an open row's page if it is still empty. Safe to call twice. */
+    fillRow(row) {
+      const body = row && row.querySelector(":scope > .word-row-body[data-lazy]");
+      const w = row && VS.byId[row.dataset.id];
+      if (!body || !w) return;
+      body.outerHTML = String(VS.ui.wordBody(w));
     },
 
     /**
@@ -769,7 +780,7 @@
             </div>
             ${combo >= 2 ? html`<span class="combo ${bump ? "bump" : ""}" title="Right answers in a row">${icon("flame", "icon-sm")} <b>${combo}</b><span class="combo-word"> in a row</span></span>` : ""}
             ${undo ? html`<button class="btn btn-quiet btn-undo" type="button" data-action="undo" title="Take back the last answer (U)" aria-label="Undo the last answer">${icon("undo", "icon-sm")}<span>Undo</span></button>` : ""}
-            <span class="count" aria-live="polite">${index >= total && again ? html`Once more` : html`${Math.min(index + 1, total)} of ${total}`}${again ? html`<span class="count-again"> · ${again} to try again</span>` : ""}</span>
+            <span class="count" aria-live="polite">${index >= total && again ? html`Once more` : html`${Math.min(index + 1, total)} of ${total}`}${again ? html`<span class="count-again"><span class="count-long"> · ${again} to try again</span><span class="count-short" aria-hidden="true"> · +${again}</span></span>` : ""}</span>
           </div>
           <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${pos}">
             <i style="--value:${pct}%"></i>

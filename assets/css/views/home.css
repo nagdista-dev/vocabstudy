@@ -25,13 +25,14 @@
 .today-streak {
   display: inline-flex; align-items: center; gap: 5px; flex: none;
   height: 24px; padding: 0 9px; border-radius: var(--r-pill);
-  background: var(--mark);
-  color: var(--on-mark);
+  /* A streak is a habit, not a word: ink on a quiet chip (yellow stays for memory). */
+  background: var(--surface); border: 1px solid var(--line);
+  color: var(--ink);
   font-size: var(--text-xs); font-weight: 700; white-space: nowrap;
 }
 .today-streak .icon { width: 14px; height: 14px; }
 .today-copy { display: grid; gap: 4px; min-width: 0; }
-.today-copy h2 {
+.today-copy h1 {
   color: var(--ink);
   font-size: clamp(1.6rem, 1.2rem + 1.6vw, 1.95rem);
   line-height: 1.15; letter-spacing: -.02em; text-wrap: pretty;
@@ -55,7 +56,7 @@
 .today-goal-extra { color: var(--ink-3); }
 .today-goal-unit { color: var(--ink-3); }   /* "150" alone said nothing: answers, not minutes or words */
 .today-goal-track { width: 52px; height: 4px; border-radius: var(--r-pill); background: rgb(20 27 45 / .10); overflow: hidden; flex: none; }
-.today-goal-track i { display: block; height: 100%; border-radius: inherit; background: var(--mark); box-shadow: inset 0 0 0 1px rgb(20 27 45 / .12); transition: width 420ms var(--ease); }
+.today-goal-track i { display: block; height: 100%; border-radius: inherit; background: var(--brand); box-shadow: inset 0 0 0 1px rgb(20 27 45 / .12); transition: width 420ms var(--ease); }
 .today-goal.is-done .today-goal-label,
 .today-goal.is-done .today-goal-label b,
 .today-goal.is-done .today-goal-label .icon { color: var(--good); }
@@ -90,17 +91,18 @@
 }
 .today-steps a .icon { width: 14px; height: 14px; color: var(--brand); }
 .today-steps b {
-  font-variant-numeric: tabular-nums; font-size: .7rem; line-height: 18px;
-  color: var(--on-mark); background: var(--mark); padding: 0 6px; border-radius: var(--r-pill);
+  font-variant-numeric: tabular-nums; font-size: var(--text-badge); line-height: 18px;
+  /* A count of new words is not the memory mark: neutral. Yellow stays for what is due. */
+  color: var(--ink); background: var(--surface-2); padding: 0 6px; border-radius: var(--r-pill);
 }
 .today-steps a:hover { background: #fff; border-color: color-mix(in srgb, var(--brand) 30%, var(--line)); color: var(--ink); }
 .today-steps .is-done a {
-  background: var(--mark-soft);
-  border-color: transparent; color: var(--on-mark);
+  background: var(--good-soft);
+  border-color: transparent; color: var(--good);
 }
-.today-steps .is-done a .icon { color: var(--on-mark); }
-.today-steps .is-quick a { border-style: dashed; color: var(--ink-2); }
-.today-steps .is-quick a .icon { color: var(--on-mark); }
+.today-steps .is-done a .icon { color: var(--good); }
+.today-steps .is-quick a { color: var(--ink-2); }          /* solid like the others: dashed read as "disabled" */
+.today-steps .is-quick a .icon { color: var(--brand); }
 .today-steps.is-overflow {
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
           mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
@@ -109,17 +111,17 @@
 
 /* Small phones: the goal keeps its word but loses "Daily", and the track
    shortens. The numbers stay; the streak pill stays whole. */
-@media (max-width: 420px) {
+@media (max-width: 599px) {
   /* Tighter chips let the four main ways to practise fit whole at 390,
      so the only thing off-screen is Quick 5 — a clean edge, not half a word. */
   .today-steps { gap: 4px; }
   .today-steps a { padding: 0 8px; }
 }
-@media (max-width: 400px) {
+@media (max-width: 374px) {
   .today-goal-extra { display: none; }
   .today-goal-track { width: 40px; }
 }
-@media (max-width: 359px) {
+@media (max-width: 374px) {
   .today-hero { padding: 16px; gap: 12px; }
   .today-steps a { padding: 0 9px; }
   .today-goal-track { display: none; }
@@ -177,7 +179,7 @@
 .backup-main:hover { background: var(--surface-2); }
 .backup-ico {
   display: grid; place-items: center; width: 30px; height: 30px; flex: none;
-  border-radius: var(--r-sm); background: var(--mark-soft); color: var(--on-mark);
+  border-radius: var(--r-sm); background: var(--note-soft); color: var(--note);
 }
 .backup-copy { display: grid; min-width: 0; line-height: 1.3; }
 .backup-copy b { font-size: var(--text-xs); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -363,7 +365,7 @@
   background: repeating-linear-gradient(to right, var(--line-strong) 0 3px, transparent 3px 7px);
 }
 .recall-days li {
-  position: relative; z-index: 1;
+  position: relative; z-index: var(--z-base);
   display: grid; justify-items: center; gap: 8px;
   min-width: 0;
 }
@@ -400,7 +402,7 @@
 
 /* Tablet portrait: one centred column, wide enough to read, narrow
    enough that the card and the copy stay a single lesson. */
-@media (min-width: 641px) and (max-width: 819px) {
+@media (min-width: 600px) and (max-width: 1023px) {
   .first-hero, .first-recall, .first-foot {
     max-width: 620px;
     margin-inline: auto;
@@ -410,7 +412,7 @@
 /* Two columns once there is room: the invitation on the left, the card
    and its promise on the right. The recall ruler then runs underneath
    both, like a line printed on the desk. */
-@media (min-width: 820px) {
+@media (min-width: 1024px) {
   .first-hero {
     grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
     gap: var(--s-7);
@@ -435,7 +437,7 @@
    On a phone the status chips already carry the counts, so the extra
    stats line stays on the desktop where it has room. */
 .lib-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-top: var(--s-6); }
-.lib-head h1 { font-size: 1.4rem; line-height: 1.2; letter-spacing: -.015em; }
+.lib-head h2 { font-size: 1.4rem; line-height: 1.2; letter-spacing: -.015em; }
 .lib-stats {
   display: none;
   font-size: var(--text-xs); color: var(--ink-3);
@@ -444,7 +446,7 @@
 .lib-stats [aria-hidden] { color: var(--line-strong); margin-inline: 4px; }
 
 /* ── Tablet / desktop ─────────────────────────────────────────── */
-@media (min-width: 760px) {
+@media (min-width: 600px) {
   .today-hero {
     grid-template-columns: minmax(0, 1fr) 236px;
     grid-template-areas: "top top" "copy cta" "steps steps";
@@ -455,10 +457,10 @@
   .today-copy { grid-area: copy; }
   .today-cta { grid-area: cta; align-self: center; }
   .today-steps { grid-area: steps; }
-  .today-copy h2 { font-size: 2rem; }
+  .today-copy h1 { font-size: 2rem; }
   .quick-add.is-compact { max-width: none; margin-top: var(--s-4); }
   .lib-head { margin-top: var(--s-6); }
-  .lib-head h1 { font-size: var(--text-xl); }
+  .lib-head h2 { font-size: var(--text-xl); }
   .lib-stats { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 4px; }
 }
 
@@ -469,6 +471,9 @@
   }
   .home-rail { display: grid; gap: var(--s-3); position: sticky; top: calc(var(--bar-h) + var(--s-4)); }
   .today-steps .is-quick { display: none; }
+  /* A word opened on a desktop reads at full width: the rail steps aside while it's open (V3.10). */
+  .home-grid:has(.word-row[open]) { grid-template-columns: minmax(0, 1fr); }
+  .home-grid:has(.word-row[open]) .home-rail { display: none; }
 }
 
 /* ── Desktop rail ───────────────────────────────────────────────
@@ -493,21 +498,21 @@
 .rail-days .is-today .rail-bar { background: var(--brand-soft); }
 .rail-days .is-today .rail-bar i { background: var(--mark); }
 .rail-days .is-future .rail-bar { background: transparent; border: 1px dashed var(--line); }
-.rail-days small { color: var(--ink-3); font-size: 10px; line-height: 1; white-space: nowrap; }
+.rail-days small { color: var(--ink-3); font-size: var(--text-xs); line-height: 1; white-space: nowrap; }
 .rail-days .is-today small { color: var(--ink); font-weight: 700; }
 .rail-note { color: var(--ink-3); font-size: var(--text-2xs); }
 .rail-note b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
 .rail-quick {
   display: flex; align-items: center; gap: var(--s-3);
   padding: var(--s-4);
-  background: var(--mark-soft); color: var(--ink);
-  border: 1px solid color-mix(in srgb, var(--mark) 70%, transparent);
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line);
   border-radius: var(--r-lg); text-decoration: none;
 }
-.rail-quick:hover { border-color: var(--mark); }
+.rail-quick:hover { border-color: var(--brand); }
 .rail-quick-ico {
   display: grid; place-items: center; width: 34px; height: 34px; flex: none;
-  border-radius: 50%; background: var(--mark); color: var(--on-mark);
+  border-radius: 50%; background: var(--brand-soft); color: var(--brand);
 }
 .rail-quick-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
 .rail-quick-copy b { font-family: var(--font-display); font-size: var(--text-sm); }

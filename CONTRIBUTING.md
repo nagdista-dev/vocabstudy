@@ -34,7 +34,7 @@ Then test the screens you changed at phone width (375px) and desktop width.
   `assets/css/tokens.css`.
 - **Comments explain why.** Names explain what.
 - **The learner comes first.** Every change should make studying clearer,
-  calmer or more effective — see `docs/DESIGN.md`.
+  calmer or more effective — see `DESIGN.md`.
 
 ## The best first contribution: a usage trap
 

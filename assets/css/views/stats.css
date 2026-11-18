@@ -29,11 +29,11 @@
 .bar {
   display: block; width: 100%; max-width: 26px; min-height: 0;
   background: var(--brand); border-radius: 4px 4px 0 0;
-  transform-origin: bottom; animation: rise 600ms var(--ease) both;
+  transform-origin: bottom; animation: rise var(--draw) var(--ease) both;
 }
 .bar-col small {
   position: absolute; top: 100%; margin-top: 6px;
-  font-size: .7rem; color: var(--ink-3); white-space: nowrap;
+  font-size: var(--text-xs); color: var(--ink-3); white-space: nowrap;
 }
 .bar-peak { position: absolute; top: -20px; font-size: var(--text-xs); color: var(--ink-2); white-space: nowrap; }
 .bars + .chart-table { margin-top: var(--s-4); }
@@ -42,7 +42,7 @@
 .bar-col:hover .bar, .bar-col:focus-visible .bar { background: var(--brand-hover); }
 .bar-col:hover::after, .bar-col:focus-visible::after {
   content: attr(data-tip);
-  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 5;
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: var(--z-base);
   padding: 6px 10px; border-radius: var(--r-sm); white-space: nowrap;
   background: var(--ink); color: var(--paper); font-size: var(--text-xs); font-weight: 500;
   box-shadow: var(--shadow-2); pointer-events: none;
@@ -73,21 +73,21 @@
 .fc-bars b { font-size: var(--text-sm); min-height: 1.2em; }
 .fc-bars small { color: var(--ink-3); font-size: var(--text-2xs); white-space: nowrap; }
 .fc-bar { display: flex; align-items: end; width: 100%; max-width: 44px; height: 72px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
-.fc-bar i { display: block; width: 100%; background: var(--brand); border-radius: 6px 6px 0 0; transform-origin: bottom; animation: rise 600ms var(--ease) both; }
+.fc-bar i { display: block; width: 100%; background: var(--brand); border-radius: 6px 6px 0 0; transform-origin: bottom; animation: rise var(--draw) var(--ease) both; }
 .fc-bars .is-today .fc-bar i { background: var(--mark); }
 .fc-bars .is-today small { color: var(--ink); font-weight: 600; }
 
 
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat-tiles > div + div { border-inline-start: 0; }
   .stat-tiles > div:nth-child(even) { border-inline-start: 1px solid var(--line); }
   .stat-tiles > div:nth-child(n + 3) { border-top: 1px solid var(--line); }
   .chart-grid { grid-template-columns: 1fr; }
 }
-@media (max-width: 640px) {
-  .bar-col small { font-size: .72rem; }
+@media (max-width: 599px) {
+  .bar-col small { font-size: var(--text-xs); }
   .stat-tiles > div { padding: 13px var(--s-4); }
   .stat-tiles dd { font-size: var(--text-lg); }
   .stat-tiles small { display: block; margin-top: 2px; font-size: var(--text-xs); }
@@ -107,7 +107,7 @@
    "Now" says the same thing in three letters. */
 .today-long { display: inline; }
 .today-short { display: none; }
-@media (max-width: 360px) {
+@media (max-width: 374px) {
   .today-long { display: none; }
   .today-short { display: inline; }
   .wk-days { gap: 2px; }
@@ -125,7 +125,7 @@
 .wk-numbers dd { margin: 0; font-family: var(--font-display); font-size: var(--text-2xl); font-variant-numeric: tabular-nums; line-height: 1.1; }
 .wk-numbers dd small { font-family: var(--font-body); font-size: var(--text-sm); color: var(--ink-2); }
 .wk-delta { font-size: var(--text-xs); color: var(--ink-3); }
-@media (min-width: 720px) { .wk-numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 600px) { .wk-numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .wk-note { display: flex; gap: var(--s-2); align-items: baseline; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--mark-soft); color: var(--on-mark); line-height: 1.5; }
 .wk-note .icon { flex: none; transform: translateY(2px); }
 .wk-nav { margin-top: var(--s-5); gap: var(--s-2); flex-wrap: wrap; }

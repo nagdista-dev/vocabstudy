@@ -9,7 +9,7 @@
   margin-inline: auto;
   padding: var(--s-6) var(--gutter) var(--s-6);
 }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .page { padding-top: var(--s-4); padding-bottom: var(--s-6); }
   .page-head h1 { font-size: var(--text-2xl); }
   .page-head { gap: var(--s-3); }
@@ -30,7 +30,15 @@
   /* Study and recall are one card with no feedback below: on a tall phone
      it sits in the middle of the paper instead of clinging to the header. */
   .activity-stage.stage-center { align-content: safe center; }
+  /* …but a card you type into stays at the top: centred, the phone keyboard covers its field (V3.9). */
+  .activity-stage.stage-center:has(input, textarea) { align-content: start; }
 }
+@media (max-width: 599px) {
+  /* Quiz on a phone: the question at the top, the answers down under the thumb (V3.9). */
+  .activity-stage:has(> .options) { align-content: space-between; }
+  .count-again .count-long { display: none; }
+}
+@media (min-width: 600px) { .count-again .count-short { display: none; } }
 @media (max-width: 1023px) {
   body[data-mode="activity"] .activity {
     min-height: 100dvh;
@@ -50,7 +58,7 @@
    section: it starts at the card's padding, not 48px below it. */
 .card > .section-title:first-child { margin-top: 0; }
 .card > .section-title { margin-bottom: var(--s-3); }
-@media (max-width: 560px) {
+@media (max-width: 599px) {
   .section-title { flex-wrap: wrap; margin: var(--s-5) 0 var(--s-3); }
   .section-title > .row { width: 100%; justify-content: space-between; }
 }
@@ -59,7 +67,7 @@
    Opaque paper, one hairline. Translucent chrome let scrolled headings
    ghost through the bar, which read as a rendering fault. */
 .app-bar {
-  position: sticky; top: 0; z-index: 20;
+  position: sticky; top: 0; z-index: var(--z-bar);
   height: calc(var(--bar-h) + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);   /* installed iPhone: keep the bar under the clock */
   background: var(--paper);
@@ -85,7 +93,7 @@
 .crumbs a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
 .crumbs a:hover { color: var(--brand); }
 .crumbs span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   :root { --bar-h: 56px; }
   .app-bar-inner { gap: var(--s-2); padding-inline: var(--gutter); }
   .brand { font-size: 1rem; gap: 8px; }
@@ -111,7 +119,7 @@
 .bar-ico { position: relative; display: inline-grid; }
 .bar-link .count {
   min-width: 19px; height: 19px; padding: 0 6px; border-radius: var(--r-pill);
-  background: var(--mark); color: var(--on-mark); font: 700 .72rem/19px var(--font-body); text-align: center;
+  background: var(--mark); color: var(--on-mark); font: 700 var(--text-badge)/19px var(--font-body); text-align: center;
 }
 
 /* Bottom tab bar: phones and tablets only, hidden during activities */
@@ -119,7 +127,7 @@
 @media (max-width: 1023px) {
   .bar-nav { display: none; }
   .tab-bar {
-    position: fixed; z-index: 18; left: 0; right: 0; bottom: 0;
+    position: fixed; z-index: var(--z-bar); left: 0; right: 0; bottom: 0;
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;          /* as many columns as links */
     padding: 3px 6px calc(3px + env(safe-area-inset-bottom));
     background: var(--surface);
@@ -139,10 +147,10 @@
   .tab-link[aria-current="page"] .tab-ico { background: var(--brand-soft); }
   .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 27px; border-radius: var(--r-pill); }
   .tab-ico .count {
-    position: absolute; z-index: 1;
+    position: absolute; z-index: var(--z-base);
     top: -5px; inset-inline-end: -9px; min-width: 18px; height: 18px; padding: 0 5px;
     background: var(--mark); color: var(--on-mark);
-    border: 2px solid var(--surface); font-size: .68rem; line-height: 14px;
+    border: 2px solid var(--surface); font-size: var(--text-badge); line-height: 14px;
   }
   .toast { bottom: calc(72px + env(safe-area-inset-bottom)); }
   .break-card { bottom: calc(72px + env(safe-area-inset-bottom)); }
@@ -191,8 +199,17 @@
 .btn-lg { min-height: 52px; padding: 0 var(--s-5); font-size: var(--text-md); border-radius: var(--r-md); }
 .btn-block { width: 100%; }
 /* Key hints take the button's own colour, so they read on every fill. */
+/* The choice card (V3.3): one look for "pick one of these" — the meaning
+   picker and the Arabic→English picker. Not a button: a row you choose. */
+.choice, .sense-opt, .ar-pick-opt {
+  min-height: var(--tap); text-align: start; font: inherit; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer;
+  transition: border-color var(--fast), background var(--fast);
+}
+.choice:hover, .sense-opt:hover, .ar-pick-opt:hover { border-color: var(--brand); }
+.choice[aria-pressed="true"], .sense-opt[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-soft); }
 .btn kbd {
-  font: 600 .7rem/1 var(--font-body); padding: 3px 6px; border-radius: 5px; min-width: 0;
+  font: 600 var(--text-xs)/1 var(--font-body); padding: 3px 6px; border-radius: 5px; min-width: 0;
   color: inherit; border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
   background: color-mix(in srgb, currentColor 12%, transparent);
 }
@@ -206,7 +223,7 @@
 .icon-btn .count {
   position: absolute; top: 4px; inset-inline-end: 2px;
   min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
-  background: var(--bad); color: #fff; font: 700 .68rem/18px var(--font-body); text-align: center;
+  background: var(--bad); color: #fff; font: 700 var(--text-badge)/18px var(--font-body); text-align: center;
 }
 .speak-btn {
   display: inline-grid; place-items: center; flex: none;
@@ -229,7 +246,7 @@
 .badge {
   display: inline-flex; align-items: center; gap: 4px;
   height: 24px; padding: 0 var(--s-2); border-radius: var(--r-sm);
-  font-size: .75rem; font-weight: 600; white-space: nowrap;
+  font-size: var(--text-xs); font-weight: 600; white-space: nowrap;
   background: var(--surface-2); color: var(--ink-2);
 }
 .badge.lvl-a { background: var(--lvl-a-soft); color: var(--lvl-a); }
@@ -264,7 +281,7 @@
 .ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring circle { fill: none; stroke-width: 4.5; }
 .ring-bg { stroke: var(--surface-2); }
-.ring-fill { stroke: var(--good); stroke-linecap: round; transition: stroke-dashoffset var(--slow) var(--ease); animation: ring-in 900ms var(--ease) both; }
+.ring-fill { stroke: var(--good); stroke-linecap: round; transition: stroke-dashoffset var(--slow) var(--ease); animation: ring-in var(--draw) var(--ease) both; }
 .ring b { font-size: calc(var(--size) * .24); font-variant-numeric: tabular-nums; color: var(--ink-2); }
 
 /* Your note on a word (VS.ui.noteBox) */
@@ -320,14 +337,14 @@
   /* The activity header stays with you while the task scrolls: the way out,
      the count and the progress bar never leave the screen. */
   body[data-mode="activity"] .activity-head {
-    position: sticky; top: 0; z-index: 12;
+    position: sticky; top: 0; z-index: var(--z-sticky);
     background: var(--paper);
     margin-inline: calc(var(--gutter) * -1);
     padding: var(--s-2) var(--gutter) var(--s-2);
     margin-bottom: var(--s-3);
   }
 }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .activity-head { gap: 8px; }
   .activity-head .combo-word { display: none; }
 }
@@ -337,9 +354,9 @@
   display: flex; gap: var(--s-3); margin-top: var(--s-5);
 }
 .action-bar > .btn { flex: 1; }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .action-bar {
-    position: fixed; z-index: 15; left: 0; right: 0; bottom: 0; margin: 0;
+    position: fixed; z-index: var(--z-sticky); left: 0; right: 0; bottom: 0; margin: 0;
     padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
     background: var(--paper);
     border-top: 1px solid var(--line);
@@ -358,7 +375,7 @@
 .empty p + p { margin-top: var(--s-2); }
 .empty-actions { justify-content: center; }
 .empty-actions .btn { margin-top: var(--s-3); }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .empty { padding: var(--s-5) var(--s-4); }
   .empty-actions { gap: var(--s-2); }
   .empty-actions .btn { flex: 1 1 auto; }
@@ -369,7 +386,7 @@
    It appears once the learner has a word, sleeps for 30 days after
    "not now", and is hidden on anything wider than a phone. */
 .install-nudge {
-  position: fixed; z-index: 19; inset-inline: 12px;
+  position: fixed; z-index: var(--z-float); inset-inline: 12px;
   bottom: calc(60px + 12px + env(safe-area-inset-bottom));
   width: min(440px, calc(100vw - 24px));
   margin-inline: auto;
@@ -378,11 +395,11 @@
   border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--shadow-2);
-  animation: nudge-in 220ms var(--ease) both;
+  animation: nudge-in var(--base) var(--ease) both;
 }
 @keyframes nudge-in { from { opacity: 0; transform: translateY(10px); } }
-.install-nudge.is-off { animation: none; opacity: 0; transform: translateY(6px); transition: opacity 160ms, transform 160ms; }
-@media (min-width: 701px) and (pointer: fine) { .install-nudge { display: none; } }
+.install-nudge.is-off { animation: none; opacity: 0; transform: translateY(6px); transition: opacity var(--fast), transform var(--fast); }
+@media (min-width: 600px) and (pointer: fine) { .install-nudge { display: none; } }
 .install-nudge-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
 .install-nudge-ico {
   display: grid; place-items: center; width: 38px; height: 38px;
@@ -395,19 +412,13 @@
   text-transform: uppercase; color: var(--ink-3); line-height: 1.2;
 }
 .install-nudge-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-md); line-height: 1.25; }
-.install-nudge-x {
-  display: grid; place-items: center; width: 40px; height: 40px;
-  border: 0; border-radius: 10px;
-  background: transparent; color: var(--ink-3);
-}
-.install-nudge-x:hover { background: var(--surface-2); color: var(--ink); }
 .install-nudge-text { margin-top: 8px; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
 .install-nudge-actions { display: flex; margin-top: 12px; }
-.install-nudge-actions .btn { flex: 1 1 auto; min-height: 42px; }
-@media (max-width: 420px) { .install-nudge { padding: 12px 14px 14px; } }
+.install-nudge-actions .btn { flex: 1 1 auto; }
+@media (max-width: 599px) { .install-nudge { padding: 12px 14px 14px; } }
 
 .toast {
-  position: fixed; z-index: 50; left: 50%; bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  position: fixed; z-index: var(--z-toast); left: 50%; bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
   transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
   padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
   background: var(--ink); color: var(--paper); font-weight: 500; font-size: var(--text-sm);
@@ -422,7 +433,7 @@ body.has-undo .update-bar { visibility: hidden; }       /* one bar at a time at 
 .toast-action { min-height: var(--tap); padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent;
   color: var(--mark); font: inherit; font-weight: 700; cursor: pointer; }
 .toast-action:hover { background: rgb(255 255 255 / .08); }
-@media (max-width: 640px) { .toast { bottom: calc(72px + env(safe-area-inset-bottom)); } }
+@media (max-width: 599px) { .toast { bottom: calc(72px + env(safe-area-inset-bottom)); } }
 
 .sheet {
   /* base.css zeroes every margin; a modal <dialog> needs margin:auto to centre. */
@@ -434,7 +445,7 @@ body.has-undo .update-bar { visibility: hidden; }       /* one bar at a time at 
 }
 .sheet::backdrop { background: rgb(10 14 25 / .45); }
 /* On a phone a sheet rises from the thumb, where every native sheet lives. */
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .sheet {
     width: 100%; max-width: none; max-height: 90dvh;
     margin: auto 0 0; border-radius: var(--r-lg) var(--r-lg) 0 0;
@@ -443,18 +454,18 @@ body.has-undo .update-bar { visibility: hidden; }       /* one bar at a time at 
 }
 /* The header stays pinned while the settings scroll, so Close is always in reach. */
 .sheet-head {
-  position: sticky; top: 0; z-index: 2; display: flex; align-items: center;
+  position: sticky; top: 0; z-index: var(--z-base); display: flex; align-items: center;
   padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
   background: var(--surface); border-bottom: 1px solid var(--line);
 }
 .sheet-foot {
-  position: sticky; bottom: 0; z-index: 2; display: flex; justify-content: flex-end;
+  position: sticky; bottom: 0; z-index: var(--z-base); display: flex; justify-content: flex-end;
   padding: var(--s-3) var(--s-5); background: var(--surface); border-top: 1px solid var(--line);
 }
 .sheet-head h2 { font-size: var(--text-lg); }
 .sheet-head .icon-btn { margin-inline-start: auto; }
 .sheet-body { padding: var(--s-4) var(--s-5) var(--s-5); display: grid; gap: var(--s-5); }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .sheet-head { padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); }
   .sheet-body { padding: var(--s-3) var(--s-4) var(--s-5); gap: var(--s-4); }
   .sheet-foot { padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom)); }
@@ -468,7 +479,7 @@ body.has-undo .update-bar { visibility: hidden; }       /* one bar at a time at 
 .confirm-body h2 { font-size: var(--text-xl); line-height: 1.3; text-wrap: balance; }
 .confirm-body p { max-width: 42ch; color: var(--ink-2); font-size: var(--text-md); line-height: 1.6; text-wrap: pretty; }
 .confirm-foot { display: flex; justify-content: flex-end; gap: var(--s-2); padding: 0 var(--s-5) var(--s-5); }
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .confirm-body { padding: var(--s-5) var(--s-4) var(--s-4); }
   .confirm-body h2 { font-size: var(--text-lg); }
   .confirm-foot { padding: 0 var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom)); }
@@ -484,7 +495,7 @@ body.has-undo .update-bar { visibility: hidden; }       /* one bar at a time at 
 kbd {
   display: inline-block; min-width: 22px; padding: 1px 6px; border-radius: 5px; text-align: center;
   border: 1px solid var(--line-strong); border-bottom-width: 2px; background: var(--surface);
-  font: 600 .75rem/1.5 var(--font-body); color: var(--ink-2);
+  font: 600 var(--text-xs)/1.5 var(--font-body); color: var(--ink-2);
 }
 .sheet-group { font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; letter-spacing: .02em;
   padding-top: var(--s-3); border-top: 1px solid var(--line); margin-bottom: calc(var(--s-2) * -1); }
@@ -496,7 +507,7 @@ kbd {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-1); overflow: visible;
 }
-@media (min-width: 520px) {
+@media (min-width: 600px) {
   .seg.swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .seg.swatches > button:last-child:nth-child(3n+1) { grid-column: 1 / -1; justify-self: center; }
 }
@@ -522,14 +533,14 @@ kbd {
 
 /* "A new version is ready" (app.js, after a deploy) */
 .update-bar {
-  position: fixed; z-index: 45; left: 50%; top: calc(var(--bar-h) + var(--s-3)); transform: translateX(-50%);
+  position: fixed; z-index: var(--z-float); left: 50%; top: calc(var(--bar-h) + var(--s-3)); transform: translateX(-50%);
   display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);
   background: var(--ink); color: var(--paper); border-radius: var(--r-pill); box-shadow: var(--shadow-2);
   font-size: var(--text-sm); font-weight: 500; animation: view-in var(--slow) var(--ease);
   max-width: calc(100vw - 32px);
 }
 /* Phones: a card above the tab bar instead of a narrow pill over the title. */
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .update-bar {
     top: auto; bottom: calc(64px + env(safe-area-inset-bottom) + var(--s-3));
     left: var(--gutter); right: var(--gutter); transform: none; max-width: none;
@@ -541,7 +552,7 @@ kbd {
 
 /* Break reminder (core/study-time.js) — calm, never blocks the screen. */
 .break-card {
-  position: fixed; z-index: 40; right: var(--s-5); bottom: var(--s-5);
+  position: fixed; z-index: var(--z-float); right: var(--s-5); bottom: var(--s-5);
   width: min(360px, calc(100vw - 32px)); display: grid; gap: var(--s-2);
   padding: var(--s-4) var(--s-5); border-radius: var(--r-lg);
   background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2);
@@ -550,7 +561,7 @@ kbd {
 .break-card[hidden] { display: none; }
 .break-card p { color: var(--ink-2); font-size: var(--text-sm); }
 .break-card .row { margin-top: var(--s-2); }
-@media (max-width: 640px) { .break-card { right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); } }
+@media (max-width: 599px) { .break-card { right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); } }
 
 /* Sound traps (core/sound-traps.js): what an Arabic speaker should listen for.
    Quiet ink, never a colour of its own — it's advice, not right/wrong. */
@@ -585,7 +596,7 @@ kbd {
    Most learning happens on a phone, one-handed, by learners of every
    age. Every control is at least 44px; small text never goes below
    ~13px; and form fields use 16px+, or iPhone zooms the page on focus. */
-@media (pointer: coarse), (max-width: 640px) {
+@media (pointer: coarse), (max-width: 599px) {
   .btn, .seg button, .icon-btn { min-height: var(--tap); }
   .speak-btn { width: var(--tap); height: var(--tap); }
   .more-ex-items .speak-btn { width: 44px; height: 44px; }
@@ -611,8 +622,9 @@ kbd {
 .dup-note[hidden] { display: none; }
 
 /* "Did you mean receive?" under an add box (core/spelling.js): a question, not an error. */
-.spell-check { margin-top: var(--s-2); padding: var(--s-3); border: 1px solid var(--mark); border-radius: var(--r-md);
-  background: var(--mark-soft); color: var(--on-mark); }
+.spell-check { margin-top: var(--s-2); padding: var(--s-3); border: 1px solid var(--note-line); border-radius: var(--r-md);
+  background: var(--note-soft); color: var(--note-ink); }
+.spell-check-q > .icon, .word-check > span > .icon { color: var(--note); }
 .spell-check-q { display: flex; align-items: center; gap: var(--s-2); margin: 0; font-size: var(--text-md); }
 .spell-check-q b { color: var(--ink); font-weight: 700; }
 .spell-check-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
@@ -620,12 +632,12 @@ kbd {
 
 /* A word whose spelling or meaning should be checked (core/autofill.js): one line, one fix. */
 .word-check { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-3);
-  padding: var(--s-2) var(--s-3); border: 1px solid var(--mark); border-radius: var(--r-md); background: var(--mark-soft); color: var(--on-mark); }
+  padding: var(--s-2) var(--s-3); border: 1px solid var(--note-line); border-radius: var(--r-md); background: var(--note-soft); color: var(--note-ink); }
 .word-check > span { flex: 1 1 14rem; }
 .word-check > span > .icon, .spell-check-q > .icon { flex: none; display: inline-block; vertical-align: -3px; margin-inline-end: var(--s-1); }
 .word-check b { color: var(--ink); }
 .word-check .btn { min-height: var(--tap); }
-.word-row-flag { color: var(--on-mark); background: var(--mark-soft); border-radius: var(--r-pill); padding: 0 var(--s-2); font-weight: 600; }
+.word-row-flag { color: var(--note-ink); background: var(--note-soft); border: 1px solid var(--note-line); border-radius: var(--r-pill); padding: 0 var(--s-2); font-weight: 600; }
 
 /* A text-style button: a small secondary action inside running content */
 .link-btn { justify-self: start; padding: var(--s-2) 0; min-height: var(--tap); border: 0; background: none; font: inherit;
@@ -672,7 +684,8 @@ kbd {
 
 /* A milestone reached (100, 500, 1000… mastered): shown once, on the results screen */
 .milestone-hit { display: flex; gap: var(--s-3); align-items: center; padding: var(--s-4); margin-bottom: var(--s-4);
-  border-radius: var(--r-lg); background: var(--mark); color: var(--on-mark); text-align: start; }
+  border-radius: var(--r-lg); background: var(--note-soft); color: var(--note-ink); border: 1px solid var(--note-line); text-align: start; }
+.milestone-hit .icon { color: var(--note); }
 .milestone-hit .icon { flex: none; }
 .milestone-hit p { display: grid; gap: 2px; }
 .milestone-hit b { font-family: var(--font-display); font-size: var(--text-xl); }
@@ -717,9 +730,7 @@ kbd {
 .ar-pick .spell-check-q bdi { font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); font-weight: 600; }
 .ar-pick-list { display: grid; gap: var(--s-2); margin-top: var(--s-2); }
 .ar-pick-opt { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3);
-  min-height: var(--tap); padding: var(--s-2) var(--s-3); text-align: start; font: inherit; color: var(--ink);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer; }
-.ar-pick-opt:hover, .ar-pick-opt:focus-visible { border-color: var(--brand); }
+  padding: var(--s-2) var(--s-3); }
 .ar-pick-opt.is-first { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
 .ar-pick-opt b { font-size: var(--text-md); }
 .ar-pick-opt bdi { font-family: var(--font-arabic); color: var(--ink-2); font-size: var(--text-sm); }
@@ -734,11 +745,11 @@ kbd {
 .more-settings[open] > summary { color: var(--brand); }
 /* Same rhythm as the basics above it (.sheet-body is a grid with a gap; <details> isn't). */
 .more-settings-body { display: grid; gap: var(--s-5); padding-bottom: var(--s-2); }
-@media (max-width: 640px) { .more-settings-body { gap: var(--s-4); } }
+@media (max-width: 599px) { .more-settings-body { gap: var(--s-4); } }
 
 /* A service that isn't answering (Settings → Auto-fill, core/autofill.js VS.google): said plainly, not as an error. */
 .setting-status { display: flex; align-items: flex-start; gap: var(--s-2); margin: 0; padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-md); background: var(--mark-soft); color: var(--on-mark); font-size: var(--text-sm); line-height: 1.5; }
+  border-radius: var(--r-md); background: var(--note-soft); color: var(--note-ink); font-size: var(--text-sm); line-height: 1.5; }
 .setting-status .icon { flex: none; margin-top: 3px; }
 
 /* A word's meanings, inline (views/shared.js meaning-list): read, compare, pick — no form. */

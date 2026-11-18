@@ -76,14 +76,14 @@
 .reset-cancel { background: transparent; border-color: transparent; color: var(--ink-2); }
 .reset-cancel:hover { background: var(--surface-2); color: var(--ink); }
 
-@media (max-width: 640px) {
+@media (max-width: 599px) {
   .reset-ledger { padding: var(--s-4); }
   .reset-panel { padding: 0 var(--s-4); }
   .reset-step { padding: var(--s-4) 0; }
   .reset-backup, .reset-confirm, .reset-hint, .reset-actions { padding-inline-start: 0; }
   .reset-cancel { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
 }
-@media (max-width: 480px) {
+@media (max-width: 599px) {
   .reset-actions .btn { flex: 1 1 160px; }
   .reset-actions .btn-danger { margin-inline-start: 0; }
 }

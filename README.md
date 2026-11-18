@@ -185,7 +185,7 @@ docs/                     architecture, design, learning guide
 | --- | --- |
 | [about.html](about.html) | introduce the app to a friend — in Arabic |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | understand how the app boots, routes and schedules recall |
-| [docs/DESIGN.md](docs/DESIGN.md) | change colours, fonts, spacing, motion or sounds safely |
+| [DESIGN.md](DESIGN.md) | change colours, fonts, spacing, motion or sounds safely |
 | [docs/LEARN.md](docs/LEARN.md) | learn web development from this codebase (Arabic) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | send an improvement |
 

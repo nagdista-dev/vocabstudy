@@ -27,7 +27,7 @@
   const words = () => F.apply(VS.allWords(), f);
   const query = () => F.query(f);
   const pickHref = (mode) => "#/pick/" + mode + (query() ? "?" + query() : "");
-  const narrow = () => matchMedia("(max-width: 420px)").matches;
+  const narrow = () => matchMedia("(max-width: 599px)").matches;
 
   /* Status has its own chips; the badge on Filters counts only the
      advanced filters hiding in the sheet. */
@@ -377,7 +377,7 @@
               ${backupNudge()}
 
               <header class="lib-head">
-                <h1>Your words</h1>
+                <h2>Your words</h2>
                 <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
               </header>
 
@@ -386,7 +386,7 @@
                   <label class="field">
                     ${icon("search", "icon-sm")}
                     <span class="sr-only">Search the library</span>
-                    <input type="search" id="libSearch" value="${f.q}" placeholder="${narrow() ? "Search words" : "Search your words"}" autocomplete="off"
+                    <input dir="auto" type="search" id="libSearch" value="${f.q}" placeholder="${narrow() ? "Search words" : "Search your words"}" autocomplete="off"
                            aria-label="Search English, Arabic, definitions, examples, tags and your notes"/>
                   </label>
                   <button class="btn lib-filter-btn" type="button" data-action="lib-panel" aria-expanded="${panelOpen}" aria-controls="libPanel" aria-label="Filters">

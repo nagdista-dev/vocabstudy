@@ -1051,35 +1051,52 @@ agent مستقل راجع V0 وV1 ضد الخطة ولقى **4 P0** و**5 P1** �
 - **الكيبورد العربي:** "شؤفعشممغ" = actually في Recall وSpell وAdd (اتجرّب: actually، borrow، make a decision).
 
 ### V3 — نظام التصميم والراحة للعين (P1/P2) — "مرتب ومريح"
-- [ ] **V3.1 Breakpoints:** 3 بس كـ tokens: phone < 600، tablet 600–1023، desktop ≥ 1024 (و wide ≥ 1440 للمسافات
+- [x] **V3.1 Breakpoints:** 3 بس كـ tokens: phone < 600، tablet 600–1023، desktop ≥ 1024 (و wide ≥ 1440 للمسافات
       بس). اجمع الـ ~25 media query عليهم. اختبر 360، 390، 768، 1024، 1280، 1440.
-- [ ] **V3.2 سلّم z-index:** tokens: `--z-base, --z-sticky, --z-bar, --z-sheet, --z-toast, --z-dialog` بدل 16 قيمة.
+- [x] **V3.2 سلّم z-index:** tokens: `--z-base, --z-sticky, --z-bar, --z-sheet, --z-toast, --z-dialog` بدل 16 قيمة.
       التوست والـ update bar والـ install card ميغطوش زرار أساسي (يتحركوا فوق الـ action bar).
-- [ ] **V3.3 نظام الزراير:** 4 بس: primary، secondary (tonal)، quiet (text)، danger + icon-button بحجم واحد. وحّد
+- [x] **V3.3 نظام الزراير:** 4 بس: primary، secondary (tonal)، quiet (text)، danger + icon-button بحجم واحد. وحّد
       `link-btn، word-manage-btn، speak-btn، more-btn، filter-btn، install-nudge-x، sense-opt، ar-pick-opt`.
-- [ ] **V3.4 سلّم الخط:** حد أدنى 13px لأي نص (حروف أيام الأسبوع 10px، تابات 12px، meta 12px، about 10–11px كلهم
+- [x] **V3.4 سلّم الخط:** حد أدنى 13px لأي نص (حروف أيام الأسبوع 10px، تابات 12px، meta 12px، about 10–11px كلهم
       يتصلحوا)؛ النص اللي بيتقري 15–17px؛ تعريف أكتر من سطر left-aligned؛ اكتب السلّم في `tokens.css`.
-- [ ] **V3.5 Touch targets 44×44 في كل مكان** (موبايل وديسكتوب): Learn 8، Quick، #tags، Edit/Delete/Start over،
+- [x] **V3.5 Touch targets 44×44 في كل مكان** (موبايل وديسكتوب): Learn 8، Quick، #tags، Edit/Delete/Start over،
       Other meanings، Hear the sentence، More examples، تابات Add، روابط الـ rail (Open/Details 19px)، chips، × بتاع
       الـ backup nudge، brand link.
-- [ ] **V3.6 Focus:** حلقة واضحة ≥ 3:1 لكل الخانات والأزرار (مش ظل `--brand-soft`).
-- [ ] **V3.7 الأصفر = الذاكرة بس:** الـ highlighter للكلمة اللي بتتعلمها والعدد المستحق. "Which meaning?" والتحذيرات
+- [x] **V3.6 Focus:** حلقة واضحة ≥ 3:1 لكل الخانات والأزرار (مش ظل `--brand-soft`).
+- [x] **V3.7 الأصفر = الذاكرة بس:** الـ highlighter للكلمة اللي بتتعلمها والعدد المستحق. "Which meaning?" والتحذيرات
       ولون الـ milestone ياخدوا token تاني (`--note`/outline). عدد "Learn" محايد.
-- [ ] **V3.8 مكوّن Status واحد** (نقطة + نص) في الموبايل والديسكتوب؛ صف الكلمة المستحقة النهارده عليه علامة.
-- [ ] **V3.9 Layout الموبايل:** كارت Recall فوق مش في النص (الكيبورد ميغطيش)؛ اختيارات Quiz قريبة من الإبهام؛ chips
+- [x] **V3.8 مكوّن Status واحد** (نقطة + نص) في الموبايل والديسكتوب؛ صف الكلمة المستحقة النهارده عليه علامة.
+- [x] **V3.9 Layout الموبايل:** كارت Recall فوق مش في النص (الكيبورد ميغطيش)؛ اختيارات Quiz قريبة من الإبهام؛ chips
       الـ hero بـ fade أو سطرين؛ "Quick 5" border solid؛ تايلز النتيجة متتقطعش ("remembered").
-- [ ] **V3.10 Layout الديسكتوب:** الـ hero عمود واحد (العنوان → CTA → chips)، "Tomorrow/Remind" في الـ rail؛ صفحة
+- [x] **V3.10 Layout الديسكتوب:** الـ hero عمود واحد (العنوان → CTA → chips)، "Tomorrow/Remind" في الـ rail؛ صفحة
       الكلمة لما تتفتح تاخد عرض العمودين (أو الـ rail يختفي)؛ الـ scrim بتاع الـ dialog أغمق شوية.
-- [ ] **V3.11 العناوين:** h1 واحد في كل شاشة وفي أولها (الـ hero = h1 "Today"، "Your words" = h2).
-- [ ] **V3.12 الأداء:** صفحة الكلمة تتبني لما الصف يتفتح بس (مش 2,505 عنصر لـ 23 كلمة)؛ اختبار بمكتبة 1,000 كلمة
+- [x] **V3.11 العناوين:** h1 واحد في كل شاشة وفي أولها (الـ hero = h1 "Today"، "Your words" = h2).
+- [x] **V3.12 الأداء:** صفحة الكلمة تتبني لما الصف يتفتح بس (مش 2,505 عنصر لـ 23 كلمة)؛ اختبار بمكتبة 1,000 كلمة
       (seed صناعي من غير نت) — الفتح والسكرول والبحث < 100ms تقريبًا على موبايل متوسط.
-- [ ] **V3.13 Bidi/RTL:** `dir="auto"` على كل input/textarea؛ about.html: النقطة متقعش لوحدها ("متضيعش منك."
+- [x] **V3.13 Bidi/RTL:** `dir="auto"` على كل input/textarea؛ about.html: النقطة متقعش لوحدها ("متضيعش منك."
       جوه الـ highlight أو nowrap)، "PREPOSITION" مش all-caps؛ تصليح ملاحظات الـ detector (cramped padding في
       `ruler-card، faq-list، privacy-online، final`؛ `span.plat` 10.9px).
-- [ ] **V3.14 Motion:** مدة واحدة وeasing واحد من الـ tokens؛ كل حاجة تحترم `prefers-reduced-motion`؛ مفيش
+- [x] **V3.14 Motion:** مدة واحدة وeasing واحد من الـ tokens؛ كل حاجة تحترم `prefers-reduced-motion`؛ مفيش
       حاجة بتتحرك وهي بتظهر لو المستخدم لسه هيقرا (السكرين شوتس طلعت كتير "mid-fade").
-- [ ] **V3.15 DESIGN.md:** حدّثه بالـ tokens والزراير والسلّم والـ breakpoints والـ glossary؛ وانقله للـ root
+- [x] **V3.15 DESIGN.md:** حدّثه بالـ tokens والزراير والسلّم والـ breakpoints والـ glossary؛ وانقله للـ root
       (impeccable بيدوّر على `DESIGN.md` في الـ root) أو اعمل link.
+
+**اتعمل في V3 (ملاحظات التنفيذ):**
+- **Breakpoints:** بقوا 599/600/1023/1024 (و374 للموبايل الضيق بس)؛ about.html مستثناة لأنها صفحة قراءة.
+- **z-index:** سلّم `--z-*` (base→dialog) ومفيش رقم خام في أي ملف.
+- **الخط:** أقل حاجة 13px (`--text-2xs`)، والاستثناء الوحيد رقم جوه badge (`--text-badge` 12px).
+- **Touch/Focus:** `system.css` جديد فيه الـ 44px لكل حاجة، و hit ring خفي للـ #tags وروابط الـ rail، وحلقة focus
+  `2px solid --brand`.
+- **الأصفر للذاكرة بس:** "Which meaning?" والتحذيرات والـ milestone والـ status خدوا `--note` (أزرق رمادي هادي).
+- **Status:** نقطة + كلمة في كل المقاسات، والـ pill اتشال (statusBadge اتمسح). علامة "المستحقة النهارده" على الصف
+  اتأجلت: عدد المستحق موجود في الـ hero، والعلامة هتيجي مع المسطرة في V4.2 عشان متبقاش لون زيادة.
+- **الزراير:** 4 أنواع + icon-btn؛ × بتاع الـ install بقى `icon-btn`، وword-manage/link-btn بقوا 44px، و
+  sense-opt وar-pick-opt بقوا "choice card" واحد.
+- **الأداء:** صفحة الكلمة بتتبني لما الصف يتفتح (wordBody/fillRow): الـ Home من ~2,500 عنصر لـ 716.
+- **Motion:** 4 مدد (`--fast/--base/--slow/--draw`) و easing واحد؛ شلت الـ cascades من على أي نص بيتقري
+  (chips، recent، tiles، اختيارات الـ quiz، أرقام النتيجة) — الشاشة بتدخل مرة واحدة والباقي ثابت.
+- **About:** النقطة جوه الـ highlight، مفيش all-caps، padding أوسع للكروت.
+- **DESIGN.md** اتنقل للـ root واتكتب فيه النظام كله + glossary.
 
 ### V4 — الهوية والتميز ("كراسة مدرس عربي")
 - [ ] **V4.1 لغة بصرية واحدة للمدرس:** الـ highlighter = الكلمة اللي بتتعلمها بس؛ **قلم أحمر** = الغلط (شطب + سهم

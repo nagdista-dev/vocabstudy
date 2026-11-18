@@ -60,7 +60,7 @@
             <form data-form="spell" autocomplete="off">
               <label class="field field-xl ${s.checked ? (ok ? "is-right" : "is-wrong") : ""}">
                 <span class="sr-only">Type the word you hear</span>
-                <input id="spellInput" type="text" value="${s.typed}" ${s.checked ? "readonly" : ""}
+                <input dir="auto" id="spellInput" type="text" value="${s.typed}" ${s.checked ? "readonly" : ""}
                        spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="Type the word"/>
               </label>
             </form>
@@ -80,7 +80,7 @@
                 ${ok ? "" : html`
                   <form class="spell-retype" data-form="retype" autocomplete="off">
                     <label class="form-field"><span>Now type it once more, the right way</span>
-                      <input id="retypeInput" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" lang="en"
+                      <input dir="auto" id="retypeInput" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" lang="en"
                              class="${s.retyped ? "is-right" : ""}" value="${s.retype || ""}" placeholder="${answer.replace(/[^\s]/g, "·")}"/>
                     </label>
                   </form>`}`
