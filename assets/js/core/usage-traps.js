@@ -294,7 +294,7 @@
 
     /* ── Tense: the past needs a past verb (soft: see PAST above) ── */
     ["yesterday|ago|last", "tense", "Yesterday the plane take off late.", "Yesterday the plane took off late.",
-      "Yesterday, last week, two days ago = the past, so the verb goes to the past too (borrow → borrowed, take → took). In Arabic the verb can stay «امبارح الطيارة بتطير متأخر»; in English it can't.",
+      "Yesterday, last week, two days ago = the past, so the verb goes to the past too (borrow → borrowed, take → took). Arabic can say «امبارح الطيارة بتطير متأخر» (yesterday the plane flies late); English can't.",
       `\\b${PAST}\\b,?\\s+${GAP}\\b${SUBJ}\\s+${DO}(?:s|es)?\\b|\\b(?:i|you|we|they|he|she)\\s+${DO}(?:s|es)?\\b[^.,;!?\\n]{0,40}?\\b${PAST}\\b`],
     ["yesterday|ago|last", "tense", "Yesterday I am very tired.", "Yesterday I was very tired.",
       "Am / is / are are now. Yesterday, last week, two days ago: was / were.",

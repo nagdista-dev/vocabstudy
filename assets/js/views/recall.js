@@ -257,7 +257,7 @@
           <p>${next
             ? html`Your next recall is <b>${VS.ui.whenText(next.date)}</b>: ${VS.plural(next.count, "word")}.`
             : "Add words to your library — they come back here on their recall days."}</p>
-          <p class="hint">Want to keep going? ${VS.newLeftToday() && VS.store.newWords().length ? "Meet today's new words, or practise" : "Practise"} without changing your schedule:</p>
+          <p class="hint">Want to keep going? ${VS.newLeftToday() && VS.store.newWords().length ? "Meet today's new words, or practise" : "Practise"} — the words you've studied keep their recall days:</p>
           <div class="row empty-actions">
             ${VS.newLeftToday() && VS.store.newWords().length ? html`<a class="btn btn-primary" href="#/new/cards">${icon("plus", "icon-sm")} Learn new words</a>
             <a class="btn" href="#/all/quiz">${icon("quiz", "icon-sm")} Quiz</a>` : html`<a class="btn btn-primary" href="#/all/quiz">${icon("quiz", "icon-sm")} Quiz</a>`}

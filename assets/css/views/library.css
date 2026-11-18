@@ -147,7 +147,7 @@
   transition: background var(--fast);
 }
 .word-row summary::-webkit-details-marker { display: none; }
-@media (hover: hover) { .word-row summary:hover { background: #fbfcfe; } }
+@media (hover: hover) { .word-row summary:hover { background: var(--surface-hover); } }
 .word-row[open] .word-row-word b { font-size: 1.0625rem; }
 .word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
 .word-row-word b { font-weight: 600; overflow-wrap: anywhere; }
@@ -169,7 +169,7 @@
    starts with "· Top 12,000" instead of ending in a bare dot. */
 .word-row-freq::before, .word-row-note::before { content: " \00b7\00a0"; color: var(--ink-3); }
 .word-row-state { font-weight: 600; }
-.word-row-state[data-s="learning"] { color: var(--on-mark); }
+.word-row-state[data-s="learning"] { color: var(--on-mark-soft); }
 .word-row-state[data-s="mastered"] { color: var(--good); }
 .word-row-sep { margin-inline: 3px; color: var(--line-strong); }
 .word-row-ar { grid-area: ar; text-align: left; color: var(--ink-2); font-size: 1.02rem; overflow-wrap: anywhere; }
@@ -436,7 +436,7 @@
 .sense-type [lang="ar"] { font-family: var(--font-arabic); font-size: calc(var(--text-sm) * var(--arabic-scale)); color: var(--ink-2); }
 /* The weekly report on the home screen (Thursday, Friday): a reward, so it wears the highlighter */
 .week-ready { background: var(--note-soft); border-color: var(--note-line); }
-.week-ready .recall-strip-main > .icon:first-child { color: var(--on-mark); }
+.week-ready .recall-strip-main > .icon:first-child { color: var(--on-mark-soft); }
 
 /* Filters in three steps (V2.15): sort · show only · more filters. */
 .filter-group-title { margin: var(--s-2) 0 0; font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); }

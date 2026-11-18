@@ -1170,6 +1170,418 @@ agent مستقل راجع V0 وV1 ضد الخطة ولقى **4 P0** و**5 P1** �
   - **الهدف 34 متحققش.** اللي فاضل متكرر عند الـ reviewers: الرئيسية + المكتبة في شاشة موبايل واحدة (تغيير هيكلي:
   تاب "Your words" لوحده)، اختيارات الطباعة كتير، والـ charts عادية. هنعيد الـ critique بعد V6.
 
+
+
+**اتعمل في V6 (ملاحظات التنفيذ):**
+- **Night:** Settings → Look → Theme: Light / Night / Auto (الـ default Auto، بيتبع الجهاز وبيتغير معاه). سكريبت صغير في
+  الـ `<head>` بيحط الـ theme قبل أول رسمة، فمفيش وميض أبيض. ورقة كحلي مش أسود: كل لون ليه token ليلي في
+  `tokens.css`، والـ 10 accents ليهم درجة فاتحة، والـ soft والـ hover بيتعملوا منها بـ color-mix.
+- **الـ highlighter بالليل:** شريط أصفر هادي ورا الكلمة كلها ونص غامق (9.2:1)، من غير أنيميشن (الحروف الغامقة
+  كانت بتختفي قبل ما الشريط يترسم). نص على الأصفر الخفيف ليه token لوحده `--on-mark-soft`.
+- **التباين:** كل الـ accents ≥ 7:1 للـ brand، الأخضر/الأحمر ≥ 6.5:1 على الـ soft، `--ink-3` 5.7:1؛ الـ placeholders
+  بقت `--ink-3` (كانت رمادي المتصفح 3.7:1 — الـ detector مسكها).
+- **Glass** بالنهار بس؛ بالليل accent عادي فاتح. **الطباعة والـ PDF** دايمًا light (الـ `.print-doc` بيرجّع
+  الـ tokens بتاعة النهار). about.html فاضلة light (صفحة قراءة).
+- **من الـ critique الأخيرة (30/40، الليل "theme حقيقي مش inversion"، مفيش حاجة مكسورة):**
+  - Spell كان بيكتب الكلمة الصح بالأحمر → الحروف اللي اتقالت بالحبر، واللي محتاج تتعلمها عليها الـ highlighter.
+  - الغلط كان بيلوّن الكارت كله وردي → الكارت محايد، خط أحمر على الجنب وعنوان أحمر بس؛ والشرح بقى 15px مش hint.
+  - Use it: سؤال الـ grammar بيظهر قبل أول Check بس، والعنوان "One thing to change" بدل "Almost there"،
+    والمثال العربي اتترجم.
+  - "Practise without changing your schedule" مكانتش صح للكلمات الجديدة → الجملة بقت صادقة.
+  - الـ update bar مبيظهرش جوه نشاط، والـ toast والـ bar بالليل لوحة غامقة مش بلوك أبيض.
+
+### معيار القبول (نفس التجربة دي تتعاد)
+بذاكرة فاضية على 375px: `recieve` ← يقترح receive؛ `take off` ← يسأل عن المعنى، والعربي
+والتعريف من نفس المعنى؛ `تحدي` ← يقترح challenge؛ جملة "Yesterday the plane take off" ← تتعلّم
+غلط ومتتخزنش كتذكير؛ Recall يقبل took off؛ Learn يبدأ بكارت مفتوح؛ مفيش شاشة من غير طريق
+للرئيسية؛ Goal مكتوب بوحدته.
+
+---
+
+# v10 — مراجعة خبير UI/UX: من "تطبيق كويس" لـ "رقم 1 للعرب"
+
+**التاريخ:** 17 نوفمبر 2026. **الحالة:** خطة بس، لسه متنفذتش. اللي هينفذ: agent تاني (البرومبت بتاعه في
+`docs/AGENT_BRIEF_v10.md`). **قرارات صاحب التطبيق:** كل حاجة تتصلح؛ الدارك مود **آخر مرحلة**؛ لينك
+البورتفوليو `nagdista.com` يتحط من غير ما يضايق المستخدم؛ التطبيق لازم يبقى ليه **هوية مميزة**، **مريح
+للعين**، **مرتب وواضح**، و**ينافس التطبيقات الكبيرة** (Duolingo، Anki، Memrise، Quizlet).
+
+## 17. إزاي اتعملت المراجعة
+- **Assessment A (خبير تصميم، مستقل):** لف على كل شاشة موبايل 375 وديسكتوب 1280/800 ببيانات متعلم حقيقي
+  (`tools/seed_learner.js`: 22 كلمة، 8 مستحقة، 3 mastered، أسبوعين تاريخ، ملاحظات، جمل)، وقيّم بـ 10
+  مبادئ Nielsen وشخصيات (منى: طالبة A2 موبايل في المترو؛ خالد: مهندس IELTS لابتوب وكيبورد). 47 سكرين شوت.
+- **Assessment B (أداة impeccable detect + قياسات المتصفح):** فحص آلي للكود + overlay في المتصفح + قياس
+  أزرار تحت 44px، تباين، overflow، خطوط تحت 14px، ترتيب العناوين، حجم الصفحة.
+- **أنا (مراجعة الكود + التحقق):** اتأكدت بنفسي من أخطر الادعاءات في الكود، ولقيت مشاكل نظام التصميم.
+- **النتيجة:** **26/40 (Good — بس فيه ثغرات حقيقية).** المراجعة اللي فاتت (16 نوفمبر، على نسخة أقدم ومن
+  غير agents مستقلين) كانت 29/40. التفاعل نفسه شاطر جدًا؛ اللي بينزّل الدرجة: **الثقة في المحتوى**
+  و**عدم الاتساق**.
+
+| # | المبدأ | الدرجة | أهم مشكلة |
+|---|---|---|---|
+| 1 | حالة النظام واضحة | 3 | عداد Recall بيكبر في نص الجلسة (3/8 ← 10/12)؛ مفيش مؤشر أوفلاين عام |
+| 2 | لغة المستخدم | 2 | عربي غلط/متناقض؛ مصطلحات: Box 1/6، JSON؛ "Accent" يعني نطق ويعني لون؛ "Quick 5" فيها 10 كلمات؛ الديسكتوب بيسمي الرئيسية "Words" والموبايل "Today" |
+| 3 | التحكم والتراجع | 3 | "Start over" للكلمة بيمسح تقدمها من غير تأكيد ولا Undo؛ Delete بيعمل reload للصفحة |
+| 4 | الاتساق | 2 | "Start over" ليها 3 معاني؛ أزرار التقييم 2 مرة و3 مرة؛ Practise/Practice؛ الحالة pill في الديسكتوب ونص في الموبايل |
+| 5 | منع الأخطاء | 2 | "Delete 22 words" (المكتبة كلها) بتأكيد واحد، و"Start over" محتاج backup وكتابة RESET؛ أزرار Check شغالة قبل قلب الكارت |
+| 6 | التعرف بدل التذكر | 3 | "Other meanings" بيفتح فورم 13 خانة |
+| 7 | المرونة والسرعة | 3 | الإجابة الصح المكتوبة محتاجة ضغطة تانية؛ مفيش Undo برّه Recall |
+| 8 | البساطة | 3 | الـ hero فيه 8+ عناصر؛ الفلاتر 11؛ الطباعة ~41 اختيار؛ صفحة الكلمة 17 بلوك |
+| 9 | التعافي من الغلط | 2 | تصحيح Use it بيرد بجملة محفوظة ("Yesterday the plane took off late") بدل جملة المتعلم |
+| 10 | المساعدة | 3 | صفحة About بالعربي ممتازة، بس اللينك ليها مكتوب إنجليزي |
+
+**اللي لازم نحافظ عليه (نقط قوتنا قدام المنافسين):** feedback زي المدرس ("Almost — one slip"، diff
+الإملاء، فخوخ العرب بالمصري تستلف/تسلّف، تحذير الكيبورد العربي) — مفيش تطبيق في السوق بيعمل كده. أول
+تشغيل والمسطرة 1-3-7-14-30-60 وصفحة About. نشاط واحد في كل شاشة، الزرار تحت الإبهام، Undo، الاختصارات.
+
+## 18. النقاش — أنا كخبير شايف إيه
+
+**1) المحتوى هو المنتج.** الشكل 3/4 من حيث الهوية، بس التجربة الفعلية 2/4، لأن مفيش highlighter يصلّح
+معنى عربي غلط. commute = «استبدل - خفف العقوبة» جنب "travel between home and work"؛ persuade = «اقتنع»
+(المفروض أقنع)؛ afford = «يمنح»؛ take off اتعرض «نزع» والمتعلم قابلها "The plane will take off at six"؛
+Similar لـ borrow = commandeer · abstract؛ challenge = "…especially a duel". **المتعلم العربي مش هيكتشف إن
+المعنى غلط — هيحفظه غلط.** ده أخطر من أي مشكلة شكل. الحل مش "ذكاء أكتر" بس: (أ) الجملة اللي قابلها فيها
+هي اللي تختار المعنى، (ب) جدول تصحيحات يدوي لأشهر الكلمات، (ج) المتعلم يأكد العربي في Meet ("ده المعنى؟ ✓ /
+غيّر")، (د) Similar من الكلمات الشائعة بس.
+
+**2) الثقة بتتكسر في اللحظات الخطيرة.** Start over للكلمة بضغطة، حذف المكتبة كلها بتأكيد واحد، Replace في
+الـ backup شبه Merge. التطبيقات الكبيرة كلها بتدي **Undo** بعد أي حذف. محتاجين قاعدة واحدة: أي حاجة بتمسح =
+تأكيد أو Undo، والمسح الكبير = نفس بوابة الـ backup.
+
+**3) "خط النهاية بيهرب".** عداد Recall بيكبر، وعداد Check واقف عند 8/8. ده بيكسر أهم إحساس في جلسة
+مذاكرة: "فاضل قد إيه؟". محتاجين نموذج واحد: "3 of 8 · 2 to try again" والشريط بيتحرك لقدام بس.
+
+**4) الصدمة بعد أول كلمة.** أول تشغيل معمول بحب؛ بعد أول كلمة بتظهر قاعدة بيانات كاملة (6 chips كلها صفر،
+Goal 0/150، Practise، …). المفروض أول 5 كلمات تفضل الشاشة "خطوة واحدة": "achieve اتضافت. اتعلمها دلوقتي (دقيقة)".
+
+**5) وعد "تذكر مش تعرّف" مكسور.** خطوة Check بتوري الكلمة الإنجليزي وتسأل "فاكرها؟" — ده تعرّف، وصفحة
+About بتقول بالحرف إن التطبيق مش بيعمل كده. والـ default بتاع الكروت إنجليزي الأول. لازم الوعد والمنتج
+يبقوا حاجة واحدة: Check عربي الأول، والمتعلم يكتب/يقول الكلمة.
+
+**6) نظام التصميم مفكك (ده سبب إن الحاجات "بتضايق العين" ومش "مرتبة").**
+- ~25 breakpoint مختلف (360، 374، 420، 480، 520، 560، 640، 641، 700، 701، 720، 760، 761، 820، 860، 900،
+  1000، 1023، 1024…) → التابلت والمقاسات اللي في النص بتبوظ.
+- 16 قيمة z-index من غير سلّم → كارت التثبيت والـ update bar بيغطوا الزراير.
+- 16 شكل زرار (9 `btn-*` + 7 `*-btn`) → المفروض 4.
+- خطوط 10–12px في أماكن كتير (حروف أيام الأسبوع 10px، تابات الموبايل 12px، meta الكلمات 12px).
+- أزرار أصغر من 44px حتى على الموبايل (Learn 8 و Quick 5 = 36px، #IELTS = 28px، Edit/Delete = 40px،
+  روابط الـ rail على الديسكتوب 19px).
+- focus الخانات = ظل أزرق فاتح على أبيض (~1.2:1) — المستخدم بالكيبورد مش شايف هو فين.
+- الأصفر بقى ليه 4 معاني (ذاكرة، مكافأة، تحذير، "راجع ده") → الهوية بتبهت.
+- الرئيسية فيها 2,505 عنصر بـ 23 كلمة بس (كل صفحة كلمة متبنية جوه `<details>` حتى وهي مقفولة) → بـ 1,000
+  كلمة هتبقى تقيلة جدًا على موبايل ضعيف.
+
+**7) الهوية.** عندنا عناصر مميزة بجد (الـ highlighter اللي بيترسم تحت الكلمة، علامات المدرس، العامية
+المصرية في الشرح، المسطرة). المشكلة إنها مش مستخدمة بنظام: كل شاشة بتستخدمها بطريقة. الهدف: لو حد شاف
+سكرين شوت واحد من غير لوجو يعرف إنه VocabStudy. الهوية = **"كراسة مدرس عربي"**: highlighter أصفر = الكلمة
+اللي بتتعلمها **بس**؛ قلم أحمر المدرس = الغلط والتصحيح (شطب + سهم)؛ المسطرة 1-3-7-14-30-60 = التقدم في كل
+مكان بدل "Box 3/6"؛ صوت المدرس المصري في الشرح. ده اللي محدش من المنافسين عنده.
+
+**8) المنافسة.** Duolingo: خط النهاية واضح جدًا، احتفال بكل جلسة، تذكير؛ Anki: جدولة قوية بس شكل قديم؛
+Memrise/Quizlet: محتوى منظّف ومراجَع. إحنا أقوى منهم في: الكلمة من حياتك + فخوخ العرب + محلي ومجاني. أضعف في:
+ثقة المحتوى، نهاية الجلسة الباهتة ("Recall done" وخلاص)، الاتساق. الخطة بتقفل الضعف ده.
+
+**9) الراحة للعين (قبل الدارك مود).** حد أدنى للخط 13px لأي حاجة بتتقري و15–17px للنص؛ مفيش نص بين
+البيانات؛ أصفر أقل في المساحات الكبيرة (التحذيرات تاخد لون تاني)؛ الكارت يتثبت فوق في الموبايل عشان
+الكيبورد ميغطيش؛ تعريفات أكتر من سطر تبقى left-aligned مش centered. والدارك مود في **آخر مرحلة (V6)**.
+
+**10) لينك صاحب التطبيق.** تسويق هادي: نص صغير + لينك، من غير popup، ومش في أي نشاط مذاكرة. في 4 أماكن:
+فوتر أول تشغيل، الإعدادات (App & data)، فوتر صفحة About، فوتر الـ PDF المطبوع (اللي بيتشارك = تسويق مجاني).
+
+## 19. الخطة — V0 لـ V6 (كل تاسك: إيه، ليه، فين، يتقبل إمتى)
+
+> القاعدة لكل تاسك: يتجرّب على 375 و 1280 بـ `tools/seed_learner.js`، و`python3 tools/build.py` و
+> `python3 tools/check.py` و`node tools/test_traps.js` يعدّوا، ومفيش console errors. أي قرار مش واضح: اختار
+> الأبسط اللي بيخدم "خطوة واحدة واضحة" واكتبه هنا.
+
+### V0 — ثقة المحتوى (P0) — الأول قبل أي حاجة
+- [x] **V0.1 المعنى من الجملة اللي قابلها فيها.** لو الكلمة ليها `context` (Where you met it) أو اتضافت من
+      From text: اختار المعنى اللي كلماته بتشارك الجملة (take off + plane → "leave the ground" = أقلعت). ولو
+      مفيش تطابق، العربي ميتعرضش في الـ cue اللي فيه الجملة دي. ملفات: `core/autofill.js`، `views/recall.js`.
+- [x] **V0.2 جدول تصحيحات يدوي** `assets/data/overrides.js`: أشهر الكلمات اللي الآلي بيغلط فيها (persuade=أقنع،
+      afford=يقدر على (تكلفة)، commute=يتنقّل يوميًا (للشغل)، relieved=مرتاح (adjective)، give up=يبطّل/يستسلم،
+      challenge=تحدّي (من غير duel)، look after=يعتني بـ، depend=يعتمد على…). يبدأ بـ 100 كلمة شائعة على الأقل
+      ويكون سهل يتزود. الـ override بيكسب على الآلي. اختبار في `tools/` بيتأكد إن كل override ليه word/arabic/definition.
+- [x] **V0.3 Similar نضيف:** من أشهر 6,000 كلمة بس، نفس نوع الكلمة، 3 بالكتير، ومن غير register نادر. "Goes with"
+      3 بالكتير ومرتبين بالشيوع.
+- [x] **V0.4 أمثلة بسيطة:** أفضّل مثال ≤ 12 كلمة ومستوى عادي (من Tatoeba أو جوجل)؛ highlight على الـ collocation
+      كلها (depend **on**).
+- [x] **V0.5 المتعلم يأكد المعنى في Meet:** تحت العربي: "Is this the meaning you met? ✓ Yes / Another meaning".
+      "Another meaning" يفتح قايمة المعاني inline (V2.4). الكلمة اللي اتأكدت تتعلّم `confirmed`.
+- [x] **V0.6 تصحيح Use it على جملة المتعلم:** لما فخ بيلقط، اعرض جملته هو بالتصحيح (I give up to smoke → I gave
+      up smoking)، أو القاعدة بس — **ممنوع** الجملة المحفوظة بتاعة الفخ. "Keep it anyway" بس للي جاي من
+      LanguageTool مش من فخ متأكد منه.
+- [x] **V0.7 فخوخ جديدة/مصلّحة:** give up / stop / avoid / enjoy / finish + -ing؛ "make a decision — العربي بيقول
+      اتخذ (take)، الإنجليزي بيقول make" (من غير "British also says take")؛ صياغة depend: "يعتمد على = depend
+      **on** — never of, from or at"؛ مثال about.html "my plans depends of" فيه غلطتين → غلطة واحدة.
+- [x] **V0.8 كلمات مكررة:** relieved اتحولت relieve واتعمل منها نسختين بصمت → متضيفش lemma جديدة لو الشكل الأصلي
+      فيه context؛ واسأل بدل ما تحوّل بصمت ("relieved (adjective) or relieve (verb)?").
+- [x] **V0.9 عرض أول تشغيل صادق:** كارت المثال (resilient صامد، مرن) يطابق اللي الـ auto-fill بيطلعه فعلًا
+      (أو resilient يدخل جدول V0.2).
+
+#### اللي اتعمل في V0 (والمقاسات)
+- **جدول المعاني المراجَعة** `assets/data/overrides.js`: **95 كلمة** مكتوبة باليد (تعريف بإنجليزي بسيط، عربي
+  قصير، مثال ≤ 14 كلمة — كلها مكتوبة للتطبيق مش منقولة من قاموس). الكلمات اللي ليها كذا معنى يومي (take off،
+  give up، fine، apply، manage، turn down، break down، challenge) ليها `senses` و`keys`. `tools/check.py`
+  بيرفض أي entry ناقص أو عربيه مش عربي أو مثاله طويل (اتجرّب بكسر entry عمدًا → الفحص وقع).
+- **المعنى من الجملة:** `lookup(word, context)` — جملة "Where you met it" بتختار المعنى (keys + التعريف +
+  المثال). **اتجرّب:** take off + "The plane…" ← تقلع (الطيارة)؛ fine + "parking" ← غرامة؛ turn down + "the
+  music" ← يوطّي (الصوت). من غير جملة والكلمة ليها كذا معنى ← "Which meaning?".
+- **Recall:** العربي جنب جملة المتعلم بيظهر بس لو المعنى متأكد منه (مراجَع / المتعلم أكده / جه من نفس
+  الجملة) — "The plane will ___" عمرها ما تيجي جنب «نزع».
+- **Similar:** من أشهر 6,000 بس، 3 بالكتير؛ Goes with 3 بالكتير وwoman/women واحد.
+- **أمثلة:** المثال الطويل (> 14 كلمة) بيتبدّل بأقصر مثال لنفس الكلمة؛ الـ highlighter بياخد حرف الجر مع
+  الكلمة لما الفخ عن حرف الجر (depend **on**).
+- **Meet:** "Is this the meaning you met? Yes / Another meaning" للكلمات اللي مش مراجَعة؛ "Another meaning" /
+  "Other meanings" / "Show the others" بقوا **قايمة inline واحدة** (`meaning-list`) — المعنى الحالي "✓ This one"،
+  والباقي "Use this meaning" (`VS.store.applySense`)؛ مش فورم الـ Edit. لو الكلمة ليها معاني مراجَعة بتظهر هي بس
+  (مفيش duel)؛ لو مفيش غير معنى واحد: "That's the only meaning we found".
+- **Use it بيصحح جملة المتعلم هو** (`VS.fixSentence`): تبديل/إضافة/حذف كلمة واحدة، والـ -ing (gave up to smoke →
+  gave up smoking، look forward to meet → to meeting). **78 فخ** بيصححوا جملة المتعلم، و`tools/test_traps.js`
+  بيتأكد إن تصحيح الجملة الغلط بتاعة كل فخ = الجملة الصح بالظبط — الاختبار مسك 3 bugs قبل ما توصل لحد
+  ("attended thing meeting"، "look forward meeting"، "used waking"). الزمن: القاعدة بس.
+- **فخ جديد:** give up / enjoy / avoid / finish / mind / keep + to (من غير ما يمسك "keep to the left" أو "gave up
+  to the police")؛ depend و make a decision اتعادت صياغتهم؛ مثال about.html بقى غلطة واحدة وبيوري جملة
+  المتعلم متصححة.
+- **relieved / interested / tired** مبقوش بيتحولوا لفعل (relieve) بصمت.
+- **أول تشغيل صادق:** resilient في الجدول = صامد - مرن بنفس التعريف والمثال اللي في كارت أول تشغيل.
+
+### V1 — الأمان والتحكم (P1)
+- [x] **V1.1 Undo لكل حذف:** حذف كلمة/كلمات/جملة/reset كلمة → toast فيه "Undo" لمدة 10 ثواني (soft-delete في
+      `core/store.js`). **ممنوع** `location.reload()` بعد الحذف (re-render والـ focus يروح لمكان منطقي).
+- [x] **V1.2 أسماء الأفعال الخطيرة:** "Start over" تبقى لـ `#/reset` بس. الكلمة: "Reset to new" + Undo. الـ bulk:
+      عنوان "Reset progress for 20 words?" وزرار "Reset progress".
+- [x] **V1.3 بوابة الحذف الكبير:** لو الحذف = المكتبة كلها أو > 20 كلمة → نفس بوابة الـ backup بتاعة `#/reset`.
+- [x] **V1.4 Backup:** "Replace everything" شكل danger وتحتها "Replace erases what's on this device"؛ "JSON" →
+      "Backup file"؛ "Never backed up" أوضح.
+- [x] **V1.5 milestones (bug من P2):** الاحتفال بس باللي اتعدّى **في الجلسة دي** (احفظ عدد الـ mastered عند البداية)،
+      وسمّي الكلمة ("postpone is yours now"). متعلم قديم أو restore → backfill بصمت.
+- [x] **V1.6 الاقتراح الإملائي يشوف المكتبة:** "recieve" وreceive موجودة → "receive is already in your library. Open it".
+      والبحث بالعربي يعلّم "in your library" على الاختيار الموجود.
+- [x] **V1.7 تأكيد الحذف:** "Its progress, note and your sentences go too."
+
+#### اللي اتعمل في V1 (والمقاسات)
+- **Undo لكل حاجة بتمسح:** `VS.store.snapshot(ids)` / `restore(snap)` (الكلمة بمكانها في القايمة وتقدمها
+  وملاحظتها وجملها)، و`VS.toast(msg, { label: "Undo", run })` — زرار أصفر، 10 ثواني، عرض ثابت. على: Delete
+  (من غير `location.reload()`)، Reset to new، حذف جملة، Reset progress والحذف الجماعي. **اتجرّب:** borrow
+  (خطوة 2، 3 صح/1 غلط، جملة) — اتمسحت ورجعت بنفس التقدم والجملة ومتسجلة في التخزين.
+- **الأسماء:** "Start over" بقت لـ `#/reset` بس؛ الكلمة "Reset to new"؛ الجماعي "Reset progress for N words?".
+- **بوابة الحذف الكبير:** المكتبة كلها أو > 20 كلمة → "Save a backup and delete" (`VS.backup.save()` الأول؛ لو
+  اتلغى مفيش حذف).
+- **Backup:** Replace بشكل danger وجملة "erases what's on this device"؛ "JSON" → أيقونة؛ "Never backed up" بالخط
+  الغامق.
+- **Milestones:** بتحتفل باللي اتعدّى في الزيارة دي بس (`startMastered`)؛ اللي ورا المتعلم بيتعلّم بصمت؛ أول كلمة
+  بتتسمّى ("postpone is yours now"). **اتجرّب:** متعلم عنده 3 mastered ← `claim()` = 0.
+- **الإملاء والمكتبة:** "recieve" وreceive موجودة ← "It's already in your library. Open “receive”"؛ البحث بالعربي
+  بيعلّم "In your library" وبيفتحها.
+- **تأكيد الحذف:** "Its progress, note and your sentences go too."
+
+### V2 — الوضوح والتدفق (P1)
+- [x] **V2.1 أول 5 كلمات = خطوة واحدة:** تحت 5 كلمات: من غير status chips/filters/Practise/…، من غير goal لحد
+      أول جلسة. بعد أول كلمة: "achieve is in. Learn it now (1 min)" وكارتها مفتوح تحت.
+- [x] **V2.2 عداد واحد لكل الأنشطة:** "3 of 8 · 2 to try again"، الشريط لقدام بس (Recall، Quick، Check، Quiz).
+- [x] **V2.3 Recall:** إجابة مكتوبة صح = "Got it ✓" وزرار Continue واحد (Enter) + لينك "It was hard"؛ نفس مجموعة
+      التقييم في كل الحالات (Forgot · Hard · Got it)؛ "Almost" يعرض الكلمة مرة واحدة والغلطة جواها؛ العربي في
+      gap cue يظهر بعد Hint بس (أو setting)؛ نهاية الجلسة تسمّي الكلمات اللي طلعت خطوة ("deadline → back in 3
+      days") وعدد بكرة؛ الـ Undo عليه كلمة على الديسكتوب.
+- [x] **V2.4 المعاني inline:** "Other meanings" / "Show the others" يفتحوا قايمة تحت التعريف، المعنى الحالي عليه ✓
+      "This one"، والباقي "Use this meaning" — من غير فورم الـ Edit.
+- [x] **V2.5 Learn/Check:** Check عربي الأول، والمتعلم يكتب الكلمة (أو يقولها لو Speak شغال) — مش "فاكرها؟". أزرار
+      التقييم مقفولة لحد ما يقلب. `cardFront` default = `ar`. تحديث about.html يطابق.
+- [x] **V2.6 صفحة الكلمة مرتبة (chunking):** الترتيب: الكلمة + الصوت + Sound tips في سطر واحد → **Where you met it
+      أول حاجة** (لو موجودة) → المعنى (عربي + تعريف) → مثال → فخ العرب → جملك → (More: Similar، Goes with، Other
+      meanings) → الملاحظة والجدول. أقصى 6 بلوكات ظاهرة؛ الباقي تحت "More". الصف يعمل `scrollIntoView` لما يتفتح.
+      Cancel في الـ Edit يرجع لصفحة الكلمة. جملة unsure: الغلطة مشطوبة بالأحمر جوه الجملة + "Fix it".
+- [x] **V2.7 قاموس الأسماء (glossary) واحد في كل التطبيق:** Today (مش Words) في الـ nav والـ crumbs، وعنصر Today
+      في nav الديسكتوب؛ "Quick 5" → "5-minute review"؛ Settings "Accent" (نطق) → "Voice"؛ Practise في كل حتة؛ "Box
+      1/6" → "Step 1 of 6" أو "Comes back in 3 days"؛ "Memory: Box 3 · waits 1 week" → "Comes back in 1 week"؛
+      "Cards" = "Learn". اكتب الـ glossary في `docs/DESIGN.md`.
+- [x] **V2.8 الهدف اليومي:** اختيارات 20/50/100/200/Off، default 50؛ اشرح الحد اليومي ("7 today · limit 10/day").
+- [x] **V2.9 Quiz:** "Can't listen now" بيبدّل سؤال الاستماع لنص للجولة؛ الاختيارات الغلط بنفس صيغة الإجابة
+      (relieved ↔ improved)؛ الاختيارات قريبة من الإبهام في الموبايل؛ feedback الغلط = عربي + سطر تعريف؛
+      `aria-label="Option A: …"`.
+- [x] **V2.10 Spell:** "Type it once more" إجباري بعد الغلط؛ placeholder على الشمال؛ أيقونة "Slower" سلحفاة.
+- [x] **V2.11 Match:** سطر تعليمات "Tap a word, then its meaning."؛ الساعة مخفية (تظهر في النتيجة بس)؛ ارتفاع
+      الكروت متساوي.
+- [x] **V2.12 Speak مقفول:** عنوان "Speak practice is off" + زرار "Turn it on" بيشغّله مكانه.
+- [x] **V2.13 Add:** "Press Add (or Enter)"؛ "Your words stay on this device. To fill in meanings, only the English word
+      is looked up online."؛ `dir="auto"` في كل خانات الكتابة (الكلمة، الملاحظة، الجمل، where you met it)؛ Text
+      tab: الـ textarea تتقفل لسطر "Edit text" بعد اللصق؛ دمج الكلمات المتجاورة بس بـ long-press/drag؛ أوفلاين:
+      "You're offline — the word is saved now and filled in when you're back."
+- [x] **V2.14 Progress / Week:** "Recall this week" → "Coming up: 19 words in the next 7 days"؛ الأسبوع يقارن بنفس
+      اليوم من الأسبوع اللي فات أو يخبّي الفرق لحد الخميس؛ الفرق بالحبر + ▲▼ مش أخضر؛ "Added" و"Learned".
+- [x] **V2.15 الفلاتر والطباعة:** فلاتر = Sort + "Show only" + "More filters"؛ Memory بلغة "Comes back in…"؛ الطباعة:
+      default Word sheet + Due today، والباقي تحت "More options"، Level يختفي لو مفيش كلمة ليها level، padding
+      تحت قد شريط Download.
+- [x] **V2.16 التذكير:** "Add a daily reminder to my calendar (6 PM)" + اختيار الساعة؛ وقول إن ملف هيتنزّل.
+- [x] **V2.17 العربي لضعاف الإنجليزي:** لينك About مكتوب بالعربي "اقرأ عن التطبيق بالعربي" (`lang=ar`)؛ أول تشغيل:
+      تابات Recall/Progress فاضية عليها hint "after your first word".
+- [x] **V2.18 الكيبورد العربي:** حوّل الحروف المكتوبة بالعربي لمكانها على الكيبورد الإنجليزي (شؤفعشممغ → actually)
+      واعرض "Did you mean actually?" في Recall وSpell وAdd. (ميزة محدش عنده.)
+
+#### النقاش مع المراجع المستقل على V0/V1 (وإيه اللي اتغيّر بسببه)
+agent مستقل راجع V0 وV1 ضد الخطة ولقى **4 P0** و**5 P1** حقيقيين. كلهم اتصلحوا واتجرّبوا:
+- **Toast الـ Undo كان بيسيب زرار غير مرئي شغال** (بيرجّع كلمة اتمسحت لو لمست مكانه). دلوقتي `hideToast()` بيشيل
+  الزرار والحالة؛ تغييرين ورا بعض = "· 2 changes" والـ Undo بيرجّع الاتنين (مفيش حاجة بتضيع بصمت)؛ الوقت
+  بيقف لما الصباع أو الكيبورد عليه؛ Ctrl/Cmd+Z؛ الـ Undo وشريط التحديث مش فوق بعض.
+- **فخ الـ -ing كان بيعلّم إنجليزي صح غلط** ("keeps to himself" ← "himselfing"): دلوقتي بس قبل فعل من قايمة صريحة.
+- **"your sentence, fixed" كان أحيانًا بيطلع جملة غلط** (arrived in the airport، interested about): بعد أي تصحيح
+  الجملة **بتتفحص تاني**، ولو لسه فيها غلط بتظهر القاعدة بس؛ كل الأماكن بتتصلح؛ الحرف الكابيتال بيفضل؛ arrive = at
+  للمكان / in للمدينة؛ married بس بعد is/got. اتضاف اختبار بجمل حقيقية من المراجعة.
+- **اختيار المعنى من الجملة كان بيغلط** ("I took off my coat" ← الطيارة) لأن "took" في أمثلة الجدول كانت بتتحسب
+  دليل: دلوقتي المعاني المراجَعة بتتحسب بالـ `keys` بس، والتعادل = نسأل المتعلم؛ apostrophe الآيفون والجمع بيتوحدوا؛
+  معاني القاموس محتاجة دليلين وفرق واضح. **اتجرّب 15 جملة: كلها صح** (والملتبس بيسأل).
+- **الجدول:** 114 كلمة (138 معنى) — اتصلح العربي اللي قال عليه (run out of، remind، take place، manage…)،
+  اتضافت be/get used to = متعود على، be supposed to = المفروض، والكلمات اللي اقترحها (nervous، lately، fabric،
+  experiment…)، و29 alias (realise، gave up ← give up…). `check.py` بيرفض key ضمير وalias لـ entry مش موجود.
+- **ترحيل المكتبات القديمة:** `migrateChecked()` عند الفتح — persuade=اقتنع القديمة بتبقى يقنع (اللي الـ auto-fill
+  كتبه بس، مش اللي المتعلم كتبه). "trusted" بس لو العربي اللي ظاهر هو بتاع الجدول.
+- **الكلمات المراجَعة رجعلها Similar** من معنى القاموس بنفس نوع الكلمة. **"Use this meaning" عليه Undo** وبيشيل
+  collocations المعنى القديم. **الـ focus** بيروح لمكان منطقي بعد الحذف/التأكيد/التغيير.
+- **قايمة المعاني:** المراجَع الأول، وبعده "From the dictionary" (3 بالكتير) — عمرها ما تقول "مفيش غيره" وفيه.
+- **حماية:** `check.py` بيرفض أي regex lookbehind (بيكسر iOS قبل 16.4 — حصل مرتين وأنا بكتب).
+- **مختلفين فيه:** المراجع اقترح إن "trusted" ميلغيش السؤال خالص؛ قررت: كلمة مراجَعة بمعنى واحد = مفيش سؤال،
+  بأكتر من معنى ومفيش جملة تحسم = "Which meaning?" — نفس روح اقتراحه من غير ما نسأل على كلمات معناها واحد.
+
+#### اللي اتعمل في V2
+- **أسماء موحّدة:** 5-minute review، Voice، Today (في الـ nav والـ crumbs، والديسكتوب بقى فيه Today)، "Comes back in"
+  و"Step 2 of 6" بدل Box؛ Practise (فعل) / Practice (اسم) صح الاتنين بالإنجليزي البريطاني فاتسابوا.
+- **أول 5 كلمات:** من غير chips/فلاتر/بحث/Practise؛ من غير هدف لحد أول جلسة؛ أول كلمة: "achieve is in. Learn it now".
+- **عداد واحد:** "2 of 5 · 1 to try again"، الشريط لقدام بس (Recall وLearn).
+- **Recall:** إجابة صح = Continue واحد؛ Forgot · Got it في كل حالة (Easy على زرار 3)؛ "Almost" الكلمة مرة واحدة والغلط
+  جواها؛ العربي في سؤال الجملة بعد أول Hint؛ النهاية بتسمّي الكلمات اللي اتحركت ("comes back in 3 days").
+- **Learn/Check:** عربي الأول بعد Meet، والأزرار مقفولة لحد ما الكارت يتقلب (السحب بيقلب الأول)؛ default الكروت عربي.
+- **صفحة الكلمة:** Where you met it الأول، والفخ قبل جملك، وSimilar/Goes with تحت "More about this word"؛ الصف بيطلع
+  تحت الشريط لما يتفتح؛ Cancel بيرجع للكلمة؛ جملة unsure: الغلط بالقلم الأحمر + "Use the fix".
+- **Goal** 20/50/100/200 (default 50، والقديم بيتنقل للأقرب). **Speak** بيتشغّل من مكانه. **التذكير** بيقول إنه ملف تقويم.
+  **لينك About** بالعربي.
+- **Quiz:** "Can't listen now"؛ اختيارات fill-the-gap بنفس صيغة الإجابة (relieved / improved)؛ feedback أقصر؛
+  aria-label "Option A: …". **Spell:** لازم تكتبها صح مرة بعد الغلط. **Match:** تعليمات ومن غير ساعة شغالة.
+- **Add:** "Press Add (or Enter)"، رسالة أوفلاين، `dir="auto"`، وFrom text مبيدمجش الكلمات المتجاورة غير لو المتعلم
+  اختار "Join". **Progress/Week:** "Coming up"، المقارنة بنفس اليوم من الأسبوع اللي فات، ▲▼ بالحبر، Words learned/added.
+  **الفلاتر:** Sort · Show only · More filters، وLevel يختفي لو مفيش. **الطباعة:** More options، default المستحق
+  النهارده، وpadding تحت قد الشريطين.
+- **الكيبورد العربي:** "شؤفعشممغ" = actually في Recall وSpell وAdd (اتجرّب: actually، borrow، make a decision).
+
+### V3 — نظام التصميم والراحة للعين (P1/P2) — "مرتب ومريح"
+- [x] **V3.1 Breakpoints:** 3 بس كـ tokens: phone < 600، tablet 600–1023، desktop ≥ 1024 (و wide ≥ 1440 للمسافات
+      بس). اجمع الـ ~25 media query عليهم. اختبر 360، 390، 768، 1024، 1280، 1440.
+- [x] **V3.2 سلّم z-index:** tokens: `--z-base, --z-sticky, --z-bar, --z-sheet, --z-toast, --z-dialog` بدل 16 قيمة.
+      التوست والـ update bar والـ install card ميغطوش زرار أساسي (يتحركوا فوق الـ action bar).
+- [x] **V3.3 نظام الزراير:** 4 بس: primary، secondary (tonal)، quiet (text)، danger + icon-button بحجم واحد. وحّد
+      `link-btn، word-manage-btn، speak-btn، more-btn، filter-btn، install-nudge-x، sense-opt، ar-pick-opt`.
+- [x] **V3.4 سلّم الخط:** حد أدنى 13px لأي نص (حروف أيام الأسبوع 10px، تابات 12px، meta 12px، about 10–11px كلهم
+      يتصلحوا)؛ النص اللي بيتقري 15–17px؛ تعريف أكتر من سطر left-aligned؛ اكتب السلّم في `tokens.css`.
+- [x] **V3.5 Touch targets 44×44 في كل مكان** (موبايل وديسكتوب): Learn 8، Quick، #tags، Edit/Delete/Start over،
+      Other meanings، Hear the sentence، More examples، تابات Add، روابط الـ rail (Open/Details 19px)، chips، × بتاع
+      الـ backup nudge، brand link.
+- [x] **V3.6 Focus:** حلقة واضحة ≥ 3:1 لكل الخانات والأزرار (مش ظل `--brand-soft`).
+- [x] **V3.7 الأصفر = الذاكرة بس:** الـ highlighter للكلمة اللي بتتعلمها والعدد المستحق. "Which meaning?" والتحذيرات
+      ولون الـ milestone ياخدوا token تاني (`--note`/outline). عدد "Learn" محايد.
+- [x] **V3.8 مكوّن Status واحد** (نقطة + نص) في الموبايل والديسكتوب؛ صف الكلمة المستحقة النهارده عليه علامة.
+- [x] **V3.9 Layout الموبايل:** كارت Recall فوق مش في النص (الكيبورد ميغطيش)؛ اختيارات Quiz قريبة من الإبهام؛ chips
+      الـ hero بـ fade أو سطرين؛ "Quick 5" border solid؛ تايلز النتيجة متتقطعش ("remembered").
+- [x] **V3.10 Layout الديسكتوب:** الـ hero عمود واحد (العنوان → CTA → chips)، "Tomorrow/Remind" في الـ rail؛ صفحة
+      الكلمة لما تتفتح تاخد عرض العمودين (أو الـ rail يختفي)؛ الـ scrim بتاع الـ dialog أغمق شوية.
+- [x] **V3.11 العناوين:** h1 واحد في كل شاشة وفي أولها (الـ hero = h1 "Today"، "Your words" = h2).
+- [x] **V3.12 الأداء:** صفحة الكلمة تتبني لما الصف يتفتح بس (مش 2,505 عنصر لـ 23 كلمة)؛ اختبار بمكتبة 1,000 كلمة
+      (seed صناعي من غير نت) — الفتح والسكرول والبحث < 100ms تقريبًا على موبايل متوسط.
+- [x] **V3.13 Bidi/RTL:** `dir="auto"` على كل input/textarea؛ about.html: النقطة متقعش لوحدها ("متضيعش منك."
+      جوه الـ highlight أو nowrap)، "PREPOSITION" مش all-caps؛ تصليح ملاحظات الـ detector (cramped padding في
+      `ruler-card، faq-list، privacy-online، final`؛ `span.plat` 10.9px).
+- [x] **V3.14 Motion:** مدة واحدة وeasing واحد من الـ tokens؛ كل حاجة تحترم `prefers-reduced-motion`؛ مفيش
+      حاجة بتتحرك وهي بتظهر لو المستخدم لسه هيقرا (السكرين شوتس طلعت كتير "mid-fade").
+- [x] **V3.15 DESIGN.md:** حدّثه بالـ tokens والزراير والسلّم والـ breakpoints والـ glossary؛ وانقله للـ root
+      (impeccable بيدوّر على `DESIGN.md` في الـ root) أو اعمل link.
+
+**اتعمل في V3 (ملاحظات التنفيذ):**
+- **Breakpoints:** بقوا 599/600/1023/1024 (و374 للموبايل الضيق بس)؛ about.html مستثناة لأنها صفحة قراءة.
+- **z-index:** سلّم `--z-*` (base→dialog) ومفيش رقم خام في أي ملف.
+- **الخط:** أقل حاجة 13px (`--text-2xs`)، والاستثناء الوحيد رقم جوه badge (`--text-badge` 12px).
+- **Touch/Focus:** `system.css` جديد فيه الـ 44px لكل حاجة، و hit ring خفي للـ #tags وروابط الـ rail، وحلقة focus
+  `2px solid --brand`.
+- **الأصفر للذاكرة بس:** "Which meaning?" والتحذيرات والـ milestone والـ status خدوا `--note` (أزرق رمادي هادي).
+- **Status:** نقطة + كلمة في كل المقاسات، والـ pill اتشال (statusBadge اتمسح). علامة "المستحقة النهارده" على الصف
+  اتأجلت: عدد المستحق موجود في الـ hero، والعلامة هتيجي مع المسطرة في V4.2 عشان متبقاش لون زيادة.
+- **الزراير:** 4 أنواع + icon-btn؛ × بتاع الـ install بقى `icon-btn`، وword-manage/link-btn بقوا 44px، و
+  sense-opt وar-pick-opt بقوا "choice card" واحد.
+- **الأداء:** صفحة الكلمة بتتبني لما الصف يتفتح (wordBody/fillRow): الـ Home من ~2,500 عنصر لـ 716.
+- **Motion:** 4 مدد (`--fast/--base/--slow/--draw`) و easing واحد؛ شلت الـ cascades من على أي نص بيتقري
+  (chips، recent، tiles، اختيارات الـ quiz، أرقام النتيجة) — الشاشة بتدخل مرة واحدة والباقي ثابت.
+- **About:** النقطة جوه الـ highlight، مفيش all-caps، padding أوسع للكروت.
+- **DESIGN.md** اتنقل للـ root واتكتب فيه النظام كله + glossary.
+
+### V4 — الهوية والتميز ("كراسة مدرس عربي")
+- [x] **V4.1 لغة بصرية واحدة للمدرس:** الـ highlighter = الكلمة اللي بتتعلمها بس؛ **قلم أحمر** = الغلط (شطب + سهم
+      للصح) في كل مكان (Recall، Spell، Use it، الفخوخ، جملة unsure)؛ نفس المكوّن بنفس الشكل.
+- [x] **V4.2 المسطرة في كل مكان:** التقدم بتاع الكلمة = مسطرة 1-3-7-14-30-60 صغيرة (بدل Box 3/6) في صفحة الكلمة
+      ونهاية Recall والـ Progress.
+- [x] **V4.3 نهاية الجلسة لحظة:** (peak-end) تسمّي الكلمات اللي اتحسنت، الكلمة اللي بقت ملكك، عدد بكرة، وجملة
+      مدرس قصيرة ("deadline came back after 3 days — it's sticking.")؛ احتفال صغير للجلسة الكاملة بس.
+- [x] **V4.4 صوت المدرس:** راجع كل الـ copy (ممكن بسكيل `humanizer` من `~/.agents/skills`) — قصير، إنساني، من غير
+      مصطلحات؛ الشرح العربي بالعامية المصرية في الفخوخ يفضل ويتوسع.
+- [x] **V4.5 أيقونات وبصمة:** طقم أيقونات واحد (stroke واحد)، لوجو "V" بالـ highlighter يظهر في الـ splash/الـ PDF/
+      الـ OG image بتاع الموقع.
+- [x] **V4.6 لينك صاحب التطبيق (تسويق هادي، من غير ما يضايق):**
+  - فوتر أول تشغيل: "Free and open source · Made by **Nagdista**" (لينك `https://nagdista.com/?utm_source=vocabstudy&utm_medium=app&utm_campaign=credit`).
+  - الإعدادات → App & data: سطر "Made by Nagdista — nagdista.com ↗".
+  - فوتر about.html: "عمله **Nagdista** — nagdista.com".
+  - فوتر الـ PDF/الطباعة: سطر صغير رمادي "Made with VocabStudy · vocabstudy.nagdista.com · by nagdista.com".
+  - `<meta name="author" content="Nagdista">` في index.html وabout.html، وسطر credit في README.
+  - **ممنوع:** popup، أو في أي نشاط مذاكرة، أو في الشاشة الرئيسية بعد أول تشغيل، أو بلون الـ brand. اللينك
+    `target="_blank" rel="noopener"` ومفيش أي بيانات للمتعلم في اللينك.
+- [x] **V4.7 ميزات تنافسية صغيرة:** الكيبورد العربي (V2.18)؛ "Your words this week" في Progress؛ widget مش متاح على
+      الويب — بدالها app badge (موجود) + التذكير (V2.16).
+
+**اتعمل في V4 (ملاحظات التنفيذ):**
+- **القلم الأحمر:** قاعدة CSS واحدة (`.pen-wrong`، `.usage-wrong > span`، `.spell-typed`): كلام المتعلم بيفضل
+  بحبره (ink-2) والمدرس بيشطب بالأحمر 2px. Recall بقى بيشطب اللي اتكتب غلط بنفس العلامة.
+- **المسطرة:** `VS.ui.ruler(box)` — 6 خانات 1·3·7·14·30·60؛ اللي عداها بالـ highlighter الخفيف واللي واقف عليها
+  أصفر سادة. في صفحة الكلمة (بدل "Step 3 of 6")، ونسخة صغيرة من غير أرقام في "Moving forward" آخر Recall، والـ
+  chart في Progress اتسمى "Your words on the ruler".
+- **نهاية الجلسة:** سطر مدرس واحد: الكلمة اللي رجعت بعد أطول فترة ("depend came back after 3 days — it's
+  sticking."). بيتحسب من آخر يوم الكلمة اتشافت فيه لحد النهارده (التأخير بيتحسب، و"Easy" مبيكدبش)، وبيتقال بس لو الكلمة كانت مستحقة واتفتكرت والفترة 3 أيام أو أكتر — عشان
+  الجملة تبقى صح دايمًا. تايلز النتيجة على الموبايل بقت بعرض الشاشة ("remembered" مبتتقطعش).
+- **صوت المدرس:** الـ copy كان أغلبه إنساني؛ اتصلح: رسايل النقل ("the words from the other device didn't arrive
+  whole")، والقاموس المشغول، و"Memory strength" بقت "the ruler".
+- **البصمة:** `og.png` 1200×630 (ورقة مسطرة، اللوجو، الوعد بالعربي والـ highlighter) بيتعمل من
+  `tools/build_icons.py`؛ og/twitter meta في index وabout. الأيقونات أصلًا طقم واحد بـ stroke واحد.
+- **Nagdista:** `VS.credit` في 4 أماكن بالظبط (فوتر أول تشغيل، Settings → App & data، فوتر about، فوتر الطباعة و
+  كل صفحة PDF — "nagdista.com" بس هو اللينك)، بلون الحبر مش الـ brand، `target=_blank rel=noopener`، والـ utm
+  بس من غير أي بيانات. `meta author` + سطر في README.
+- **V4.7:** الكيبورد العربي اتعمل في V2.18، و"Words learned/added" في الأسبوع، والتذكير .ics في V2.16.
+
+### V5 — التحقق الشامل (اللي محدش راجعه)
+- [x] **V5.1** راجع واصلح: break card (بعد 50 دقيقة)، combo badge، confetti، كارت "Add words from any website"
+      (bookmarklet)، مسار Share → VocabStudy (`#/add?from=share`)، الـ 7 layouts بتوع الطباعة واحدة واحدة،
+      `#/tricky/*` و`#/pick/*` و`#/word/<mode>?id=`، keyboard shortcuts، الـ install card وupdate bar على موبايل حقيقي،
+      كاميرا الـ transfer، restore من ملف، route مش موجود.
+- [x] **V5.2** مصفوفة اختبار: 360/390/768/1024/1280/1440؛ phone landscape؛ Text size Large وLarger؛ الـ 10 accents
+      + Glass (تباين)؛ zoom 200%؛ keyboard-only؛ screen reader (VoiceOver/TalkBack أو NVDA)؛ reduced motion؛
+      forced-colors؛ أوفلاين من أول فتح؛ كلمة/عبارة طويلة جدًا وعربي طويل؛ 1,000 كلمة.
+- [~] **V5.3** شغّل `impeccable critique` تاني (dual-agent) — الهدف **≥ 34/40** ومفيش P0/P1.
+
+**اتعمل في V5 (ملاحظات التنفيذ):**
+- **V5.1:** كل الـ routes اتفتحت (23 route، من غير أخطاء ولا overflow): الـ 7 layouts بتوع الطباعة، tricky/pick/word،
+  route مش موجود (بيرجع للرئيسية)، الكيبورد (1–4 في الـ Quiz شغالين)، الـ toast والـ break card فوق شريط الإجابة مش
+  عليه. اتصلح: كل شاشة فاضية بقى فيها h1، و"tricky" من غير كلمات بقت تقول "No tricky words — well done" بدل "no
+  meaning yet". الكاميرا والتثبيت على موبايل حقيقي محتاجين جهاز — متعملوش هنا.
+- **V5.2:** 360/768/1024/1280/1440 + Larger text + landscape: مفيش overflow، مفيش هدف < 44px (اتصلحت 5 حاجات كانت
+  40px على الديسكتوب)، مفيش خط < 13px غير أرقام الـ badges. الـ 10 accents كلهم ≥ 4.5:1. focus بالكيبورد ظاهر.
+  forced-colors اتضافله block (الـ highlighter = Mark، المسطرة = Highlight). 1,026 كلمة: الرئيسية بتترسم في 36ms
+  و1,336 عنصر بس (60 صف في المرة).
+- **V5.3 (3 جولات critique، كل جولة reviewers جداد):** 30 → 28 → 29 من 40. الـ detector نضيف في المتصفح في كل
+  route؛ ملاحظات الـ CLI على about.html false positives. كل P1 اتصلح بعد كل جولة:
+  - الجولة 1: badge الـ backup بيطلع برا، والرئيسية زحمة (اختصارات الـ hero بقت 3 بس، chips الصفر اتشالت)، الـ update
+    bar بقى ليه ×، الـ Quiz مبيبدأش بسؤال صوت، serendipity اتصلح معناها.
+  - الجولة 2: Use it كان بيقبل جملة غلط بعلامة خضرا → بقى يقول "grammar not checked" بلون الـ note، وفخ الزمن بقى
+  يمسك الأفعال العادية (borrow…)؛ والأصفر اتشال من التحذيرات (الكيبورد، الـ hint، ملاحظة الأسبوع) للـ `--note`.
+  - الجولة 3: Use it بقى يقول الجملة صح بكلام المتعلم نفسه ("Yesterday I borrowed…") + زرار "Use this sentence"؛
+  والـ grammar check بقى **بيسأل مرة واحدة** (مقفول افتراضيًا، key جديد `grammarOnline` عشان القدام يتسألوا كمان).
+  - تاني: Learn بدل Study، "Save backup file"، Practise بقى quiet، الـ fade مبقاش شفاف، محاور الـ charts بالأسابيع
+  وأيام المسطرة، تايلز الأسبوع، /ɹ/ = /r/، إنجليزي الـ Match أكبر.
+  - **الهدف 34 متحققش.** اللي فاضل متكرر عند الـ reviewers: الرئيسية + المكتبة في شاشة موبايل واحدة (تغيير هيكلي:
+  تاب "Your words" لوحده)، اختيارات الطباعة كتير، والـ charts عادية. هنعيد الـ critique بعد V6.
+
 ### V6 — الدارك مود (آخر مرحلة، بقرار صاحب التطبيق)
 - [ ] **V6.1** Night theme: tokens كاملة لكل لون، يتبع `prefers-color-scheme` + اختيار في الإعدادات (Light / Night /
       Auto)؛ الـ highlighter يفضل مقروء بالليل (أصفر أهدى، النص غامق)؛ الأخضر/الأحمر ≥ 4.5:1؛ Glass في الليل؛

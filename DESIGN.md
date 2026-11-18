@@ -5,7 +5,13 @@
 The learner is an adult (B1–C1 words) who may study for **six hours a day**.
 Everything serves long, focused sessions:
 
-- **Light only.** A bright, calm page keeps attention up; no dark mode to maintain.
+- **Light by default, Night for the dark room** (V6, Settings → Look → Theme:
+  Light / Night / Auto). Night is a navy desk, not black; every colour has a
+  night token in `tokens.css`, the ten accents get a light tint and mix their
+  soft fill and hover from it, the highlighter becomes a muted yellow band
+  behind the whole word with dark text, and green / red stay ≥ 4.5:1.
+  Glass is day-only (at night it is a flat accent). Paper and PDFs are always
+  light. A `<head>` script applies the theme before the first paint.
 - **One action accent at a time** — ink blue by default, plus nine alternates in
   Settings → Look (teal, sky, violet, plum, rose, cocoa, amber, graphite, glass) —
   and **one for memory** (highlighter yellow). The nine flat colours and the
@@ -167,6 +173,11 @@ its fix is right.
 learner's words stay in their own ink (`--ink-2`) and the teacher strikes
 them through in `--bad` at 2px (`.pen-wrong`). The fix beside it is ink with
 a green tick. Recall, Spell, Use it, the traps and a kept sentence all use it.
+
+**A mistake is a margin note, not a red page:** the feedback card stays
+neutral with one red edge and a red title; only the chosen wrong option is
+red. In Spell the right spelling is never red — the letters the learner had
+stay in ink and the ones to learn wear the highlighter.
 
 **The ruler (V4.2, `VS.ui.ruler`)** is where a word stands on the six spaced
 days 1·3·7·14·30·60 — the same days the first run promises. Reached days wear

@@ -108,7 +108,12 @@
   background: color-mix(in srgb, var(--good-soft) 55%, var(--surface));
   animation: view-in var(--slow) var(--ease);
 }
-.feedback.is-wrong { border-color: color-mix(in srgb, var(--bad) 35%, var(--line)); background: color-mix(in srgb, var(--bad-soft) 55%, var(--surface)); }
+/* A mistake is a teacher's margin note, not a red page (critique v10): the
+   card stays neutral, one red line on the side and a red title — over six
+   hours of study a pink card reads as punishment. */
+.feedback.is-wrong { border-color: var(--line); border-inline-start: 4px solid var(--bad); background: var(--surface); }
+/* What the teaching says is body text, not a grey hint. */
+.feedback .hint { font-size: var(--text-sm); color: var(--ink-2); }
 .feedback-title { font-weight: 700; }
 .feedback.is-right .feedback-title { color: var(--good); }
 .feedback.is-wrong .feedback-title { color: var(--bad); }
@@ -130,7 +135,7 @@
 .spell form { width: 100%; max-width: 440px; }
 .field-xl input { height: 60px; font-size: 1.5rem; text-align: center; letter-spacing: .06em; font-family: var(--font-word); }
 .field.is-right { border-color: var(--good); background: var(--good-soft); }
-.field.is-wrong { border-color: var(--bad); background: var(--bad-soft); }
+.field.is-wrong { border-color: var(--bad); background: var(--surface); }   /* a red edge, not a red box */
 .spell .feedback { width: 100%; text-align: start; }
 .spell-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s-2) var(--s-3); }
 .spell-line .hint { min-width: 72px; }
@@ -139,10 +144,13 @@
 /* One span per letter has no break opportunity between the spans: a 22-letter
    word would push the whole card past the screen. Let it break when needed. */
 .spell-diff { font-size: 1.6rem; font-weight: 700; letter-spacing: .06em; overflow-wrap: anywhere; }
-.ch-ok { color: var(--good); }
-.ch-bad { color: var(--bad); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+/* The right spelling is never red (critique v10): it is what the learner must
+   keep. The letters they had stay in ink; the ones to learn wear the
+   highlighter — memory, not failure. */
+.ch-ok { color: var(--ink); }
+.ch-bad { color: var(--on-mark-soft); background: var(--mark-soft); border-radius: 3px; box-shadow: inset 0 -3px 0 var(--mark); padding: 0 .04em; }
 .ch-space { display: inline-block; width: .45em; }
-.spell-legend .ch-ok, .spell-legend .ch-bad { font-weight: 700; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.spell-legend .ch-bad { font-weight: 700; }
 
 /* ── Match ─────────────────────────────────────────────────────── */
 .match-bar {
@@ -242,7 +250,7 @@
 .hint-space { display: inline-block; width: .6em; }
 .recall-hint .similar { color: var(--note-ink); }
 .verdict { display: grid; gap: var(--s-1); }
-.verdict.is-almost { color: var(--on-mark); }
+.verdict.is-almost { color: var(--on-mark-soft); }
 .action-bar .btn.is-suggested { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px currentColor; }
 .btn-undo { margin-inline-start: auto; min-height: var(--tap); min-width: var(--tap); padding: 0 var(--s-3); font-size: var(--text-sm); color: var(--ink-2); }
 .btn-undo + .count { margin-inline-start: var(--s-2); }
@@ -270,7 +278,7 @@
 .write-example[open] { display: grid; gap: var(--s-2); }
 .write-form textarea { font-size: var(--text-lg); line-height: 1.5; min-height: 96px; }
 .write-form .form-field > span { font-size: var(--text-md); color: var(--ink); }
-.write-check { padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: color-mix(in srgb, var(--bad-soft) 60%, var(--surface)); }
+.write-check { padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); border-inline-start: 4px solid var(--bad); }
 .write-check-title { font-weight: 700; color: var(--bad); margin-bottom: var(--s-2); }
 .write-check ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-3); }
 .write-check li { display: grid; gap: 2px; color: var(--ink); }
@@ -308,6 +316,7 @@
 
 /* Use it: the one-time question about the online grammar check — the app
    asking, so it wears the note colour, beside the sentence it would send. */
-.write-ask { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
-  background: var(--note-soft); border: 1px solid var(--note-line); color: var(--note-ink); font-size: var(--text-sm); }
+.write-ask { display: grid; gap: var(--s-2); padding: var(--s-1) 0 0 var(--s-3);
+  border-inline-start: 3px solid var(--note); color: var(--ink-2); font-size: var(--text-sm); }   /* a margin note, not a card in a card */
+.write-ask b { color: var(--note-ink); }
 .write-ask .row { gap: var(--s-2); }

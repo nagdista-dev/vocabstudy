@@ -170,7 +170,7 @@
 .tok:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
 .collect-picked { display: grid; gap: var(--s-3); margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); }
 .collect-chips { gap: var(--s-2); }
-.collect-chip { padding: 4px 10px; border-radius: var(--r-pill); background: var(--mark-soft); color: var(--on-mark); font-weight: 600; }
+.collect-chip { padding: 4px 10px; border-radius: var(--r-pill); background: var(--mark-soft); color: var(--on-mark-soft); font-weight: 600; }
 .collect-chip.is-known { background: var(--surface-2); color: var(--ink-3); text-decoration: line-through; }
 .capture-help { margin-top: var(--s-5); padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--surface-2); }
 .capture-help summary { display: flex; align-items: center; gap: var(--s-2); min-height: var(--tap); cursor: pointer; font-weight: 600; }

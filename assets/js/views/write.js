@@ -51,7 +51,7 @@
     }
     return html`
       <div class="write-check" role="status">
-        <p class="write-check-title">Almost there — fix this and check again:</p>
+        <p class="write-check-title">${r.problems.length === 1 ? "One thing to change" : "A few things to change"}, then check again:</p>
         <ul>
           ${r.problems.map((p) => html`
             <li>${p.trap
@@ -145,7 +145,7 @@
                   placeholder="${IDEAS[(s.idea + s.index) % IDEAS.length]}" ${done ? VS.raw("readonly") : ""}>${s.draft}</textarea>
               </label>
             </form>
-            ${done ? "" : VS.grammar.undecided() ? html`
+            ${done || s.result ? "" : VS.grammar.undecided() ? html`
               <div class="write-ask" role="group" aria-label="Online grammar check">
                 <p><b>Check the grammar too?</b> LanguageTool, a free online checker, reads only this sentence when you press Check. Nothing else leaves your device.</p>
                 <div class="row"><button class="btn btn-tonal" type="button" data-action="grammar-yes">Yes, check online</button>

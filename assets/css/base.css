@@ -73,6 +73,8 @@ a { color: var(--brand); text-underline-offset: 3px; }
 ::-webkit-scrollbar-corner { background: transparent; }
 
 ::selection { background: var(--mark); color: var(--on-mark); }
+/* Placeholders in the hint ink, never the browser grey (3.7:1 at night). */
+::placeholder { color: var(--ink-3); opacity: 1; }
 
 .skip-link:not(:focus) { position: absolute; left: -9999px; }
 .skip-link:focus { position: fixed; z-index: var(--z-dialog); top: 8px; left: 8px; padding: 8px 12px; background: var(--surface); border-radius: var(--r-sm); }

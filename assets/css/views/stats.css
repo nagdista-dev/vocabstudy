@@ -136,7 +136,7 @@
 /* Toward the next milestone: the highlighter fills the track */
 .wk-milestone { display: grid; gap: var(--s-2); margin-top: var(--s-5); }
 .wk-milestone p { display: flex; gap: var(--s-2); align-items: baseline; font-size: var(--text-sm); color: var(--ink-2); }
-.wk-milestone .icon { flex: none; color: var(--on-mark); transform: translateY(2px); }
+.wk-milestone .icon { flex: none; color: var(--on-mark-soft); transform: translateY(2px); }
 .wk-milestone b { color: var(--ink); }
 .wk-track { height: 10px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
 .wk-track i { display: block; height: 100%; background: var(--mark); border-radius: inherit; }

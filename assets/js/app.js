@@ -331,10 +331,24 @@
   }
 
   /* ── Settings ─────────────────────────────────────────────────── */
+  /* Night (V6): Light, Night, or Auto — Auto follows the device and
+     changes with it (sunset on a phone set to automatic). The <head>
+     script in tools/templates/page.html does the same before first paint. */
+  const darkQuery = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  const nightNow = (theme) => theme === "night" || (theme !== "light" && !!(darkQuery && darkQuery.matches));
+  function applyTheme() {
+    const night = nightNow(VS.store.settings().theme || "auto");
+    document.documentElement.dataset.theme = night ? "night" : "light";
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = night ? "#0f1420" : "#f3f5f9";
+  }
+  if (darkQuery && darkQuery.addEventListener) darkQuery.addEventListener("change", applyTheme);
+
   function applySettings() {
     const st = VS.store.settings();
     document.documentElement.style.setProperty("--text-scale", st.textScale);
     document.documentElement.dataset.accent = st.accent || "blue";
+    applyTheme();
   }
 
   const QUIZ_TYPES = [["meaning", "Definition → word"], ["arabic", "Arabic → English"], ["english", "English → Arabic"],
@@ -408,6 +422,8 @@
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
 
           <h3 class="sheet-group">Look</h3>
+        <div class="setting"><b>Theme</b><div class="seg">${choice("theme", "light", "Light")}${choice("theme", "night", "Night")}${choice("theme", "auto", "Auto")}</div>
+          <span class="hint">Night is easier in a dark room. Auto follows your device. Printing and PDFs are always light.</span></div>
         <div class="setting"><b>Accent colour</b><div class="seg swatches">
           ${[["blue", "Ink blue"], ["teal", "Teal"], ["sky", "Sky"], ["violet", "Violet"], ["plum", "Plum"], ["rose", "Rose"], ["cocoa", "Cocoa"], ["amber", "Amber"], ["graphite", "Graphite"], ["glass", "Glass"]].map(([v, l]) =>
             html`<button type="button" data-action="setting" data-name="accent" data-value="${v}" aria-pressed="${st.accent === v}"><i class="swatch sw-${v}"></i>${l}</button>`)}

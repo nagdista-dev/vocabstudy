@@ -7,8 +7,9 @@
    a highlighter yellow for the words you are learning and for rewards.
    Green and red mean right and wrong — never decoration.
 
-   Light only, on purpose: a bright, calm page keeps a learner alert
-   through long study days. Text contrast is tuned for hours of reading.
+   Light by default, with a Night theme (V6, at the end of this file):
+   a bright, calm page keeps a learner alert through long study days;
+   night is for the dark room. Contrast is tuned for hours of reading.
    --------------------------------------------------------------- */
 
 :root {
@@ -42,6 +43,10 @@
   --note-line: #c8d3e6;   /* border */
   --note-ink:  #22344f;   /* text: 11.6:1 on --note-soft */
   --on-mark:   #4a3900;
+  --on-mark-soft: #4a3900;   /* text on --mark-soft (light: the same brown; night differs) */
+  --surface-hover: #fbfcfe;  /* a row under the pointer */
+  --hairline: rgb(20 27 45 / .10);   /* a rule drawn on a tint */
+  --shadow-rgb: 20 27 45;
 
   /* Feedback */
   --good:      #0f744f;   /* ≥ 5:1 on --good-soft: the answer buttons */
@@ -132,3 +137,92 @@
 :root[data-accent="amber"]    { --brand: #8a5600; --brand-hover: #6f4600; --brand-soft: #fcecd4; }
 :root[data-accent="graphite"] { --brand: #3d4452; --brand-hover: #2f3541; --brand-soft: #e9ebef; }
 :root[data-accent="glass"]    { --brand: #26384a; --brand-hover: #17283a; --brand-soft: #eef4f8; }
+
+/* ── Night (V6) ──────────────────────────────────────────────────────
+   Settings → Look → Theme: Light, Night or Auto (follows the device).
+   app.js sets data-theme="night" on <html>; a tiny script in <head>
+   does it before the first paint, so a night page never flashes white.
+   A calm dark desk, not pure black: navy paper, soft ink, and the same
+   meanings — the highlighter is a muted yellow band with dark text (a
+   bright yellow at night glares), green and red stay right and wrong
+   at ≥ 4.5:1. Screen only: paper and PDFs are always light. */
+@media screen {
+  :root[data-theme="night"] {
+    color-scheme: dark;
+    --paper:      #0f1420;
+    --surface:    #171d2b;
+    --surface-2:  #212a3b;
+    --surface-hover: #1c2333;
+    --line:       #2c3546;
+    --line-strong:#47526a;
+    --hairline:   rgb(232 236 244 / .10);
+    --shadow-rgb: 0 0 0;
+
+    --ink:   #e8ecf4;      /* 14.8:1 on --surface */
+    --ink-2: #b7c0d1;      /* 9.6:1 */
+    --ink-3: #9aa4b8;      /* 6.9:1 on --surface, 5.9:1 on --surface-2 */
+
+    --brand:      #8fa3ff; /* light ink-blue: text and fills on dark */
+    --on-brand:   #0b1020; /* dark label on a light action */
+
+    --mark:      #d9bb52;  /* a quieter highlighter */
+    --mark-soft: #3a3217;
+    --on-mark:   #221a00;  /* text ON the yellow */
+    --on-mark-soft: #f1dc93;  /* text on the soft yellow */
+
+    --note:      #8fb0e0;
+    --note-soft: #1b2638;
+    --note-line: #2f4060;
+    --note-ink:  #d3e2fb;
+
+    --good:      #5ccf98;  --good-soft: #13352a;
+    --bad:       #ff8a80;  --bad-soft:  #3f1c1e;
+
+    --lvl-a: #56d6c4;  --lvl-a-soft: #12332f;
+    --lvl-b: #8fa3ff;  --lvl-b-soft: #222c52;
+    --lvl-c: #c9a6f7;  --lvl-c-soft: #2e2142;
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / .4);
+    --shadow-2: 0 12px 32px -12px rgb(0 0 0 / .6), 0 2px 6px rgb(0 0 0 / .3);
+  }
+  /* Every accent, at night: its own light tint for actions; the soft fill
+     and the hover are mixed from it, so all ten stay in step. */
+  :root[data-theme="night"],
+  :root[data-theme="night"][data-accent] {
+    --brand-soft:  color-mix(in srgb, var(--brand) 20%, var(--surface));
+    --brand-hover: color-mix(in srgb, var(--brand) 82%, white);
+  }
+  :root[data-theme="night"][data-accent="teal"]     { --brand: #5fd0c6; }
+  :root[data-theme="night"][data-accent="sky"]      { --brand: #6cc6ec; }
+  :root[data-theme="night"][data-accent="violet"]   { --brand: #b9a0ff; }
+  :root[data-theme="night"][data-accent="plum"]     { --brand: #e594c9; }
+  :root[data-theme="night"][data-accent="rose"]     { --brand: #ff93b0; }
+  :root[data-theme="night"][data-accent="cocoa"]    { --brand: #dcae88; }
+  :root[data-theme="night"][data-accent="amber"]    { --brand: #f2bb55; }
+  :root[data-theme="night"][data-accent="graphite"] { --brand: #bcc4d3; }
+  :root[data-theme="night"][data-accent="glass"]    { --brand: #a9cde9; }   /* Glass is a flat accent at night (glass.css is day-only) */
+
+  /* Messages and the update bar are a raised dark panel at night, not a
+     bright block in a dark room. */
+  :root[data-theme="night"] .toast,
+  :root[data-theme="night"] .update-bar { background: #2a3346; color: var(--ink); border: 1px solid var(--line-strong); }
+  :root[data-theme="night"] .update-bar .icon-btn { color: var(--ink-2); }
+
+  /* The highlighter at night: a full band behind the word with dark text —
+     a half band under light letters would cut every word in two. */
+  :root[data-theme="night"] .mark {
+    background-image: linear-gradient(var(--mark), var(--mark));
+    color: var(--on-mark); border-radius: 3px;
+    animation: none !important;   /* dark letters before the band is drawn would vanish on the dark page */
+    background-size: 100% 100% !important;
+  }
+}
+
+/* Paper is always light: the printed page, the PDF and its preview keep
+   the day colours even when the screen around them is at night. */
+.print-doc {
+  --paper: #f3f5f9; --surface: #ffffff; --surface-2: #eaeef5; --line: #d9dfe9; --line-strong: #b9c2d3;
+  --ink: #141b2d; --ink-2: #465066; --ink-3: #56617a;
+  --mark: #ffe066; --mark-soft: #fff5c7; --on-mark: #4a3900; --on-mark-soft: #4a3900;
+  --good: #0f744f; --bad: #b3302f;
+}

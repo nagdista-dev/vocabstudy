@@ -50,4 +50,5 @@ And a week that ends with a report (Saturday → Friday, ready Thursday).
 
 ## Out of scope (for now)
 Built-in word lists, guessed CEFR levels, grammar lessons, cloud sync (devices
-meet by QR code instead), accounts, dark mode (by decision), anything paid.
+meet by QR code instead), accounts, anything paid. (Dark mode was out of scope
+until v10 V6; it now ships as a Night theme — Light / Night / Auto.)
