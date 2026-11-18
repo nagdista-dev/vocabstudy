@@ -374,7 +374,10 @@
         pdf.text("Print double-sided (flip on long edge), then cut along the dashed lines.",
           width / 2, height - 5.5, { align: "center" });
       } else {
-        pdf.text("VocabStudy", 12, height - 5.5);
+        // The maker's credit, small and grey; only "nagdista.com" is a link.
+        const made = "Made with VocabStudy · vocabstudy.nagdista.com · by ";
+        pdf.text(made, 12, height - 5.5);
+        pdf.textWithLink("nagdista.com", 12 + pdf.getTextWidth(made), height - 5.5, { url: VS.credit.url });
       }
       pdf.text("Page " + i + " of " + total, width - 12, height - 5.5, { align: "right" });
     }
@@ -528,6 +531,7 @@
               ${words.length
                 ? LAYOUT[opts.layout](words)
                 : html`<p class="p-empty-note">No words match these options. Choose other words or loosen a filter.</p>`}
+              <footer class="p-foot">Made with VocabStudy · vocabstudy.nagdista.com · by nagdista.com</footer>
             </article>
           </div>
         </div>`;

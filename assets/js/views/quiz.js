@@ -169,7 +169,10 @@
       if (!s.scope || !s.questions.length) {
         return VS.ui.emptyActivity("#/", VS.allWords().length < 2
           ? "A quiz needs at least two words in your library. Add another one."
-          : "These words have no meaning yet — wait for auto-fill, or add it in your words.");
+          : s.scope && !s.scope.words.length
+            ? (s.scope.kind === "tricky" ? "No tricky words — nothing you keep missing. Well done."
+              : "No words in this list. Choose other words, or loosen a filter.")
+            : "These words have no meaning yet — wait for auto-fill, or add it in your words.");
       }
       if (s.index >= s.questions.length) return html`<div class="activity">${finish()}</div>`;
       const q = s.questions[s.index];

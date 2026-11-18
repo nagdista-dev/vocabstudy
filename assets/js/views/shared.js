@@ -398,6 +398,21 @@
         ? [{ label: "Your list", href: "#/words?" + p.query }, { label: name }]
         : [{ label: name }];
     },
+    /**
+     * The ruler (V4.2): where a word stands on the spaced days 1·3·7·14·30·60 —
+     * the same six days the first run promises. Days already reached wear the
+     * highlighter (memory); the day the word is on now is solid. `compact`
+     * drops the numbers for a one-line list (the end of Recall).
+     */
+    ruler(box, compact) {
+      const days = [1, 3, 7, 14, 30, 60];
+      const at = Math.max(0, Math.min(6, box || 0));
+      const label = at ? "On the ruler: day " + days[at - 1] + " of 1, 3, 7, 14, 30, 60" : "Not on the ruler yet";
+      return html`<ol class="ruler-mini ${compact ? "is-compact" : ""}" role="img" aria-label="${label}">${days.map((d, i) => {
+        const cls = i + 1 === at ? "is-now" : i + 1 < at ? "is-past" : "";
+        return html`<li class="${cls}">${compact ? "" : html`<b>${d}</b>`}</li>`;
+      })}</ol>`;
+    },
     levelBadge: (w) => (w.level ? html`<span class="badge ${VS.levelGroup(w.level)}" title="CEFR level">${w.level}</span>` : ""),
 
     speakButton: (text, label) =>
@@ -707,12 +722,7 @@
                     ? html`<span>Added ${VS.ui.dateText(w.added)} · not studied yet</span>`
                     : html`
                       <span>Next recall <b>${whenText(e.due)}</b></span>
-                      <span class="word-box-line">
-                        <span class="word-boxes" role="img" aria-label="Step ${e.box} of 6">
-                          ${[1, 2, 3, 4, 5, 6].map((n) => html`<i class="${n <= e.box ? "is-on" : ""}"></i>`)}
-                        </span>
-                        <span class="word-box-label">Step ${e.box} of 6</span>
-                      </span>
+                      ${VS.ui.ruler(e.box)}
                       <span class="word-score">${e.right} right · ${e.wrong} wrong</span>`}
                 </div>
                 <div class="word-manage">
@@ -807,7 +817,7 @@
     },
 
     /** End-of-session screen. `stats` = [{ value, label, tone }], `words` = mistakes to show. */
-    summary({ title, message, stats, words, actions, back, moved }) {
+    summary({ title, message, stats, words, actions, back, moved, teacher }) {
       // Always a way out: "Next: Quiz" is a suggestion, "Done" is a choice.
       actions = actions.filter(Boolean);
       if (!actions.some((a) => a.label === "Done")) actions.push({ href: back || "#/", label: "Done" });
@@ -827,18 +837,19 @@
             <div class="milestone-hit">
               ${icon("trophy", "icon-lg")}
               <p><b>${reached === 1 ? (VS.milestones.firstWord() ? "“" + VS.milestones.firstWord() + "” is yours now." : "Your first word mastered.") : reached.toLocaleString("en-GB") + " words mastered."}</b>
-                <span>${reached === 1 ? "You remembered it after two weeks or more — it's yours now."
-                  : reached.toLocaleString("en-GB") + " words you remembered after two weeks or more — they're yours now."}</span></p>
+                <span>${reached === 1 ? "You remembered it after a week or more — it's yours now."
+                  : reached.toLocaleString("en-GB") + " words you remembered after a week or more — they're yours now."}</span></p>
             </div>` : ""}
           <h1>${title}</h1>
           <p class="muted">${message}</p>
+          ${teacher ? html`<p class="summary-teacher">${teacher}</p>` : ""}
           <div class="summary-stats">
             ${stats.map((s) => html`<div class="summary-stat ${s.tone ? "is-" + s.tone : ""}"><b>${s.value}</b><span>${s.label}</span></div>`)}
           </div>
           ${moved && moved.length ? html`
             <div class="summary-moved">
               <h2 class="summary-sub">Moving forward</h2>
-              <ul>${moved.slice(0, 8).map((m) => html`<li><mark class="mark">${m.word}</mark><span>comes back ${m.when}</span></li>`)}</ul>
+              <ul>${moved.slice(0, 8).map((m) => html`<li><mark class="mark">${m.word}</mark>${VS.ui.ruler(m.box, true)}<span>comes back ${m.when}</span></li>`)}</ul>
               ${moved.length > 8 ? html`<p class="hint">and ${moved.length - 8} more</p>` : ""}
             </div>` : ""}
           <div class="summary-actions">
@@ -860,7 +871,7 @@
       return html`
         <div class="activity">
           <div class="empty">
-            <h2>Nothing to practise here yet</h2>
+            <h1>Nothing to practise here yet</h1>
             <p>${text}</p>
             <a class="btn btn-primary" href="${back}">${label || "Go back"}</a>
           </div>

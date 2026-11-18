@@ -298,7 +298,7 @@
       "qr-speed"() { s.speed = s.speed === "normal" ? "slow" : "normal"; VS.app.render(); },
       "qr-stop"() { VS.views.transfer.leave(); s = { mode: "" }; VS.app.render(); },
       "qr-merge"() {
-        if (!VS.store.mergeJSON(s.ready.text)) { VS.toast("That data couldn't be merged."); return; }
+        if (!VS.store.mergeJSON(s.ready.text)) { VS.toast("Nothing was added — the words from the other device didn't arrive whole. Try the move again."); return; }
         VS.toast("Merged. Your words are on this device now.");
         setTimeout(() => location.reload(), 700);
       },
@@ -310,7 +310,7 @@
           confirmLabel: "Replace",
         });
         if (!yes) return;
-        if (!VS.store.importJSON(payload)) { VS.toast("That data couldn't be used."); return; }
+        if (!VS.store.importJSON(payload)) { VS.toast("Nothing changed — the words from the other device didn't arrive whole. Try the move again."); return; }
         VS.toast("Replaced. This device now matches the other one.");
         setTimeout(() => location.reload(), 700);
       },

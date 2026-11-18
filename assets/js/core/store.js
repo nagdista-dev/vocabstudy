@@ -17,7 +17,7 @@
    Status shown to the learner:
        new       never studied             (box 0)
        learning  in boxes 1–3
-       mastered  box 4+ (remembered after a two-week gap)
+       mastered  box 4+ (remembered after a one-week gap; now waits two weeks)
    ------------------------------------------------------------------ */
 (function () {
   "use strict";

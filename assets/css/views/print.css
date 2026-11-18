@@ -72,6 +72,10 @@
 }
 .p-brand { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 700; }
 .p-brand .brand-mark { width: 18px; height: 18px; }
+/* The maker's credit on paper: one grey line at the end. The PDF stamps it
+   on every page itself, so the drawn copy leaves it out. */
+.p-foot { margin-top: 14px; padding-top: 6px; border-top: 1px solid #ddd; color: #888; font-size: .75em; }
+.print-doc.pdf-render .p-foot, .layout-cards .p-foot { display: none; }
 .p-name { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px; font-size: .85em; color: #555; }
 .p-name span { border-bottom: 1px solid #999; padding: 10px 0 2px; }
 .p-howto { margin-bottom: 10px; color: #444; font-size: .9em; }

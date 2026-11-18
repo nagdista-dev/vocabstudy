@@ -108,7 +108,7 @@
 
       if (!history.length) {
         return html`<div class="page view-enter"><div class="empty">
-          <h2>Your progress shows up here</h2>
+          <h1>Your progress shows up here</h1>
           <p>Study a set or answer a quiz, and your days start filling in.</p>
           <a class="btn btn-primary" href="#/">Start studying</a></div></div>`;
       }
@@ -148,13 +148,13 @@
               items: d30.map((d, i) => ({ label: dayLabel(d.date, i, 30), value: d.mastered, tip: longDate(d.date) + ": " + d.mastered + " mastered" })),
             })}
             ${barChart({
-              id: "boxes", title: "Memory strength",
+              id: "boxes", title: "Your words on the ruler",
               // Unstudied words aren't memory yet: they'd dwarf every other bar, so they go in the subtitle.
-              sub: "Studied words by how long they wait before the next recall · " + boxes[0] + " not studied yet",
+              sub: "How many days each word waits before it comes back · " + boxes[0] + " not studied yet",
               items: boxes.slice(1).map((n, i) => ({ label: BOX_LABELS[i + 1], value: n, tone: "seq-" + (i + 1), tip: BOX_LABELS[i + 1] + ": " + VS.plural(n, "word") })),
             })}
           </div>
-          <p class="hint stats-note">Words move right in “Memory strength” each time you remember them on their recall day. Mastered = 2 weeks or more.</p>
+          <p class="hint stats-note">Remember a word on its day and it moves one step along the ruler. Mastered means it came back after a week or more, and now waits two weeks.</p>
         </div>`;
     },
   };

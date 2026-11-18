@@ -627,7 +627,7 @@
           { partial: googleDown });
         if (googleDown && !toldBusy) {
           toldBusy = true;
-          VS.toast("Saved. The meaning service is busy — the details will be finished in a few minutes.");
+          VS.toast("Saved. The dictionary is busy — the meaning will fill in by itself in a few minutes.");
         }
       } catch (e) {
         VS.store.fillUserWord(now, {}, "todo");

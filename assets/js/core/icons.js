@@ -63,4 +63,13 @@
       '<path d="M9.5 8.5 16 23l6.5-14.5" fill="none" stroke="var(--on-brand)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>' +
     "</svg>"
   );
+
+  /* The maker's credit (V4.6): a quiet link in exactly four places — the
+     first-run footer, Settings → App & data, about.html and the printed page.
+     Never in an activity, never a popup, never in the brand colour. The link
+     carries where it came from and nothing about the learner. */
+  VS.credit = {
+    url: "https://nagdista.com/?utm_source=vocabstudy&utm_medium=app&utm_campaign=credit",
+    link: () => VS.raw('<a class="credit-link" href="https://nagdista.com/?utm_source=vocabstudy&amp;utm_medium=app&amp;utm_campaign=credit" target="_blank" rel="noopener">Nagdista</a>'),
+  };
 })();

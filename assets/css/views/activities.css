@@ -133,7 +133,7 @@
 .spell-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s-2) var(--s-3); }
 .spell-line .hint { min-width: 72px; }
 .spell-diff { font-family: var(--font-word); font-size: 1.4rem; letter-spacing: .08em; }
-.spell-typed { font-family: var(--font-word); font-size: 1.15rem; color: var(--ink-2); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 60%, transparent); overflow-wrap: anywhere; }
+.spell-typed { font-family: var(--font-word); font-size: 1.15rem; overflow-wrap: anywhere; }
 /* One span per letter has no break opportunity between the spans: a 22-letter
    word would push the whole card past the screen. Let it break when needed. */
 .spell-diff { font-size: 1.6rem; font-weight: 700; letter-spacing: .06em; overflow-wrap: anywhere; }
@@ -196,8 +196,8 @@
   .tile { min-height: 58px; padding: var(--s-2) var(--s-3); font-size: .95rem; }
   .summary { padding-top: var(--s-4); gap: var(--s-3); }
   .summary h1 { font-size: var(--text-2xl); }
-  .summary-stats { gap: 8px; margin-block: var(--s-1); }
-  .summary-stat { min-width: 0; flex: 1; padding: 12px 8px; }
+  .summary-stats { gap: 8px; margin-block: var(--s-1); justify-self: stretch; width: 100%; }
+  .summary-stat { min-width: 0; flex: 1; padding: 12px 4px; }
   .summary-stat b { font-size: 1.35rem; }
   .summary-stat span { font-size: var(--text-2xs); }
   .summary-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -278,6 +278,8 @@
 .count-again { color: var(--ink-3); font-weight: 500; }
 
 /* Results: the words that moved forward and when each comes back (views/shared.js summary). */
+/* The teacher's one line at the end (V4.3): handwritten-margin quiet, not a banner. */
+.summary-teacher { margin: 0; padding-inline-start: var(--s-3); border-inline-start: 3px solid var(--mark); color: var(--ink); font-size: var(--text-md); text-align: start; justify-self: center; }
 .summary-moved { justify-self: stretch; text-align: start; }
 .summary-moved ul { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: grid; gap: var(--s-2); }
 .summary-moved li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3);

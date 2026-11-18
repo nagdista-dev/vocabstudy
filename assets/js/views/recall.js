@@ -24,6 +24,7 @@
   const RECALL_BATCH = 50;
   const MAX_HINTS = 2;
 
+  const WAIT_DAYS = [0, 1, 3, 7, 14, 30, 60];   // core/store.js: the wait for each box
   let s = null;   // { scope, queue, cues, index, revealed, typed, verdict, hints, results: Map(id → grade), undo }
 
   /* Two ways to ask, mixed at random: from the meaning, or from a sentence
@@ -81,7 +82,7 @@
     if (s.verdict === "form") return html`<p class="verdict is-right">${icon("check", "icon-sm")} Right — “${s.typed}” is a form of “${w.word}”.</p>`;
     return html`
       <div class="verdict is-${s.verdict}">
-        <p>${s.verdict === "almost" ? html`<b>Almost.</b> You typed “${s.typed}” — one slip, marked below.` : html`You typed “${s.typed}”. The letters you missed are marked below.`}</p>
+        <p>${s.verdict === "almost" ? html`<b>Almost.</b> You typed <del class="pen-wrong">${s.typed}</del> — one slip, marked below.` : html`You typed <del class="pen-wrong">${s.typed}</del>. The letters you missed are marked below.`}</p>
       </div>`;
   }
 
@@ -157,7 +158,15 @@
     const due = VS.store.totals().due;
     // The end names what moved: each word remembered, and when it comes back (peak-end).
     const moved = [...s.results].filter(([, g]) => g !== "again").map(([id]) => VS.byId[id]).filter(Boolean)
-      .map((w) => ({ word: w.word, when: VS.ui.whenText(VS.store.word(w.id).due) }));
+      .map((w) => ({ id: w.id, word: w.word, box: VS.store.word(w.id).box, when: VS.ui.whenText(VS.store.word(w.id).due) }));
+    // One teacher's line for the end (V4.3, peak-end): the word that came back
+    // after the longest gap. Only said when it is true and worth saying (3+ days).
+    const star = moved.filter((m) => s.gaps && s.gaps.has(m.id))
+      .sort((a, b) => s.gaps.get(b.id) - s.gaps.get(a.id))[0];
+    const gap = star ? s.gaps.get(star.id) : 0;
+    const teacher = gap >= 3
+      ? html`<mark class="mark">${star.word}</mark> came back after ${gap} days — ${star.box >= 4 ? "it's yours now." : "it's sticking."}`
+      : "";
     if (s.scope.kind === "quick") return VS.ui.summary({
       title: "Five minutes, well spent",
       message: due ? html`${VS.plural(due, "word")} still due today — finish them when you have more time.` : "Nothing else is due today.",
@@ -168,6 +177,7 @@
       ],
       words: forgot,
       moved,
+      teacher,
       actions: [due ? { href: "#/recall", label: "Recall the rest", primary: true } : { href: s.scope.back, label: "Done", primary: true },
                 due ? { href: s.scope.back, label: "Stop for now" } : null],
     });
@@ -183,6 +193,7 @@
       ],
       words: forgot,
       moved,
+      teacher,
       actions: s.more
         ? [{ action: "restart", label: "Next " + Math.min(s.more, RECALL_BATCH) + " words", primary: true }, { href: s.scope.back, label: "Stop for now" }]
         : [{ href: s.scope.back, label: "Done", primary: true }],
@@ -213,7 +224,7 @@
       if (!s.scope) return VS.ui.emptyActivity("#/", "This list was not found.");
       if (!s.queue.length && s.scope.kind === "quick") {
         return html`<div class="activity"><div class="empty">
-          <h2>Nothing for a 5-minute review yet</h2>
+          <h1>Nothing for a 5-minute review yet</h1>
           <p>The 5-minute review brings back words you've started learning. Meet a few new words first — it takes about five minutes too.</p>
           <div class="row empty-actions">
             <a class="btn btn-primary" href="#/new/cards">${icon("cards", "icon-sm")} Learn new words</a>
@@ -225,7 +236,7 @@
         // Nothing studied yet: the useful next step is learning, not practising.
         if (!next && VS.store.newWords().length) {
           return html`<div class="activity"><div class="empty">
-            <h2>Nothing to recall yet</h2>
+            <h1>Nothing to recall yet</h1>
             <p>Words come back here after you learn them. Start with today's new words.</p>
             <div class="row empty-actions">
               <a class="btn btn-primary" href="#/new/cards">${icon("cards", "icon-sm")} Learn new words</a>
@@ -235,14 +246,14 @@
         // An empty library: Quiz and Spell would only say "needs two words".
         if (!VS.allWords().length) {
           return html`<div class="activity"><div class="empty">
-            <h2>Nothing to recall yet</h2>
+            <h1>Nothing to recall yet</h1>
             <p>Words you add and learn come back here on the days you're about to forget them.</p>
             <div class="row empty-actions">
               <a class="btn btn-primary" href="#/">${icon("plus", "icon-sm")} Add your first word</a>
             </div></div></div>`;
         }
         return html`<div class="activity"><div class="empty">
-          <h2>Nothing to recall right now</h2>
+          <h1>Nothing to recall right now</h1>
           <p>${next
             ? html`Your next recall is <b>${VS.ui.whenText(next.date)}</b>: ${VS.plural(next.count, "word")}.`
             : "Add words to your library — they come back here on their recall days."}</p>
@@ -320,7 +331,19 @@
         // Remember the session as it was, so Undo can bring this word back.
         s.undo = { index: s.index, queue: s.queue.slice(), cues: s.cues.slice(), results: new Map(s.results), combo: s.combo,
                    typed: s.typed, verdict: s.verdict, hints: s.hints, token: null };
-        if (!s.results.has(w.id)) s.undo.token = VS.store.grade(w.id, grade);
+        if (!s.results.has(w.id)) {
+          // How long the word really waited: from the day it was last seen
+          // (its due date minus its box's wait) to today — late recalls count
+          // in full. Only a due word remembered now earns a teacher's line.
+          const e = VS.store.word(w.id);
+          const today = VS.todayKey();
+          if (grade !== "again" && e.box > 0 && e.due <= today) {
+            const seen = new Date(e.due + "T12:00:00").getTime() - WAIT_DAYS[e.box] * 864e5;
+            const gap = Math.round((new Date(today + "T12:00:00").getTime() - seen) / 864e5);
+            (s.gaps || (s.gaps = new Map())).set(w.id, gap);
+          }
+          s.undo.token = VS.store.grade(w.id, grade);
+        }
         s.results.set(w.id, s.results.get(w.id) === "again" ? "again" : grade);
         s.combo = grade === "again" ? 0 : s.combo + 1;
         VS.sfx.play(grade === "again" ? "wrong" : "right");
@@ -333,6 +356,7 @@
         const u = s.undo;
         if (!u) return;
         if (u.token) VS.store.undo(u.token);
+        if (s.gaps) s.gaps.delete(s.queue[u.index] && s.queue[u.index].id);
         Object.assign(s, { index: u.index, queue: u.queue, cues: u.cues, results: u.results, combo: u.combo,
                            typed: u.typed, verdict: u.verdict, hints: u.hints, revealed: true, undo: null });
         VS.toast("Answer taken back.");

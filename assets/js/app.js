@@ -378,7 +378,8 @@
           <a class="btn" href="#/transfer" data-action="close-settings">${icon("qr", "icon-sm")} Move to another device</a></div>
         </div>
         <div class="setting"><b>About VocabStudy</b><p class="hint">What it does and why, in Arabic — a page to share with a friend.</p>
-          <a class="btn" href="about.html">Read it in Arabic</a></div>
+          <a class="btn" href="about.html">Read it in Arabic</a>
+          <p class="hint">Made by ${VS.credit.link()} — free and open source.</p></div>
 
         <details class="more-settings" ${moreSettingsOpen ? VS.raw("open") : ""}>
           <summary>${icon("settings", "icon-sm")} More settings <span class="hint">sound, study, look, reset</span></summary>

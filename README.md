@@ -207,3 +207,5 @@ untouched by updates.
 ## License
 
 [MIT](LICENSE) — free to use, change and share.
+
+Made by [Nagdista](https://nagdista.com/?utm_source=vocabstudy&utm_medium=readme&utm_campaign=credit).

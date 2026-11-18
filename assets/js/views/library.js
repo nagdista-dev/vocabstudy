@@ -362,7 +362,8 @@
             </div>
             ${firstRecall()}
             <footer class="first-foot">
-              <p>Free and open source. No account, no server: <b>your words stay on this device</b>.</p>
+              <p>Free and open source. No account, no server: <b>your words stay on this device</b>.
+                <span class="first-credit">Made by ${VS.credit.link()}.</span></p>
               <a href="about.html" hreflang="ar" lang="ar" dir="rtl">اقرأ عن التطبيق بالعربي</a>
             </footer>
           </div>`;

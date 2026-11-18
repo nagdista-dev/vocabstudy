@@ -399,6 +399,7 @@
 .first-foot p { max-width: 60ch; }
 .first-foot b { color: var(--ink-2); font-weight: 600; }
 .first-foot a { flex: none; font-weight: 600; }
+.first-foot .first-credit { display: block; margin-top: 2px; }
 
 /* Tablet portrait: one centred column, wide enough to read, narrow
    enough that the card and the copy stay a single lesson. */

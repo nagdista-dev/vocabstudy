@@ -56,7 +56,7 @@
         // Off is one tap from here — not a trip to More settings → Study.
         if (VS.listen.available) return html`
           <div class="activity"><div class="empty">
-            <h2>Speak practice is off</h2>
+            <h1>Speak practice is off</h1>
             <p>Say each word out loud and the app checks it. Your browser does the listening.</p>
             <div class="row empty-actions">
               <button class="btn btn-primary" type="button" data-action="speak-on">${icon("mic", "icon-sm")} Turn it on</button>

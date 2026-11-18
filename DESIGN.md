@@ -159,6 +159,25 @@ learner learns to read them:
 Red and green still mean only wrong and right: a trap's mistake is wrong,
 its fix is right.
 
+**The red pen (V4.1)** is one rule for every mistake on every screen: the
+learner's words stay in their own ink (`--ink-2`) and the teacher strikes
+them through in `--bad` at 2px (`.pen-wrong`). The fix beside it is ink with
+a green tick. Recall, Spell, Use it, the traps and a kept sentence all use it.
+
+**The ruler (V4.2, `VS.ui.ruler`)** is where a word stands on the six spaced
+days 1·3·7·14·30·60 — the same days the first run promises. Reached days wear
+`--mark-soft`, the current one `--mark`. Word page, end of Recall (compact,
+no numbers) and Progress ("Your words on the ruler").
+
+**The teacher's line (V4.3)** ends Recall: the word that came back after the
+longest real gap (from the day it was last seen, late days included), said only for a due word remembered now after 3+ days.
+
+**The maker's credit (V4.6, `VS.credit`)** — "Made by Nagdista" — lives in
+exactly four places: the first-run footer, Settings → App & data, the
+about.html footer and the printed page / every PDF page. It is ink, never
+brand, opens in a new tab, and its link carries only utm source tags. Never
+in an activity, never a popup.
+
 ## The signature
 
 Home opens with one index card, never a dark block. Its tint follows the

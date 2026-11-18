@@ -295,14 +295,6 @@
 .word-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .word-record { display: grid; gap: 3px; font-size: var(--text-xs); color: var(--ink-3); }
 .word-record b { color: var(--ink-2); font-weight: 600; }
-.word-box-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.word-boxes { display: inline-flex; align-items: center; gap: 3px; }
-.word-boxes i {
-  width: 12px; height: 5px; border-radius: var(--r-pill);
-  background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line);
-}
-.word-boxes i.is-on { background: var(--brand); box-shadow: none; }
-.word-box-label { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .word-score { white-space: nowrap; }
 .word-manage { display: flex; flex-wrap: wrap; align-items: center; }
 .word-manage-btn {
