@@ -353,6 +353,12 @@
 .action-bar {
   display: flex; gap: var(--s-3); margin-top: var(--s-5);
 }
+/* Tablet and desktop: the answers sit right under the card — on a tall screen a
+   bar pinned to the bottom edge left a gap the mouse had to cross every time. */
+@media (min-width: 600px) {
+  .activity { min-height: 0; }
+  .activity-stage { flex: 0 0 auto; }
+}
 .action-bar > .btn { flex: 1; }
 @media (max-width: 599px) {
   .action-bar {

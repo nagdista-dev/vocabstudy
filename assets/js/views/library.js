@@ -251,8 +251,7 @@
           <dl class="rail-stats">
             <div><dt>Streak</dt><dd>${t.streak} ${t.streak === 1 ? "day" : "days"}</dd></div>
             <div><dt>Mastered</dt><dd>${t.mastered} / ${t.words}</dd></div>
-            <div><dt>Accuracy</dt><dd>${answered >= VS.ACCURACY_FROM ? VS.accuracyText(right, answered)
-              : html`<span class="rail-later">after ${VS.ACCURACY_FROM - answered} more ${VS.ACCURACY_FROM - answered === 1 ? "answer" : "answers"}</span>`}</dd></div>
+            <div><dt>Accuracy</dt><dd>${VS.accuracyText(right, answered)}</dd></div>
           </dl>
         </section>
       </aside>`;
@@ -344,7 +343,7 @@
 
   VS.views.library = {
     title: () => (!VS.allWords().length ? "Start with one word" : page === "words" ? "Your words" : "Today"),
-    crumbs: () => (page === "words" && VS.allWords().length ? [{ label: "Your words" }] : []),
+    crumbs: () => [],           // Today and Words are main tabs: the nav already says where you are
 
     start(p) { f = F.parse(p.query); limit = PAGE; panelOpen = false; page = p.words ? "words" : "today"; },
 
@@ -403,8 +402,12 @@
           <div class="home-grid">
             <div class="home-main">
               <header class="lib-head">
-                <h1>Your words</h1>
-                <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
+                <div class="words-title">
+                  <h1>Your words</h1>
+                  <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
+                </div>
+                <!-- Print & PDF in plain sight (it hid in the ⋯ menu): the words on screen, ready for paper. -->
+                <a class="btn words-print" href="#/print/pick${query() ? "?" + query() : ""}">${icon("print", "icon-sm")} Print &amp; PDF</a>
               </header>
 
               ${s.total < EARLY ? "" : html`<div class="lib-tools">

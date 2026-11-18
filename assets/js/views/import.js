@@ -468,7 +468,7 @@
 
   VS.views.import = {
     title: () => "Add words",
-    crumbs: () => [{ label: "Add words" }],
+    crumbs: () => [],           // a main tab: the nav already says where you are
 
     start(p) {
       const tab = new URLSearchParams(p.query || "").get("tab");

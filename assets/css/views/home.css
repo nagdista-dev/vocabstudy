@@ -118,7 +118,7 @@
   .today-steps a { padding: 0 8px; }
 }
 @media (max-width: 374px) {
-  .today-goal-extra { display: none; }
+  .today-goal-word { display: none; }      /* the target icon and "29 / 100" say it; a lowercase "goal" looked broken */
   .today-goal-track { width: 40px; }
 }
 @media (max-width: 374px) {
@@ -440,7 +440,9 @@
 .lib-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-top: var(--s-6); }
 .lib-head h2 { font-size: 1.4rem; line-height: 1.2; letter-spacing: -.015em; }
 /* Your words, its own page (#/words): the page title, then the tools. */
-.words-page .lib-head { margin-top: 0; flex-wrap: wrap; }
+.words-page .lib-head { margin-top: 0; flex-wrap: wrap; align-items: center; }
+.words-title { display: grid; gap: 2px; min-width: 0; }
+.words-print { flex: none; }
 .words-page .lib-head h1 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.15; letter-spacing: -.02em; }
 /* Today: the newest few words, and the way to all of them. */
 .home-recent { margin-top: var(--s-6); }
@@ -547,15 +549,23 @@
 /* On the tinted card a tonal button vanished into the tint: a white key, brand ink. */
 .today-remind { background: var(--surface); color: var(--brand); border-color: color-mix(in srgb, var(--brand) 22%, var(--line)); }
 .today-remind:hover { border-color: var(--brand); }
-.today-tomorrow .today-tomorrow-note { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--ink-3); }
+.today-remind-row { display: flex; align-items: center; gap: var(--s-1); justify-self: start; }
+.today-remind-x { color: var(--ink-3); }
+.today-tomorrow.is-quiet { padding-top: var(--s-3); }
 .today-tomorrow .hint .icon { vertical-align: -2px; color: var(--good); }
 @media (min-width: 600px) {
   .today-tomorrow { grid-template-columns: minmax(0, 1fr) auto; }
-  .today-tomorrow .btn { justify-self: end; }
+  .today-remind-row { justify-self: end; }
 }
 @media (max-width: 599px) {
   .today-goal-unit { display: none; }      /* "Daily goal 2 / 100" fits beside the streak on one line */
   .today-top { flex-wrap: nowrap; }
   .today-goal { flex: 0 1 auto; min-width: 0; }
   .today-goal-track { width: 40px; }
+}
+
+/* Wide lists: English at the start, Arabic at the end beside the arrow — like a
+   dictionary line, instead of both crowding the left with a gap in the middle. */
+@media (min-width: 600px) {
+  .word-row:not([open]) .word-row-ar { justify-self: end; text-align: right; }
 }

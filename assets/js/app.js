@@ -440,6 +440,9 @@
         ${VS.listen.available ? html`<div class="setting"><b>Speak practice</b><div class="seg">${choice("speak", true, "On")}${choice("speak", false, "Off")}</div>
           <span class="hint">Say words out loud and the app checks them. Your browser does the listening — Chrome and Edge use their online speech service.</span></div>` : ""}
         <div class="setting"><b>Round size</b><div class="seg">${choice("roundSize", 10, "10")}${choice("roundSize", 20, "20")}${choice("roundSize", 30, "30")}</div></div>
+        <div class="setting"><b>Daily reminder</b>
+          <div class="row"><button class="btn" type="button" data-action="daily-reminder">${icon("clock", "icon-sm")} ${VS.store.reminder() ? "Add it to my calendar again" : "Add it to my calendar"}</button></div>
+          <span class="hint">${VS.store.reminder() ? "Added (" + VS.store.reminder() + "). Only needed if you removed it from your calendar." : "A daily calendar event at the hour you usually study — a small file you open once."}</span></div>
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
 
           <h3 class="sheet-group">Look</h3>

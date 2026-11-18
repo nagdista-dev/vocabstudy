@@ -10,13 +10,13 @@
    around them takes the extra touch area, so the type stays quiet and the target big. */
 
 /* ── Touch floor: 44 px ─────────────────────────────────────────── */
-.today-steps a, .chip, .bar-link, .seg button, .word-manage-btn, .word-other, .word-hear,
+.today-steps a, .chip, .bar-link, .seg button, .word-other, .word-hear,
 .speak-btn, .icon-btn, .backup-dismiss, .tab-btn, .import-tabs button, .import-tabs a,
 .lib-actions > summary, .lib-bar summary, .lib-filter-btn, .meaning-list .btn, .mine-del,
 .summary-actions .btn, .empty-actions .btn, .row-actions .btn {
   min-height: var(--tap);
 }
-.speak-btn, .icon-btn, .backup-dismiss, .mine-del, .word-manage-btn { min-width: var(--tap); }
+.speak-btn, .icon-btn, .backup-dismiss, .mine-del { min-width: var(--tap); }
 .skip-link:focus { min-height: var(--tap); display: inline-flex; align-items: center; }
 .brand { min-height: var(--tap); display: inline-flex; align-items: center; }
 

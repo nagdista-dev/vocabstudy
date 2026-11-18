@@ -96,7 +96,7 @@
 
   VS.views.stats = {
     title: () => "Progress",
-    crumbs: () => [{ label: "Progress" }],
+    crumbs: () => [],           // a main tab: the nav already says where you are
 
     render() {
       const t = VS.store.totals();

@@ -97,7 +97,7 @@
     const pct = Math.min(100, Math.round((done / target) * 100));
     return html`
       <div class="today-goal ${reached ? "is-done" : ""}">
-        <span class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span><span class="today-goal-extra">Daily </span>goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}<span class="today-goal-unit"> answers</span></span>
+        <span class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span class="today-goal-word"><span class="today-goal-extra">Daily </span>goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}<span class="today-goal-unit"> answers</span></span>
         <span class="today-goal-track" role="progressbar" aria-label="Daily goal: ${done} of ${target} answers"
              aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(done, target)}">
           <i style="width:${pct}%"></i>
@@ -146,20 +146,28 @@
     if (!p.t.started || (p.next && (p.next.key === "recall" || p.next.key === "learn"))) return "";
     const n = (VS.store.forecast()[1] || {}).count || 0;
     const min = Math.max(1, Math.round((n * 20) / 60));     // about 20 seconds a word in Recall
-    const added = reminderAdded();
+    // The reminder offer shows until it is added or put away (×) — then the card
+    // keeps just tomorrow's line. It stays in Settings → Daily reminder for later.
+    const offer = !reminderAdded() && !VS.store.settings().reminderHidden;
     return html`
-      <div class="today-tomorrow">
+      <div class="today-tomorrow ${offer ? "" : "is-quiet"}">
         <p>${n
           ? html`Tomorrow: <b>${VS.plural(n, "word")}</b> to recall · about ${min} min.`
           : html`Nothing due tomorrow — a good day to add new words.`}</p>
-        ${added
-          ? html`<p class="hint">${icon("check", "icon-sm")} Daily reminder in your calendar (${added}).
-              <button class="link-btn" type="button" data-action="daily-reminder">Add it again</button></p>`
-          : html`<button class="btn today-remind" type="button" data-action="daily-reminder" aria-describedby="reminderNote">${icon("clock", "icon-sm")}
+        ${offer ? html`
+          <div class="today-remind-row">
+            <button class="btn today-remind" type="button" data-action="daily-reminder" title="Adds a daily event to your calendar (a small file you open once)">${icon("clock", "icon-sm")}
               Daily reminder · ${hourText(reminderAt())}</button>
-              <span class="today-tomorrow-note" id="reminderNote">Adds a daily event to your calendar: it saves a small file — open it once.</span>`}
+            <button class="icon-btn today-remind-x" type="button" data-action="reminder-hide" aria-label="Hide the reminder offer">${icon("x", "icon-sm")}</button>
+          </div>` : ""}
       </div>`;
   }
+
+  VS.actions["reminder-hide"] = () => {
+    VS.store.setSetting("reminderHidden", true);
+    VS.app.render();
+    VS.toast("Hidden. It's in Settings → Daily reminder whenever you want it.");
+  };
 
   /** A daily calendar event with an alert, as a file the calendar app opens. */
   VS.actions["daily-reminder"] = () => {

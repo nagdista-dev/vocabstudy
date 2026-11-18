@@ -21,12 +21,39 @@
   const LONG_FIELDS = ["definition", "example", "context"];
   const LIST_FIELDS = ["tags", "synonyms"];       // edited as "a, b, c"
   VS.actions = VS.actions || {};
+  /* The open word's small buttons: one section open at a time; the same button closes it. */
+  VS.actions["word-sec"] = (el) => {
+    const entry = el.closest(".word-entry");
+    if (!entry) return;
+    const wasOpen = el.getAttribute("aria-expanded") === "true";
+    entry.querySelectorAll(".word-sec[aria-expanded]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+    entry.querySelectorAll(".word-panel").forEach((p) => { p.hidden = true; });
+    if (wasOpen) return;
+    el.setAttribute("aria-expanded", "true");
+    const panel = entry.querySelector('.word-panel[data-panel="' + el.dataset.sec + '"]');
+    if (panel) {
+      panel.hidden = false;
+      const field = el.dataset.sec === "note" && panel.querySelector("textarea");
+      if (field && !field.value) field.focus();
+    }
+  };
   VS.actions["word-edit"] = (el) => {
     const w = VS.byId[el.dataset.id];
     const body = el.closest(".word-row-body");
     if (!w || !body) return;
     body.innerHTML = String(html`
       <form class="word-edit" data-edit-id="${w.id}">
+        <details class="ai-fill is-wide">
+          <summary>${icon("bolt", "icon-sm")}<span>Fill it in with AI</span><span class="hint">ChatGPT, Claude, Gemini…</span></summary>
+          <ol class="ai-fill-steps">
+            <li><button class="btn btn-tonal" type="button" data-action="ai-copy" data-id="${w.id}">${icon("text", "icon-sm")} Copy the prompt</button>
+              <span class="hint">and paste it into your AI chat.</span></li>
+            <li><label class="ai-fill-paste"><span>Paste its answer here — the fields below fill in.</span>
+              <textarea rows="3" dir="auto" data-ai-answer placeholder="arabic: …&#10;definition: …&#10;example: …"></textarea></label></li>
+            <li><span class="hint">Check them, then press <b>Save changes</b>.</span></li>
+          </ol>
+          <p class="ai-fill-status" aria-live="polite"></p>
+        </details>
         ${EDIT_FIELDS.map(([k, label]) => html`
           <label class="form-field ${LONG_FIELDS.includes(k) ? "is-wide" : ""}"><span>${label}</span>
             ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
@@ -48,6 +75,92 @@
         </div>
       </form>`);
   };
+  /* ── Fill it in with AI (no key, no account) ──────────────────────
+     The learner copies a prompt into any AI chat and pastes the answer
+     back. We read "key: value" lines (or JSON), keep only fields that pass
+     the same checks as typing, and fill the form — nothing is saved until
+     they press Save. */
+  function aiPrompt(w) {
+    const lines = [
+      "I'm an Arabic speaker learning English (B1–C1). Help me with the English word “" + w.word + "”" + (w.sense ? " (" + w.sense + ")" : "") + ".",
+      w.context ? "I met it in this sentence: “" + w.context + "” — use THAT meaning." : "",
+      w.arabic ? "My current Arabic meaning is: " + w.arabic + " (fix it if it's wrong)." : "",
+      "",
+      "Reply with exactly these lines and nothing else:",
+      "word: <the base form>",
+      "arabic: <short Arabic meaning; Egyptian Arabic is welcome; several meanings separated by \" - \">",
+      "definition: <one simple English definition, learner-dictionary style>",
+      "example: <one natural example sentence, 14 words or fewer, that uses the word>",
+      "type: <Noun, Verb, Adjective, Adverb, Phrase, Phrasal Verb or Idiom>",
+      "level: <A1, A2, B1, B2, C1 or C2>",
+      "ipa: </IPA/>",
+      "synonyms: <up to 4, comma-separated>",
+    ];
+    return lines.filter((l, i) => l || i === 3).join("\n");
+  }
+  const AI_KEYS = {
+    word: "word", headword: "word", arabic: "arabic", "arabic meaning": "arabic", meaning: "arabic", "المعنى": "arabic", "عربي": "arabic",
+    definition: "definition", "english definition": "definition", example: "example", "example sentence": "example",
+    type: "type", "part of speech": "type", pos: "type", level: "level", cefr: "level", "cefr level": "level",
+    ipa: "ipa", pronunciation: "ipa", synonyms: "synonyms", "similar words": "synonyms", similar: "synonyms",
+  };
+  /** The AI's answer → { field: value } (only fields that look right). */
+  VS.parseAiWord = function (text) {
+    let t = String(text || "").replace(/```[a-z]*\n?/gi, "").trim();
+    const raw = {};
+    try {
+      const j = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1));
+      Object.keys(j).forEach((k) => { if (AI_KEYS[k.toLowerCase()]) raw[AI_KEYS[k.toLowerCase()]] = Array.isArray(j[k]) ? j[k].join(", ") : String(j[k]); });
+    } catch (e) {
+      t.split(/\r?\n/).forEach((line) => {
+        const m = /^\s*[-*•]?\s*\**\s*([A-Za-z\u0600-\u06FF ]{2,20}?)\s*\**\s*[:：]\s*(.+)$/.exec(line);
+        const key = m && AI_KEYS[m[1].trim().toLowerCase()];
+        if (key && !raw[key]) raw[key] = m[2].trim();
+      });
+    }
+    const out = {};
+    const clean = (v) => String(v).replace(/\*\*/g, "").trim().replace(/^["“'«]+|["”'»]+$/g, "").trim();
+    Object.keys(raw).forEach((k) => {
+      let v = clean(raw[k]);
+      if (!v || /^<.*>$/.test(v)) return;                                 // the template itself, pasted back
+      if (k === "arabic" && !/[\u0600-\u06FF]/.test(v)) return;
+      if (k === "level") { v = v.toUpperCase().match(/[ABC][12]/); if (!v) return; v = v[0]; }
+      if (k === "type") { const hit = VS.importer.TYPES.find((x) => x.toLowerCase() === v.toLowerCase()); if (!hit) return; v = hit; }
+      if (k === "ipa") v = "/" + v.replace(/^\/+|\/+$/g, "") + "/";
+      if (k === "example" && v.split(/\s+/).length > 22) return;
+      if (k === "synonyms") v = VS.parseTags(v).slice(0, 6).join(", ");
+      out[k] = v.slice(0, 400);
+    });
+    return out;
+  };
+  VS.actions["ai-copy"] = async (el) => {
+    const w = VS.byId[el.dataset.id];
+    if (!w) return;
+    const text = aiPrompt(w);
+    try { await navigator.clipboard.writeText(text); VS.toast("Prompt copied — paste it into ChatGPT, Claude or Gemini."); }
+    catch (e) {
+      const box = el.closest(".ai-fill").querySelector("[data-ai-answer]");
+      box.value = text; box.select();
+      VS.toast("Copy the selected text, then replace it with the AI's answer.");
+    }
+  };
+  document.addEventListener("input", (e) => {
+    if (!e.target.matches || !e.target.matches("[data-ai-answer]")) return;
+    const form = e.target.closest("form.word-edit");
+    const found = VS.parseAiWord(e.target.value);
+    const filled = [];
+    Object.keys(found).forEach((k) => {
+      const f = form && form.elements[k];
+      if (!f) return;
+      if (k === "word" && f.value.trim().toLowerCase() === found[k].toLowerCase()) return;
+      f.value = found[k];
+      f.classList.add("is-filled");
+      filled.push(k === "synonyms" ? "similar words" : k);
+    });
+    const status = form && form.querySelector(".ai-fill-status");
+    if (status) status.textContent = filled.length ? "Filled in: " + filled.join(", ") + ". Check them, then Save." : (e.target.value.trim() ? "Nothing usable yet — paste the whole answer." : "");
+  });
+
   VS.actions["word-save"] = (el) => {
     const form = el.closest("form");
     const changes = {};
@@ -654,84 +767,82 @@
       const s = VS.store.status(w.id);
       const e = VS.store.word(w.id);
       const tips = VS.soundTraps(w);
+      const traps = VS.usageTraps(w);
+      const note = VS.store.note(w.id);
+      const mine = w.mine || [];
+      const related = (w.goes && w.goes.length) || (w.synonyms && w.synonyms.length);
+      // The open word, short on purpose (v10 final): the essentials are always in
+      // view — sound, meaning, one example, where it stands — and everything else
+      // waits behind one row of small buttons, one section open at a time.
+      const sec = (key, label, n, ico) => html`<button class="word-sec" type="button" data-action="word-sec" data-sec="${key}" aria-expanded="false">
+          ${icon(ico, "icon-sm")}<span>${label}</span>${n ? html`<b>${n}</b>` : ""}</button>`;
       return html`
           <div class="word-row-body">
             <div class="word-entry">
-              <div class="word-sound">
+              <div class="word-bar">
                 <div class="word-sound-main">
                   ${VS.ui.speakButton(w.word)}
                   ${w.ipa ? html`<span class="word-sound-ipa">${VS.ui.ipa(w)}</span>` : ""}
                 </div>
-                ${tips.length ? html`
-                  <details class="word-traps">
-                    <summary>
-                      <span>Sound tips</span>
-                      <span class="word-traps-n">${tips.length}</span>
-                      ${icon("chevron-right", "icon-sm word-traps-chev")}
-                    </summary>
-                    ${VS.ui.soundTraps(w)}
-                  </details>` : ""}
-              </div>
-
-              <div class="word-main">
-                ${VS.ui.checkLine(w)}
-                ${VS.ui.context(w)}
-                <div class="word-lead">
-                  ${w.definition
-                    ? html`<p class="word-definition">${w.definition}</p>`
-                    : html`<p class="hint">No definition yet.
-                        <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
-                  ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}" aria-expanded="false">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
-                </div>
-                <div class="meanings" aria-live="polite"></div>
-
-                <div class="word-example-block">
-                  ${w.example ? html`
-                    <figure class="word-example">
-                      <blockquote>${VS.ui.quote(w)}</blockquote>
-                    </figure>` : html`<p class="hint word-no-ex">No example yet.
-                      <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add an example</button></p>`}
-                  <div class="word-ex-tools">
-                    ${w.example ? html`<button class="word-hear" type="button" data-action="speak" data-say="${w.example}">
-                      ${icon("volume", "icon-sm")}<span>Hear the sentence</span>
-                    </button>` : ""}
-                    ${VS.ui.moreExamples(w)}
+                <details class="lib-more word-menu">
+                  <summary class="icon-btn" aria-label="Manage “${w.word}”">${icon("more")}</summary>
+                  <div class="lib-more-menu">
+                    <button class="btn btn-quiet" type="button" data-action="word-edit" data-id="${w.id}">${icon("pen", "icon-sm")} Edit word</button>
+                    ${s === "new" ? "" : html`<button class="btn btn-quiet" type="button" data-action="forget" data-id="${w.id}">${icon("review", "icon-sm")} Reset to new</button>`}
+                    <button class="btn btn-quiet word-menu-danger" type="button" data-action="word-delete" data-id="${w.id}">${icon("x", "icon-sm")} Delete</button>
                   </div>
-                </div>
-
-                ${VS.usageTraps(w).length ? html`<div class="word-usage">${VS.ui.usage(w)}</div>` : ""}
-                ${VS.ui.mine(w, true)}
-                <div class="word-practice">
-                  <a class="btn btn-primary word-write" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}
-                    ${w.mine.length ? "Another sentence" : "Write a sentence"}</a>
-                </div>
-                ${(w.goes && w.goes.length) || (w.synonyms && w.synonyms.length) ? html`
-                  <details class="word-more">
-                    <summary>${icon("chevron-right", "icon-sm word-more-chev")} More about this word</summary>
-                    <div class="word-related">
-                      ${VS.ui.goes(w)}
-                      ${VS.ui.similar(w)}
-                    </div>
-                  </details>` : ""}
+                </details>
               </div>
 
-              <aside class="word-margin" aria-label="Notes and schedule for this word">
+              ${VS.ui.checkLine(w)}
+              ${VS.ui.context(w)}
+
+              <div class="word-lead">
+                ${w.definition
+                  ? html`<p class="word-definition">${w.definition}</p>`
+                  : html`<p class="hint">No definition yet.
+                      <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
+                ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}" aria-expanded="false">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
+              </div>
+              <div class="meanings" aria-live="polite"></div>
+
+              <div class="word-example-block">
+                ${w.example ? html`
+                  <figure class="word-example">
+                    <blockquote>${VS.ui.quote(w)}</blockquote>
+                    <button class="icon-btn word-hear" type="button" data-action="speak" data-say="${w.example}" aria-label="Hear the sentence">${icon("volume", "icon-sm")}</button>
+                  </figure>` : html`<p class="hint word-no-ex">No example yet.
+                    <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add an example</button></p>`}
+                <div class="word-ex-tools">${VS.ui.moreExamples(w)}</div>
+              </div>
+
+              <div class="word-memory">
+                ${s === "new"
+                  ? html`<p class="word-memory-line"><span>Not studied yet</span><span class="word-memory-sep" aria-hidden="true">·</span><span>added ${VS.ui.dateText(w.added)}</span></p>`
+                  : html`<p class="word-memory-line"><span>Next recall</span> <b>${whenText(e.due)}</b></p>
+                    ${VS.ui.ruler(e.box, true)}
+                    <span class="word-memory-score" title="Right and wrong answers">${e.right} right · ${e.wrong} wrong</span>`}
+              </div>
+
+              <div class="word-secs" role="group" aria-label="More about this word">
+                ${traps.length ? sec("mistakes", "Common mistakes", traps.length, "bulb") : ""}
+                ${mine.length ? sec("mine", "Your sentences", mine.length, "pen")
+                  : html`<a class="word-sec" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")}<span>Write a sentence</span></a>`}
+                ${related ? sec("related", "Goes with", 0, "link") : ""}
+                ${tips.length ? sec("sound", "Sound tips", tips.length, "volume") : ""}
+                ${sec("note", note ? "My note" : "Add a note", 0, "bulb")}
+              </div>
+              ${traps.length ? html`<div class="word-panel" data-panel="mistakes" hidden>${VS.ui.usage(w)}</div>` : ""}
+              ${mine.length ? html`<div class="word-panel" data-panel="mine" hidden>
+                  ${VS.ui.mine(w, true)}
+                  <a class="btn btn-tonal word-write" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")} Write another sentence</a>
+                </div>` : ""}
+              ${related ? html`<div class="word-panel word-related" data-panel="related" hidden>${VS.ui.goes(w)}${VS.ui.similar(w)}</div>` : ""}
+              ${tips.length ? html`<div class="word-panel" data-panel="sound" hidden>${VS.ui.soundTraps(w)}</div>` : ""}
+              <div class="word-panel" data-panel="note" hidden>
                 ${VS.ui.noteBox(w)}
                 ${w.tags.length ? html`<div class="word-tags">${VS.ui.tags(w)}</div>` : ""}
-                <div class="word-record">
-                  ${s === "new"
-                    ? html`<p class="word-record-head"><span>Not studied yet</span><b>Added ${VS.ui.dateText(w.added)}</b></p>`
-                    : html`
-                      <p class="word-record-head"><span>Next recall</span><b>${whenText(e.due)}</b></p>
-                      ${VS.ui.ruler(e.box)}
-                      <p class="word-score"><span class="is-right">${e.right} right</span><span aria-hidden="true">·</span><span>${e.wrong} wrong</span></p>`}
-                </div>
-                <div class="word-manage" role="group" aria-label="Manage this word">
-                  <button class="word-manage-btn" type="button" data-action="word-edit" data-id="${w.id}">${icon("pen", "icon-sm")}<span>Edit</span></button>
-                  ${s === "new" ? "" : html`<button class="word-manage-btn" type="button" data-action="forget" data-id="${w.id}" title="Reset to new">${icon("review", "icon-sm")}<span>Reset</span></button>`}
-                  <button class="word-manage-btn danger" type="button" data-action="word-delete" data-id="${w.id}">${icon("x", "icon-sm")}<span>Delete</span></button>
-                </div>
-              </aside>
+              </div>
             </div>
           </div>`;
     },

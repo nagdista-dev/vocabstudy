@@ -109,7 +109,7 @@
   VS.ACCURACY_FROM = ACCURACY_FROM;
   VS.accuracyText = (right, answered) => answered >= ACCURACY_FROM
     ? Math.round((right / answered) * 100) + "%"
-    : VS.html`<span class="muted-num">shows at ${ACCURACY_FROM} answers (${answered} so far)</span>`;
+    : VS.html`<span class="muted-num rail-later">after ${ACCURACY_FROM - answered} more ${ACCURACY_FROM - answered === 1 ? "answer" : "answers"}</span>`;
 
   // Words already mastered when the app opened: only milestones past this are celebrated.
   const startMastered = VS.store.totals().mastered;
