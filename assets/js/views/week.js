@@ -16,10 +16,11 @@
 
   /** "▲ 12" / "▼ 3" / "same" next to last week's number (in ink: green and red mean right and wrong only). */
   let sofar = false;
+  let noLast = false;   // nothing at all last week (a first week): no ▲ "vs last week" — it would be hollow praise
   function delta(now, last, unit) {
     const d = now - last;
     const when = sofar ? "last week so far" : "last week";
-    if (!last && !now) return "";
+    if (noLast || (!last && !now)) return "";
     if (!d) return html`<small class="wk-delta">same as ${when}</small>`;
     return html`<small class="wk-delta">${d > 0 ? "▲" : "▼"} ${Math.abs(d)}${unit || ""} vs ${when}</small>`;
   }
@@ -83,6 +84,7 @@
     render() {
       const w = VS.week.summary(start);
       sofar = !!w.partial;
+      noLast = !w.last.answers && !w.last.met && !w.last.mastered;
       const thisWeek = VS.week.range().start;
       const prev = VS.dateKey(new Date(new Date(start + "T12:00:00").getTime() - 7 * 864e5));
       const next = VS.dateKey(new Date(new Date(start + "T12:00:00").getTime() + 7 * 864e5));

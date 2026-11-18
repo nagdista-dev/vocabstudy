@@ -30,6 +30,14 @@
 
   let s = null;   // { scope, words, index, draft, result, written, skipped, saved }
 
+  /* "Use this sentence" is offered only when the corrected sentence passes every
+     check — a fix that then fails ("no borrow in it") is the app contradicting itself. */
+  const fixPasses = (fixed) => {
+    const w = s.words[s.index];
+    const r = w && VS.checkSentence(w, fixed);
+    return !!(r && r.ok);
+  };
+
   function feedback() {
     const r = s.result;
     if (!r) return "";
@@ -58,7 +66,7 @@
               ? html`<span class="usage-kind">${p.trap.label}</span>
                      ${p.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.found}</span><small>you wrote</small></span>` : ""}
                      ${p.fixed ? html`<span class="usage-right">${icon("check", "icon-sm")}<span>${p.fixed}</span><small>your sentence, fixed</small></span>
-                       <button class="btn btn-tonal write-use-fix" type="button" data-action="use-fix" data-fix="${p.fixed}">Use this sentence</button>` : ""}
+                       ${fixPasses(p.fixed) ? html`<button class="btn btn-tonal write-use-fix" type="button" data-action="use-fix" data-fix="${p.fixed}">Use this sentence</button>` : ""}` : ""}
                      <span class="usage-why">${VS.ui.mixed(p.text)}</span>`
               : p.grammar
               ? html`<span class="usage-kind">${p.grammar.label}</span>

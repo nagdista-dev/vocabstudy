@@ -170,8 +170,10 @@
   VS.dateKey = (d) =>
     d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   VS.todayKey = () => VS.dateKey(new Date());
-  /** A word's IPA as learners see it: dictionaries write the English r two ways (/ɹ/, /r/) — show one. */
-  VS.ipaText = (w) => String((w && w.ipa) || "").replace(/ɹ/g, "r");
+  /** A word's IPA as learners see it: one way to write r (/ɹ/ → /r/), no
+      dictionary syllable dots, and optional sounds written in, not in
+      brackets (/ˈæk.(t)ʃu.ə.li/ → /ˈæktʃuəli/). The stress dots still read the original. */
+  VS.ipaText = (w) => String((w && w.ipa) || "").replace(/ɹ/g, "r").replace(/[()]/g, "").replace(/\./g, "");
   VS.yesterdayKey = () => VS.dateKey(new Date(Date.now() - 864e5));
 
   VS.formatTime = function (ms) {

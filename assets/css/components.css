@@ -375,6 +375,8 @@
 .empty p + p { margin-top: var(--s-2); }
 .empty-actions { justify-content: center; }
 .empty-actions .btn { margin-top: var(--s-3); }
+/* Two real choices sit side by side at one width; "Go back" is a quiet line under them, not a third ghost button. */
+.empty-actions .btn-quiet { flex-basis: 100%; }
 @media (max-width: 599px) {
   .empty { padding: var(--s-5) var(--s-4); }
   .empty-actions { gap: var(--s-2); }
@@ -662,7 +664,7 @@ kbd {
 .usage-right .icon { color: var(--good); }
 .usage-why { font-size: var(--text-sm); color: var(--ink-2); margin-top: 2px; }
 /* Arabic quoted inside an English line: isolated, in the Arabic face, on a soft chip instead of «» */
-.ar-chip { font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); padding: 0 .3em; border-radius: 4px; background: var(--note-soft); color: var(--ink); }
+.ar-chip { white-space: nowrap; font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); padding: 0 .3em; border-radius: 4px; background: var(--note-soft); color: var(--ink); }
 
 /* ── Where you met it: personal memory, so it wears the highlighter's soft yellow ── */
 .met { display: grid; gap: var(--s-1); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--mark-soft); text-align: start; width: 100%; max-width: 56ch; overflow-wrap: anywhere; }

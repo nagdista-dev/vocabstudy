@@ -358,6 +358,13 @@
     )).slice(0, 3);
   };
 
+  /**
+   * A learner's sentence that must not be shown as a model or a Recall cue:
+   * kept against a warning, or one today's traps now catch (a sentence saved
+   * before a trap existed is re-read every time, never trusted forever).
+   */
+  VS.sentenceUnsure = (w, text) => (w.unsure || []).includes(text) || VS.findUsageMistakes(text).length > 0;
+
   /** Every trap whose mistake appears in a piece of writing (the learner's own sentence). */
   VS.findUsageMistakes = function (text) {
     const t = " " + String(text || "").replace(/[’‘]/g, "'") + " ";

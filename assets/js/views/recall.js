@@ -33,7 +33,7 @@
      come first: where they met the word, or one they wrote (Use it). */
   function pickCue(w) {
     // Sentences kept against a warning ("Keep it anyway") are never a cue: a mistake repeated is a mistake learned.
-    const own = (w.mine || []).filter((t) => !(w.unsure || []).includes(t))
+    const own = (w.mine || []).filter((t) => !VS.sentenceUnsure(w, t))
       .concat(w.context ? [w.context] : []).filter((t) => VS.findIn(w, t));
     if (own.length && Math.random() < 0.7) {
       const text = own[Math.floor(Math.random() * own.length)];

@@ -22,6 +22,8 @@
   let f = F.parse("");
   let limit = PAGE;
   let panelOpen = false;
+  let page = "today";   // "today" (#/): the plan and a few recent words · "words" (#/words): the whole library
+  const RECENT = 5;
   let stepsRO = null;   // watches the one-row practice scroller for overflow
 
   const words = () => F.apply(VS.allWords(), f);
@@ -340,10 +342,10 @@
   }
 
   VS.views.library = {
-    title: () => (VS.allWords().length ? "Your words" : "Start with one word"),
-    crumbs: () => [],
+    title: () => (!VS.allWords().length ? "Start with one word" : page === "words" ? "Your words" : "Today"),
+    crumbs: () => (page === "words" && VS.allWords().length ? [{ label: "Your words" }] : []),
 
-    start(p) { f = F.parse(p.query); limit = PAGE; panelOpen = false; },
+    start(p) { f = F.parse(p.query); limit = PAGE; panelOpen = false; page = p.words ? "words" : "today"; },
 
     render() {
       const s = VS.store.statsFor(VS.allWords());
@@ -371,17 +373,36 @@
             </footer>
           </div>`;
       }
+      if (page === "today") {
+        // Today: the plan, the add box and the newest few words — the library
+        // itself is one tap away, on its own tab.
+        const recent = F.apply(VS.allWords(), F.parse("")).slice(0, RECENT);
+        return html`
+          <div class="page home-page view-enter">
+            <div class="home-grid">
+              <div class="home-main">
+                ${VS.today.strip()}
+                ${weekReady()}
+                ${addBox(true)}
+                ${backupNudge()}
+                <section class="home-recent" aria-labelledby="recent-title">
+                  <header class="lib-head home-recent-head">
+                    <h2 id="recent-title">${s.total > RECENT ? "Newest words" : "Your words"}</h2>
+                    ${s.total > RECENT ? html`<a class="home-all" href="#/words">All ${s.total.toLocaleString("en-GB")} words ${icon("arrow-right", "icon-sm")}</a>` : ""}
+                  </header>
+                  <div class="word-list">${recent.map((w) => VS.ui.wordRow(w))}</div>
+                </section>
+              </div>
+              ${rail()}
+            </div>
+          </div>`;
+      }
       return html`
-        <div class="page home-page view-enter">
+        <div class="page home-page words-page view-enter">
           <div class="home-grid">
             <div class="home-main">
-              ${VS.today.strip()}
-              ${weekReady()}
-              ${addBox(true)}
-              ${backupNudge()}
-
               <header class="lib-head">
-                <h2>Your words</h2>
+                <h1>Your words</h1>
                 <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
               </header>
 
@@ -401,9 +422,8 @@
                 ${panel()}
               </div>`}
 
-              <div id="libResults">${results()}</div>
+                <div id="libResults">${results()}</div>
             </div>
-            ${rail()}
           </div>
         </div>`;
     },

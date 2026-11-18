@@ -524,7 +524,7 @@
           <p class="mine-head">Your sentences</p>
           <ul>${w.mine.map((m, i) => {
             const hit = VS.findIn(w, m, true);
-            const unsure = (w.unsure || []).includes(m);
+            const unsure = VS.sentenceUnsure(w, m);
             // Kept against a warning: show the teacher's red pen on the mistake and the fix, one tap away.
             const trap = unsure ? VS.findUsageMistakes(m)[0] : null;
             const fixed = trap ? VS.fixSentence(m, trap) : "";

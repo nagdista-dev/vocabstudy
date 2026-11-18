@@ -11,7 +11,7 @@
      #/pick/quiz?level=B2    an activity over a filtered list (core/filters.js)
      #/word/write?id=borrow  an activity over one word
                              modes: cards | quiz | spell | match | speak | write
-     #/words?tag=IELTS       the library with its filters in the address
+     #/words?tag=IELTS       Your words: the whole library, its filters in the address (#/ is Today)
      #/add                   add words: type, paste a table, upload files
      #/data                  backup, restore (merge/replace), export words
      #/reset                 start over: backup first, then type RESET
@@ -46,7 +46,9 @@
   function parse(hash) {
     const [path, query = ""] = hash.replace(/^#\/?/, "").split("?");
     const parts = path.split("/").filter(Boolean);
-    if (!parts.length || parts[0] === "words") return { view: "library", query };
+    // Today (#/) and the whole library (#/words) are one view with two pages:
+    // the reviews kept finding the plan and the library crowded on one phone screen.
+    if (!parts.length || parts[0] === "words") return { view: "library", query, words: parts[0] === "words" };
     if (parts[0] === "add") return { view: "import", query };
     if (parts[0] === "data") return { view: "data" };
     if (parts[0] === "reset") return { view: "reset" };
@@ -144,6 +146,7 @@
      thumb is). Activities hide the tab bar so nothing distracts. */
   const NAV = [
     { id: "home", label: "Today", icon: "home", href: () => "#/", match: ["library"] },
+    { id: "words", label: "Words", icon: "book", href: () => "#/words", match: ["library"] },
     { id: "recall", label: "Recall", icon: "review", href: () => "#/recall", match: ["recall"] },
     { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats", "week"] },
     { id: "add", label: "Add", icon: "plus", href: () => "#/add", match: ["import"] },
@@ -153,7 +156,8 @@
   function navMarkup(due, cls) {
     // Today is in both bars: on a desktop the logo was the only way home.
     return NAV.map((n) => {
-      const on = n.match.includes(current.name) && !(n.id === "recall" && current.params.scope === "day");
+      const on = n.match.includes(current.name) && !(n.id === "recall" && current.params.scope === "day") &&
+        !(n.id === "home" && current.params.words) && !(n.id === "words" && !current.params.words);
       const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>` : "";
       return html`<a class="${cls}-link" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
         ${n.id === "recall" ? VS.raw(`aria-label="Recall — ${due ? due + " words due" : "nothing due"}"`) : ""}>
@@ -382,6 +386,8 @@
         <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
           <span class="hint">How many new words “Learn” brings each day. The rest wait for tomorrow.</span></div>
         <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 20, "20")}${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 100, "100")}${choice("dailyGoal", 200, "200")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day across all activities (each new word you meet counts too). Progress shows on today's plan.</span></div>
+        <div class="setting"><b>Theme</b><div class="seg">${choice("theme", "light", "Light")}${choice("theme", "night", "Night")}${choice("theme", "auto", "Auto")}</div>
+          <span class="hint">Night is easier in a dark room. Auto follows your device. Printing and PDFs are always light.</span></div>
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
 
         <h3 class="sheet-group">App &amp; data</h3>
@@ -422,8 +428,6 @@
         <div class="setting"><b>Break reminder</b><div class="seg">${choice("breakEvery", 25, "25 min")}${choice("breakEvery", 50, "50 min")}${choice("breakEvery", 0, "Off")}</div></div>
 
           <h3 class="sheet-group">Look</h3>
-        <div class="setting"><b>Theme</b><div class="seg">${choice("theme", "light", "Light")}${choice("theme", "night", "Night")}${choice("theme", "auto", "Auto")}</div>
-          <span class="hint">Night is easier in a dark room. Auto follows your device. Printing and PDFs are always light.</span></div>
         <div class="setting"><b>Accent colour</b><div class="seg swatches">
           ${[["blue", "Ink blue"], ["teal", "Teal"], ["sky", "Sky"], ["violet", "Violet"], ["plum", "Plum"], ["rose", "Rose"], ["cocoa", "Cocoa"], ["amber", "Amber"], ["graphite", "Graphite"], ["glass", "Glass"]].map(([v, l]) =>
             html`<button type="button" data-action="setting" data-name="accent" data-value="${v}" aria-pressed="${st.accent === v}"><i class="swatch sw-${v}"></i>${l}</button>`)}

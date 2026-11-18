@@ -271,8 +271,12 @@ JS). It keeps the same desk without imitating an app screen:
 - 4px spacing grid (`--s-1` … `--s-8`).
 - App bar: 56px on phones, 64px from 1024px; opaque paper with a 1px line
   (under Glass: blurred glass). Desktop
-  navigation lives in the bar; ≤1023px uses the bottom tab bar (Today, Recall,
-  Progress, Add) so the thumb reaches every destination.
+  navigation lives in the bar; ≤1023px uses the bottom tab bar (Today, Words,
+  Recall, Progress, Add) so the thumb reaches every destination.
+- **Today and Words are two pages** (v10 final): Today (#/) is the plan, the
+  add box and the newest five words with "All N words →"; Words (#/words) is
+  the whole library — title, search, status chips, filters, the list. Every
+  review found the plan and the library crowded together on one phone screen.
 - Activities ≤1023px hide the app bar and show their own header: exit, title,
   scope, count, 4px progress. Print stays a browse screen and keeps the tab bar.
 - Phones (≤ 599px): answer buttons sit in a fixed opaque bar under the thumb;

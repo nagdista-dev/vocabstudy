@@ -97,7 +97,7 @@
     const pct = Math.min(100, Math.round((done / target) * 100));
     return html`
       <div class="today-goal ${reached ? "is-done" : ""}">
-        <span class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span><span class="today-goal-extra">Daily </span>Goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}<span class="today-goal-unit"> answers</span></span>
+        <span class="today-goal-label">${icon(reached ? "check" : "target", "icon-sm")} <span><span class="today-goal-extra">Daily </span>goal</span> <b>${done}</b><span class="today-goal-sep">/</span>${target}<span class="today-goal-unit"> answers</span></span>
         <span class="today-goal-track" role="progressbar" aria-label="Daily goal: ${done} of ${target} answers"
              aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(done, target)}">
           <i style="width:${pct}%"></i>
