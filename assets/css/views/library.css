@@ -184,7 +184,7 @@
   margin: var(--s-2) 0; border: 1px solid var(--line-strong) !important; border-radius: var(--r-lg);
   box-shadow: var(--shadow-2); background: var(--surface);
 }
-.word-row[open] + .word-row { border-top: 1px solid var(--line); }
+.word-row[open] + .word-row { border-top: 0; }   /* the raised card needs no rule under it: the gap and its shadow separate it */
 .word-row-body {
   container: word-entry / inline-size;
   padding: 0 var(--s-4) var(--s-4);
