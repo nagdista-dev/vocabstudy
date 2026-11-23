@@ -135,18 +135,7 @@
             ? "Press Add (or Enter). The app fills in the Arabic meaning, definition, example and pronunciation."
             : "You're offline — the word is saved now, and its meaning is filled in when you're back online.")
           : html`Auto-fill is off (Settings), so nothing leaves this device. Add the details below.`}</p>
-        <details class="ai-fill add-ai">
-          <summary>${icon("bolt", "icon-sm")}<span>Fill it in with AI</span><span class="hint">ChatGPT, Claude, Gemini…</span></summary>
-          <ol class="ai-fill-steps">
-            <li><span class="hint">Type the word above, then</span>
-              <button class="btn btn-tonal" type="button" data-action="add-ai-copy">${icon("text", "icon-sm")} Copy the prompt</button>
-              <span class="hint">and paste it into your AI chat.</span></li>
-            <li><label class="ai-fill-paste"><span>Paste its answer here — the details below fill in.</span>
-              <textarea rows="3" dir="auto" data-ai-add placeholder="arabic: …&#10;definition: …&#10;example: …"></textarea></label></li>
-            <li><span class="hint">Check them, then press <b>Add</b>.</span></li>
-          </ol>
-          <p class="ai-fill-status" aria-live="polite"></p>
-        </details>
+        <div class="add-ai">${VS.aiFill({ action: "add-ai-copy", paste: "data-ai-add", done: "Add" })}</div>
         <details class="add-more" ${!auto || filled || st.openDetails ? VS.raw("open") : ""}>
           <summary>${icon("chevron-right", "icon-sm")} More details <span class="hint">(optional)</span></summary>
           <div class="word-form">
@@ -553,9 +542,7 @@
           filled.push(k === "synonyms" ? "similar words" : k);
         });
         if (filled.length) { const more = VS.$(".add-more", root); if (more) more.open = true; st.openDetails = true; }
-        const status = VS.$(".add-ai .ai-fill-status", root);
-        if (status) status.textContent = filled.length ? "Filled in: " + filled.join(", ") + ". Check them, then press Add."
-          : (aiBox.value.trim() ? "Nothing usable yet — paste the whole answer." : "");
+        VS.aiFillStatus(aiBox.closest(".ai-fill"), filled, !!aiBox.value.trim());
       });
       VS.ui.watchKeyboard(VS.$("#addWord", root), { lookup: true });
       VS.ui.watchDuplicate(VS.$("#addWord", root), VS.$("#addWord", root) && VS.$("#addWord", root).closest(".add-line"));
@@ -566,11 +553,11 @@
     },
 
     actions: {
-      async "add-ai-copy"() {
+      async "add-ai-copy"(el) {
         const word = (st.form.word || "").trim();
         if (!word) { VS.toast("Type the word first."); const f = VS.$("#addWord"); if (f) f.focus(); return; }
         const text = VS.aiPrompt({ word, sense: st.form.sense || "", context: st.form.context || "", arabic: st.form.arabic || "" });
-        try { await navigator.clipboard.writeText(text); VS.toast("Prompt copied — paste it into ChatGPT, Claude or Gemini."); }
+        try { await navigator.clipboard.writeText(text); VS.aiCopied(el); }
         catch (e) {
           const box = VS.$("[data-ai-add]");
           if (box) { box.value = text; box.select(); }

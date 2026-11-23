@@ -402,21 +402,6 @@
 .word-row[open] .word-row-ar.hint { font-size: var(--text-sm); color: var(--ink-3); }
 .word-row[open] .word-row-meta { white-space: normal; }
 
-/* Edit → Fill it in with AI: copy a prompt, paste the answer, fields fill in (nothing saved until Save). */
-.ai-fill { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
-.ai-fill > summary {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px var(--s-2); min-height: var(--tap); padding: 0 var(--s-3);
-  list-style: none; cursor: pointer; font-weight: 600; color: var(--ink);
-}
-.ai-fill > summary::-webkit-details-marker { display: none; }
-.ai-fill > summary .icon { color: var(--brand); }
-.ai-fill > summary .hint { font-weight: 400; font-size: var(--text-xs); }
-.ai-fill-steps { display: grid; gap: var(--s-3); margin: 0; padding: 0 var(--s-3) var(--s-3) var(--s-6); }
-.ai-fill-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-.ai-fill-paste { display: grid; gap: var(--s-1); width: 100%; font-size: var(--text-sm); color: var(--ink-2); }
-.ai-fill-paste textarea { width: 100%; min-height: 84px; padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: inherit; color: var(--ink); resize: vertical; }
-.ai-fill-status { margin: 0; padding: 0 var(--s-3) var(--s-3); font-size: var(--text-sm); font-weight: 600; color: var(--good); }
-.ai-fill-status:empty { display: none; }
 .word-edit .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
 
 /* Card polish (v11.3): flags never break mid-phrase; the memory line stays one line. */

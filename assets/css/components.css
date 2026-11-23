@@ -826,3 +826,44 @@ kbd {
    signature, not an action. */
 .credit-link { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .credit-link:hover { color: var(--ink); }
+
+/* ── Fill it in with AI (VS.ui.aiFill) — Add word and Edit word ──────
+   A calm, closed panel; open, it is two numbered steps and one paste box.
+   The result line is the only colour: green when fields filled in. */
+.ai-fill { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+.ai-fill[open] { border-color: color-mix(in srgb, var(--brand) 28%, var(--line)); box-shadow: var(--shadow-1); }
+.ai-fill > summary {
+  display: flex; align-items: center; gap: var(--s-3); min-height: 56px; padding: var(--s-2) var(--s-3);
+  list-style: none; cursor: pointer;
+}
+.ai-fill > summary::-webkit-details-marker { display: none; }
+.ai-fill-ico { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--brand-soft); color: var(--brand); }
+.ai-fill-title { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.ai-fill-title b { font-size: var(--text-sm); font-weight: 700; color: var(--ink); }
+.ai-fill-title small { font-size: var(--text-xs); color: var(--ink-3); }
+.ai-fill-chev { flex: none; color: var(--ink-3); transition: transform var(--fast); }
+.ai-fill[open] .ai-fill-chev { transform: rotate(90deg); }
+.ai-fill-body { display: grid; gap: var(--s-3); padding: var(--s-1) var(--s-4) var(--s-4); border-top: 1px solid var(--line); padding-top: var(--s-4); }
+.ai-step { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.ai-step-n {
+  display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface-2); color: var(--ink-2); font-size: var(--text-xs); font-weight: 700;
+}
+.ai-step-copy { display: grid; gap: 0; min-width: 0; flex: 1; }
+.ai-step-copy b { font-size: var(--text-sm); color: var(--ink); }
+.ai-step-copy span { font-size: var(--text-xs); color: var(--ink-3); }
+.ai-copy-btn { flex: none; min-width: 96px; }
+.ai-copy-btn.is-done { background: var(--good-soft); color: var(--good); }
+.ai-fill-input {
+  width: 100%; min-height: 92px; padding: var(--s-3); resize: vertical;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2);
+  font: inherit; font-size: var(--text-sm); line-height: 1.5; color: var(--ink);
+}
+.ai-fill-input:focus { background: var(--surface); }
+.ai-fill-status { display: flex; align-items: flex-start; gap: var(--s-2); margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
+  background: var(--note-soft); color: var(--note-ink); font-size: var(--text-sm); }
+.ai-fill-status[hidden] { display: none; }
+.ai-fill-status.is-ok { background: var(--good-soft); color: var(--good); }
+.ai-fill-status .icon { flex: none; margin-top: 2px; }
+.ai-fill-status b { font-weight: 700; }
+.ai-fill-foot { margin: 0; font-size: var(--text-xs); color: var(--ink-3); }

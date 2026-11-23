@@ -43,17 +43,7 @@
     if (!w || !body) return;
     body.innerHTML = String(html`
       <form class="word-edit" data-edit-id="${w.id}">
-        <details class="ai-fill is-wide">
-          <summary>${icon("bolt", "icon-sm")}<span>Fill it in with AI</span><span class="hint">ChatGPT, Claude, Gemini…</span></summary>
-          <ol class="ai-fill-steps">
-            <li><button class="btn btn-tonal" type="button" data-action="ai-copy" data-id="${w.id}">${icon("text", "icon-sm")} Copy the prompt</button>
-              <span class="hint">and paste it into your AI chat.</span></li>
-            <li><label class="ai-fill-paste"><span>Paste its answer here — the fields below fill in.</span>
-              <textarea rows="3" dir="auto" data-ai-answer placeholder="arabic: …&#10;definition: …&#10;example: …"></textarea></label></li>
-            <li><span class="hint">Check them, then press <b>Save changes</b>.</span></li>
-          </ol>
-          <p class="ai-fill-status" aria-live="polite"></p>
-        </details>
+        ${VS.aiFill({ action: "ai-copy", id: w.id, paste: "data-ai-answer", done: "Save changes", wide: true })}
         ${EDIT_FIELDS.map(([k, label]) => html`
           <label class="form-field ${LONG_FIELDS.includes(k) ? "is-wide" : ""}"><span>${label}</span>
             ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
@@ -134,11 +124,59 @@
     });
     return out;
   };
+  /**
+   * "Fill it in with AI" — one component for Add word and Edit word.
+   *   ① Copy the prompt (the button says "Copied" for a moment)
+   *   ② Paste the AI's answer → the fields fill in
+   * A result line says what filled in; nothing is saved until the learner's own button.
+   */
+  VS.aiFill = ({ action, id, paste, done, wide }) => html`
+    <details class="ai-fill ${wide ? "is-wide" : ""}">
+      <summary>
+        <span class="ai-fill-ico">${icon("bolt", "icon-sm")}</span>
+        <span class="ai-fill-title"><b>Fill it in with AI</b><small>Free with ChatGPT, Claude or Gemini</small></span>
+        ${icon("chevron-right", "icon-sm ai-fill-chev")}
+      </summary>
+      <div class="ai-fill-body">
+        <div class="ai-step">
+          <span class="ai-step-n" aria-hidden="true">1</span>
+          <div class="ai-step-copy"><b>Copy the prompt</b><span>Paste it into your AI chat.</span></div>
+          <button class="btn btn-tonal ai-copy-btn" type="button" data-action="${action}" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""}>${icon("text", "icon-sm")}<span>Copy</span></button>
+        </div>
+        <div class="ai-step">
+          <span class="ai-step-n" aria-hidden="true">2</span>
+          <div class="ai-step-copy"><b>Paste its answer</b><span>The fields fill in by themselves.</span></div>
+        </div>
+        <textarea class="ai-fill-input" rows="3" dir="auto" ${VS.raw(paste)} aria-label="The AI's answer"
+          placeholder="arabic: …&#10;definition: …&#10;example: …"></textarea>
+        <p class="ai-fill-status" aria-live="polite" hidden></p>
+        <p class="ai-fill-foot">Nothing is saved until you press <b>${done}</b>.</p>
+      </div>
+    </details>`;
+  /** The result line under the paste box, and the brief "Copied" on the button. */
+  VS.aiFillStatus = (box, filled, hasText) => {
+    const status = box && box.querySelector(".ai-fill-status");
+    if (!status) return;
+    status.hidden = !hasText;
+    status.classList.toggle("is-ok", filled.length > 0);
+    status.innerHTML = filled.length
+      ? String(html`${icon("check", "icon-sm")}<span><b>${VS.plural(filled.length, "field")} filled in</b> — ${filled.join(", ")}. Check them below.</span>`)
+      : "Nothing usable yet — paste the whole answer.";
+  };
+  VS.aiCopied = (btn) => {
+    if (!btn) return;
+    const label = btn.querySelector("span");
+    btn.classList.add("is-done");
+    if (label) label.textContent = "Copied";
+    clearTimeout(btn._t);
+    btn._t = setTimeout(() => { btn.classList.remove("is-done"); if (label) label.textContent = "Copy"; }, 2200);
+  };
+
   VS.actions["ai-copy"] = async (el) => {
     const w = VS.byId[el.dataset.id];
     if (!w) return;
     const text = aiPrompt(w);
-    try { await navigator.clipboard.writeText(text); VS.toast("Prompt copied — paste it into ChatGPT, Claude or Gemini."); }
+    try { await navigator.clipboard.writeText(text); VS.aiCopied(el); }
     catch (e) {
       const box = el.closest(".ai-fill").querySelector("[data-ai-answer]");
       box.value = text; box.select();
@@ -158,8 +196,7 @@
       f.classList.add("is-filled");
       filled.push(k === "synonyms" ? "similar words" : k);
     });
-    const status = form && form.querySelector(".ai-fill-status");
-    if (status) status.textContent = filled.length ? "Filled in: " + filled.join(", ") + ". Check them, then Save." : (e.target.value.trim() ? "Nothing usable yet — paste the whole answer." : "");
+    VS.aiFillStatus(e.target.closest(".ai-fill"), filled, !!e.target.value.trim());
   });
 
   VS.actions["word-save"] = (el) => {
