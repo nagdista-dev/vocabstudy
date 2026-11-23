@@ -290,17 +290,24 @@
 }
 
 
-/* Two labelled rows of ways in: "With AI" and "Yourself". Each row is one
-   segmented control with equal parts — it never wraps, never scrolls. */
-.import-ways { display: grid; gap: var(--s-2); }
-.import-way { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; gap: var(--s-3); }
-.import-way-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); font-weight: 700; color: var(--ink-3); white-space: nowrap; }
-.import-way-label .icon { width: 14px; height: 14px; color: var(--brand); }
+/* With AI | Yourself: two big tabs side by side; under the open one, its ways in
+   one segmented row with equal parts — one line on every screen. */
+.import-ways { display: grid; gap: var(--s-3); }
+.import-groups { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+.import-groups button {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: 48px; margin-bottom: -1px; padding: 0 var(--s-3);
+  border: 0; border-bottom: 2px solid transparent; background: none; cursor: pointer;
+  font: inherit; font-size: var(--text-md); font-weight: 700; color: var(--ink-3);
+  transition: color var(--fast), border-color var(--fast);
+}
+.import-groups button .icon { width: 16px; height: 16px; }
+.import-groups button:hover { color: var(--ink); }
+.import-groups button[aria-pressed="true"] { color: var(--brand); border-bottom-color: var(--brand); }
 .import-ways .import-tabs { display: grid; width: 100%; max-width: none; margin: 0; }
 .import-ways .import-tabs.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .import-ways .import-tabs.is-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .import-ways .import-tabs button { min-width: 0; padding: 0 var(--s-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 599px) {
-  .import-way { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .import-ways .import-tabs { -webkit-mask-image: none; mask-image: none; overflow: visible; }
 }

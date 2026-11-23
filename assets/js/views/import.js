@@ -595,6 +595,8 @@
     ["Yourself", "pen", [["type", "Type a word", "Type"], ["text", "From text", "Text"], ["paste", "Paste a list", "List"], ["files", "Upload files", "File"]]],
   ];
   const TABS = TAB_GROUPS.flatMap((g) => g[2]);
+  const groupOf = (tab) => Math.max(0, TAB_GROUPS.findIndex((g) => g[2].some(([v]) => v === tab)));
+  const lastIn = {};            // the way last opened in each group, so switching back returns there
   const isAiTab = (t) => t in AI_TAB_MODE;
 
   VS.views.import = {
@@ -617,14 +619,15 @@
           </div></header>
 
           <section class="card import-step import-main">
-            <div class="import-ways" role="tablist" aria-label="How to add words">
-              ${TAB_GROUPS.map(([label, ico, tabs]) => html`
-                <div class="import-way">
-                  <span class="import-way-label">${icon(ico, "icon-sm")}${label}</span>
-                  <div class="seg import-tabs is-${tabs.length}">
-                    ${tabs.map(([v, l, short]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}"><span class="tab-long">${l}</span><span class="tab-short">${short}</span></button>`)}
-                  </div>
-                </div>`)}
+            <!-- Two big tabs side by side — With AI | Yourself — and, under the open one, its ways. -->
+            <div class="import-ways">
+              <div class="import-groups" role="tablist" aria-label="How to add words">
+                ${TAB_GROUPS.map(([label, ico], i) => html`<button type="button" role="tab" data-action="import-group" data-value="${i}"
+                  aria-pressed="${groupOf(st.tab) === i}" aria-selected="${groupOf(st.tab) === i}">${icon(ico, "icon-sm")}<span>${label}</span></button>`)}
+              </div>
+              <div class="seg import-tabs is-${TAB_GROUPS[groupOf(st.tab)][2].length}" role="tablist" aria-label="${TAB_GROUPS[groupOf(st.tab)][0]}">
+                ${TAB_GROUPS[groupOf(st.tab)][2].map(([v, l, short]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}"><span class="tab-long">${l}</span><span class="tab-short">${short}</span></button>`)}
+              </div>
             </div>
             ${st.tab === "type" ? typeTab() : isAiTab(st.tab) ? aiTab() : st.tab === "text" ? textTab() : st.tab === "paste" ? pasteTab() : filesTab()}
           </section>
@@ -750,9 +753,16 @@
         if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
         VS.toast(text.length < 6000 ? "Opened with your prompt — send it, then copy the answer back here." : "The prompt is long: it's copied — paste it in the chat.");
       },
+      "import-group"(el) {
+        const g = Number(el.dataset.value);
+        if (g === groupOf(st.tab)) return;
+        const tab = lastIn[g] || TAB_GROUPS[g][2][0][0];
+        Object.assign(st.ai, { answer: "", rows: [] });
+        st.tab = tab; lastIn[g] = tab; st.saved = ""; VS.app.render();
+      },
       "import-tab"(el) {
         if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [] });
-        st.tab = el.dataset.value; st.saved = ""; VS.app.render();
+        st.tab = el.dataset.value; lastIn[groupOf(st.tab)] = st.tab; st.saved = ""; VS.app.render();
       },
       "ai-add"() {
         const tags = VS.parseTags(st.ai.tags);
