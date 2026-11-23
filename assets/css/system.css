@@ -61,3 +61,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   .word-row-dot { forced-color-adjust: none; background: CanvasText !important; }
   .pen-wrong, .usage-wrong > span, .spell-typed { text-decoration-color: CanvasText; }
 }
+
+/* No text box shows a resize handle (owner's call): boxes keep their size and
+   scroll inside; the app sizes them for what they hold. */
+textarea { resize: none !important; }

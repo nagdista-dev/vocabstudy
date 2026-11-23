@@ -39,17 +39,18 @@
       const text = own[Math.floor(Math.random() * own.length)];
       return { style: "gap", text, own: w.mine.includes(text) ? "Your sentence" : "Where you met it" };
     }
-    if (VS.findInExample(w) && Math.random() < 0.5) return { style: "gap", text: w.example, own: "" };
-    return { style: "meaning", text: "", own: "" };
+    if (VS.findInExample(w) && (Math.random() < 0.5 || !w.definition)) return { style: "gap", text: w.example, own: "" };
+    // Recall is English (the Arabic belongs to Learn): the definition is the question.
+    // Only a word with no definition and no sentence falls back to its Arabic.
+    return { style: w.definition ? "meaning" : "arabic", text: "", own: "" };
   }
 
-  /* The Arabic next to the learner's own sentence must mean what that sentence
-     means: "The plane will ___ at six" never comes with «نزع». It shows only
-     when the meaning is settled — checked by hand, confirmed by the learner,
-     or picked from that very sentence — or when the cue is the dictionary
-     example, which belongs to the definition. */
-  const oneChecked = (w) => { const c = VS.autofill.checked(w.word); return !!c && c.length === 1; };
-  const arabicFits = (w, cue) => !cue.own || !!(w.confirmed || (w.fromContext && cue.text === w.context) || (w.trusted && oneChecked(w)));
+
+  /** "7 letters" — or "4 + 3 letters" for a phrase — so the blank is never a blind guess. */
+  function letterCount(w) {
+    const parts = VS.spellingOf(w).split(/\s+/).filter(Boolean).map((p) => p.replace(/[^A-Za-z]/g, "").length);
+    return parts.length > 1 ? parts.join(" + ") + " letters" : parts[0] + " letters";
+  }
 
   function gapText(w) {
     const hit = VS.findIn(w, s.cues[s.index].text);
@@ -94,13 +95,15 @@
         <div class="row recall-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>
           ${w.tags.length ? html`<span class="hint recall-from">#${w.tags.join(" #")}</span>` : ""}</div>
         ${gap
-          ? html`<p class="q-label">${cue.own ? html`${icon(cue.own === "Your sentence" ? "pen" : "bulb", "icon-sm")} ${cue.own} — which word fits?` : "Which word fits the sentence?"}</p>
+          ? html`<p class="q-label">${cue.own ? html`${icon(cue.own === "Your sentence" ? "pen" : "bulb", "icon-sm")} ${cue.own} — which word fits?` : "Which word fits the sentence?"}
+                   <span class="recall-len">${letterCount(w)}</span></p>
                  <p class="recall-gap">${gapText(w)}</p>
-                 ${arabicFits(w, cue) && (s.hints || s.revealed)
-                   // The sentence is the cue; the Arabic would hand over the answer. It comes with the first hint.
-                   ? html`<p class="recall-ar recall-ar-sm" lang="ar">${w.arabic}</p>` : ""}`
-          : html`<p class="recall-ar" lang="ar">${w.arabic}</p>
-                 ${w.definition ? html`<p class="recall-def">${w.definition}</p>` : ""}`}
+                 ${w.definition ? html`<p class="recall-clue"><span>Meaning</span>${w.definition}</p>` : ""}`
+          : cue.style === "meaning"
+            ? html`<p class="q-label">Which English word means… <span class="recall-len">${letterCount(w)}</span></p>
+                 <p class="recall-def recall-def-q">${w.definition}</p>`
+            : html`<p class="q-label">Which English word means… <span class="recall-len">${letterCount(w)}</span></p>
+                 <p class="recall-ar" lang="ar">${w.arabic}</p>`}
         ${w.sense ? html`<p class="hint">Sense: ${w.sense}</p>` : ""}
         ${hintMarkup(w)}
 

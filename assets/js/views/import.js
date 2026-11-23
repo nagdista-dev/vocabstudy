@@ -220,7 +220,8 @@
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">2</span>
           <div class="ai-step-copy"><b>Copy the prompt</b><span>Paste it into ChatGPT, Claude or Gemini.</span></div>
-          <button class="btn btn-tonal ai-copy-btn" type="button" data-action="add-ai-copy">${icon("text", "icon-sm")}<span>Copy</span></button>
+          <button class="btn btn-tonal ai-copy-btn ${aiWords().length ? "is-ready" : ""}" type="button" data-action="add-ai-copy"
+            ${aiWords().length ? "" : VS.raw('disabled title="Type a word first"')}>${icon("text", "icon-sm")}<span>Copy</span></button>
         </div>
 
         <div class="ai-step">
@@ -615,7 +616,21 @@
       });
       // With AI: words typed, answer pasted, cards edited — all kept in st.ai.
       const words = VS.$("[data-ai-words]", root);
-      if (words) words.addEventListener("input", () => { st.ai.words = words.value; });
+      // The Copy button waits for a word, then wakes up — once, so the eye goes to step 2.
+      const copyBtn = VS.$(".ai-add .ai-copy-btn", root);
+      if (words) words.addEventListener("input", () => {
+        st.ai.words = words.value;
+        if (!copyBtn) return;
+        const ready = aiWords().length > 0;
+        if (ready && copyBtn.disabled) {
+          copyBtn.disabled = false; copyBtn.removeAttribute("title");
+          copyBtn.classList.add("is-ready", "just-ready");
+          setTimeout(() => copyBtn.classList.remove("just-ready"), 1000);
+        } else if (!ready && !copyBtn.disabled) {
+          copyBtn.disabled = true; copyBtn.title = "Type a word first";
+          copyBtn.classList.remove("is-ready", "just-ready");
+        }
+      });
       const aiBox = VS.$("[data-ai-add]", root);
       const review = VS.$("#aiReview", root);
       const readAnswer = () => {

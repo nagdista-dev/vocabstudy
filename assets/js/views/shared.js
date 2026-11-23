@@ -76,7 +76,7 @@
       w.context ? "I met it in this sentence: “" + w.context + "” — use THAT meaning." : "",
       w.arabic ? "My current Arabic meaning is: " + w.arabic + " (fix it if it's wrong)." : "",
       "",
-      "Reply with exactly these lines and nothing else:",
+      "Reply with ONE markdown code block (```markdown … ```) so I can copy it in one tap. Inside it, exactly these lines; nothing outside the block:",
       "word: <the base form>",
       "arabic: <short Arabic meaning; Egyptian Arabic is welcome; several meanings separated by \" - \">",
       "definition: <one simple English definition, learner-dictionary style>",
@@ -94,7 +94,8 @@
     "I'm an Arabic speaker learning English (B1–C1). For EACH of these English words, give one block:",
     words.join(", "),
     "",
-    "Each block has exactly these lines, with a blank line between blocks, and nothing else:",
+    "Put ALL the blocks inside ONE markdown code block (```markdown … ```) so I can copy it in one tap — nothing outside it.",
+    "Each block has exactly these lines, with a blank line between blocks:",
     "word: <the base form>",
     "arabic: <short Arabic meaning; Egyptian Arabic is welcome; several meanings separated by \" - \">",
     "definition: <one simple English definition, learner-dictionary style>",
@@ -179,7 +180,7 @@
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">1</span>
           <div class="ai-step-copy"><b>Copy the prompt</b><span>Paste it into your AI chat.</span></div>
-          <button class="btn btn-tonal ai-copy-btn" type="button" data-action="${action}" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""}>${icon("text", "icon-sm")}<span>Copy</span></button>
+          <button class="btn btn-tonal ai-copy-btn is-ready" type="button" data-action="${action}" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""}>${icon("text", "icon-sm")}<span>Copy</span></button>
         </div>
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">2</span>

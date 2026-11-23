@@ -325,3 +325,10 @@
 /* Learn: "Show" until the card turns, then the two answers in its place. */
 .card-bar:not(.is-flipped) .card-grade { display: none; }
 .card-bar.is-flipped .card-show { display: none; }
+
+/* Recall in English (v11.7): the sentence, then its meaning as the clue, and the
+   word's length — never a blind blank, never the Arabic. */
+.recall-len { margin-inline-start: var(--s-2); padding: 1px var(--s-2); border-radius: var(--r-pill); background: var(--surface-2); color: var(--ink-3); font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
+.recall-clue { display: grid; gap: 2px; margin: 0; padding: var(--s-3); border-radius: var(--r-md); background: var(--surface-2); color: var(--ink); font-size: var(--text-md); line-height: 1.5; }
+.recall-clue > span { font-size: var(--text-xs); font-weight: 700; letter-spacing: .02em; color: var(--ink-3); }
+.recall-def-q { font-size: var(--text-lg); font-weight: 600; color: var(--ink); line-height: 1.45; }
