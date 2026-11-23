@@ -461,3 +461,13 @@
 .word-ex-tools { padding-inline-start: calc(var(--s-3) + 3px); }   /* under the quote's text, not its rule */
 .word-example-block { gap: 2px; }
 .word-memory { margin-top: var(--s-1); }
+
+/* The example's speaker sits right after the sentence (it floated at the far
+   end of a wide card), and "Other meanings" hugs the definition. */
+.word-example { justify-content: flex-start; align-items: center; }
+.word-example blockquote { flex: 0 1 auto; }
+.word-hear { width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 50%; }
+.word-hear:hover { background: var(--surface-2); }
+.word-lead { gap: 0; }
+.word-lead .word-other { min-height: 28px; }
+@media (pointer: coarse) { .word-hear { width: 44px; height: 44px; } .word-lead .word-other { min-height: 36px; } }

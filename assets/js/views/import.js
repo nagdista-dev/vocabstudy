@@ -23,7 +23,8 @@
   const DETAILS = ["arabic", "type", "level", "tags", "context", "source", "definition", "example", "ipa", "sense"];
 
   const st = {
-    tab: "type",                  // type | text | paste | files
+    tab: "ai",                    // ai | type | text | paste | files
+    ai: { words: "", answer: "", rows: [], tags: "" },   // With AI: several words at once
     collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
@@ -157,18 +158,63 @@
   /* ── Tab 5: with AI — the word, the prompt, the answer, a review, Add ──
      Any AI chat (ChatGPT, Claude, Gemini) fills the details; the learner
      checks them in plain fields and adds the word. Nothing is added before Add. */
-  function aiTab() {
+  /** The words typed in step 1: one per line or separated by commas, no repeats. */
+  function aiWords() {
+    const seen = new Set();
+    return st.ai.words.split(/[\n,،;]+/).map((x) => x.trim()).filter((x) => {
+      const k = x.toLowerCase();
+      if (!x || seen.has(k)) return false;
+      seen.add(k); return true;
+    }).slice(0, 30);
+  }
 
+  /** Step 4: one card per word from the AI's answer — edit, untick, then add them all. */
+  function aiReview() {
+    const rows = st.ai.rows;
+    if (!rows.length) return html`<p class="hint ai-review-empty">The words appear here, ready to check, once you paste the answer.</p>`;
+    const n = rows.filter((r) => r.keep && !r.dup).length;
     return html`
-      <form class="ai-add" data-form="ai-word" autocomplete="off">
+      <ul class="ai-rows">
+        ${rows.map((r, i) => html`
+          <li class="ai-row ${r.dup ? "is-dup" : ""} ${r.keep && !r.dup ? "" : "is-off"}">
+            <label class="ai-row-head">
+              <input type="checkbox" data-ai-keep="${i}" ${r.keep && !r.dup ? VS.raw("checked") : ""} ${r.dup ? VS.raw("disabled") : ""}>
+              <b>${VS.cap(r.word)}</b>
+              <span class="ai-row-meta">${[r.type, r.level].filter(Boolean).join(" · ")}</span>
+              ${r.dup ? html`<span class="ai-row-dup">Already in your words</span>` : ""}
+            </label>
+            <div class="ai-row-fields">
+              <input dir="rtl" lang="ar" data-ai-row="${i}" data-ai-k="arabic" value="${r.arabic || ""}" placeholder="Arabic meaning" aria-label="Arabic meaning of ${r.word}">
+              <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="definition" placeholder="Definition" aria-label="Definition of ${r.word}">${r.definition || ""}</textarea>
+              <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="example" placeholder="Example sentence" aria-label="Example for ${r.word}">${r.example || ""}</textarea>
+            </div>
+          </li>`)}
+      </ul>
+      <div class="ai-add-foot">
+        <label class="form-field ai-tags"><span>Tags for all (optional)</span>
+          <input dir="auto" data-ai-tags value="${st.ai.tags}" placeholder="IELTS, work" list="tagList" autocomplete="off"></label>
+        ${VS.ui.tagList()}
+        <button class="btn btn-primary btn-lg ai-add-btn" type="button" data-action="ai-add" ${n ? "" : VS.raw("disabled")}>${icon("plus", "icon-sm")}
+          ${n === 1 ? "Add 1 word" : "Add " + n + " words"}</button>
+        <span class="hint">Nothing is added until you press Add.</span>
+      </div>`;
+  }
+
+  /* ── Tab: with AI — several words at once ─────────────────────────
+     Type the words, copy one prompt, paste the AI's answer, check each word,
+     add them all. Missing details are filled by the app's dictionaries. */
+  function aiTab() {
+    const many = aiWords().length > 1;
+    return html`
+      <div class="ai-add">
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">1</span>
-          <div class="ai-step-copy"><b>The word</b><span>The English word or phrase you want to add.</span></div>
+          <div class="ai-step-copy"><b>Your words</b><span>One word, or many — one per line or separated by commas.</span></div>
         </div>
-        <label class="field ai-add-word">
-          <span class="sr-only">English word or phrase</span>
-          <input data-form-field="word" id="aiWord" dir="auto" value="${st.form.word || ""}" placeholder="e.g. resilient"
-                 spellcheck="false" autocapitalize="off" enterkeyhint="next"/>
+        <label class="ai-add-words">
+          <span class="sr-only">English words</span>
+          <textarea id="aiWords" rows="3" dir="auto" data-ai-words spellcheck="false" autocapitalize="off"
+            placeholder="resilient, deadline, take off">${st.ai.words}</textarea>
         </label>
 
         <div class="ai-step">
@@ -179,33 +225,20 @@
 
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">3</span>
-          <div class="ai-step-copy"><b>Paste its answer</b><span>The details below fill in by themselves.</span></div>
+          <div class="ai-step-copy"><b>Paste its answer</b><span>${many ? "All the words at once." : "The details fill in by themselves."}</span></div>
         </div>
         <div class="ai-fill">
           <textarea class="ai-fill-input" rows="4" dir="auto" data-ai-add aria-label="The AI's answer"
-            placeholder="arabic: …&#10;definition: …&#10;example: …"></textarea>
+            placeholder="word: …&#10;arabic: …&#10;definition: …">${st.ai.answer}</textarea>
           <p class="ai-fill-status" aria-live="polite" hidden></p>
         </div>
 
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">4</span>
-          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything you like first.</span></div>
+          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything, or untick a word to skip it.</span></div>
         </div>
-        <div class="word-form ai-review">
-          ${field("arabic", "Arabic meaning", { ar: true, placeholder: "مثلاً: مرن - بيقاوم" })}
-          ${field("type", "Type", { options: VS.importer.TYPES, empty: "—" })}
-          ${field("definition", "Definition (English)", { wide: true, long: true })}
-          ${field("example", "Example sentence", { wide: true, long: true })}
-          ${field("level", "Level (CEFR)", { options: VS.importer.LEVELS, empty: "—" })}
-          ${field("ipa", "Pronunciation (IPA)", { placeholder: "/rɪˈzɪliənt/" })}
-          ${field("tags", "Tags", { placeholder: "IELTS, work", list: "tagList", wide: true })}
-        </div>
-        ${VS.ui.tagList()}
-        <div class="ai-add-foot">
-          <button class="btn btn-primary btn-lg" type="submit">${icon("plus", "icon-sm")} Add word</button>
-          <span class="hint">Nothing is added until you press Add word.</span>
-        </div>
-      </form>`;
+        <div class="ai-review" id="aiReview">${aiReview()}</div>
+      </div>`;
   }
 
   /* The newest words, so this screen shows your shelf even in a fresh
@@ -516,7 +549,7 @@
     return files;
   }
 
-  const TABS = [["type", "Type a word", "Type"], ["ai", "With AI", "AI"], ["text", "From text", "Text"], ["paste", "Paste a list", "List"], ["files", "Upload files", "File"]];
+  const TABS = [["ai", "With AI", "AI"], ["type", "Type a word", "Type"], ["text", "From text", "Text"], ["paste", "Paste a list", "List"], ["files", "Upload files", "File"]];
 
   VS.views.import = {
     title: () => "Add words",
@@ -580,27 +613,41 @@
           if (el.dataset.formField === "word") VS.spelling.cancel();
         });
       });
-      // Fill it in with AI: the pasted answer fills the details (nothing is added until Add).
+      // With AI: words typed, answer pasted, cards edited — all kept in st.ai.
+      const words = VS.$("[data-ai-words]", root);
+      if (words) words.addEventListener("input", () => { st.ai.words = words.value; });
       const aiBox = VS.$("[data-ai-add]", root);
-      if (aiBox) aiBox.addEventListener("input", () => {
-        const found = VS.parseAiWord(aiBox.value);
-        const filled = [];
-        Object.keys(found).forEach((k) => {
-          if (k === "word" && (st.form.word || "").trim()) return;     // the word they typed wins
-          const el = VS.$('[data-form-field="' + k + '"]', root);
-          if (!el) return;
-          el.value = found[k];
-          st.form[k] = found[k];
-          el.classList.add("is-filled");
-          filled.push(k === "synonyms" ? "similar words" : k);
+      const review = VS.$("#aiReview", root);
+      const readAnswer = () => {
+        st.ai.answer = aiBox.value;
+        const typed = aiWords();
+        let rows = VS.parseAiWords(aiBox.value);
+        // One typed word and an answer without a "word:" line: it's that word.
+        if (rows.length === 1 && !rows[0].word && typed.length === 1) rows[0].word = typed[0];
+        rows = rows.filter((r) => r.word && !VS.isArabicTyping(r.word));
+        st.ai.rows = rows.map((r) => Object.assign({ keep: true, dup: !!VS.byId[VS.wordKey(r.word, "")] }, r));
+        if (review) review.innerHTML = String(aiReview());
+        const fine = st.ai.rows.filter((r) => !r.dup);
+        VS.aiFillStatus(aiBox.closest(".ai-fill"), fine.map((r) => r.word), !!aiBox.value.trim());
+        const status = aiBox.closest(".ai-fill").querySelector(".ai-fill-status");
+        if (status && fine.length) status.innerHTML = String(html`${icon("check", "icon-sm")}<span><b>${VS.plural(fine.length, "word")} ready</b> — check them below.</span>`);
+      };
+      if (aiBox) aiBox.addEventListener("input", readAnswer);
+      if (review) {
+        review.addEventListener("input", (e) => {
+          const i = e.target.dataset.aiRow;
+          if (i != null) st.ai.rows[Number(i)][e.target.dataset.aiK] = e.target.value;
+          if (e.target.matches("[data-ai-tags]")) st.ai.tags = e.target.value;
         });
-        if (filled.length) { const more = VS.$(".add-more", root); if (more) more.open = true; st.openDetails = true; }
-        VS.aiFillStatus(aiBox.closest(".ai-fill"), filled, !!aiBox.value.trim());
-      });
+        review.addEventListener("change", (e) => {
+          const i = e.target.dataset.aiKeep;
+          if (i == null) return;
+          st.ai.rows[Number(i)].keep = e.target.checked;
+          review.innerHTML = String(aiReview());
+        });
+      }
       VS.ui.watchKeyboard(VS.$("#addWord", root), { lookup: true });
       VS.ui.watchDuplicate(VS.$("#addWord", root), VS.$("#addWord", root) && VS.$("#addWord", root).closest(".add-line"));
-      const aiForm = VS.$("[data-form='ai-word']", root);
-      if (aiForm) aiForm.addEventListener("submit", (e) => { e.preventDefault(); VS.views.import.actions["ai-add"](); });
       const form = VS.$("[data-form='one-word']", root);
       if (form) form.addEventListener("submit", (e) => { e.preventDefault(); VS.views.import.actions["form-add"](); });
       const first = VS.$("#addWord", root);
@@ -609,9 +656,10 @@
 
     actions: {
       async "add-ai-copy"(el) {
-        const word = (st.form.word || "").trim();
-        if (!word) { VS.toast("Type the word first."); const f = VS.$("#aiWord") || VS.$("#addWord"); if (f) f.focus(); return; }
-        const text = VS.aiPrompt({ word, sense: st.form.sense || "", context: st.form.context || "", arabic: st.form.arabic || "" });
+        const words = aiWords();
+        if (!words.length) { VS.toast("Type your words first."); const f = VS.$("#aiWords"); if (f) f.focus(); return; }
+        if (words.some((w) => VS.isArabicTyping(w))) { VS.toast("Type the English words — the AI adds the Arabic."); return; }
+        const text = words.length === 1 ? VS.aiPrompt({ word: words[0] }) : VS.aiPromptMany(words);
         try { await navigator.clipboard.writeText(text); VS.aiCopied(el); }
         catch (e) {
           const box = VS.$("[data-ai-add]");
@@ -621,16 +669,19 @@
       },
       "import-tab"(el) { st.tab = el.dataset.value; st.saved = ""; VS.app.render(); },
       "ai-add"() {
-        const word = (st.form.word || "").trim();
-        if (!word) { VS.toast("Type the word first."); const f = VS.$("#aiWord"); if (f) f.focus(); return; }
-        if (VS.isArabicTyping(word)) { VS.toast("Type the English word — the Arabic goes in the meaning."); return; }
-        if (!VS.addWordReady(word, st.form.sense)) return;
-        const added = VS.addWord(Object.assign({}, st.form, { word }));
-        if (!added) return;
-        VS.toast("Added “" + VS.cap(added.word) + "”.");
-        st.form = st.form.tags ? { tags: st.form.tags } : {};
+        const tags = VS.parseTags(st.ai.tags);
+        const words = st.ai.rows.filter((r) => r.keep && !r.dup).map((r) => {
+          const w = { word: r.word, tags: tags.slice() };
+          ["arabic", "definition", "example", "type", "level", "ipa"].forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
+          if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
+          return w;
+        });
+        if (!words.length) return;
+        const r = save(words);
+        VS.sfx.play("pop");
+        VS.toast(r.added.length === 1 ? "Added “" + VS.cap(r.added[0].word) + "”." : "Added " + r.added.length + " words.");
+        st.ai = { words: "", answer: "", rows: [], tags: st.ai.tags };
         VS.app.render();
-        const f = VS.$("#aiWord"); if (f) f.focus();
       },
 
       "collect-tok"(el) {

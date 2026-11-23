@@ -89,6 +89,44 @@
     return lines.filter((l, i) => l || i === 3).join("\n");
   }
   VS.aiPrompt = aiPrompt;
+  /** One prompt for several new words: one block per word, a blank line between. */
+  VS.aiPromptMany = (words) => [
+    "I'm an Arabic speaker learning English (B1–C1). For EACH of these English words, give one block:",
+    words.join(", "),
+    "",
+    "Each block has exactly these lines, with a blank line between blocks, and nothing else:",
+    "word: <the base form>",
+    "arabic: <short Arabic meaning; Egyptian Arabic is welcome; several meanings separated by \" - \">",
+    "definition: <one simple English definition, learner-dictionary style>",
+    "example: <one natural example sentence, 14 words or fewer, that uses the word>",
+    "type: <Noun, Verb, Adjective, Adverb, Phrase, Phrasal Verb or Idiom>",
+    "level: <A1, A2, B1, B2, C1 or C2>",
+    "ipa: </IPA/>",
+  ].join("\n");
+  /**
+   * The AI's answer for several words → [{ word, arabic, … }].
+   * Reads a JSON array, or "key: value" blocks (a new "word:" line starts a new block).
+   */
+  VS.parseAiWords = function (text) {
+    const t = String(text || "").replace(/```[a-z]*\n?/gi, "").trim();
+    if (!t) return [];
+    const a = t.indexOf("["), b = t.lastIndexOf("]");
+    if (a >= 0 && b > a) {
+      try {
+        const arr = JSON.parse(t.slice(a, b + 1));
+        if (Array.isArray(arr)) return arr.map((o) => VS.parseAiWord(JSON.stringify(o))).filter((o) => o.word);
+      } catch (e) { /* not JSON: read the lines */ }
+    }
+    const blocks = [];
+    let cur = [];
+    const isWordLine = (line) => /^\s*[-*•]?\s*\**\s*(word|headword)\s*\**\s*[:：]/i.test(line);
+    t.split(/\r?\n/).forEach((line) => {
+      if (isWordLine(line) && cur.some(isWordLine)) { blocks.push(cur); cur = []; }
+      cur.push(line);
+    });
+    blocks.push(cur);
+    return blocks.map((lines) => VS.parseAiWord(lines.join("\n"))).filter((o) => o.word || o.arabic || o.definition);
+  };
   const AI_KEYS = {
     word: "word", headword: "word", arabic: "arabic", "arabic meaning": "arabic", meaning: "arabic", "المعنى": "arabic", "عربي": "arabic",
     definition: "definition", "english definition": "definition", example: "example", "example sentence": "example",
