@@ -720,13 +720,15 @@ kbd {
 .more-ex { display: grid; gap: var(--s-1); }
 .more-ex-list:empty { display: none; }
 .more-ex-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+/* Each sentence with its speaker right after it — the same as the main example,
+   never pushed to the far edge of a wide card. */
 .more-ex-items li {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start;
-  gap: var(--s-3); font-style: italic; color: var(--ink-2); line-height: 1.6;
+  display: flex; align-items: center; justify-content: flex-start;
+  gap: var(--s-2); font-style: italic; color: var(--ink-2); line-height: 1.6;
 }
-.more-ex-text { min-width: 0; overflow-wrap: anywhere; }
+.more-ex-text { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .more-ex-items .speak-btn {
-  width: 30px; height: 30px; margin-top: 1px;
+  flex: none; width: 36px; height: 36px; min-width: 36px; border-radius: 50%;
   background: transparent; color: var(--ink-3);
 }
 .more-ex-items .speak-btn:hover { background: var(--brand-soft); color: var(--brand); }
