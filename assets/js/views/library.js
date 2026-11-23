@@ -488,7 +488,6 @@
         const wasEmpty = !VS.allWords().length;
         const w = VS.addWord({ word });
         if (!w) return;
-        VS.toast(`“${w.word}” is in your library.`);
         VS.app.render();
         // On the first word, let the screen settle on today's plan instead
         // of reopening the keyboard over it: the app restores focus to the

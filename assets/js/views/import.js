@@ -76,6 +76,7 @@
     const ids = result.added.map((w) => w.id);
     st.recent = ids.slice().reverse().concat(st.recent.filter((id) => !ids.includes(id))).slice(0, 12);
     VS.autofill.fill(ids);
+    VS.celebrateAdded(result.added);
     return result;
   }
 
@@ -312,7 +313,7 @@
           ${words.slice(0, 6).map((w) => {
             const waiting = VS.autofill.pending(w.id);
             const s = VS.store.status(w.id);
-            return html`<li>
+            return html`<li class="${VS.justAdded.has(w.id) ? "just-added" : ""}">
               <a class="recent-row ${w.word.length > 14 ? "is-long" : ""}" href="#/words?q=${encodeURIComponent(w.word)}">
                 <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b>${VS.cap(w.word)}</b></span>
                 <span class="recent-ar" lang="ar">${w.arabic || (waiting ? "…" : "—")}</span>
@@ -790,7 +791,6 @@
         if (!words.length) return;
         const r = save(words);
         VS.sfx.play("pop");
-        VS.toast(r.added.length === 1 ? "Added “" + VS.cap(r.added[0].word) + "”." : "Added " + r.added.length + " words.");
         st.ai = { words: "", answer: "", rows: [], tags: st.ai.tags };
         VS.app.render();
       },

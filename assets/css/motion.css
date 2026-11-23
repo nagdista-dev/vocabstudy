@@ -158,3 +158,44 @@
 @media print {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── The moment a word is added (VS.celebrateAdded) ─────────────────
+   A small card drops in under the bar: a green check draws itself, the word
+   wears the highlighter, one line says what's next. New rows glow once. */
+.added-pop {
+  position: fixed; z-index: var(--z-toast); left: 50%; top: calc(var(--bar-h) + env(safe-area-inset-top) + var(--s-3));
+  display: flex; align-items: center; gap: var(--s-3); width: max-content; max-width: calc(100vw - 32px);
+  padding: var(--s-3) var(--s-4) var(--s-3) var(--s-3); border-radius: var(--r-lg);
+  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2);
+  opacity: 0; transform: translate(-50%, -12px) scale(.96); pointer-events: none;
+  transition: opacity var(--base) var(--ease), transform var(--base) var(--ease);
+}
+.added-pop.is-on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.added-check { flex: none; width: 36px; height: 36px; }
+.added-check circle { fill: var(--good-soft); stroke: var(--good); stroke-width: 2; stroke-dasharray: 101; stroke-dashoffset: 101; }
+.added-check path { fill: none; stroke: var(--good); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; }
+.added-pop.is-on .added-check circle { animation: added-draw 420ms var(--ease) 80ms forwards; }
+.added-pop.is-on .added-check path { animation: added-draw 320ms var(--ease) 380ms forwards; }
+@keyframes added-draw { to { stroke-dashoffset: 0; } }
+.added-copy { display: grid; gap: 1px; min-width: 0; }
+.added-copy b { font-size: var(--text-md); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.added-copy small { font-size: var(--text-xs); color: var(--ink-3); }
+.added-word {
+  background: linear-gradient(transparent 55%, var(--mark) 55%, var(--mark) 92%, transparent 92%) no-repeat;
+  background-size: 0% 100%; padding: 0 .08em;
+}
+.added-pop.is-on .added-word { animation: added-mark 520ms var(--ease) 520ms forwards; }
+@keyframes added-mark { to { background-size: 100% 100%; } }
+/* A row that just arrived: slides in and glows with the highlighter, then settles. */
+.just-added { animation: added-row 1800ms var(--ease) both; }
+@keyframes added-row {
+  0% { opacity: 0; transform: translateY(-6px); background-color: var(--mark-soft); }
+  18% { opacity: 1; transform: none; background-color: var(--mark-soft); }
+  100% { background-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .added-pop, .added-pop.is-on { transition: none; }
+  .added-check circle, .added-check path { stroke-dashoffset: 0; animation: none !important; }
+  .added-word { background-size: 100% 100%; animation: none !important; }
+  .just-added { animation: none; background-color: var(--mark-soft); }
+}

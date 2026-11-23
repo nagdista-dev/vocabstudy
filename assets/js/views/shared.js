@@ -229,6 +229,44 @@
     btn._t = setTimeout(() => { btn.classList.remove("is-done"); if (label) label.textContent = "Copy"; }, 2200);
   };
 
+  /**
+   * The moment a word joins the library (every way of adding ends in
+   * views/import.js save()): a small card with a check that draws itself, the
+   * word, and what happens next — and the new rows glow with the highlighter
+   * for a moment. Quiet for reduced motion; replaces the plain "Added" toast.
+   */
+  VS.justAdded = new Set();
+  let addedTimer = null;
+  VS.celebrateAdded = (words) => {
+    if (!words || !words.length) return;
+    words.forEach((w) => VS.justAdded.add(w.id));
+    setTimeout(() => words.forEach((w) => VS.justAdded.delete(w.id)), 2600);
+    const one = words.length === 1;
+    const filling = words.some((w) => !w.arabic);        // the meaning itself still on its way
+    let pop = document.getElementById("addedPop");
+    if (!pop) {
+      pop = document.createElement("div");
+      pop.id = "addedPop";
+      pop.className = "added-pop";
+      pop.setAttribute("role", "status");
+      document.body.appendChild(pop);
+    }
+    pop.innerHTML = String(html`
+      <svg class="added-check" viewBox="0 0 36 36" aria-hidden="true">
+        <circle cx="18" cy="18" r="16"/><path d="M11 18.5l5 5 9-10"/>
+      </svg>
+      <span class="added-copy">
+        <b>${one ? html`Added <span class="added-word">${VS.cap(words[0].word)}</span>` : "Added " + words.length + " words"}</b>
+        <small>${filling ? (one ? "Its meaning is filling in — then it's ready in Learn." : "Their meanings are filling in — then they're ready in Learn.")
+          : one ? "It's waiting for you in Learn." : "They're waiting for you in Learn."}</small>
+      </span>`);
+    pop.classList.remove("is-on");
+    void pop.offsetWidth;                        // restart the animation for a second add in a row
+    pop.classList.add("is-on");
+    clearTimeout(addedTimer);
+    addedTimer = setTimeout(() => pop.classList.remove("is-on"), 2400);
+  };
+
   VS.actions["ai-copy"] = async (el) => {
     const w = VS.byId[el.dataset.id];
     if (!w) return;
@@ -833,7 +871,7 @@
       const s = VS.store.status(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
       return html`
-        <details class="word-row ${w.word.length > 14 ? "is-long" : ""}" data-status="${s}" data-id="${w.id}">
+        <details class="word-row ${w.word.length > 14 ? "is-long" : ""} ${VS.justAdded.has(w.id) ? "just-added" : ""}" data-status="${s}" data-id="${w.id}">
           <summary>
             <span class="word-row-word">
               <i class="word-row-dot" aria-hidden="true"></i>
