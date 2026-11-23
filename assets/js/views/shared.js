@@ -90,20 +90,40 @@
   }
   VS.aiPrompt = aiPrompt;
   /** One prompt for several new words: one block per word, a blank line between. */
-  VS.aiPromptMany = (words) => [
-    "I'm an Arabic speaker learning English (B1–C1). For EACH of these English words, give one block:",
-    words.join(", "),
+  /* Every multi-word prompt asks for the same blocks, in one copyable markdown block. */
+  const aiBlocks = (withContext) => [
     "",
     "Put ALL the blocks inside ONE markdown code block (```markdown … ```) so I can copy it in one tap — nothing outside it.",
     "Each block has exactly these lines, with a blank line between blocks:",
-    "word: <the base form>",
+    "word: <the English base form>",
     "arabic: <short Arabic meaning; Egyptian Arabic is welcome; several meanings separated by \" - \">",
     "definition: <one simple English definition, learner-dictionary style>",
     "example: <one natural example sentence, 14 words or fewer, that uses the word>",
+    ...(withContext ? ["context: <the exact sentence from my text where the word appears>"] : []),
     "type: <Noun, Verb, Adjective, Adverb, Phrase, Phrasal Verb or Idiom>",
     "level: <A1, A2, B1, B2, C1 or C2>",
     "ipa: </IPA/>",
-  ].join("\n");
+  ];
+  const ME = "I'm an Arabic speaker learning English (B1–C1).";
+  /** Several words I already know I want. */
+  VS.aiPromptMany = (words) => [ME + " For EACH of these English words, give one block:", words.join(", "), ...aiBlocks(false)].join("\n");
+  /** The most useful words about a topic, at a level. */
+  VS.aiPromptTopic = (topic, n, level) => [
+    ME + " Choose the " + n + " most useful English words and phrases about “" + topic + "” for a " + level + " learner.",
+    "Pick words people really use in that situation; skip very basic words I surely know. One block per word:",
+    ...aiBlocks(false)].join("\n");
+  /** The words worth learning in a text — or in a photo the learner attaches in the AI chat. */
+  VS.aiPromptText = (text, n) => [
+    ME + " From " + (text ? "the text below" : "the photo or screenshot I'm attaching") + ", pick up to " + n + " words or phrases worth learning.",
+    "Skip easy everyday words. One block per word:",
+    ...aiBlocks(true),
+    ...(text ? ["", "TEXT:", text] : [])].join("\n");
+  /** Arabic I know → the natural English for it. */
+  VS.aiPromptArabic = (arabic) => [
+    ME + " For EACH Arabic word or phrase below, give the most natural English word or phrase with that meaning, as one block.",
+    "Keep my Arabic in the “arabic” line (you may add a closer meaning after \" - \").",
+    arabic.join("\n"),
+    ...aiBlocks(false)].join("\n");
   /**
    * The AI's answer for several words → [{ word, arabic, … }].
    * Reads a JSON array, or "key: value" blocks (a new "word:" line starts a new block).
@@ -133,6 +153,7 @@
     definition: "definition", "english definition": "definition", example: "example", "example sentence": "example",
     type: "type", "part of speech": "type", pos: "type", level: "level", cefr: "level", "cefr level": "level",
     ipa: "ipa", pronunciation: "ipa", synonyms: "synonyms", "similar words": "synonyms", similar: "synonyms",
+    context: "context", sentence: "context", "where i met it": "context",
   };
   /** The AI's answer → { field: value } (only fields that look right). */
   VS.parseAiWord = function (text) {
@@ -158,6 +179,7 @@
       if (k === "type") { const hit = VS.importer.TYPES.find((x) => x.toLowerCase() === v.toLowerCase()); if (!hit) return; v = hit; }
       if (k === "ipa") v = "/" + v.replace(/^\/+|\/+$/g, "") + "/";
       if (k === "example" && v.split(/\s+/).length > 22) return;
+      if (k === "context") v = v.slice(0, 300);
       if (k === "synonyms") v = VS.parseTags(v).slice(0, 6).join(", ");
       out[k] = v.slice(0, 400);
     });

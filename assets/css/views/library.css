@@ -471,3 +471,8 @@
 .word-lead { gap: 0; }
 .word-lead .word-other { min-height: 28px; }
 @media (pointer: coarse) { .word-hear { width: 44px; height: 44px; } .word-lead .word-other { min-height: 36px; } }
+
+/* Edit word: with "Fill it in with AI" open, the fields step aside — the AI box,
+   then Save / Cancel. Close the panel to see (and change) every field. */
+.word-edit:has(.ai-fill[open]) > .form-field,
+.word-edit:has(.ai-fill[open]) > .sense-pick { display: none; }
