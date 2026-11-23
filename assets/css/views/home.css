@@ -440,7 +440,7 @@
 .lib-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-top: var(--s-6); }
 .lib-head h2 { font-size: 1.4rem; line-height: 1.2; letter-spacing: -.015em; }
 /* Your words, its own page (#/words): the page title, then the tools. */
-.words-page .lib-head { margin-top: 0; flex-wrap: wrap; align-items: center; }
+.words-page .lib-head { margin-top: 0; margin-bottom: var(--s-5); flex-wrap: wrap; align-items: center; }   /* room before the search box */
 .words-title { display: grid; gap: 2px; min-width: 0; }
 .words-print { flex: none; }
 .words-page .lib-head h1 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.15; letter-spacing: -.02em; }
