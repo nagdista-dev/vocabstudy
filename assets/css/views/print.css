@@ -214,7 +214,7 @@
 
 @media print {
   body { background: #fff; }
-  .app-bar, .no-print, .toast, .added-pop, .break-card, .confetti, .skip-link { display: none !important; }
+  .app-bar, .tab-bar, .update-bar, .no-print, .toast, .added-pop, .break-card, .confetti, .skip-link { display: none !important; }
   .print-page { display: block; padding: 0; max-width: none; }
   .print-preview { height: auto !important; overflow: visible; }
   .print-doc {
