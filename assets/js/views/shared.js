@@ -109,8 +109,10 @@
   VS.aiPromptMany = (words) => [ME + " For EACH of these English words, give one block:", words.join(", "), ...aiBlocks(false)].join("\n");
   /** The most useful words about a topic, at a level. */
   VS.aiPromptTopic = (topic, n, level) => [
-    ME + " Choose the " + n + " most useful English words and phrases about “" + topic + "” for a " + level + " learner.",
-    "Pick words people really use in that situation; skip very basic words I surely know. One block per word:",
+    "I'm an Arabic speaker learning English. Choose the " + n + " most useful English words and phrases about “" + topic + "” for a " + level + " learner.",
+    /^A/.test(level)
+      ? "Pick simple, everyday words people really use in that situation. One block per word:"
+      : "Pick words people really use in that situation; skip very basic words I surely know. One block per word:",
     ...aiBlocks(false)].join("\n");
   /** Arabic I know → the natural English for it. */
   VS.aiPromptArabic = (arabic) => [

@@ -226,7 +226,7 @@
         <label class="ai-in ai-in-wide"><span class="sr-only">Topic</span>
           <input dir="auto" data-ai-in="topic" value="${st.ai.topic}" placeholder="a job interview, travel, football, السفر…" autocomplete="off"></label>
         <label class="ai-in"><span>How many</span>${aiSelect("count", [5, 10, 15, 20], st.ai.count)}</label>
-        <label class="ai-in"><span>Level</span>${aiSelect("level", ["B1", "B2", "C1"], st.ai.level)}</label>
+        <label class="ai-in"><span>Level</span>${aiSelect("level", ["A1", "A2", "B1", "B2", "C1", "C2"], st.ai.level)}</label>
       </div>`;
     if (m === "arabic") return html`
       <label class="ai-add-words"><span class="sr-only">Arabic words</span>
@@ -297,10 +297,17 @@
           <li><span class="import-next-when">Then</span><p>3 days, 1 week, 2 weeks. Each return makes it harder to forget.</p></li>
         </ol>
       </section>`;
+    // A side column on a computer (always open); on a phone one folded line that
+    // opens on a tap — the add form keeps the screen.
+    const open = st.recentOpen || matchMedia("(min-width: 600px)").matches;
     return html`
-      <section class="card import-step import-side" id="recentBox" aria-labelledby="recent-title">
-        <div class="section-title recent-head"><h2 id="recent-title">${st.recent.length ? "Just added" : "Newest words"}</h2>
-          <a class="recent-all" href="#/words">All words ${icon("arrow-right", "icon-sm")}</a></div>
+      <section class="card import-step import-side recent-card" id="recentBox" aria-labelledby="recent-title">
+        <details class="recent-fold" ${open ? VS.raw("open") : ""}>
+        <summary class="section-title recent-head">
+          <h2 id="recent-title">${st.recent.length ? "Just added" : "Newest words"}</h2>
+          <span class="recent-count">${VS.plural(VS.allWords().length, "word")}</span>
+          ${icon("chevron-right", "icon-sm recent-chev")}
+        </summary>
         <ul class="recent-list" aria-live="polite">
           ${words.slice(0, 6).map((w) => {
             const waiting = VS.autofill.pending(w.id);
@@ -314,9 +321,17 @@
             </li>`;
           })}
         </ul>
-        ${VS.newLeftToday() && VS.store.newWords().length ? html`<a class="btn btn-tonal recent-learn" href="#/new/cards">${icon("cards", "icon-sm")} Learn the new ones</a>` : ""}
+        <div class="recent-foot">
+          ${VS.newLeftToday() && VS.store.newWords().length ? html`<a class="btn btn-tonal recent-learn" href="#/new/cards">${icon("cards", "icon-sm")} Learn the new ones</a>` : ""}
+          <a class="recent-all" href="#/words">All words ${icon("arrow-right", "icon-sm")}</a>
+        </div>
+        </details>
       </section>`;
   }
+
+  document.addEventListener("toggle", (e) => {
+    if (e.target.classList && e.target.classList.contains("recent-fold") && !matchMedia("(min-width: 600px)").matches) st.recentOpen = e.target.open;
+  }, true);
 
   /* ── Tab 2: from text — tap the words you don't know ───────────── */
 
@@ -873,7 +888,7 @@
   // Only the list is redrawn, so typing the next word isn't interrupted.
   VS.autofill.onFill((id, oldId) => {
     if (oldId && oldId !== id) st.recent = st.recent.map((r) => (r === oldId ? id : r));
-    const box = VS.app.current() === "import" && st.tab === "type" && VS.$("#recentBox");
+    const box = VS.app.current() === "import" && (st.tab === "type" || isAiTab(st.tab)) && VS.$("#recentBox");
     if (box) box.outerHTML = String(recent());
   });
 })();
