@@ -845,6 +845,12 @@ P0 (T39→T42) ← P1 (T43→T45) ← P2 (T46→T49) ← P3 ← P4 ← P5. P0 ل
 - **Add word → Fill it in with AI:** اكتب الكلمة ← Copy the prompt ← الصق رد الـ AI ← الحقول تتملا و
   "More details" تتفتح ← Add. نفس الـ prompt والقارئ بتوع شاشة التعديل (`VS.aiPrompt` و`VS.parseAiWord`).
 
+### v11.5 — "With AI" تاب لوحده في Add words
+- صاحب التطبيق مش عايز الـ AI مخلوط مع "Type a word": بقى تاب خامس **With AI** (Type · AI · Text · List · File).
+- 4 خطوات مرقّمة في عمود واحد: ① الكلمة ② Copy the prompt (الزرار يبقى "Copied") ③ الصق رد الـ AI (سطر أخضر
+  بعدد الحقول اللي اتملت) ④ راجع الحقول (عربي، نوع، تعريف، مثال، مستوى، نطق، tags) ← **Add word**.
+- "Type a word" رجع بسيط: الكلمة و"More details" بس. شاشة تعديل الكلمة لسه فيها "Fill it in with AI" (VS.aiFill).
+
 ### معيار القبول (نفس التجربة دي تتعاد)
 بذاكرة فاضية على 375px: `recieve` ← يقترح receive؛ `take off` ← يسأل عن المعنى، والعربي
 والتعريف من نفس المعنى؛ `تحدي` ← يقترح challenge؛ جملة "Yesterday the plane take off" ← تتعلّم

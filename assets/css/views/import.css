@@ -14,7 +14,7 @@
 .import-tabs .tab-short { display: none; }
 /* Phones: all three ways stay visible — equal columns, short one-line labels. */
 @media (max-width: 599px) {
-  .import-tabs { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .import-tabs { width: 100%; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .import-tabs button { white-space: nowrap; padding: 4px 6px; text-align: center; }
   .import-tabs .tab-long { display: none; }
   .import-tabs .tab-short { display: inline; }
@@ -195,6 +195,18 @@
 .recent-state[data-s="mastered"] { color: var(--good); }
 .recent-learn { justify-self: start; margin-top: var(--s-3); }
 
-/* Add → Fill it in with AI (shares .ai-fill with the edit screen): a quiet box under the word. */
-.add-ai { margin-top: var(--s-3); }
 .add-form .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+
+/* Add → With AI: four numbered steps in one column — word, prompt, answer, review. */
+.ai-add { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
+.ai-add .ai-step { margin-top: var(--s-2); }
+.ai-add .ai-step:first-child { margin-top: 0; }
+.ai-add-word, .ai-add .ai-fill { margin-inline-start: calc(26px + var(--s-3)); }
+.ai-add .ai-fill { display: grid; gap: var(--s-2); border: 0; background: none; box-shadow: none; }
+.ai-add .ai-review { margin-inline-start: calc(26px + var(--s-3)); }
+.ai-add-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); margin-top: var(--s-2); }
+.ai-add .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+@media (max-width: 599px) {
+  .ai-add-word, .ai-add .ai-fill, .ai-add .ai-review { margin-inline-start: 0; }
+  .ai-add-foot .btn { width: 100%; }
+}
