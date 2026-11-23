@@ -98,6 +98,7 @@
     ];
     return lines.filter((l, i) => l || i === 3).join("\n");
   }
+  VS.aiPrompt = aiPrompt;
   const AI_KEYS = {
     word: "word", headword: "word", arabic: "arabic", "arabic meaning": "arabic", meaning: "arabic", "المعنى": "arabic", "عربي": "arabic",
     definition: "definition", "english definition": "definition", example: "example", "example sentence": "example",

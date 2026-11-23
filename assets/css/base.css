@@ -5,12 +5,16 @@
 * { margin: 0; }
 
 html {
+  /* The page never scrolls sideways, whatever a child does (clip, not hidden:
+     sticky bars keep working). Wide things scroll inside their own box. */
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   font-size: calc(100% * var(--text-scale, 1));   /* Settings → text size */
 }
 
 body {
+  overflow-x: clip;
   min-height: 100dvh;
   background: var(--paper);
   color: var(--ink);

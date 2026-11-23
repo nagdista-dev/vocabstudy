@@ -135,6 +135,18 @@
             ? "Press Add (or Enter). The app fills in the Arabic meaning, definition, example and pronunciation."
             : "You're offline — the word is saved now, and its meaning is filled in when you're back online.")
           : html`Auto-fill is off (Settings), so nothing leaves this device. Add the details below.`}</p>
+        <details class="ai-fill add-ai">
+          <summary>${icon("bolt", "icon-sm")}<span>Fill it in with AI</span><span class="hint">ChatGPT, Claude, Gemini…</span></summary>
+          <ol class="ai-fill-steps">
+            <li><span class="hint">Type the word above, then</span>
+              <button class="btn btn-tonal" type="button" data-action="add-ai-copy">${icon("text", "icon-sm")} Copy the prompt</button>
+              <span class="hint">and paste it into your AI chat.</span></li>
+            <li><label class="ai-fill-paste"><span>Paste its answer here — the details below fill in.</span>
+              <textarea rows="3" dir="auto" data-ai-add placeholder="arabic: …&#10;definition: …&#10;example: …"></textarea></label></li>
+            <li><span class="hint">Check them, then press <b>Add</b>.</span></li>
+          </ol>
+          <p class="ai-fill-status" aria-live="polite"></p>
+        </details>
         <details class="add-more" ${!auto || filled || st.openDetails ? VS.raw("open") : ""}>
           <summary>${icon("chevron-right", "icon-sm")} More details <span class="hint">(optional)</span></summary>
           <div class="word-form">
@@ -526,6 +538,25 @@
           if (el.dataset.formField === "word") VS.spelling.cancel();
         });
       });
+      // Fill it in with AI: the pasted answer fills the details (nothing is added until Add).
+      const aiBox = VS.$("[data-ai-add]", root);
+      if (aiBox) aiBox.addEventListener("input", () => {
+        const found = VS.parseAiWord(aiBox.value);
+        const filled = [];
+        Object.keys(found).forEach((k) => {
+          if (k === "word" && (st.form.word || "").trim()) return;     // the word they typed wins
+          const el = VS.$('[data-form-field="' + k + '"]', root);
+          if (!el) return;
+          el.value = found[k];
+          st.form[k] = found[k];
+          el.classList.add("is-filled");
+          filled.push(k === "synonyms" ? "similar words" : k);
+        });
+        if (filled.length) { const more = VS.$(".add-more", root); if (more) more.open = true; st.openDetails = true; }
+        const status = VS.$(".add-ai .ai-fill-status", root);
+        if (status) status.textContent = filled.length ? "Filled in: " + filled.join(", ") + ". Check them, then press Add."
+          : (aiBox.value.trim() ? "Nothing usable yet — paste the whole answer." : "");
+      });
       VS.ui.watchKeyboard(VS.$("#addWord", root), { lookup: true });
       VS.ui.watchDuplicate(VS.$("#addWord", root), VS.$("#addWord", root) && VS.$("#addWord", root).closest(".add-line"));
       const form = VS.$("[data-form='one-word']", root);
@@ -535,6 +566,17 @@
     },
 
     actions: {
+      async "add-ai-copy"() {
+        const word = (st.form.word || "").trim();
+        if (!word) { VS.toast("Type the word first."); const f = VS.$("#addWord"); if (f) f.focus(); return; }
+        const text = VS.aiPrompt({ word, sense: st.form.sense || "", context: st.form.context || "", arabic: st.form.arabic || "" });
+        try { await navigator.clipboard.writeText(text); VS.toast("Prompt copied — paste it into ChatGPT, Claude or Gemini."); }
+        catch (e) {
+          const box = VS.$("[data-ai-add]");
+          if (box) { box.value = text; box.select(); }
+          VS.toast("Copy the selected text, then replace it with the AI's answer.");
+        }
+      },
       "import-tab"(el) { st.tab = el.dataset.value; st.saved = ""; VS.app.render(); },
 
       "collect-tok"(el) {

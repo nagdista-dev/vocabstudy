@@ -194,3 +194,7 @@
 .recent-state[data-s="learning"] { color: var(--on-mark-soft); }
 .recent-state[data-s="mastered"] { color: var(--good); }
 .recent-learn { justify-self: start; margin-top: var(--s-3); }
+
+/* Add → Fill it in with AI (shares .ai-fill with the edit screen): a quiet box under the word. */
+.add-ai { margin-top: var(--s-3); }
+.add-form .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }

@@ -447,3 +447,32 @@
 .word-panel { padding: 0; border: 0; background: none; }
 .word-panel.word-related, .word-panel[data-panel="note"] { padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); }
 .word-entry .met, .word-entry .word-check { max-width: none; width: 100%; }   /* every box ends on the card's edge */
+
+/* An open word never outgrows its card, on any phone: every part may shrink,
+   long words and Arabic phrases wrap, and the button row scrolls inside itself. */
+.word-row, .word-row-body, .word-entry, .word-entry > :not(.word-secs) { min-width: 0; max-width: 100%; }
+.word-row[open] { overflow: clip; }
+.word-row-body { overflow-wrap: anywhere; }
+
+/* ── The open word, refined (v11.4) ─────────────────────────────────
+   Pronunciation is one capsule (speaker · IPA · stress), the two small
+   links share one style and sit against what they belong to, and spacing
+   follows one rhythm: tight inside a group, wider between groups. */
+.word-entry { gap: var(--s-4); }
+.word-sound-main {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: 3px var(--s-3) 3px 3px; border-radius: var(--r-pill); background: var(--surface-2);
+}
+.word-sound-main .speak-btn { width: 36px; height: 36px; min-width: 36px; min-height: 36px; background: var(--surface); box-shadow: var(--shadow-1); }
+.word-sound-main .ipa { font-size: var(--text-sm); color: var(--ink-2); }
+@media (pointer: coarse) { .word-sound-main .speak-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; } }
+
+.word-lead { display: grid; gap: 2px; justify-items: start; }
+.word-other, .word-ex-tools .more-ex .link-btn {
+  min-height: 32px; padding: 0; text-decoration: none;
+  color: var(--brand); font-size: var(--text-xs); font-weight: 600;
+}
+.word-other:hover, .word-ex-tools .more-ex .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; color: var(--brand); }
+.word-ex-tools { padding-inline-start: calc(var(--s-3) + 3px); }   /* under the quote's text, not its rule */
+.word-example-block { gap: 2px; }
+.word-memory { margin-top: var(--s-1); }
