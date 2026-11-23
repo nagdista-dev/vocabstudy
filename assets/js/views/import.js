@@ -763,12 +763,7 @@
       "ai-open"(el) {
         if (!aiReady()) { VS.toast(!VS.profileSet() ? "Choose your level and Arabic first." : "Fill in step 1 first."); return; }
         if (st.ai.mode === "words" && aiWords().some((w) => VS.isArabicTyping(w))) { VS.toast("Arabic? Use “From Arabic”."); return; }
-        const text = aiPromptNow();
-        const base = el.dataset.to === "claude" ? "https://claude.ai/new" : "https://chatgpt.com/";
-        const url = text.length < 6000 ? base + "?q=" + encodeURIComponent(text) : base;
-        window.open(url, "_blank", "noopener");
-        if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
-        VS.toast(text.length < 6000 ? "Opened with your prompt — send it, then copy the answer back here." : "The prompt is long: it's copied — paste it in the chat.");
+        VS.aiOpen(el.dataset.to, aiPromptNow());
       },
       "import-group"(el) {
         const g = Number(el.dataset.value);

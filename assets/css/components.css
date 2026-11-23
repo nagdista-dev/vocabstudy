@@ -921,3 +921,18 @@ kbd {
 .profile-done { position: sticky; bottom: var(--s-3); width: 100%; box-shadow: 0 0 0 8px var(--surface); }
 /* Locked Start stays solid: it floats over the list, so nothing may show through it. */
 .profile-done:disabled { opacity: 1; background: var(--surface-2); color: var(--ink-3); border-color: var(--line); }
+
+/* The study reminder sheet: a time, the days of the week, then the calendar. */
+.remind-body { gap: var(--s-4); }
+.remind-time { display: grid; gap: 6px; font-weight: 700; font-size: var(--text-sm); }
+.remind-time input { min-height: 52px; font-size: var(--text-lg); font-weight: 700; padding: 0 var(--s-3); max-width: 220px; }
+.remind-days { display: grid; gap: var(--s-2); margin: 0; padding: 0; border: 0; min-width: 0; }
+.remind-days legend { padding: 0; margin-bottom: var(--s-2); font-weight: 700; font-size: var(--text-sm); }
+.remind-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.remind-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.remind-week button { min-width: 0; min-height: var(--tap); padding: 0; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink-2); font: inherit; font-size: var(--text-sm); font-weight: 700; cursor: pointer; }
+.remind-week button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.remind-sum { display: flex; align-items: center; gap: var(--s-2); margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
+  background: var(--brand-soft); color: var(--ink); font-size: var(--text-sm); }
+.remind-sum .icon { color: var(--brand); flex: none; }

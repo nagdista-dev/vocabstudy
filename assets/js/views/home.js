@@ -138,7 +138,6 @@
     const h = new Date().getHours();
     return h < 7 ? 20 : h >= 23 ? 21 : h + 1;
   };
-  const hourText = (h) => (h % 12 || 12) + (h < 12 ? " AM" : " PM");
   const reminderAdded = () => VS.store.reminder();
 
   function tomorrow(p) {
@@ -156,8 +155,8 @@
           : html`Nothing due tomorrow — a good day to add new words.`}</p>
         ${offer ? html`
           <div class="today-remind-row">
-            <button class="btn today-remind" type="button" data-action="daily-reminder" title="Adds a daily event to your calendar (a small file you open once)">${icon("clock", "icon-sm")}
-              Daily reminder · ${hourText(reminderAt())}</button>
+            <button class="btn today-remind" type="button" data-action="daily-reminder" title="Choose the time and the days, then add it to your calendar">${icon("clock", "icon-sm")}
+              Set a study reminder</button>
             <button class="icon-btn today-remind-x" type="button" data-action="reminder-hide" aria-label="Hide the reminder offer">${icon("x", "icon-sm")}</button>
           </div>` : ""}
       </div>`;
@@ -169,29 +168,113 @@
     VS.toast("Hidden. It's in Settings → Daily reminder whenever you want it.");
   };
 
-  /** A daily calendar event with an alert, as a file the calendar app opens. */
+  /* ── The study reminder: you choose the time and the days first ──
+     A weekly repeating event on the days you pick (Sat → Fri, the app's week),
+     so it fits your week — work days only, weekends only, or every day. */
+  const DAYS = [["SA", "Sat"], ["SU", "Sun"], ["MO", "Mon"], ["TU", "Tue"], ["WE", "Wed"], ["TH", "Thu"], ["FR", "Fri"]];
+  const JS_DAY = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+  const pad = (x) => String(x).padStart(2, "0");
+  const rem = { time: "", days: null };            // the choice being made in the sheet
+  const timeText = (t) => { const [h, m] = t.split(":").map(Number); return (h % 12 || 12) + (m ? ":" + pad(m) : "") + (h < 12 ? " AM" : " PM"); };
+  const daysText = (days) => days.length === 7 ? "every day"
+    : DAYS.filter(([d]) => days.includes(d)).map(([, l]) => l).join(" · ");
+
+  function reminderMarkup() {
+    const presets = [["Every day", DAYS.map(([d]) => d)], ["Sun – Thu", ["SU", "MO", "TU", "WE", "TH"]], ["Mon – Fri", ["MO", "TU", "WE", "TH", "FR"]]];
+    const same = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+    return html`
+      <div class="sheet-head"><h2 id="reminderTitle">Study reminder</h2>
+        <button class="icon-btn" type="button" data-action="close-reminder" aria-label="Close">${icon("x")}</button></div>
+      <div class="sheet-body remind-body">
+        <p class="hint">Your calendar reminds you — on the days and at the time you choose. Change it any time.</p>
+        <label class="remind-time"><span>Time</span>
+          <input type="time" id="remindTime" value="${rem.time}" step="300"></label>
+        <fieldset class="remind-days">
+          <legend>Days</legend>
+          <div class="remind-presets">${presets.map(([l, d]) => html`<button type="button" class="chip" data-action="remind-preset" data-days="${d.join(",")}" aria-pressed="${same(rem.days, d)}">${l}</button>`)}</div>
+          <div class="remind-week">${DAYS.map(([d, l]) => html`<button type="button" data-action="remind-day" data-day="${d}" aria-pressed="${rem.days.includes(d)}">${l}</button>`)}</div>
+        </fieldset>
+        <p class="remind-sum" aria-live="polite">${rem.days.length
+          ? html`${icon("clock", "icon-sm")}<span><b>${timeText(rem.time)}</b>, ${daysText(rem.days)}</span>`
+          : "Pick at least one day."}</p>
+        <button class="btn btn-primary" type="button" data-action="remind-add" ${rem.days.length ? "" : VS.raw("disabled")}>${icon("plus", "icon-sm")} Add to my calendar</button>
+        <span class="hint">A small file opens in your calendar app — one tap there adds it.</span>
+      </div>`;
+  }
+  const drawReminder = () => {
+    const dlg = document.getElementById("reminder");
+    if (!dlg) return;
+    dlg.innerHTML = String(reminderMarkup());
+    VS.$("#remindTime", dlg).addEventListener("change", (e) => { if (e.target.value) { rem.time = e.target.value; drawSum(); } });
+  };
+  const drawSum = () => {     // the line under the days, without redrawing the time field the learner is in
+    const dlg = document.getElementById("reminder");
+    const tmp = document.createElement("div");
+    tmp.innerHTML = String(reminderMarkup());
+    dlg.querySelector(".remind-sum").innerHTML = tmp.querySelector(".remind-sum").innerHTML;
+  };
+
+  /** Opens the reminder sheet with the last choice (or now + 1 h, every day). */
   VS.actions["daily-reminder"] = () => {
-    const h = reminderAt();
-    const d = new Date(); d.setDate(d.getDate() + 1);
-    const pad = (x) => String(x).padStart(2, "0");
+    const st = VS.store.settings();
+    rem.time = st.reminderTime || pad(reminderAt()) + ":00";
+    rem.days = Array.isArray(st.reminderDays) && st.reminderDays.length ? st.reminderDays.slice() : DAYS.map(([d]) => d);
+    const settings = document.getElementById("settings");
+    if (settings && settings.open) settings.close();
+    let dlg = document.getElementById("reminder");
+    if (!dlg) {
+      dlg = document.createElement("dialog");
+      dlg.id = "reminder";
+      dlg.className = "sheet";
+      dlg.setAttribute("aria-labelledby", "reminderTitle");
+      document.body.appendChild(dlg);
+    }
+    drawReminder();
+    dlg.showModal();
+  };
+  VS.actions["close-reminder"] = () => document.getElementById("reminder").close();
+  VS.actions["remind-day"] = (el) => {
+    const d = el.dataset.day;
+    rem.days = rem.days.includes(d) ? rem.days.filter((x) => x !== d) : rem.days.concat(d);
+    keepTime(); drawReminder();
+  };
+  VS.actions["remind-preset"] = (el) => { rem.days = el.dataset.days.split(","); keepTime(); drawReminder(); };
+  const keepTime = () => { const t = VS.$("#remindTime"); if (t && t.value) rem.time = t.value; };
+
+  /** The calendar file: a weekly event on the chosen days, with an alert. */
+  VS.actions["remind-add"] = () => {
+    keepTime();
+    if (!rem.days.length || !rem.time) return;
+    const [h, m] = rem.time.split(":").map(Number);
+    // The first chosen day still ahead (today counts if the time hasn't passed).
+    const d = new Date();
+    for (let i = 0; i < 8; i++) {
+      const c = new Date(); c.setDate(c.getDate() + i); c.setHours(h, m, 0, 0);
+      if (c > new Date() && rem.days.some((x) => JS_DAY[x] === c.getDay())) { d.setTime(c.getTime()); break; }
+    }
     const day = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
     const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
     const url = location.origin + location.pathname;
-    const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//VocabStudy//Daily reminder//EN", "BEGIN:VEVENT",
-      "UID:vocabstudy-daily-" + day + "@vocabstudy", "DTSTAMP:" + now,
-      "DTSTART:" + day + "T" + pad(h) + "0000", "DURATION:PT10M", "RRULE:FREQ=DAILY",
+    const byday = DAYS.map(([x]) => x).filter((x) => rem.days.includes(x)).join(",");
+    const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//VocabStudy//Study reminder//EN", "BEGIN:VEVENT",
+      "UID:vocabstudy-reminder-" + now + "@vocabstudy", "DTSTAMP:" + now,
+      "DTSTART:" + day + "T" + pad(h) + pad(m) + "00", "DURATION:PT10M", "RRULE:FREQ=WEEKLY;WKST=SA;BYDAY=" + byday,
       "SUMMARY:VocabStudy — recall your words",
       "DESCRIPTION:A few minutes today keeps them for good. Open VocabStudy: " + url,
       "URL:" + url,
       "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Time for VocabStudy", "TRIGGER:PT0M", "END:VALARM",
       "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+    VS.lastIcs = ics;                                // for checking in the browser console
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
-    a.download = "vocabstudy-daily-reminder.ics";
+    a.download = "vocabstudy-reminder.ics";
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    VS.store.setReminder(hourText(h));
+    VS.store.setSetting("reminderTime", rem.time);
+    VS.store.setSetting("reminderDays", rem.days.slice());
+    VS.store.setReminder(timeText(rem.time) + ", " + daysText(rem.days));
+    document.getElementById("reminder").close();
     VS.toast("Open the file to add the reminder to your calendar.");
     VS.app.render();
   };

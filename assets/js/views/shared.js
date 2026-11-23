@@ -300,6 +300,14 @@
    *   ② Paste the AI's answer → the fields fill in
    * A result line says what filled in; nothing is saved until the learner's own button.
    */
+  /** Opens ChatGPT or Claude in a new tab with the prompt already typed (and copies it as well). */
+  VS.aiOpen = (to, text) => {
+    const base = to === "claude" ? "https://claude.ai/new" : "https://chatgpt.com/";
+    const fits = text.length < 6000;
+    window.open(fits ? base + "?q=" + encodeURIComponent(text) : base, "_blank", "noopener");
+    if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+    VS.toast(fits ? "Opened with your prompt — send it, then copy the answer back here." : "The prompt is long: it's copied — paste it in the chat.");
+  };
   VS.aiFill = ({ action, id, paste, done, wide }) => html`
     <details class="ai-fill ${wide ? "is-wide" : ""}">
       <summary>
@@ -311,8 +319,12 @@
         ${VS.levelPick()}
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">1</span>
-          <div class="ai-step-copy"><b>Copy the prompt</b><span>Paste it into your AI chat.</span></div>
-          <button class="btn btn-tonal ai-copy-btn is-ready" type="button" data-action="${action}" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""}>${icon("text", "icon-sm")}<span>Copy</span></button>
+          <div class="ai-step-copy"><b>Ask the AI</b><span>Open a chat with the prompt already typed — or copy it for Gemini.</span></div>
+        </div>
+        <div class="ai-ask">
+          <button class="btn btn-tonal ai-copy-btn ai-ask-btn is-ready" type="button" data-action="ai-fill-open" data-to="chatgpt" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""} title="Open ChatGPT with the prompt ready"><span>ChatGPT</span>${icon("arrow-right", "icon-sm")}</button>
+          <button class="btn ai-ask-btn" type="button" data-action="ai-fill-open" data-to="claude" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""} title="Open Claude with the prompt ready"><span>Claude</span>${icon("arrow-right", "icon-sm")}</button>
+          <button class="btn btn-quiet ai-ask-btn ai-copy-only" type="button" data-action="${action}" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""}>${icon("text", "icon-sm")}<span>Copy</span></button>
         </div>
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">2</span>
@@ -381,6 +393,12 @@
     addedTimer = setTimeout(() => pop.classList.remove("is-on"), 2400);
   };
 
+  VS.actions["ai-fill-open"] = (el) => {
+    const w = VS.byId[el.dataset.id];
+    if (!w) return;
+    if (!VS.profileSet()) { VS.openProfile(true); return; }
+    VS.aiOpen(el.dataset.to, aiPrompt(w));
+  };
   VS.actions["ai-copy"] = async (el) => {
     const w = VS.byId[el.dataset.id];
     if (!w) return;
