@@ -395,6 +395,8 @@
           finished when it's back — in about ${Math.max(1, Math.round((VS.google.pausedUntil() - Date.now()) / 60000))} min.</span></p>` : ""}
         <h3 class="sheet-group">Basics</h3>
         <div class="setting"><b>Voice</b><div class="seg">${choice("voice", "us", "American")}${choice("voice", "uk", "British")}</div></div>
+        <div class="setting"><b>Your level &amp; Arabic</b>${VS.levelPick()}
+          <span class="hint">The AI writes meanings and examples for your level, with the Arabic in your own dialect.</span></div>
         <div class="setting"><b>New words per day</b><div class="seg">${choice("newPerDay", 5, "5")}${choice("newPerDay", 10, "10")}${choice("newPerDay", 20, "20")}${choice("newPerDay", 30, "30")}</div>
           <span class="hint">How many new words “Learn” brings each day. The rest wait for tomorrow.</span></div>
         <div class="setting"><b>Daily goal</b><div class="seg">${choice("dailyGoal", 20, "20")}${choice("dailyGoal", 50, "50")}${choice("dailyGoal", 100, "100")}${choice("dailyGoal", 200, "200")}${choice("dailyGoal", 0, "Off")}</div><span class="hint">Answers per day across all activities (each new word you meet counts too). Progress shows on today's plan.</span></div>
@@ -666,4 +668,6 @@
   readShare();
   window.addEventListener("hashchange", go);
   go();
+  // The first time: two quick choices (level and Arabic) before anything else.
+  if (!VS.profileSet()) VS.openProfile(true);
 })();

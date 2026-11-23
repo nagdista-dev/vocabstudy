@@ -24,7 +24,7 @@
 
   const st = {
     tab: "ai",                    // ai | type | text | paste | files
-    ai: { mode: "words", words: "", topic: "", count: 10, level: "B2", ar: "", answer: "", rows: [], tags: "" },   // With AI
+    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "" },   // With AI
     collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
@@ -210,11 +210,12 @@
   const aiArabic = () => st.ai.ar.split(/[\n,،;]+/).map((x) => x.trim()).filter(Boolean).slice(0, 30);
   function aiReady() {
     const m = st.ai.mode;
+    if (!VS.profileSet()) return false;        // level and Arabic come first: the AI writes for them
     return m === "topic" ? !!st.ai.topic.trim() : m === "arabic" ? aiArabic().length > 0 : aiWords().length > 0;
   }
   function aiPromptNow() {
     const m = st.ai.mode;
-    if (m === "topic") return VS.aiPromptTopic(st.ai.topic.trim(), st.ai.count, st.ai.level);
+    if (m === "topic") return VS.aiPromptTopic(st.ai.topic.trim(), st.ai.count);
     if (m === "arabic") return VS.aiPromptArabic(aiArabic());
     const words = aiWords();
     return words.length === 1 ? VS.aiPrompt({ word: words[0] }) : VS.aiPromptMany(words);
@@ -227,7 +228,6 @@
         <label class="ai-in ai-in-wide"><span class="sr-only">Topic</span>
           <input dir="auto" data-ai-in="topic" value="${st.ai.topic}" placeholder="a job interview, travel, football, السفر…" autocomplete="off"></label>
         <label class="ai-in"><span>How many</span>${aiSelect("count", [5, 10, 15, 20], st.ai.count)}</label>
-        <label class="ai-in"><span>Level</span>${aiSelect("level", ["A1", "A2", "B1", "B2", "C1", "C2"], st.ai.level)}</label>
       </div>`;
     if (m === "arabic") return html`
       <label class="ai-add-words"><span class="sr-only">Arabic words</span>
@@ -244,9 +244,10 @@
   };
   function aiTab() {
     const ready = aiReady();
-    const off = ready ? "" : VS.raw('disabled title="Fill in step 1 first"');
+    const off = ready ? "" : VS.raw('disabled title="' + (VS.profileSet() ? "Fill in step 1 first" : "Choose your level and Arabic first") + '"');
     return html`
       <div class="ai-add">
+        ${VS.levelPick()}
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">1</span>
           <div class="ai-step-copy"><b>${AI_ONE[st.ai.mode][0]}</b><span>${AI_ONE[st.ai.mode][1]}</span></div>
@@ -695,7 +696,7 @@
             btn.disabled = false; btn.removeAttribute("title");
             if (btn.classList.contains("ai-copy-btn")) { btn.classList.add("is-ready", "just-ready"); setTimeout(() => btn.classList.remove("just-ready"), 1000); }
           } else if (!ready && !btn.disabled) {
-            btn.disabled = true; btn.title = st.ai.mode === "words" ? "Type a word first" : "Fill in step 1 first";
+            btn.disabled = true; btn.title = !VS.profileSet() ? "Choose your level and Arabic first" : st.ai.mode === "words" ? "Type a word first" : "Fill in step 1 first";
             btn.classList.remove("is-ready", "just-ready");
           }
         });
@@ -747,7 +748,7 @@
 
     actions: {
       async "add-ai-copy"(el) {
-        if (!aiReady()) { VS.toast(st.ai.mode === "words" ? "Type your words first." : "Fill in step 1 first."); return; }
+        if (!aiReady()) { VS.toast(!VS.profileSet() ? "Choose your level and Arabic first." : st.ai.mode === "words" ? "Type your words first." : "Fill in step 1 first."); return; }
         if (st.ai.mode === "words" && aiWords().some((w) => VS.isArabicTyping(w))) { VS.toast("Type the English words — the AI adds the Arabic."); return; }
         const text = aiPromptNow();
         try { await navigator.clipboard.writeText(text); VS.aiCopied(el); }
@@ -760,7 +761,7 @@
       /* A new chat with the prompt already typed (both read ?q=). The prompt is
          copied too, so a long one — or Gemini — still works with one paste. */
       "ai-open"(el) {
-        if (!aiReady()) { VS.toast("Fill in step 1 first."); return; }
+        if (!aiReady()) { VS.toast(!VS.profileSet() ? "Choose your level and Arabic first." : "Fill in step 1 first."); return; }
         if (st.ai.mode === "words" && aiWords().some((w) => VS.isArabicTyping(w))) { VS.toast("Arabic? Use “From Arabic”."); return; }
         const text = aiPromptNow();
         const base = el.dataset.to === "claude" ? "https://claude.ai/new" : "https://chatgpt.com/";
@@ -791,7 +792,8 @@
         if (!words.length) return;
         const r = save(words);
         VS.sfx.play("pop");
-        st.ai = { words: "", answer: "", rows: [], tags: st.ai.tags };
+        // Added: every field is empty again, ready for the next words (tags kept on purpose).
+        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [] });
         VS.app.render();
       },
 
@@ -816,7 +818,7 @@
         const fresh = pickedPhrases().filter((p) => !VS.byId[VS.wordKey(p.word)]);
         if (!fresh.length) { VS.toast("Those words are already in your library."); return; }
         const r = save(fresh.map((p) => ({ word: p.word, context: p.context, source: c.source, tags: [] })));
-        c.picked = new Set();
+        c.picked = new Set(); c.text = ""; c.source = "";
         c.done = `Added ${VS.plural(r.added.length, "word")}, each with its sentence.`;
         VS.sfx.play("done");
         VS.app.render();

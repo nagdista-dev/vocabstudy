@@ -70,15 +70,128 @@
      back. We read "key: value" lines (or JSON), keep only fields that pass
      the same checks as typing, and fill the form — nothing is saved until
      they press Save. */
+  /* The learner's own level (Settings → Your English level, A1–C2): chosen by
+     them, never guessed, and written into every prompt so the AI's meanings
+     and examples are pitched exactly at them. */
+  VS.myLevel = () => VS.store.settings().level || "";
+  /* The Arab world speaks many Arabics: the learner picks theirs once, and every
+     Arabic meaning the AI writes is in it. [value, name for the AI, Arabic label, where] */
+  VS.DIALECTS = [
+    ["msa", "clear Modern Standard Arabic (الفصحى)", "الفصحى", "لكل العرب"],
+    ["eg", "Egyptian Arabic (العامية المصرية)", "مصر", "مصري"],
+    ["sa", "Saudi Arabic (اللهجة السعودية / النجدية والحجازية)", "السعودية", "سعودي"],
+    ["ae", "Emirati Arabic (اللهجة الإماراتية)", "الإمارات", "إماراتي"],
+    ["kw", "Kuwaiti Arabic (اللهجة الكويتية)", "الكويت", "كويتي"],
+    ["qa", "Qatari Arabic (اللهجة القطرية)", "قطر", "قطري"],
+    ["bh", "Bahraini Arabic (اللهجة البحرينية)", "البحرين", "بحريني"],
+    ["om", "Omani Arabic (اللهجة العمانية)", "عُمان", "عماني"],
+    ["ye", "Yemeni Arabic (اللهجة اليمنية)", "اليمن", "يمني"],
+    ["iq", "Iraqi Arabic (اللهجة العراقية)", "العراق", "عراقي"],
+    ["sy", "Syrian Arabic (اللهجة الشامية السورية)", "سوريا", "سوري"],
+    ["lb", "Lebanese Arabic (اللهجة اللبنانية)", "لبنان", "لبناني"],
+    ["jo", "Jordanian Arabic (اللهجة الأردنية)", "الأردن", "أردني"],
+    ["ps", "Palestinian Arabic (اللهجة الفلسطينية)", "فلسطين", "فلسطيني"],
+    ["sd", "Sudanese Arabic (اللهجة السودانية)", "السودان", "سوداني"],
+    ["ly", "Libyan Arabic (اللهجة الليبية)", "ليبيا", "ليبي"],
+    ["tn", "Tunisian Arabic (الدارجة التونسية)", "تونس", "تونسي"],
+    ["dz", "Algerian Arabic (الدارجة الجزائرية)", "الجزائر", "جزائري"],
+    ["ma", "Moroccan Arabic (الدارجة المغربية)", "المغرب", "مغربي"],
+    ["mr", "Hassaniya Arabic of Mauritania (الحسانية)", "موريتانيا", "حساني"],
+    ["so", "the Arabic used in Somalia (simple Modern Standard Arabic)", "الصومال", "صومالي"],
+    ["dj", "the Arabic used in Djibouti (simple Modern Standard Arabic)", "جيبوتي", "جيبوتي"],
+    ["km", "the Arabic used in Comoros (simple Modern Standard Arabic)", "جزر القمر", "قمري"],
+  ];
+  VS.myDialect = () => VS.DIALECTS.find((d) => d[0] === VS.store.settings().dialect) || null;
+  const dialectLabel = (d) => d[0] === "msa" ? d[2] : d[3];
+  VS.profileSet = () => !!(VS.myLevel() && VS.myDialect());
+  const LEVEL_NAMES = { A1: "Beginner", A2: "Elementary", B1: "Intermediate", B2: "Upper-mid", C1: "Advanced", C2: "Proficient" };
+  const meLine = () => "I'm an Arabic speaker learning English at CEFR level " + VS.myLevel() +
+    ". Write every definition and example so a " + VS.myLevel() + " learner understands it easily.";
+  /** The "arabic:" line of every prompt: meanings in the learner's own Arabic. */
+  VS.aiArabicLine = () => {
+    const d = VS.myDialect();
+    return "arabic: <short Arabic meaning written in " + (d ? d[1] : "Modern Standard Arabic") +
+      (d && !/Standard/.test(d[1]) ? ", the way people there really say it" : "") + "; several meanings separated by \" - \">";
+  };
+  /** One quiet line where the AI is used: who it writes for, and Change. */
+  VS.levelPick = () => {
+    const d = VS.myDialect();
+    return html`<button type="button" class="me-chip ${VS.profileSet() ? "" : "is-unset"}" data-action="open-profile">
+      ${icon("target", "icon-sm")}
+      ${VS.profileSet()
+        ? html`<span class="me-chip-text">Written for <b>${VS.myLevel()}</b> · <bdi lang="ar" dir="rtl">${dialectLabel(d)}</bdi></span><span class="me-chip-edit">Change</span>`
+        : html`<span class="me-chip-text">Choose your level and Arabic first</span><span class="me-chip-edit">Choose</span>`}
+    </button>`;
+  };
+
+  /* ── Your level and your Arabic: asked once, at the start ─────────── */
+  function profileMarkup(first) {
+    const lv = VS.myLevel(), dv = (VS.myDialect() || [])[0];
+    return html`
+      <div class="sheet-head"><h2 id="profileTitle">${first ? "Make it yours" : "Your level & Arabic"}</h2>
+        ${first ? "" : html`<button class="icon-btn" type="button" data-action="close-profile" aria-label="Close">${icon("x")}</button>`}</div>
+      <div class="sheet-body profile-body">
+        ${first ? html`<p class="hint">Two quick choices. The AI uses them for every word it writes for you — you can change them any time in Settings.</p>` : ""}
+        <fieldset class="profile-set">
+          <legend>Your English level</legend>
+          <div class="profile-levels">
+            ${Object.keys(LEVEL_NAMES).map((l) => html`<button type="button" data-action="profile-pick" data-name="level" data-value="${l}" aria-pressed="${lv === l}">
+              <b>${l}</b><small>${LEVEL_NAMES[l]}</small></button>`)}
+          </div>
+        </fieldset>
+        <fieldset class="profile-set">
+          <legend>Your Arabic <span class="hint">— where you're from; meanings are written in your dialect</span></legend>
+          <div class="profile-dialects">
+            ${VS.DIALECTS.map(([v, , place, dia]) => html`<button type="button" data-action="profile-pick" data-name="dialect" data-value="${v}" aria-pressed="${dv === v}" lang="ar" dir="rtl" class="${v === "msa" ? "is-msa" : ""}">
+              <b>${place}</b><small>${dia}</small></button>`)}
+          </div>
+        </fieldset>
+        <button class="btn btn-primary profile-done" type="button" data-action="profile-done" ${lv && dv ? "" : VS.raw("disabled")}>${first ? "Start" : "Done"}</button>
+      </div>`;
+  }
+  VS.openProfile = (first) => {
+    let dlg = document.getElementById("profile");
+    if (!dlg) {
+      dlg = document.createElement("dialog");
+      dlg.id = "profile";
+      dlg.className = "sheet profile-sheet";
+      dlg.setAttribute("aria-labelledby", "profileTitle");
+      // The first time, the two choices come before anything else (Esc doesn't skip them).
+      dlg.addEventListener("cancel", (e) => { if (!VS.profileSet()) e.preventDefault(); });
+      document.body.appendChild(dlg);
+    }
+    dlg.dataset.first = first ? "1" : "";
+    dlg.innerHTML = String(profileMarkup(first));
+    if (!dlg.open) dlg.showModal();
+  };
+  VS.actions["open-profile"] = () => {
+    const s = document.getElementById("settings");
+    if (s && s.open) s.close();
+    VS.openProfile(!VS.profileSet());
+  };
+  VS.actions["profile-pick"] = (el) => {
+    VS.store.setSetting(el.dataset.name, el.dataset.value);
+    const dlg = document.getElementById("profile");
+    dlg.querySelectorAll(`[data-name="${el.dataset.name}"]`).forEach((b) => b.setAttribute("aria-pressed", String(b === el)));
+    dlg.querySelector(".profile-done").disabled = !VS.profileSet();
+  };
+  const closeProfile = () => {
+    const dlg = document.getElementById("profile");
+    if (dlg) dlg.close();
+    VS.app.render();                              // the AI tabs and buttons wake up with the choice
+  };
+  VS.actions["profile-done"] = closeProfile;
+  VS.actions["close-profile"] = () => { if (VS.profileSet()) closeProfile(); };
+
   function aiPrompt(w) {
     const lines = [
-      "I'm an Arabic speaker learning English (B1–C1). Help me with the English word “" + w.word + "”" + (w.sense ? " (" + w.sense + ")" : "") + ".",
+      meLine() + " Help me with the English word “" + w.word + "”" + (w.sense ? " (" + w.sense + ")" : "") + ".",
       w.context ? "I met it in this sentence: “" + w.context + "” — use THAT meaning." : "",
       w.arabic ? "My current Arabic meaning is: " + w.arabic + " (fix it if it's wrong)." : "",
       "",
       "Reply with ONE markdown code block (```markdown … ```) so I can copy it in one tap. Inside it, exactly these lines; nothing outside the block:",
       "word: <the base form>",
-      "arabic: <short Arabic meaning; Egyptian Arabic is welcome; several meanings separated by \" - \">",
+      VS.aiArabicLine(),
       "definition: <one simple English definition, learner-dictionary style>",
       "example: <one natural example sentence, 14 words or fewer, that uses the word>",
       "type: <Noun, Verb, Adjective, Adverb, Phrase, Phrasal Verb or Idiom>",
@@ -96,7 +209,7 @@
     "Put ALL the blocks inside ONE markdown code block (```markdown … ```) so I can copy it in one tap — nothing outside it.",
     "Each block has exactly these lines, with a blank line between blocks:",
     "word: <the English base form>",
-    "arabic: <short Arabic meaning; Egyptian Arabic is welcome; several meanings separated by \" - \">",
+    VS.aiArabicLine(),
     "definition: <one simple English definition, learner-dictionary style>",
     "example: <one natural example sentence, 14 words or fewer, that uses the word>",
     ...(withContext ? ["context: <the exact sentence from my text where the word appears>"] : []),
@@ -104,19 +217,19 @@
     "level: <A1, A2, B1, B2, C1 or C2>",
     "ipa: </IPA/>",
   ];
-  const ME = "I'm an Arabic speaker learning English (B1–C1).";
+
   /** Several words I already know I want. */
-  VS.aiPromptMany = (words) => [ME + " For EACH of these English words, give one block:", words.join(", "), ...aiBlocks(false)].join("\n");
+  VS.aiPromptMany = (words) => [meLine() + " For EACH of these English words, give one block:", words.join(", "), ...aiBlocks(false)].join("\n");
   /** The most useful words about a topic, at a level. */
-  VS.aiPromptTopic = (topic, n, level) => [
-    "I'm an Arabic speaker learning English. Choose the " + n + " most useful English words and phrases about “" + topic + "” for a " + level + " learner.",
-    /^A/.test(level)
+  VS.aiPromptTopic = (topic, n) => [
+    meLine() + " Choose the " + n + " most useful English words and phrases about “" + topic + "” for my level.",
+    /^A/.test(VS.myLevel())
       ? "Pick simple, everyday words people really use in that situation. One block per word:"
       : "Pick words people really use in that situation; skip very basic words I surely know. One block per word:",
     ...aiBlocks(false)].join("\n");
   /** Arabic I know → the natural English for it. */
   VS.aiPromptArabic = (arabic) => [
-    ME + " For EACH Arabic word or phrase below, give the most natural English word or phrase with that meaning, as one block.",
+    meLine() + " For EACH Arabic word or phrase below, give the most natural English word or phrase with that meaning, as one block.",
     "Keep my Arabic in the “arabic” line (you may add a closer meaning after \" - \").",
     arabic.join("\n"),
     ...aiBlocks(false)].join("\n");
@@ -195,6 +308,7 @@
         ${icon("chevron-right", "icon-sm ai-fill-chev")}
       </summary>
       <div class="ai-fill-body">
+        ${VS.levelPick()}
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">1</span>
           <div class="ai-step-copy"><b>Copy the prompt</b><span>Paste it into your AI chat.</span></div>
@@ -270,6 +384,7 @@
   VS.actions["ai-copy"] = async (el) => {
     const w = VS.byId[el.dataset.id];
     if (!w) return;
+    if (!VS.profileSet()) { VS.openProfile(true); return; }
     const text = aiPrompt(w);
     try { await navigator.clipboard.writeText(text); VS.aiCopied(el); }
     catch (e) {

@@ -103,22 +103,31 @@
   function actions(list) {
     const n = list.length;
     const started = list.filter((w) => VS.store.status(w.id) !== "new").length;
-    const modes = [["cards", "Cards"], ["quiz", "Quiz"], ["spell", "Spell"], ["match", "Match"], ["write", "Use it"]]
-      .concat(VS.listen && VS.listen.supported ? [["speak", "Speak"]] : []);
+    // Each way to practise says what it asks of you, so the choice is quick.
+    const modes = [["cards", "Cards", "Flip and recall", "cards"], ["quiz", "Quiz", "Pick the answer", "quiz"],
+      ["spell", "Spell", "Hear it, type it", "spell"], ["match", "Match", "Pair them up", "match"], ["write", "Use it", "In a sentence", "pen"]]
+      .concat(VS.listen && VS.listen.supported ? [["speak", "Speak", "Say it aloud", "mic"]] : [])
+      .filter(([m]) => !(m === "match" && n < 2));
     if (!n) return "";
     return html`
       <div class="lib-actions">
         <details class="lib-more">
-          <summary class="btn btn-quiet">${icon("play", "icon-sm")} Practise ${icon("chevron-right", "icon-sm")}</summary>
-          <div class="lib-more-menu">
-            ${modes.map(([m, l]) => (m === "match" && n < 2) ? "" : html`<a class="btn btn-quiet" href="${pickHref(m)}">${icon(m === "speak" ? "mic" : m === "write" ? "pen" : m, "icon-sm")} ${l}</a>`)}
+          <summary class="btn lib-practise"><span class="lib-play">${icon("play", "icon-sm")}</span>Practise ${icon("chevron-right", "icon-sm lib-chev")}</summary>
+          <div class="lib-more-menu lib-modes-menu">
+            <p class="lib-menu-head">Practise ${n === 1 ? "this word" : "these " + n + " words"}</p>
+            <div class="lib-modes">
+              ${modes.map(([m, l, hint, ico]) => html`<a class="lib-mode" href="${pickHref(m)}">
+                <span class="lib-mode-ico">${icon(ico, "icon-sm")}</span><b>${l}</b><small>${hint}</small></a>`)}
+            </div>
           </div>
         </details>
         <details class="lib-more">
-          <summary class="btn btn-quiet lib-more-btn" aria-label="More actions for this list">${icon("more")}<span class="lib-more-label">More</span></summary>
+          <summary class="btn lib-more-btn" aria-label="Manage this list">${icon("more")}<span class="lib-more-label">Manage</span></summary>
           <div class="lib-more-menu">
+            <p class="lib-menu-head">${VS.plural(n, "word")}</p>
             <a class="btn btn-quiet" href="#/print/pick${query() ? "?" + query() : ""}">${icon("print", "icon-sm")} Print or PDF</a>
             <button class="btn btn-quiet" type="button" data-action="lib-export">${icon("book", "icon-sm")} Export CSV</button>
+            <hr class="lib-menu-sep">
             ${started ? html`<button class="btn btn-quiet" type="button" data-action="lib-reset">${icon("review", "icon-sm")} Reset progress</button>` : ""}
             <button class="btn btn-quiet danger" type="button" data-action="lib-delete">${icon("x", "icon-sm")} Delete ${VS.plural(n, "word")}</button>
           </div>
