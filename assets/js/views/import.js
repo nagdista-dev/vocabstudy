@@ -24,7 +24,7 @@
 
   const st = {
     tab: "ai",                    // ai | type | text | paste | files
-    ai: { mode: "words", more: "words", words: "", topic: "", count: 10, level: "B2", text: "", ar: "", answer: "", rows: [], tags: "" },   // With AI
+    ai: { mode: "words", words: "", topic: "", count: 10, level: "B2", ar: "", answer: "", rows: [], tags: "" },   // With AI
     collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
@@ -201,60 +201,19 @@
       </div>`;
   }
 
-  function aiTab() {
-    const many = aiWords().length > 1;
-    return html`
-      <div class="ai-add">
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">1</span>
-          <div class="ai-step-copy"><b>Your words</b><span>One word, or many — one per line or separated by commas.</span></div>
-        </div>
-        <label class="ai-add-words">
-          <span class="sr-only">English words</span>
-          <textarea id="aiWords" rows="3" dir="auto" data-ai-words spellcheck="false" autocapitalize="off"
-            placeholder="resilient, deadline, take off">${st.ai.words}</textarea>
-        </label>
-
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">2</span>
-          <div class="ai-step-copy"><b>Copy the prompt</b><span>Paste it into ChatGPT, Claude or Gemini.</span></div>
-          <button class="btn btn-tonal ai-copy-btn ${aiWords().length ? "is-ready" : ""}" type="button" data-action="add-ai-copy"
-            ${aiWords().length ? "" : VS.raw('disabled title="Type a word first"')}>${icon("text", "icon-sm")}<span>Copy</span></button>
-        </div>
-
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">3</span>
-          <div class="ai-step-copy"><b>Paste its answer</b><span>${many ? "All the words at once." : "The details fill in by themselves."}</span></div>
-        </div>
-        <div class="ai-fill">
-          <textarea class="ai-fill-input" rows="4" dir="auto" data-ai-add aria-label="The AI's answer"
-            placeholder="word: …&#10;arabic: …&#10;definition: …">${st.ai.answer}</textarea>
-          <p class="ai-fill-status" aria-live="polite" hidden></p>
-        </div>
-
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">4</span>
-          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything, or untick a word to skip it.</span></div>
-        </div>
-        <div class="ai-review" id="aiReview">${aiReview()}</div>
-      </div>`;
-  }
-
-  /* ── Tab: AI · More ways — My words · A topic · Text or photo · From Arabic ──
-     My words · A topic · A text or photo · From Arabic. Each builds one prompt;
-     the AI chat answers in blocks; the learner checks a card per word and adds
-     them all. "Open in ChatGPT / Claude" starts the chat with the prompt typed. */
-  // "With AI" (the original tab) asks about the words typed; "AI · More ways" offers four starts.
-  const AI_MODES = [["words", "My words", "pen"], ["topic", "A topic", "star"], ["text", "Text or photo", "camera"], ["arabic", "From Arabic", "text"]];
+  /* ── The three AI tabs: With AI (your words) · By topic · From Arabic ──
+     Same four steps on each — what to start from, ask the AI (open a chat with
+     the prompt typed, or copy it), paste its answer, check a card per word —
+     so learning one teaches all three. */
+  const AI_TAB_MODE = { ai: "words", "ai-topic": "topic", "ai-ar": "arabic" };
   const aiArabic = () => st.ai.ar.split(/[\n,،;]+/).map((x) => x.trim()).filter(Boolean).slice(0, 30);
   function aiReady() {
     const m = st.ai.mode;
-    return m === "words" ? aiWords().length > 0 : m === "topic" ? !!st.ai.topic.trim() : m === "arabic" ? aiArabic().length > 0 : true;
+    return m === "topic" ? !!st.ai.topic.trim() : m === "arabic" ? aiArabic().length > 0 : aiWords().length > 0;
   }
   function aiPromptNow() {
     const m = st.ai.mode;
     if (m === "topic") return VS.aiPromptTopic(st.ai.topic.trim(), st.ai.count, st.ai.level);
-    if (m === "text") return VS.aiPromptText(st.ai.text.trim().slice(0, 4000), st.ai.count);
     if (m === "arabic") return VS.aiPromptArabic(aiArabic());
     const words = aiWords();
     return words.length === 1 ? VS.aiPrompt({ word: words[0] }) : VS.aiPromptMany(words);
@@ -269,11 +228,6 @@
         <label class="ai-in"><span>How many</span>${aiSelect("count", [5, 10, 15, 20], st.ai.count)}</label>
         <label class="ai-in"><span>Level</span>${aiSelect("level", ["B1", "B2", "C1"], st.ai.level)}</label>
       </div>`;
-    if (m === "text") return html`
-      <label class="ai-add-words"><span class="sr-only">Text</span>
-        <textarea rows="4" dir="auto" data-ai-in="text" placeholder="Paste an article, an email, a message… — or leave this empty and attach a photo or screenshot in the AI chat.">${st.ai.text}</textarea></label>
-      <div class="ai-in-row"><label class="ai-in"><span>Up to</span>${aiSelect("count", [5, 10, 15, 20], st.ai.count)}</label>
-        <span class="hint">The AI keeps the sentence each word came from — it becomes “Where you met it”.</span></div>`;
     if (m === "arabic") return html`
       <label class="ai-add-words"><span class="sr-only">Arabic words</span>
         <textarea rows="3" dir="rtl" lang="ar" data-ai-in="ar" placeholder="أجّل، فرصة، يستلف">${st.ai.ar}</textarea></label>`;
@@ -284,18 +238,14 @@
   }
   const AI_ONE = {
     words: ["Your words", "One word, or many — one per line or separated by commas."],
-    topic: ["A topic", "The AI picks the most useful words about it."],
-    text: ["A text or a photo", "The AI finds the words worth learning in it."],
+    topic: ["Your topic", "The AI picks the most useful words about it, at your level."],
     arabic: ["Arabic words", "The AI finds the natural English for each one."],
   };
-  function aiMoreTab() {
+  function aiTab() {
     const ready = aiReady();
     const off = ready ? "" : VS.raw('disabled title="Fill in step 1 first"');
     return html`
       <div class="ai-add">
-        <div class="seg ai-modes" role="tablist" aria-label="What to start from">
-          ${AI_MODES.map(([v, l, ico]) => html`<button type="button" role="tab" data-action="ai-mode" data-value="${v}" aria-pressed="${st.ai.mode === v}">${icon(ico, "icon-sm")}<span>${l}</span></button>`)}
-        </div>
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">1</span>
           <div class="ai-step-copy"><b>${AI_ONE[st.ai.mode][0]}</b><span>${AI_ONE[st.ai.mode][1]}</span></div>
@@ -638,9 +588,14 @@
     return files;
   }
 
-  const TABS = [["ai", "With AI", "AI"], ["ai-more", "AI · More ways", "AI+"],
-                ["type", "Type a word", "Type"], ["text", "From text", "Text"], ["paste", "Paste a list", "List"], ["files", "Upload files", "File"]];
-  const isAiTab = (t) => t === "ai" || t === "ai-more";
+  /* Seven ways in, in two labelled rows so nothing wraps or repeats:
+     with AI (your words · a topic · from Arabic) and by yourself. */
+  const TAB_GROUPS = [
+    ["With AI", "bolt", [["ai", "Your words", "Words"], ["ai-topic", "By topic", "Topic"], ["ai-ar", "From Arabic", "Arabic"]]],
+    ["Yourself", "pen", [["type", "Type a word", "Type"], ["text", "From text", "Text"], ["paste", "Paste a list", "List"], ["files", "Upload files", "File"]]],
+  ];
+  const TABS = TAB_GROUPS.flatMap((g) => g[2]);
+  const isAiTab = (t) => t in AI_TAB_MODE;
 
   VS.views.import = {
     title: () => "Add words",
@@ -653,7 +608,7 @@
     },
 
     render() {
-      if (isAiTab(st.tab)) st.ai.mode = st.tab === "ai" ? "words" : st.ai.more;
+      if (isAiTab(st.tab)) st.ai.mode = AI_TAB_MODE[st.tab];
       return html`
         <div class="page import-page ${st.tab === "type" || isAiTab(st.tab) ? "is-type" : ""} view-enter">
           <header class="page-head"><div>
@@ -662,10 +617,16 @@
           </div></header>
 
           <section class="card import-step import-main">
-            <div class="seg import-tabs" role="tablist" aria-label="How to add words">
-              ${TABS.map(([v, l, short]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}"><span class="tab-long">${l}</span><span class="tab-short">${short}</span></button>`)}
+            <div class="import-ways" role="tablist" aria-label="How to add words">
+              ${TAB_GROUPS.map(([label, ico, tabs]) => html`
+                <div class="import-way">
+                  <span class="import-way-label">${icon(ico, "icon-sm")}${label}</span>
+                  <div class="seg import-tabs is-${tabs.length}">
+                    ${tabs.map(([v, l, short]) => html`<button type="button" role="tab" data-action="import-tab" data-value="${v}" aria-pressed="${st.tab === v}" aria-selected="${st.tab === v}"><span class="tab-long">${l}</span><span class="tab-short">${short}</span></button>`)}
+                  </div>
+                </div>`)}
             </div>
-            ${st.tab === "type" ? typeTab() : st.tab === "ai" ? aiTab() : isAiTab(st.tab) ? aiMoreTab() : st.tab === "text" ? textTab() : st.tab === "paste" ? pasteTab() : filesTab()}
+            ${st.tab === "type" ? typeTab() : isAiTab(st.tab) ? aiTab() : st.tab === "text" ? textTab() : st.tab === "paste" ? pasteTab() : filesTab()}
           </section>
 
           ${st.tab === "type" || isAiTab(st.tab) ? recent() : preview()}
@@ -789,10 +750,6 @@
         if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
         VS.toast(text.length < 6000 ? "Opened with your prompt — send it, then copy the answer back here." : "The prompt is long: it's copied — paste it in the chat.");
       },
-      "ai-mode"(el) {
-        if (el.dataset.value !== st.ai.more) Object.assign(st.ai, { answer: "", rows: [] });
-        st.ai.more = el.dataset.value; VS.app.render();
-      },
       "import-tab"(el) {
         if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [] });
         st.tab = el.dataset.value; st.saved = ""; VS.app.render();
@@ -802,7 +759,6 @@
         const words = st.ai.rows.filter((r) => r.keep && !r.dup).map((r) => {
           const w = { word: r.word, tags: tags.slice() };
           ["arabic", "definition", "example", "type", "level", "ipa", "context"].forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
-          if (r.context) w.source = st.ai.mode === "text" ? "A text I read" : "";
           if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
           return w;
         });

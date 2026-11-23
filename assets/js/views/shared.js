@@ -112,12 +112,6 @@
     ME + " Choose the " + n + " most useful English words and phrases about “" + topic + "” for a " + level + " learner.",
     "Pick words people really use in that situation; skip very basic words I surely know. One block per word:",
     ...aiBlocks(false)].join("\n");
-  /** The words worth learning in a text — or in a photo the learner attaches in the AI chat. */
-  VS.aiPromptText = (text, n) => [
-    ME + " From " + (text ? "the text below" : "the photo or screenshot I'm attaching") + ", pick up to " + n + " words or phrases worth learning.",
-    "Skip easy everyday words. One block per word:",
-    ...aiBlocks(true),
-    ...(text ? ["", "TEXT:", text] : [])].join("\n");
   /** Arabic I know → the natural English for it. */
   VS.aiPromptArabic = (arabic) => [
     ME + " For EACH Arabic word or phrase below, give the most natural English word or phrase with that meaning, as one block.",
