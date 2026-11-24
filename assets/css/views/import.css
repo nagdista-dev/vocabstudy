@@ -67,7 +67,12 @@
 .row-status.is-warn { background: var(--note-soft); color: var(--note-ink); }
 .row-status.is-bad { background: var(--bad-soft); color: var(--bad); }
 .row-status.is-dup { background: var(--surface-2); color: var(--ink-2); }
+.row-status.is-needar { background: var(--note-soft); color: var(--note-ink); }
+.row-status.is-repeat { background: var(--surface-2); color: var(--ink-3); }
+.row-status.is-another { background: var(--brand-soft); color: var(--brand); }
 .import-table tr.is-dup td { color: var(--ink-3); }
+.import-table tr.is-needar td { background: color-mix(in srgb, var(--note-soft) 55%, transparent); }
+.import-table tr.is-another td { background: color-mix(in srgb, var(--brand-soft) 32%, transparent); }
 .row-issues { display: block; margin-top: 2px; font-size: var(--text-xs); color: var(--ink-3); }
 
 .import-done { display: flex; align-items: center; gap: var(--s-2); color: var(--good); font-weight: 600; }
@@ -147,6 +152,8 @@
   .import-table, .import-table tbody, .import-table tr, .import-table td { display: block; width: 100%; }
   .import-table tr { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-3); margin-bottom: var(--s-2); background: var(--surface); }
   .import-table tr.is-bad { background: color-mix(in srgb, var(--bad-soft) 60%, var(--surface)); }
+  .import-table tr.is-needar { border-color: color-mix(in srgb, var(--note) 45%, var(--line)); }
+  .import-table tr.is-another { border-inline-start: 3px solid var(--brand); }
   .import-table td { border: 0; padding: 2px 0; min-width: 0; }
   .import-table tr.is-bad td { background: none; }
   .import-table td[data-label]::before { content: attr(data-label) ": "; color: var(--ink-3); font-size: var(--text-xs); font-family: var(--font-body); }
@@ -200,82 +207,84 @@
 
 .add-form .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
 
-/* Add → With AI: four numbered steps — words, prompt, answer, one card per word. */
+/* ── Add → With AI: four numbered steps — words, prompt, answer, cards ── */
 .ai-add { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
 .ai-add .ai-step { margin-top: var(--s-2); }
 .ai-add .ai-step:first-child { margin-top: 0; }
-.ai-add-words, .ai-add .ai-fill, .ai-add .ai-review { margin-inline-start: calc(26px + var(--s-3)); }
+.ai-add-words, .ai-add .ai-fill, .ai-add .ai-review, .ai-in-row, .ai-add .ai-ask {
+  margin-inline-start: calc(26px + var(--s-3));
+}
 .ai-add-words textarea {
-  width: 100%; min-height: 72px; padding: var(--s-3); resize: vertical;
-  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface);
+  width: 100%; min-height: 84px; padding: var(--s-3); resize: vertical;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
   font: inherit; font-size: var(--text-md); color: var(--ink);
 }
 .ai-add .ai-fill { display: grid; gap: var(--s-2); border: 0; background: none; box-shadow: none; }
 .ai-review-empty { margin: 0; }
-.ai-rows { display: grid; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
-.ai-row { display: grid; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+
+/* The words in the answer: a check card each, with a status that says what
+   will happen — Ready, Another meaning, In your library, Needs Arabic. */
+.ai-rows { display: grid; gap: var(--s-3); margin: 0; padding: 0; list-style: none; }
+.ai-row {
+  display: grid; gap: var(--s-3); padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+  transition: opacity var(--fast), border-color var(--fast), background var(--fast);
+}
 .ai-row.is-off { opacity: .55; }
-.ai-row.is-dup { background: var(--surface-2); }
-.ai-row-head { display: flex; align-items: center; gap: var(--s-2); min-height: 32px; cursor: pointer; }
-.ai-row-head input { width: 18px; height: 18px; accent-color: var(--brand); }
-.ai-row-head b { font-size: var(--text-md); color: var(--ink); }
+.ai-row.is-dup { opacity: .72; background: var(--surface-2); }
+.ai-row.is-needar { border-color: color-mix(in srgb, var(--note) 45%, var(--line)); }
+.ai-row.is-another { border-inline-start: 3px solid var(--brand); }
+.ai-row-head { display: flex; align-items: center; gap: var(--s-2); min-height: 32px; flex-wrap: wrap; cursor: pointer; }
+.ai-row-head input { flex: none; width: 18px; height: 18px; accent-color: var(--brand); }
+.ai-row-title { display: flex; align-items: baseline; gap: var(--s-2); min-width: 0; flex: 1; }
+.ai-row-title b { font-size: var(--text-md); color: var(--ink); }
 .ai-row-meta { font-size: var(--text-xs); color: var(--ink-3); }
-.ai-row-dup { margin-inline-start: auto; font-size: var(--text-xs); font-weight: 600; color: var(--note-ink); background: var(--note-soft); border-radius: var(--r-pill); padding: 2px var(--s-2); }
-.ai-row-fields { display: grid; gap: var(--s-2); }
+.ai-row-status {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
+  border-radius: var(--r-pill); font-size: var(--text-2xs); font-weight: 700; white-space: nowrap;
+  background: var(--surface-2); color: var(--ink-2);
+}
+.ai-row-status .icon { width: 13px; height: 13px; }
+.ai-row-status.is-ok { background: var(--good-soft); color: var(--good); }
+.ai-row-status.is-another { background: var(--brand-soft); color: var(--brand); }
+.ai-row-status.is-needar { background: var(--note-soft); color: var(--note-ink); }
+.ai-row-status.is-dup, .ai-row-status.is-repeat { background: var(--surface-2); color: var(--ink-3); }
+.ai-row.is-dup .ai-row-title b { color: var(--ink-3); }
+.ai-row.is-dup .ai-row-fields { display: none; }   /* already in the library: just its name and the reason */
+.ai-row-context { display: flex; gap: 6px; align-items: flex-start; margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
+  background: var(--mark-soft); color: var(--on-mark-soft); font-size: var(--text-xs); line-height: 1.5; }
+.ai-row-context .icon { flex: none; margin-top: 2px; width: 14px; height: 14px; }
+.ai-row-fields { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: var(--s-2) var(--s-3); }
+.ai-field { display: grid; gap: 3px; min-width: 0; }
+.ai-field > span { font-size: var(--text-2xs); font-weight: 600; color: var(--ink-3); }
+.ai-field.is-wide { grid-column: 1 / -1; }
 .ai-row-fields input, .ai-row-fields textarea {
-  width: 100%; padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm);
+  width: 100%; min-width: 0; padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm);
   background: var(--surface-2); font: inherit; font-size: var(--text-sm); color: var(--ink); resize: vertical;
 }
 .ai-row-fields input[lang="ar"] { font-family: var(--font-arabic); font-size: calc(var(--text-sm) * var(--arabic-scale)); }
 .ai-row-fields input:focus, .ai-row-fields textarea:focus { background: var(--surface); }
 .ai-add-foot { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3) var(--s-4); margin-top: var(--s-3); }
 .ai-tags { flex: 1 1 220px; }
+
+/* Step 1 inputs (words, topic, count, Arabic). */
+.ai-in-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-2) var(--s-3); }
+.ai-in { display: grid; gap: 2px; font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; }
+.ai-in-wide { flex: 1 1 260px; }
+.ai-in input, .ai-in select {
+  width: 100%; min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface); font: inherit; font-size: var(--text-md); color: var(--ink);
+}
+.ai-in select { min-width: 84px; font-size: var(--text-sm); }
+
 @media (max-width: 599px) {
-  .ai-add-words, .ai-add .ai-fill, .ai-add .ai-review { margin-inline-start: 0; }
+  .ai-add-words, .ai-add .ai-fill, .ai-add .ai-review, .ai-in-row, .ai-add .ai-ask { margin-inline-start: 0; }
   .ai-add-btn { width: 100%; }
-}
-.ai-row.is-dup .ai-row-fields { display: none; }   /* already in the library: just its name and the note */
-.ai-row.is-dup { opacity: 1; }
-.ai-row.is-dup .ai-row-head b { color: var(--ink-3); }
-
-/* With AI → four ways in, and "Ask the AI" (open a chat with the prompt, or copy). */
-.ai-in-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-2) var(--s-3); margin-inline-start: calc(26px + var(--s-3)); }
-.ai-in { display: grid; gap: 2px; font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; }
-.ai-in-wide { flex: 1 1 260px; }
-.ai-in input, .ai-in select {
-  width: 100%; min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm);
-  background: var(--surface); font: inherit; font-size: var(--text-md); color: var(--ink);
-}
-.ai-in select { min-width: 84px; font-size: var(--text-sm); }
-.ai-ask { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-inline-start: calc(26px + var(--s-3)); }
-.ai-ask .btn { min-width: 0; }
-.ai-row-context { display: flex; gap: 6px; align-items: flex-start; margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
-  background: var(--mark-soft); color: var(--on-mark-soft); font-size: var(--text-xs); line-height: 1.5; }
-.ai-row-context .icon { flex: none; margin-top: 2px; width: 14px; height: 14px; }
-@media (max-width: 599px) {
-  .ai-in-row, .ai-ask { margin-inline-start: 0; }
-  .ai-ask .ai-ask-btn:not(.ai-copy-only) { flex: 1 1 calc(50% - var(--s-2)); }
-  .ai-ask .ai-copy-only { flex: 1 1 100%; }
-}
-
-/* With AI → four ways in, and "Ask the AI" (open a chat with the prompt, or copy). */
-.ai-in-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-2) var(--s-3); margin-inline-start: calc(26px + var(--s-3)); }
-.ai-in { display: grid; gap: 2px; font-size: var(--text-xs); color: var(--ink-3); font-weight: 600; }
-.ai-in-wide { flex: 1 1 260px; }
-.ai-in input, .ai-in select {
-  width: 100%; min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm);
-  background: var(--surface); font: inherit; font-size: var(--text-md); color: var(--ink);
-}
-.ai-in select { min-width: 84px; font-size: var(--text-sm); }
-.ai-ask { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-inline-start: calc(26px + var(--s-3)); }
-.ai-ask .btn { min-width: 0; }
-.ai-row-context { display: flex; gap: 6px; align-items: flex-start; margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
-  background: var(--mark-soft); color: var(--on-mark-soft); font-size: var(--text-xs); line-height: 1.5; }
-.ai-row-context .icon { flex: none; margin-top: 2px; width: 14px; height: 14px; }
-@media (max-width: 599px) {
-  .ai-in-row, .ai-ask { margin-inline-start: 0; }
-  .ai-ask .ai-ask-btn:not(.ai-copy-only) { flex: 1 1 calc(50% - var(--s-2)); }
-  .ai-ask .ai-copy-only { flex: 1 1 100%; }
+  .ai-row { padding: var(--s-3); }
+  /* One field per line on a phone: side by side, the tags field cut its
+     own value in half ("personali…"). */
+  .ai-row-fields { grid-template-columns: minmax(0, 1fr); }
+  .ai-row-status { margin-inline-start: 26px; }
 }
 
 /* Eight ways in: the tab row wraps on a computer and scrolls sideways on a phone

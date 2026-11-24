@@ -45,7 +45,7 @@ const log = (...a) => process.stderr.write("[vocabstudy-mcp] " + a.join(" ") + "
    progress changes: an assistant can help build the library, but the
    learner's memory (the recall schedule) is theirs. */
 const WORD_FIELDS = {
-  arabic: { type: "string", description: "Arabic meaning, short, Egyptian-friendly. Several meanings: separate with ' - '." },
+  arabic: { type: "string", description: "One Arabic meaning, short and Egyptian-friendly. To keep another meaning of the same English word, add it as a second item with its own arabic." },
   definition: { type: "string", description: "One simple English definition (learner-dictionary style)." },
   example: { type: "string", description: "One natural example sentence, 14 words or fewer, that uses the word." },
   type: { type: "string", description: "Part of speech: Noun, Verb, Adjective, Adverb, Phrasal verb, Phrase…" },
@@ -82,13 +82,14 @@ const TOOLS = [
     description: "Everything about one word: meanings, example, where they met it, their own sentences, their note, and where it stands on the recall schedule.",
     inputSchema: {
       type: "object",
-      properties: { word: { type: "string" }, sense: { type: "string", description: "Only when the library has the word twice with different senses." } },
+      properties: { word: { type: "string" }, sense: { type: "string", description: "Only when the library has the word twice with different senses." },
+        arabic: { type: "string", description: "One meaning, when the same English word is kept twice with different Arabic meanings (e.g. bank = ضفة / بنك)." } },
       required: ["word"], additionalProperties: false,
     },
   },
   {
     name: "add_words",
-    description: "Add new words to the learner's library (up to 50 at once). Give at least the English word; anything you leave out is filled in by the app's own dictionaries. Words already in the library are skipped. The learner sees what was added and can undo it.",
+    description: "Add new words to the learner's library (up to 50 at once). Give at least the English word; anything you leave out is filled in by the app's own dictionaries. One English word can be kept twice only when its Arabic meaning differs: give arabic for each meaning. The same word with the same Arabic is skipped. The learner sees what was added and can undo it.",
     inputSchema: {
       type: "object",
       properties: {
@@ -113,6 +114,7 @@ const TOOLS = [
       properties: {
         word: { type: "string" },
         sense: { type: "string" },
+        arabic: { type: "string", description: "Choose one meaning when the same word is kept with several Arabic meanings." },
         changes: { type: "object", properties: Object.assign({ note: { type: "string", description: "The learner's personal note on this word (a memory trick)." } }, WORD_FIELDS), additionalProperties: false },
       },
       required: ["word", "changes"], additionalProperties: false,
@@ -123,7 +125,9 @@ const TOOLS = [
     description: "Save a sentence the learner wrote with a word (their 'Use it' sentences, which come back as Recall cues). The app checks it first: if it has a mistake Arab learners often make, it is NOT saved and the problems are returned so you can help them fix it.",
     inputSchema: {
       type: "object",
-      properties: { word: { type: "string" }, sense: { type: "string" }, sentence: { type: "string" } },
+      properties: { word: { type: "string" }, sense: { type: "string" },
+        arabic: { type: "string", description: "Choose one meaning when the same word is kept with several Arabic meanings." },
+        sentence: { type: "string" } },
       required: ["word", "sentence"], additionalProperties: false,
     },
   },

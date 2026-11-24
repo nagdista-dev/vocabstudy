@@ -32,25 +32,38 @@
     recent: [],                   // ids added on this screen, newest first
   };
 
-  /* A row can be saved when it has a word, isn't in the library already,
-     and isn't repeated earlier in the same table. */
+  /* A row can be saved when it has a word, and when the same English word is
+     not already kept with the same Arabic meaning. A different Arabic meaning
+     is another word; without Arabic the two meanings cannot be told apart. */
   function mark(rows) {
-    const seen = new Set();
+    const seen = new Map();
     rows.forEach((r) => {
-      r.issues = r.issues.filter((i) => i.kind !== "dup");
+      r.issues = r.issues.filter((i) => !["dup", "repeat", "another", "needar"].includes(i.kind));
       if (!r.word) return;
-      const id = VS.wordKey(r.word, r.sense);
+      const base = VS.wordKey(r.word, r.sense);
+      const ar = VS.arKey(r.arabic);
+      const inLib = VS.words.filter((w) => VS.wordKey(w.word, w.sense) === base);
+      const before = seen.get(base) || [];
       // A likely typo (core/spelling.js, from the common-words list, nothing sent): a warning, never a block.
       r.issues = r.issues.filter((i) => !i.spell);
       const fix = !r.definition && VS.spelling.local(r.word);
       if (fix) r.issues.push({ kind: "warn", spell: true, text: `spelling? did you mean “${fix}”` });
-      if (VS.byId[id]) r.issues.push({ kind: "dup", text: "already in your library" });
-      else if (seen.has(id)) r.issues.push({ kind: "dup", text: "repeated in this list" });
-      seen.add(id);
+      const sameAr = (w) => VS.arKey(w.arabic) === ar;
+      if (ar && (inLib.some(sameAr) || before.some(sameAr))) {
+        const known = inLib.some(sameAr);
+        r.issues.push({ kind: known ? "dup" : "repeat",
+          text: known ? "already in your library with this meaning" : "repeated in this list" });
+      } else if (!ar && (inLib.length || before.length)) {
+        r.issues.push({ kind: "needar", text: "add its Arabic meaning — this word is already here with another meaning" });
+      } else if (inLib.length || before.length) {
+        r.issues.push({ kind: "another", text: "another meaning — kept as a second word" });
+      }
+      before.push({ arabic: r.arabic });
+      seen.set(base, before);
     });
     return rows;
   }
-  const savable = (rows) => rows.filter((r) => !r.issues.some((i) => i.kind === "error" || i.kind === "dup"));
+  const savable = (rows) => rows.filter((r) => !r.issues.some((i) => ["error", "dup", "repeat", "needar"].includes(i.kind)));
   const clean = (r) => {
     const w = {};
     ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "context", "source"].forEach((k) => { if (r[k]) w[k] = r[k]; });
@@ -61,8 +74,11 @@
 
   function statusOf(r) {
     if (r.issues.some((i) => i.kind === "error")) return ["bad", "Can't use"];
+    if (r.issues.some((i) => i.kind === "needar")) return ["needar", "Needs Arabic"];
     if (r.issues.some((i) => i.kind === "dup")) return ["dup", "In library"];
+    if (r.issues.some((i) => i.kind === "repeat")) return ["repeat", "Repeated"];
     if (r.issues.some((i) => i.kind === "warn")) return ["warn", "Check"];
+    if (r.issues.some((i) => i.kind === "another")) return ["another", "Another meaning"];
     return ["ok", "Ready"];
   }
 
@@ -90,24 +106,36 @@
    */
   VS.addWord = function (fields) {
     const w = VS.importer.checkWord(fields);
-    if (!VS.addWordReady(w.word, w.sense)) return null;
+    if (!VS.addWordReady(w.word, w.sense, w.arabic)) return null;
     if (!VS.autofill.enabled() && !w.arabic) { VS.toast("Add the Arabic meaning (auto-fill is off)."); return null; }
     const r = save([clean(Object.assign({}, w, { tags: fields.tags }))]);
+    if (!r.added.length) {
+      VS.toast(r.needsArabic.length
+        ? `“${w.word}” is already in your library — add the Arabic of this meaning to keep a second word.`
+        : "That word and meaning are already in your library.");
+      return null;
+    }
     VS.sfx.play("pop");
     return r.added[0] || null;
   };
 
   /**
    * The quick checks before a word is added (and before its spelling is
-   * checked): something typed, not Arabic, not in the library already.
+   * checked): something typed, not Arabic, and not already there with the
+   * same Arabic meaning. The same English word with another meaning is fine.
    * Returns the trimmed word, or "" with a toast saying why.
    */
-  VS.addWordReady = function (word, sense) {
+  VS.addWordReady = function (word, sense, arabic) {
     const t = String(word || "").trim();
     if (!t) { VS.toast("Type a word first."); return ""; }
     if (VS.isArabicTyping(t)) { VS.toast("That's Arabic — switch your keyboard to English."); return ""; }
-    const existing = VS.byId[VS.wordKey(t, sense)];
-    if (existing) { VS.toast(`“${existing.word}” is already in your library.`); return ""; }
+    const base = VS.wordKey(t, sense);
+    const twins = VS.words.filter((w) => VS.wordKey(w.word, w.sense) === base);
+    if (twins.length) {
+      const ar = VS.arKey(arabic);
+      if (!ar) { VS.toast(`“${twins[0].word}” is already in your library. Add the Arabic meaning of this one to keep another meaning.`); return ""; }
+      if (twins.some((w) => VS.arKey(w.arabic) === ar)) { VS.toast(`“${twins[0].word}” with that Arabic meaning is already in your library.`); return ""; }
+    }
     return t;
   };
 
@@ -173,37 +201,96 @@
     }).slice(0, 30);
   }
 
+  /* ── The words from the AI's answer: what can be added, and why not ──
+     One English word lives once per Arabic meaning. A second meaning is
+     welcome; the same meaning twice, or a second meaning with no Arabic to
+     tell it apart, waits for a fix. */
+  const aiSameWord = (word) => VS.words.filter((w) => VS.wordKey(w.word) === VS.wordKey(word));
+  function aiRowInfo(r, rows, i) {
+    if (!r.word) return { kind: "bad", text: "No word" };
+    const ar = VS.arKey(r.arabic);
+    const inLib = aiSameWord(r.word);
+    const before = rows.slice(0, i).filter((x) => VS.wordKey(x.word) === VS.wordKey(r.word));
+    const sameAr = (x) => VS.arKey(x.arabic) === ar;
+    if (!ar) return inLib.length || before.length
+      ? { kind: "needar", text: "Needs Arabic" }
+      : { kind: "ok", text: "Ready" };
+    if (inLib.some(sameAr)) return { kind: "dup", text: "In your library" };
+    if (before.some(sameAr)) return { kind: "repeat", text: "Repeated" };
+    if (inLib.length || before.length) return { kind: "another", text: "Another meaning" };
+    return { kind: "ok", text: "Ready" };
+  }
+  const aiRowBlocked = (info) => info.kind !== "ok" && info.kind !== "another";
+  const AI_STATUS_ICON = { ok: "check", another: "plus", needar: "translate", dup: "book", repeat: "copy", bad: "x" };
+
   /** Step 4: one card per word from the AI's answer — edit, untick, then add them all. */
   function aiReview() {
     const rows = st.ai.rows;
     if (!rows.length) return html`<p class="hint ai-review-empty">The words appear here, ready to check, once you paste the answer.</p>`;
-    const n = rows.filter((r) => r.keep && !r.dup).length;
+    const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
+    const n = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).length;
     return html`
       <ul class="ai-rows">
-        ${rows.map((r, i) => html`
-          <li class="ai-row ${r.dup ? "is-dup" : ""} ${r.keep && !r.dup ? "" : "is-off"}">
+        ${rows.map((r, i) => {
+          const info = infos[i];
+          const blocked = aiRowBlocked(info);
+          const on = r.keep && !blocked;
+          return html`
+          <li class="ai-row is-${info.kind} ${on ? "" : "is-off"}" data-ai-item="${i}">
             <label class="ai-row-head">
-              <input type="checkbox" data-ai-keep="${i}" ${r.keep && !r.dup ? VS.raw("checked") : ""} ${r.dup ? VS.raw("disabled") : ""}>
-              <b>${VS.cap(r.word)}</b>
-              <span class="ai-row-meta">${[r.type, r.level].filter(Boolean).join(" · ")}</span>
-              ${r.dup ? html`<span class="ai-row-dup">Already in your words</span>` : ""}
+              <input type="checkbox" data-ai-keep="${i}" ${on ? VS.raw("checked") : ""} ${blocked ? VS.raw("disabled") : ""}>
+              <span class="ai-row-title"><b>${VS.cap(r.word)}</b>
+                <span class="ai-row-meta">${[r.type, r.level].filter(Boolean).join(" · ")}</span></span>
+              <span class="ai-row-status is-${info.kind}" data-ai-status>${icon(AI_STATUS_ICON[info.kind] || "info", "icon-sm")}${info.text}</span>
             </label>
             ${r.context ? html`<p class="ai-row-context">${icon("book", "icon-sm")}<span>${r.context}</span></p>` : ""}
             <div class="ai-row-fields">
-              <input dir="rtl" lang="ar" data-ai-row="${i}" data-ai-k="arabic" value="${r.arabic || ""}" placeholder="Arabic meaning" aria-label="Arabic meaning of ${r.word}">
-              <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="definition" placeholder="Definition" aria-label="Definition of ${r.word}">${r.definition || ""}</textarea>
-              <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="example" placeholder="Example sentence" aria-label="Example for ${r.word}">${r.example || ""}</textarea>
+              <label class="ai-field"><span>Arabic</span>
+                <input dir="rtl" lang="ar" data-ai-row="${i}" data-ai-k="arabic" value="${r.arabic || ""}" placeholder="المعنى بالعربية" aria-label="Arabic meaning of ${r.word}"></label>
+              <label class="ai-field"><span>Tags</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="tags" value="${r.tags || ""}" placeholder="work, travel" list="tagList" autocomplete="off" aria-label="Tags for ${r.word}"></label>
+              <label class="ai-field is-wide"><span>Definition</span>
+                <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="definition" placeholder="What it means, in simple English" aria-label="Definition of ${r.word}">${r.definition || ""}</textarea></label>
+              <label class="ai-field is-wide"><span>Example</span>
+                <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="example" placeholder="A sentence that uses it" aria-label="Example for ${r.word}">${r.example || ""}</textarea></label>
             </div>
-          </li>`)}
+          </li>`;
+        })}
       </ul>
       <div class="ai-add-foot">
         <label class="form-field ai-tags"><span>Tags for all (optional)</span>
           <input dir="auto" data-ai-tags value="${st.ai.tags}" placeholder="IELTS, work" list="tagList" autocomplete="off"></label>
         ${VS.ui.tagList()}
         <button class="btn btn-primary btn-lg ai-add-btn" type="button" data-action="ai-add" ${n ? "" : VS.raw("disabled")}>${icon("plus", "icon-sm")}
-          ${n === 1 ? "Add 1 word" : "Add " + n + " words"}</button>
-        <span class="hint">Nothing is added until you press Add.</span>
+          <span data-add-label>${n === 1 ? "Add 1 word" : "Add " + n + " words"}</span></button>
+        <span class="hint">Nothing is added until you press Add. A second meaning of a word you already have is fine — the Arabic keeps it apart.</span>
       </div>`;
+  }
+
+  /** Redraw the cards' statuses, checkboxes and the Add button in place, so typing keeps focus. */
+  function refreshAiReview() {
+    const review = VS.$("#aiReview");
+    if (!review || !st.ai.rows.length) return;
+    const rows = st.ai.rows;
+    const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
+    VS.$$("[data-ai-item]", review).forEach((li) => {
+      const i = Number(li.dataset.aiItem);
+      const info = infos[i];
+      const blocked = aiRowBlocked(info);
+      const on = rows[i].keep && !blocked;
+      li.className = "ai-row is-" + info.kind + (on ? "" : " is-off");
+      const box = li.querySelector("[data-ai-keep]");
+      if (box) { box.checked = on; box.disabled = blocked; }
+      const chip = li.querySelector("[data-ai-status]");
+      if (chip) chip.innerHTML = String(html`${icon(AI_STATUS_ICON[info.kind] || "info", "icon-sm")}${info.text}`);
+    });
+    const n = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).length;
+    const btn = review.querySelector('[data-action="ai-add"]');
+    if (btn) {
+      btn.disabled = !n;
+      const label = btn.querySelector("[data-add-label]");
+      if (label) label.textContent = n === 1 ? "Add 1 word" : "Add " + n + " words";
+    }
   }
 
   /* ── The three AI tabs: With AI (your words) · By topic · From Arabic ──
@@ -251,7 +338,7 @@
   };
   function aiTab() {
     const ready = aiReady();
-    const off = ready ? "" : VS.raw('disabled title="' + (VS.profileSet() ? "Fill in step 1 first" : "Choose your level and Arabic first") + '"');
+    const title = ready ? "" : VS.profileSet() ? "Fill in step 1 first" : "Choose your level and Arabic first";
     return html`
       <div class="ai-add">
         ${VS.levelPick()}
@@ -265,25 +352,21 @@
           <span class="ai-step-n" aria-hidden="true">2</span>
           <div class="ai-step-copy"><b>Ask the AI</b><span>Open a chat with the prompt already typed — or copy it for Gemini.</span></div>
         </div>
-        <div class="ai-ask">
-          <button class="btn btn-tonal ai-copy-btn ai-ask-btn ${ready ? "is-ready" : ""}" type="button" data-action="ai-open" data-to="chatgpt" ${off} title="Open ChatGPT with the prompt ready"><span>ChatGPT</span>${icon("arrow-right", "icon-sm")}</button>
-          <button class="btn ai-ask-btn" type="button" data-action="ai-open" data-to="claude" ${off} title="Open Claude with the prompt ready"><span>Claude</span>${icon("arrow-right", "icon-sm")}</button>
-          <button class="btn btn-quiet ai-ask-btn ai-copy-only" type="button" data-action="add-ai-copy" ${off}>${icon("text", "icon-sm")}<span>Copy</span></button>
-        </div>
+        ${VS.aiAsk({ openAction: "ai-open", copyAction: "add-ai-copy", disabled: !ready, title })}
 
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">3</span>
-          <div class="ai-step-copy"><b>Paste its answer</b><span>Copy the AI's reply and paste it here.</span></div>
+          <div class="ai-step-copy"><b>Paste its answer</b><span>Copy the AI's reply and paste it here — tags included.</span></div>
         </div>
         <div class="ai-fill">
           <textarea class="ai-fill-input" rows="4" dir="auto" data-ai-add aria-label="The AI's answer"
-            placeholder="word: …&#10;arabic: …&#10;definition: …">${st.ai.answer}</textarea>
+            placeholder="word: …&#10;arabic: …&#10;definition: …&#10;tags: …">${st.ai.answer}</textarea>
           <p class="ai-fill-status" aria-live="polite" hidden></p>
         </div>
 
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">4</span>
-          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything, or untick a word to skip it.</span></div>
+          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything, add a tag per word, or untick one to skip it.</span></div>
         </div>
         <div class="ai-review" id="aiReview">${aiReview()}</div>
       </div>`;
@@ -413,7 +496,7 @@
   const gloss = {};
   async function glossPicked() {
     if (!VS.autofill.enabled() || !navigator.onLine) return;
-    const todo = pickedPhrases().map((p) => p.word).filter((w) => !(w in gloss) && !VS.byId[VS.wordKey(w)]);
+    const todo = pickedPhrases().map((p) => p.word).filter((w) => !(w in gloss) && !VS.findWord(w));
     if (!todo.length) return;
     todo.forEach((w) => { gloss[w] = ""; });
     try {
@@ -425,7 +508,7 @@
     if (chips) chips.outerHTML = String(chipsMarkup(pickedPhrases()));
   }
   const chipsMarkup = (phrases) => html`<p class="row collect-chips">${phrases.map((p) => {
-    const known = VS.byId[VS.wordKey(p.word)];
+    const known = VS.findWord(p.word);
     const ar = known ? known.arabic : gloss[p.word];
     return html`<span class="${known ? "collect-chip is-known" : "collect-chip"}"><b>${p.word}</b>${ar ? html`<bdi lang="ar" dir="rtl">${ar}</bdi>` : ""}</span>`;
   })}</p>`;
@@ -440,11 +523,11 @@
         if (!t.word) return i > 0 && list[i - 1].word ? t.text.replace(/^[^\s]+/, "") : t.text;   // its leading punctuation went with the word before
         // A word keeps the punctuation right after it ("sick.") on its line.
         const tail = ((list[i + 1] && !list[i + 1].word && list[i + 1].text.match(/^[^\s]+/)) || [""])[0];
-        return html`<span class="tok-wrap"><button type="button" class="${VS.byId[VS.wordKey(t.text)] ? "tok is-known" : "tok"}" data-action="collect-tok" data-i="${i}" aria-pressed="${c.picked.has(i)}">${t.text}</button>${tail}</span>`;
+        return html`<span class="tok-wrap"><button type="button" class="${VS.findWord(t.text) ? "tok is-known" : "tok"}" data-action="collect-tok" data-i="${i}" aria-pressed="${c.picked.has(i)}">${t.text}</button>${tail}</span>`;
       })}</p>
       ${adjacentPicks() ? html`<label class="check collect-join"><input type="checkbox" data-collect-join ${st.collect.join ? VS.raw("checked") : ""}>
         <span>Join words next to each other into one phrase</span></label>` : ""}
-      <p class="hint">Tap each word you don't know.${list.some((t) => t.word && VS.byId[VS.wordKey(t.text)]) ? " Dotted words are already in your library." : ""}</p>
+      <p class="hint">Tap each word you don't know.${list.some((t) => t.word && VS.findWord(t.text)) ? " Dotted words are already in your library." : ""}</p>
       ${phrases.length ? html`
         <div class="collect-picked">
           ${chipsMarkup(phrases)}
@@ -452,7 +535,7 @@
             <input dir="auto" id="collectSource" value="${c.source}" placeholder="A series, an article, an email…" autocomplete="off"></label>
           <div class="row">
             <button class="btn btn-primary btn-lg" type="button" data-action="collect-save">${icon("plus", "icon-sm")}
-              Add ${VS.plural(phrases.filter((p) => !VS.byId[VS.wordKey(p.word)]).length, "word")}</button>
+              Add ${VS.plural(phrases.filter((p) => !VS.findWord(p.word)).length, "word")}</button>
             <button class="btn btn-quiet" type="button" data-action="collect-clear">Clear picks</button>
           </div>
         </div>` : ""}`;
@@ -592,7 +675,10 @@
         <p class="import-summary">
           <span class="badge is-known">${count("ok")} ready</span>
           ${count("warn") ? html`<span class="badge is-learning">${count("warn")} to check</span>` : ""}
+          ${count("another") ? html`<span class="badge is-known">${count("another")} another meaning</span>` : ""}
+          ${count("needar") ? html`<span class="badge is-learning">${count("needar")} need Arabic</span>` : ""}
           ${count("dup") ? html`<span class="badge">${count("dup")} already in library</span>` : ""}
+          ${count("repeat") ? html`<span class="badge">${count("repeat")} repeated</span>` : ""}
           ${count("bad") ? html`<span class="badge is-bad">${count("bad")} can't be used</span>` : ""}
           <span class="hint">${st.parsed.hasHeader ? "Columns read from your header row." : "No header row: columns read in the standard order."}</span>
         </p>
@@ -725,18 +811,15 @@
         });
       });
       // With AI: words typed, answer pasted, cards edited — all kept in st.ai.
-      // Step 1 → the step-2 buttons wake up together (once, with a pulse on the main one).
-      const askBtns = VS.$$(".ai-ask .ai-ask-btn, .ai-add > .ai-step .ai-copy-btn", root);
+      // Step 1 → the step-2 buttons wake up together (once, with a pulse).
+      const askBtns = VS.$$(".ai-ask .ai-provider", root);
       const wake = () => {
         const ready = aiReady();
+        const why = !VS.profileSet() ? "Choose your level and Arabic first" : st.ai.mode === "words" ? "Type a word first" : "Fill in step 1 first";
         askBtns.forEach((btn) => {
-          if (ready && btn.disabled) {
-            btn.disabled = false; btn.removeAttribute("title");
-            if (btn.classList.contains("ai-copy-btn")) { btn.classList.add("is-ready", "just-ready"); setTimeout(() => btn.classList.remove("just-ready"), 1000); }
-          } else if (!ready && !btn.disabled) {
-            btn.disabled = true; btn.title = !VS.profileSet() ? "Choose your level and Arabic first" : st.ai.mode === "words" ? "Type a word first" : "Fill in step 1 first";
-            btn.classList.remove("is-ready", "just-ready");
-          }
+          if (!btn.dataset.tip) btn.dataset.tip = btn.title;
+          btn.disabled = !ready;
+          btn.title = ready ? btn.dataset.tip : why;
         });
       };
       const words = VS.$("[data-ai-words]", root);
@@ -756,29 +839,37 @@
         if (st.ai.mode === "words" && rows.length === 1 && !rows[0].word && typed.length === 1) rows[0].word = typed[0];
         rows = rows.filter((r) => r.word && !VS.isArabicTyping(r.word));
         st.ai.rows = rows.map((r) => {
-          const row = Object.assign({ keep: true, dup: !!VS.byId[VS.wordKey(r.word, "")] }, r);
+          const row = Object.assign({ keep: true }, r);
           const m = walletMatch(r.word);
           if (m) { row.walletId = m.id; if (m.context) row.context = m.context; if (m.source) row.source = m.source; }
           return row;
         });
         if (review) review.innerHTML = String(aiReview());
-        const fine = st.ai.rows.filter((r) => !r.dup);
+        const infos = st.ai.rows.map((r, i) => aiRowInfo(r, st.ai.rows, i));
+        const fine = st.ai.rows.filter((r, i) => !aiRowBlocked(infos[i]));
+        const skipped = st.ai.rows.length - fine.length;
         VS.aiFillStatus(aiBox.closest(".ai-fill"), fine.map((r) => r.word), !!aiBox.value.trim());
         const status = aiBox.closest(".ai-fill").querySelector(".ai-fill-status");
-        if (status && fine.length) status.innerHTML = String(html`${icon("check", "icon-sm")}<span><b>${VS.plural(fine.length, "word")} ready</b> — check them below.</span>`);
+        if (status && st.ai.rows.length) {
+          status.hidden = false;
+          status.classList.toggle("is-ok", fine.length > 0);
+          status.innerHTML = fine.length
+            ? String(html`${icon("check", "icon-sm")}<span><b>${VS.plural(fine.length, "word")} ready</b>${skipped ? " — " + skipped + " skipped" : ""} — check them below.</span>`)
+            : String(html`${icon("info", "icon-sm")}<span>Nothing can be added yet — give each second meaning its own Arabic.</span>`);
+        }
       };
       if (aiBox) aiBox.addEventListener("input", readAnswer);
       if (review) {
         review.addEventListener("input", (e) => {
           const i = e.target.dataset.aiRow;
-          if (i != null) st.ai.rows[Number(i)][e.target.dataset.aiK] = e.target.value;
+          if (i != null) { st.ai.rows[Number(i)][e.target.dataset.aiK] = e.target.value; refreshAiReview(); }
           if (e.target.matches("[data-ai-tags]")) st.ai.tags = e.target.value;
         });
         review.addEventListener("change", (e) => {
           const i = e.target.dataset.aiKeep;
           if (i == null) return;
           st.ai.rows[Number(i)].keep = e.target.checked;
-          review.innerHTML = String(aiReview());
+          refreshAiReview();
         });
       }
       VS.ui.watchKeyboard(VS.$("#addWord", root), { lookup: true });
@@ -820,9 +911,11 @@
         st.tab = el.dataset.value; lastIn[groupOf(st.tab)] = st.tab; st.saved = ""; VS.app.render();
       },
       "ai-add"() {
-        const tags = VS.parseTags(st.ai.tags);
-        const words = st.ai.rows.filter((r) => r.keep && !r.dup).map((r) => {
-          const w = { word: r.word, tags: tags.slice() };
+        const globalTags = VS.parseTags(st.ai.tags);
+        const rows = st.ai.rows;
+        const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
+        const words = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).map((r) => {
+          const w = { word: r.word, tags: [...new Set(VS.parseTags(r.tags).concat(globalTags))] };
           ["arabic", "definition", "example", "type", "level", "ipa", "context", "source"].forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
           if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
           return w;
@@ -832,7 +925,9 @@
         // A wallet word the AI turned into its base form ("postponed" → "postpone") leaves the wallet too.
         const addedKeys = new Set(r.added.map((w) => VS.wordKey(w.word)));
         st.ai.rows.forEach((row) => { if (row.walletId && addedKeys.has(VS.wordKey(row.word))) VS.store.walletRemove(row.walletId); });
-        VS.sfx.play("pop");
+        if (r.added.length) VS.sfx.play("pop");
+        if (r.needsArabic.length) VS.toast(`“${r.needsArabic[0].word}” is already in your library — add this meaning's Arabic to keep a second word.`);
+        else if (!r.added.length) { VS.toast("Those words and meanings are already in your library."); VS.app.render(); return; }
         // Added: every field is empty again, ready for the next words (tags kept on purpose).
         Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {} });
         VS.app.render();
@@ -856,9 +951,16 @@
         const c = st.collect;
         const src = VS.$("#collectSource");
         if (src) c.source = src.value.trim();
-        const fresh = pickedPhrases().filter((p) => !VS.byId[VS.wordKey(p.word)]);
-        if (!fresh.length) { VS.toast("Those words are already in your library."); return; }
-        const r = save(fresh.map((p) => ({ word: p.word, context: p.context, source: c.source, tags: [] })));
+        // The gloss fetched for the appointment is the meaning: it keeps a word
+        // already in the library apart from a genuinely different meaning.
+        const fresh = pickedPhrases().filter((p) => {
+          const twins = VS.words.filter((w) => VS.wordKey(w.word) === VS.wordKey(p.word));
+          if (!twins.length) return true;
+          const ar = VS.arKey(gloss[p.word] || "");
+          return !!ar && !twins.some((w) => VS.arKey(w.arabic) === ar);
+        });
+        if (!fresh.length) { VS.toast("Those words are already in your library — or their meanings are."); return; }
+        const r = save(fresh.map((p) => ({ word: p.word, arabic: gloss[p.word] || "", context: p.context, source: c.source, tags: [] })));
         c.picked = new Set(); c.text = ""; c.source = "";
         c.done = `Added ${VS.plural(r.added.length, "word")}, each with its sentence.`;
         VS.sfx.play("done");
@@ -880,7 +982,7 @@
           st.form.word = en;
           if (input) input.value = en;
         }
-        if (!VS.addWordReady(st.form.word, st.form.sense)) return;
+        if (!VS.addWordReady(st.form.word, st.form.sense, st.form.arabic)) return;
         // A typo would be taught as the right answer: ask first (core/spelling.js).
         const word = fromArabic ? st.form.word : await VS.spelling.confirm(st.form.word, input && input.closest(".add-line"));
         if (!word) return;

@@ -110,8 +110,8 @@
   /** The "arabic:" line of every prompt: meanings in the learner's own Arabic. */
   VS.aiArabicLine = () => {
     const d = VS.myDialect();
-    return "arabic: <short Arabic meaning written in " + (d ? d[1] : "Modern Standard Arabic") +
-      (d && !/Standard/.test(d[1]) ? ", the way people there really say it" : "") + "; several meanings separated by \" - \">";
+    return "arabic: <one short Arabic meaning written in " + (d ? d[1] : "Modern Standard Arabic") +
+      (d && !/Standard/.test(d[1]) ? ", the way people there really say it" : "") + " — for THIS meaning only>";
   };
   /** One quiet line where the AI is used: who it writes for, and Change. */
   VS.levelPick = () => {
@@ -198,6 +198,7 @@
       "level: <A1, A2, B1, B2, C1 or C2>",
       "ipa: </IPA/>",
       "synonyms: <up to 4, comma-separated>",
+      "tags: <1–3 short tags that fit THIS word and THIS meaning, comma-separated — a topic or situation, e.g. work, travel, emotions>",
     ];
     return lines.filter((l, i) => l || i === 3).join("\n");
   }
@@ -216,6 +217,9 @@
     "type: <Noun, Verb, Adjective, Adverb, Phrase, Phrasal Verb or Idiom>",
     "level: <A1, A2, B1, B2, C1 or C2>",
     "ipa: </IPA/>",
+    "tags: <1–3 short tags that fit THIS word and THIS meaning, comma-separated — a topic or situation, e.g. work, travel, emotions>",
+    "",
+    "If a word has two common meanings, give it two blocks — same word, each with its own arabic and tags.",
   ];
 
   /** Several words I already know I want. */
@@ -235,7 +239,7 @@
   /** Arabic I know → the natural English for it. */
   VS.aiPromptArabic = (arabic) => [
     meLine() + " For EACH Arabic word or phrase below, give the most natural English word or phrase with that meaning, as one block.",
-    "Keep my Arabic in the “arabic” line (you may add a closer meaning after \" - \").",
+    "Keep my Arabic in the “arabic” line — one meaning, as I wrote it.",
     arabic.join("\n"),
     ...aiBlocks(false)].join("\n");
   /**
@@ -267,6 +271,7 @@
     definition: "definition", "english definition": "definition", example: "example", "example sentence": "example",
     type: "type", "part of speech": "type", pos: "type", level: "level", cefr: "level", "cefr level": "level",
     ipa: "ipa", pronunciation: "ipa", synonyms: "synonyms", "similar words": "synonyms", similar: "synonyms",
+    tags: "tags", tag: "tags", "topic tags": "tags", topics: "tags", "الوسوم": "tags", "وسوم": "tags",
     context: "context", sentence: "context", "where i met it": "context",
   };
   /** The AI's answer → { field: value } (only fields that look right). */
@@ -295,6 +300,7 @@
       if (k === "example" && v.split(/\s+/).length > 22) return;
       if (k === "context") v = v.slice(0, 300);
       if (k === "synonyms") v = VS.parseTags(v).slice(0, 6).join(", ");
+      if (k === "tags") v = VS.parseTags(v).slice(0, 3).join(", ");
       out[k] = v.slice(0, 400);
     });
     return out;
@@ -313,10 +319,37 @@
     if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
     VS.toast(fits ? "Opened with your prompt — send it, then copy the answer back here." : "The prompt is long: it's copied — paste it in the chat.");
   };
+  /**
+   * The three ways to ask an AI — one row everywhere (Add words with AI and
+   * the "Fill it in with AI" panel): ChatGPT, Claude and Copy. On a phone
+   * they stack in two balanced rows; on a computer they sit side by side.
+   */
+  VS.aiAsk = ({ openAction, copyAction, id, disabled, title }) => {
+    const more = id ? VS.raw(' data-id="' + VS.escape(id) + '"') : "";
+    const off = disabled ? VS.raw(" disabled") : "";
+    const t = (fallback) => title || fallback;
+    return html`
+      <div class="ai-ask" role="group" aria-label="Ask an AI">
+        <button class="btn ai-provider is-chatgpt" type="button" data-action="${openAction}" data-to="chatgpt"${more}${off} title="${t("Open ChatGPT with the prompt ready")}">
+          <span class="ai-provider-ico">${icon("openai", "icon-brand")}</span>
+          <span class="ai-provider-copy"><b>ChatGPT</b><small>Open with the prompt</small></span>
+          ${icon("external", "icon-sm ai-provider-go")}
+        </button>
+        <button class="btn ai-provider is-claude" type="button" data-action="${openAction}" data-to="claude"${more}${off} title="${t("Open Claude with the prompt ready")}">
+          <span class="ai-provider-ico">${icon("claude", "icon-brand")}</span>
+          <span class="ai-provider-copy"><b>Claude</b><small>Open with the prompt</small></span>
+          ${icon("external", "icon-sm ai-provider-go")}
+        </button>
+        <button class="btn ai-provider is-copy" type="button" data-action="${copyAction}"${more}${off} title="${t("Copy the prompt for Gemini or any chat")}">
+          <span class="ai-provider-ico">${icon("copy", "icon-sm")}</span>
+          <span class="ai-provider-copy"><b data-copy-label>Copy prompt</b><small>For Gemini or any chat</small></span>
+        </button>
+      </div>`;
+  };
   VS.aiFill = ({ action, id, paste, done, wide }) => html`
     <details class="ai-fill ${wide ? "is-wide" : ""}">
       <summary>
-        <span class="ai-fill-ico">${icon("bolt", "icon-sm")}</span>
+        <span class="ai-fill-ico">${icon("sparkles", "icon-sm")}</span>
         <span class="ai-fill-title"><b>Fill it in with AI</b><small>Free with ChatGPT, Claude or Gemini</small></span>
         ${icon("chevron-right", "icon-sm ai-fill-chev")}
       </summary>
@@ -326,11 +359,7 @@
           <span class="ai-step-n" aria-hidden="true">1</span>
           <div class="ai-step-copy"><b>Ask the AI</b><span>Open a chat with the prompt already typed — or copy it for Gemini.</span></div>
         </div>
-        <div class="ai-ask">
-          <button class="btn btn-tonal ai-copy-btn ai-ask-btn is-ready" type="button" data-action="ai-fill-open" data-to="chatgpt" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""} title="Open ChatGPT with the prompt ready"><span>ChatGPT</span>${icon("arrow-right", "icon-sm")}</button>
-          <button class="btn ai-ask-btn" type="button" data-action="ai-fill-open" data-to="claude" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""} title="Open Claude with the prompt ready"><span>Claude</span>${icon("arrow-right", "icon-sm")}</button>
-          <button class="btn btn-quiet ai-ask-btn ai-copy-only" type="button" data-action="${action}" ${id ? VS.raw('data-id="' + VS.escape(id) + '"') : ""}>${icon("text", "icon-sm")}<span>Copy</span></button>
-        </div>
+        ${VS.aiAsk({ openAction: "ai-fill-open", copyAction: action, id })}
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">2</span>
           <div class="ai-step-copy"><b>Paste its answer</b><span>The fields fill in by themselves.</span></div>
@@ -353,11 +382,17 @@
   };
   VS.aiCopied = (btn) => {
     if (!btn) return;
-    const label = btn.querySelector("span");
+    const label = btn.querySelector("[data-copy-label]") || btn.querySelector("span");
     btn.classList.add("is-done");
-    if (label) label.textContent = "Copied";
+    if (label) {
+      if (!label.dataset.rest) label.dataset.rest = label.textContent;
+      label.textContent = "Copied";
+    }
     clearTimeout(btn._t);
-    btn._t = setTimeout(() => { btn.classList.remove("is-done"); if (label) label.textContent = "Copy"; }, 2200);
+    btn._t = setTimeout(() => {
+      btn.classList.remove("is-done");
+      if (label && label.dataset.rest) label.textContent = label.dataset.rest;
+    }, 2200);
   };
 
   /**
@@ -439,7 +474,9 @@
     LIST_FIELDS.forEach((k) => { changes[k] = VS.parseTags(changes[k]); });
     if (!changes.word || !changes.arabic) { VS.toast("The word and its Arabic meaning are needed."); return; }
     const result = VS.store.editUserWord(el.dataset.id, changes);
-    if (result.error === "duplicate") { VS.toast("“" + result.word.word + "” is already in your library."); return; }
+    if (result.error === "duplicate") { VS.toast("“" + result.word.word + "” with that Arabic meaning is already in your library."); return; }
+    if (result.error === "needsArabic") { VS.toast("“" + result.word.word + "” is already in your library — add this meaning's Arabic to keep a second word."); return; }
+    if (result.error) { VS.toast("That word is no longer in your library."); return; }
     location.reload();                 // rebuild every list with the new version
   };
   // Cancel goes back to the word page, open where it was — not to a closed list.
@@ -782,8 +819,8 @@
     if (popFor === el) { closePop(true); return; }
     closePop();
     const word = el.dataset.word;
+    const known = VS.findWord(word);
     const id = VS.wordKey(word);
-    const known = !!VS.byId[id];
     const kept = VS.store.wallet().some((e) => e.id === id);
     pop = document.createElement("div");
     pop.className = "word-pop";
@@ -964,9 +1001,10 @@
       note.hidden = true;
       after.insertAdjacentElement("afterend", note);
       const update = () => {
-        const w = VS.byId[VS.wordKey(input.value)];
+        const twins = VS.words.filter((w) => VS.wordKey(w.word) === VS.wordKey(input.value) && input.value.trim());
+        const w = twins[0];
         note.hidden = !w;
-        note.innerHTML = w ? String(html`${icon("check", "icon-sm")} <span>“${w.word}” is already in your library.</span>
+        note.innerHTML = w ? String(html`${icon("check", "icon-sm")} <span>“${w.word}” is already in your library${twins.length > 1 ? " (" + twins.length + " meanings)" : ""}. Add a different Arabic meaning to keep another one.</span>
           <a href="#/words?q=${encodeURIComponent(w.word)}">Show it</a>`) : "";
       };
       input.addEventListener("input", update);

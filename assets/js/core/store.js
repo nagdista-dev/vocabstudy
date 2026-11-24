@@ -75,6 +75,11 @@
   const listeners = [];
   let lastUndo = null;     // the last grade, so a mis-tap can be taken back
 
+  /* A library entry's id: the headword, its sense, and the hidden variant that
+     keeps two Arabic meanings of one English word apart (core/vs.js). */
+  const rawIndex = (id) => state.library.findIndex((x) => VS.idOf(x) === id);
+  const rawOf = (id) => { const i = rawIndex(id); return i < 0 ? null : state.library[i]; };
+
   /* One compact row per study day: [answers, right, seconds, new words, mastered total].
      Kept for every day you study — the Stats screen draws from it. */
   function logToday() {
@@ -358,7 +363,8 @@
       const text = String(word || "").trim().replace(/\s+/g, " ").slice(0, 80);
       const id = VS.wordKey(text);
       if (!text || !id) return { ok: false };
-      if (VS.byId[id]) return { ok: false, inLibrary: true, id };
+      const known = VS.findWord(text);
+      if (known) return { ok: false, inLibrary: true, id: known.id };
       const list = state.wallet || (state.wallet = []);
       const found = list.find((e) => e.id === id);
       if (found) return { ok: true, entry: found, existed: true };
@@ -439,23 +445,54 @@
       let data;
       try { data = JSON.parse(text); } catch (e) { return false; }
       if (!data || data.app !== "vocabstudy" || typeof data.words !== "object") return false;
+      // A word with the same meaning may have another id here (an old backup,
+      // or its first meaning was deleted). A word whose meaning is new gets the
+      // id it will have in this library — possibly a variant — and its progress
+      // follows it there instead of landing on another meaning of the word.
+      const remap = {};
+      const link = (oldId, id) => { if (!(oldId in remap)) remap[oldId] = id; };
+      const incoming = [];
+      (data.library || []).forEach((w) => {
+        if (!w || !w.word) return;
+        const oldId = VS.idOf(w);
+        const same = VS.findSameWord(w.word, w.sense, w.arabic);
+        if (same) { link(oldId, same.id); return; }
+        const base = VS.wordKey(w.word, w.sense);
+        const ar = VS.arKey(w.arabic);
+        const sameIncoming = incoming.find((x) => VS.wordKey(x.word, x.sense) === base && VS.arKey(x.arabic) === ar);
+        if (sameIncoming) { link(oldId, sameIncoming.id); return; }
+        const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === base).concat(incoming);
+        let variant = String(w.variant || "").trim();
+        if (twins.length) {
+          if (!ar) return;                       // no Arabic: two meanings can't be told apart
+          if (!variant) variant = twins.some((x) => !x.variant) ? ar : "";
+          let n = 2;
+          const want = variant;
+          while (variant && twins.some((x) => x.variant === variant)) variant = want + "-" + n++;
+        }
+        const id = VS.wordId(w.word, w.sense, variant);
+        if (VS.byId[id] || incoming.some((x) => x.id === id)) { link(oldId, id); return; }
+        incoming.push(Object.assign({}, w, { variant, id }));
+        link(oldId, id);
+      });
       Object.entries(data.words).forEach(([id, p]) => {
+        const target = remap[id] || id;
         const theirs = unpack(p);
-        const ours = state.words[id] ? unpack(state.words[id]) : null;
+        const ours = state.words[target] ? unpack(state.words[target]) : null;
         if (!ours || theirs[0] > ours[0] || (theirs[0] === ours[0] && theirs[1] > ours[1])) {
-          state.words[id] = [theirs[0], theirs[1], Math.max(theirs[2], ours ? ours[2] : 0), Math.max(theirs[3], ours ? ours[3] : 0)];
+          state.words[target] = [theirs[0], theirs[1], Math.max(theirs[2], ours ? ours[2] : 0), Math.max(theirs[3], ours ? ours[3] : 0)];
         }
       });
       Object.entries(data.notes || {}).forEach(([id, n]) => {
-        if (!state.notes[id]) state.notes[id] = n;
-        else if (state.notes[id] !== n && !state.notes[id].includes(n)) state.notes[id] += " · " + n;
+        const target = remap[id] || id;
+        if (!state.notes[target]) state.notes[target] = n;
+        else if (state.notes[target] !== n && !state.notes[target].includes(n)) state.notes[target] += " · " + n;
       });
-      const mine = new Set(state.library.map((w) => VS.wordKey(w.word, w.sense)));
-      (data.library || []).forEach((w) => {
-        const k = VS.wordKey(w.word, w.sense);
-        if (!w.word || mine.has(k)) return;
-        mine.add(k);
+      incoming.forEach((w) => {
+        if (VS.byId[w.id]) return;
         state.library.push(w);
+        VS.words.push(w);
+        VS.byId[w.id] = w;
       });
       Object.entries(data.history || {}).forEach(([day, row]) => {
         const mineRow = state.history[day];
@@ -468,7 +505,7 @@
       const wallet = state.wallet || (state.wallet = []);
       const kept = new Set(wallet.map((e) => e.id));
       (Array.isArray(data.wallet) ? data.wallet : []).forEach((e) => {
-        if (!e || !e.word || !e.id || kept.has(e.id) || VS.byId[e.id]) return;
+        if (!e || !e.word || !e.id || kept.has(e.id) || VS.findWord(e.word)) return;
         wallet.push(e);
         kept.add(e.id);
       });
@@ -506,44 +543,65 @@
     },
 
     /**
-     * Change one of your words. If the word or its sense changes, its id
-     * changes too — progress and note move to the new id, so nothing is lost.
-     * Returns { id } or { error: "duplicate", word } when the new spelling is
-     * already in the library. The page reloads after edits (views/shared.js).
+     * Change one of your words. If the word, its sense or its Arabic meaning
+     * changes, its id changes too — progress and note move to the new id, so
+     * nothing is lost. The same English word may stay twice only when its
+     * Arabic meaning differs.
+     * Returns { id }, { error: "duplicate", word } or { error: "needsArabic", word }.
+     * The page reloads after edits (views/shared.js).
      */
     editUserWord(id, changes) {
-      const i = state.library.findIndex((x) => VS.wordKey(x.word, x.sense) === id);
+      const i = rawIndex(id);
       if (i < 0) return { error: "missing" };
-      const next = Object.assign({}, state.library[i], changes);
+      const prev = state.library[i];
+      const next = Object.assign({}, prev, changes);
       delete next.check;                 // edited by hand: the learner has checked it
-      if ("context" in changes && changes.context !== state.library[i].context) delete next.fromContext;
-      const newId = VS.wordKey(next.word, next.sense);
+      if ("context" in changes && changes.context !== prev.context) delete next.fromContext;
+      // One English word, one Arabic meaning. A different Arabic meaning is a
+      // second word; no Arabic cannot tell two meanings apart.
+      const base = VS.wordKey(next.word, next.sense);
+      const ar = VS.arKey(next.arabic);
+      const twins = VS.words.filter((x) => x.id !== id && VS.wordKey(x.word, x.sense) === base);
+      const same = twins.find((x) => VS.arKey(x.arabic) === ar);
+      if (same) return { error: "duplicate", word: same };
+      if (twins.length && !ar) return { error: "needsArabic", word: twins[0] };
+      // The primary word keeps the base id while its headword stays the same;
+      // a word taking over another headword (or already a variant) gets one.
+      const headChanged = VS.wordKey(prev.word, prev.sense) !== base;
+      next.variant = twins.length && (prev.variant || headChanged) ? ar : "";
+      const newId = VS.wordId(next.word, next.sense, next.variant);
       if (newId !== id && VS.byId[newId]) return { error: "duplicate", word: VS.byId[newId] };
       state.library[i] = next;
       if (newId !== id) {
         if (state.words[id]) { state.words[newId] = state.words[id]; delete state.words[id]; }
         if (state.notes[id]) { state.notes[newId] = state.notes[id]; delete state.notes[id]; }
+        const learned = state.today && state.today.learned;
+        if (Array.isArray(learned) && learned.includes(id)) {
+          state.today.learned = [...new Set(learned.map((x) => (x === id ? newId : x)))];
+        }
       }
       save();
-      return { id: newId };
+      return { id: newId, variant: next.variant || "" };
     },
 
     /**
      * Give a word a new headword in place — auto-fill uses it to turn
      * "postponed" into "postpone". Progress and note move with it. Returns
-     * the new id, or "" when that word is already in the library.
+     * the new id, or "" when that word cannot take the spelling (a duplicate).
      */
     renameUserWord(id, word) {
       const w = VS.byId[id];
-      const newId = VS.wordKey(word, w && w.sense);
-      if (!w || newId === id || VS.byId[newId]) return "";
-      const r = this.editUserWord(id, { word: VS.naturalCase(word, w.example) });
+      if (!w) return "";
+      const clean = VS.naturalCase(word, w.example);
+      const r = this.editUserWord(id, { word: clean });
       if (r.error) return "";
       delete VS.byId[id];
-      w.word = VS.naturalCase(word, w.example);
-      w.id = newId;
-      VS.byId[newId] = w;
-      return newId;
+      w.word = clean;
+      w.id = r.id;
+      const raw = rawOf(r.id);
+      w.variant = raw ? raw.variant : "";
+      VS.byId[r.id] = w;
+      return r.id;
     },
 
     /**
@@ -552,7 +610,7 @@
      * keeps the word marked for another try (it was added offline).
      */
     fillUserWord(id, fields, auto, opts) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       if (!raw || !w) return;
       // What auto-fill wrote is remembered, so a corrected spelling can be filled again from scratch.
@@ -591,7 +649,7 @@
      * meaning): the "check" line goes away.
      */
     clearCheck(id) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       if (!raw || !raw.check) return;
       delete raw.check;
@@ -608,8 +666,9 @@
       const newId = this.renameUserWord(id, word);
       if (!newId) return "";
       this.clearAutoFields(newId);
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === newId);
+      const raw = rawOf(newId);
       const w = VS.byId[newId];
+      if (!raw) return "";
       delete raw.check;
       if (w) delete w.check;
       raw.auto = "todo";
@@ -624,7 +683,7 @@
      * change together — only the ones auto-fill wrote; what the learner typed stays.
      */
     upgradeToChecked(id, m, fromContext) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       if (!raw || !m) return false;
       const filled = new Set(raw.filled || []);
@@ -643,7 +702,7 @@
 
     /** The learner says the meaning shown is the one they met ("Yes" on the Meet card). */
     confirmMeaning(id) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       if (!raw) return;
       raw.confirmed = true; if (w) w.confirmed = true;
@@ -657,7 +716,7 @@
      * word counts as confirmed. The id stays the same.
      */
     applySense(id, m) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       if (!raw || !m) return;
       // "goes" belongs to the old meaning too ("heavy fine" is not "I'm fine"): it goes with it.
@@ -677,7 +736,7 @@
 
     /** Forget what auto-fill wrote for a word (what the learner typed stays), so it can be filled afresh. */
     clearAutoFields(id) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       if (!raw) return;
       (raw.filled || []).forEach((k) => {
@@ -691,7 +750,7 @@
 
     /** A sentence the learner wrote with a word ("Use it"): newest first, the last five kept. */
     addSentence(id, text, opts) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       const clean = String(text || "").trim().slice(0, 300);
       if (!raw || !w || !clean) return;
@@ -706,7 +765,7 @@
     },
     /** A sentence corrected ("Use the fix"): same place, no longer unsure, so Recall may use it. */
     replaceSentence(id, index, text) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       const clean = String(text || "").trim().slice(0, 300);
       if (!raw || !raw.mine || !raw.mine[index] || !clean) return;
@@ -717,7 +776,7 @@
       save();
     },
     removeSentence(id, index) {
-      const raw = state.library.find((x) => VS.wordKey(x.word, x.sense) === id);
+      const raw = rawOf(id);
       const w = VS.byId[id];
       if (!raw || !w || !raw.mine) return;
       const [gone] = raw.mine.splice(index, 1);
@@ -740,7 +799,7 @@
      */
     snapshot(ids) {
       return ids.map((id) => {
-        const i = state.library.findIndex((x) => VS.wordKey(x.word, x.sense) === id);
+        const i = rawIndex(id);
         return { id, i, raw: i >= 0 ? JSON.parse(JSON.stringify(state.library[i])) : null,
                  prog: state.words[id] ? state.words[id].slice() : null, note: state.notes[id] };
       }).filter((x) => x.raw);
@@ -749,7 +808,7 @@
       snap.slice().sort((a, b) => a.i - b.i).forEach(({ id, i, raw, prog, note }) => {
         // Whatever is there now (edited since, or gone) is replaced by the word as it was, in its old place —
         // in storage and in the list in memory, so both agree.
-        const at = state.library.findIndex((x) => VS.wordKey(x.word, x.sense) === id);
+        const at = rawIndex(id);
         if (at >= 0) state.library.splice(at, 1);
         if (VS.byId[id]) VS.removeWords([id]);
         const pos = Math.min(i, state.library.length);
@@ -757,7 +816,8 @@
         const added = VS.addWords([raw]).added[0];
         if (added) {
           VS.words.splice(VS.words.indexOf(added), 1);
-          const before = state.library[pos + 1] && VS.byId[VS.wordKey(state.library[pos + 1].word, state.library[pos + 1].sense)];
+          const nextRaw = state.library[pos + 1];
+          const before = nextRaw && VS.findWord(nextRaw.word, nextRaw.sense);
           const k = before ? VS.words.indexOf(before) : -1;
           VS.words.splice(k >= 0 ? k : VS.words.length, 0, added);
         }
@@ -771,7 +831,7 @@
     deleteUserWords(ids) {
       const gone = new Set(ids.filter((id) => VS.byId[id]));
       if (!gone.size) return 0;
-      state.library = state.library.filter((x) => !gone.has(VS.wordKey(x.word, x.sense)));
+      state.library = state.library.filter((x) => !gone.has(VS.idOf(x)));
       gone.forEach((id) => { delete state.words[id]; delete state.notes[id]; });
       VS.removeWords([...gone]);
       save();
@@ -799,7 +859,7 @@
      * this is the one action the app cannot undo.
      */
     startOver() {
-      const ids = [...new Set([...Object.keys(VS.byId), ...state.library.map((w) => VS.wordKey(w.word, w.sense))])];
+      const ids = [...new Set([...Object.keys(VS.byId), ...state.library.map(VS.idOf)])];
       state = JSON.parse(JSON.stringify(DEFAULTS));
       lastUndo = null;
       VS.removeWords(ids);
@@ -813,7 +873,7 @@
   /** A word as it is stored: only the fields you typed (ids are derived). */
   function plain(w) {
     const out = {};
-    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "context", "source",
+    ["word", "sense", "variant", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "context", "source",
      "mine", "unsure", "audio", "goes", "tags", "added", "auto", "partial", "tries"].forEach((k) => {
       if (w.given && (k === "type" || k === "level") && !w.given[k]) return;     // a display default, not your choice
       if (w[k] !== undefined && w[k] !== "" && !(Array.isArray(w[k]) && !w[k].length)) out[k] = w[k];

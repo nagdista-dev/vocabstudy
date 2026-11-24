@@ -36,7 +36,7 @@
   function recordingFor(text) {
     const st = VS.store.settings();
     if (st.recorded === false || !navigator.onLine || !VS.byId) return "";
-    const w = VS.byId[VS.wordKey(text)];
+    const w = VS.findWord(text);
     const a = w && w.audio;
     if (!a) return "";
     return (st.voice === "uk" ? a.uk || a.us : a.us || a.uk) || "";

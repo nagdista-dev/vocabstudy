@@ -291,7 +291,16 @@
       if (VS.app.current() === "shared") VS.app.render();
     }).catch((e) => { r.err = e.message || "broken"; if (VS.app.current() === "shared") VS.app.render(); });
   }
-  const mine = (w) => !!VS.byId[VS.wordKey(w.word, w.sense)] || !!VS.byId[VS.wordKey(w.word)];
+  /* A shared word is already yours when the library has the same English word
+     with the same Arabic meaning. Without Arabic on either side there is no
+     way to tell two meanings apart, so it counts as yours. */
+  const mine = (w) => {
+    const base = VS.wordKey(w.word, w.sense);
+    const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === base);
+    if (!twins.length) return false;
+    const ar = VS.arKey(w.arabic);
+    return !ar || twins.some((x) => VS.arKey(x.arabic) === ar);
+  };
 
   function receiveRow(w, i) {
     const have = mine(w);

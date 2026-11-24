@@ -12,9 +12,13 @@ In the browser:  core/vs.js ─▶ core/* ─▶ views/* ─▶ app.js
 ```
 
 There is one page and **one word library**, and it is the home screen. The app
-ships with no words: every word is the learner's, lives once in `VS.words`, and
-is identified by the word itself (`borrow`, `axe (tool)`). Words are typed,
-pasted or uploaded in the app and saved on the device — never in the build.
+ships with no words: every word is the learner's and lives in `VS.words`. An
+entry is identified by its English word **and its Arabic meaning**, so `bank`
+(ضفة النهر) and `bank` (بنك) are two words — `bank` and `bank~بنك` — while the
+same word with the same meaning is a duplicate. A new word with no Arabic yet
+is kept once; a second meaning waits for its Arabic. Words are typed, pasted,
+uploaded or brought in with an AI chat and saved on the device — never in the
+build.
 
 **Local first.** The app has no server, no account and no CDN: fonts and the
 PDF maker ship with it. Every network call is optional and goes to a free
@@ -32,7 +36,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | --- | --- |
 | Plain HTML/CSS/JS, no framework, no bundler | Opens with a double-click (`file://`), nothing to install, every line is readable. |
 | Classic `<script>` files + one global `VS` | ES modules are blocked on `file://`. One namespace means every shared thing has exactly one name. |
-| One library, id = the word | A word can't be added twice; progress belongs to the word, not to when it was added. |
+| One library, one word per meaning | The same English word can be kept twice only with a different Arabic meaning; progress belongs to that meaning, not to when it was added. |
 | Hash routes, filters in the address (`#/words?tag=IELTS`) | Work on `file://`, keep the back button, make any list bookmarkable. |
 | Learner's words + progress in localStorage, packed arrays | No account and no server: free and private. Tens of thousands of words fit. |
 | Markup from template strings via `VS.html` | Escapes every value automatically, so word data can never break the page. |
@@ -42,7 +46,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 
 | File | Defines |
 | --- | --- |
-| `core/vs.js` | `VS`, `VS.addWords`, `VS.wordKey`, `VS.allTags`, `VS.html`, `VS.shuffle`, dates, toast |
+| `core/vs.js` | `VS`, `VS.addWords`, `VS.wordKey`, `VS.arKey`, `VS.wordId`, `VS.findWord`, `VS.findSameWord`, `VS.parseTags`, `VS.allTags`, `VS.html`, `VS.shuffle`, dates, toast |
 | `core/word-forms.js` | `VS.IRREGULAR`, `VS.STAND_INS` (brought ← bring, my ← your) |
 | `core/icons.js` | `VS.icon(name)`, `VS.brandMark` |
 | `core/store.js` | `VS.store` — library, progress, spaced repetition, settings, wallet, backup |
@@ -203,15 +207,43 @@ assets/vendor/jsQR.js otherwise), in any order, then `store.mergeJSON`.
 
 ## The learner's words
 
-`VS.store.saveUserWords(words)` adds them to `state.library` (skipping words
-already in the library) and returns `{ added, skipped }`. Only the fields the
-learner gave are stored; `core/autofill.js` fills the empty ones later with
-`store.fillUserWord` — never overwriting (the only exception: a capital the
-dictionary proves, "wednesday" → "Wednesday", which keeps the id). Words added offline keep
-`auto: "todo"` and are filled when the app is next online.
-`editUserWord` refuses a change that would duplicate another word, and moves
-progress and notes when the word's id changes. `deleteUserWords` /
-`resetWords` work on any list (the library's actions).
+`VS.store.saveUserWords(words)` adds them to `state.library` and returns
+`{ added, skipped, needsArabic }`. The rule is **one English word per Arabic
+meaning**: `VS.arKey` removes diacritics and tatweel, unifies alef/ya/ta-marbuta,
+drops punctuation, collapses spaces and a leading `ال`, so "البنك." and "بنك"
+match. The first meaning keeps the base id (`bank`); every further meaning gets
+a hidden, stable `variant` (`bank~بنك`, id `bank~ضفه`) that is never shown in
+the interface. Same word + same Arabic meaning is `skipped`; same word with no
+Arabic on the new row is `needsArabic`; same word + a different Arabic meaning
+is added as a variant.
+
+Only the fields the learner gave are stored; `core/autofill.js` fills the empty
+ones later with `store.fillUserWord` — never overwriting (the only exception: a
+capital the dictionary proves, "wednesday" → "Wednesday", which keeps the id).
+Words added offline keep `auto: "todo"` and are filled when the app is next
+online. `editUserWord` returns `{ id, variant }` after a change, or an error
+(`duplicate`, `needsArabic`); it moves progress, notes and tags when the id
+changes. `deleteUserWords` / `resetWords` work on any list (the library's
+actions).
+
+`VS.parseTags` splits on `, ; ، #`, trims, removes repeats and caps at 12.
+Tags are stored on the word, shown in its open row, and edited in the same
+form as its other fields. A word can carry as many tags as the learner wants.
+
+## Adding words with AI (`views/import.js`, `views/shared.js`)
+
+The "With AI" tab has one shared ask row: **ChatGPT**, **Claude** and **Copy
+prompt** (`VS.aiAsk`, the same component in the "Fill it in with AI" panel).
+ChatGPT and Claude open with the prompt already typed; Copy is for Gemini or
+any other chat. The prompt asks for one block per word — or two blocks for one
+English word with two common meanings, each with its own Arabic — carrying
+`arabic`, `definition`, `example`, `type`, `level`, `ipa`, and `tags`.
+`VS.parseAiWords` reads it whether the AI answers with labelled lines, a table
+or JSON, and keeps at most three tags per word. The learner can then edit each row — including its
+tags — untick one, or add "Tags for all", which merges into every added word.
+The review marks each row **Ready**, **Another meaning**, **In your library**
+or **Needs Arabic** using the same Arabic-aware duplicate rule as the store; a
+blocked row cannot be added. Nothing is saved until **Add N words**.
 
 A closed row is one line: `views/shared.js` adds the full text as a `title`,
 and `views/library.css` clips the headword and the Arabic with an ellipsis.

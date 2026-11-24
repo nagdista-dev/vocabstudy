@@ -405,6 +405,20 @@ learner's notebook, not a stack of labelled cards.
 - **Empty states keep the same order.** `No definition yet. Add a definition`,
   `Find a meaning`, `No example yet. Add an example`, then `More examples`.
 
+## Add words with AI (`#/add`, the With AI tab)
+
+Four numbered steps: your words → ask the AI → paste its answer → check and
+add. The ask row is the same component in both AI places (`VS.aiAsk`): three
+provider cards — ChatGPT with the OpenAI knot, Claude with its starburst, and
+`Copy prompt` for Gemini or any chat. Each mark sits in its own soft tile
+(mint for ChatGPT, terracotta for Claude; both lighten at night); at 480px the
+provider cards lose their second line, under 720px they become two cards with
+Copy full width. The answer lands as one card per word with its Arabic, tags,
+definition and example in editable fields, a status chip that explains what
+will happen, and one checkbox to skip it. A word already kept with another
+meaning says **Another meaning** and keeps its own Arabic and tags; a duplicate
+says **In your library** and folds its fields away.
+
 ## The wallet (`#/wallet`)
 
 Words saved for later — typed here, or kept while reading — not a second

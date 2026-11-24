@@ -43,9 +43,19 @@
   function find(args) {
     const word = text(args.word, 80);
     if (!word) throw new Error("Give the word.");
-    const id = VS.wordKey(word, text(args.sense, 60));
-    const w = VS.byId[id] || (!args.sense && VS.allWords().find((x) => x.word.toLowerCase() === word.toLowerCase()));
-    if (!w) throw new Error("“" + word + "” isn't in the library. Use add_words to add it.");
+    const sense = text(args.sense, 60);
+    const ar = text(args.arabic, 120);
+    const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense));
+    // Two meanings cannot be told apart without the Arabic: never guess, or
+    // an update would land on the wrong meaning.
+    if (!ar && twins.length > 1) {
+      throw new Error("“" + word + "” has " + twins.length + " meanings here — give arabic to choose one.");
+    }
+    const w = ar ? twins.find((x) => VS.arKey(x.arabic) === VS.arKey(ar)) : twins[0];
+    if (!w) {
+      if (ar) throw new Error("“" + word + "” has no meaning “" + ar + "” here. Give the exact arabic, or add it with add_words.");
+      throw new Error("“" + word + "” isn't in the library. Use add_words to add it.");
+    }
     return w;
   }
 
@@ -116,8 +126,15 @@
         if (!word) return;
         if (isArabic(word)) { skipped.push({ word, reason: "That's Arabic: give the English word." }); return; }
         const sense = text(it.sense, 60);
-        if (VS.byId[VS.wordKey(word, sense)] || fresh.some((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense))) {
-          skipped.push({ word, reason: "already in the library" }); return;
+        const ar = text(it.arabic, 120);
+        // One English word, one Arabic meaning. A different meaning is a second word.
+        if (VS.findSameWord(word, sense, ar) || fresh.some((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense) && VS.arKey(x.arabic) === VS.arKey(ar))) {
+          skipped.push({ word, reason: ar ? "already in the library with this meaning" : "already in the library" }); return;
+        }
+        const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense))
+          .concat(fresh.filter((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense)));
+        if (twins.length && !VS.arKey(ar)) {
+          skipped.push({ word, reason: "the word is already here with another meaning — give its arabic to keep this one" }); return;
         }
         const w = { word, tags: list(it.tags) };
         if (sense) w.sense = sense;
@@ -130,7 +147,8 @@
       });
       const result = VS.store.saveUserWords(fresh);
       const ids = result.added.map((w) => w.id);
-      (result.skipped || []).forEach((w) => skipped.push({ word: w.word, reason: "already in the library" }));
+      (result.skipped || []).forEach((w) => skipped.push({ word: w.word, reason: "already in the library with this meaning" }));
+      (result.needsArabic || []).forEach((w) => skipped.push({ word: w.word, reason: "give its arabic to keep another meaning of the same word" }));
       if (ids.length) {
         VS.autofill.fill(ids);
         const names = result.added.slice(0, 3).map((w) => w.word).join(", ") + (ids.length > 3 ? "…" : "");
@@ -159,8 +177,11 @@
       if (Object.keys(changes).length) {
         const r = VS.store.editUserWord(w.id, changes);
         if (r.error) throw new Error("Couldn't change “" + w.word + "” (" + r.error + ").");
+        if (r.id !== w.id) { delete VS.byId[w.id]; w.id = r.id; }
+        w.variant = r.variant || "";
         Object.assign(w, changes);                  // the word in memory too, so every screen shows it now
         delete w.check;
+        VS.byId[w.id] = w;
       }
       if (note !== null) VS.store.setNote(w.id, note);
       const what = Object.keys(changes).concat(note !== null ? ["note"] : []).join(", ");

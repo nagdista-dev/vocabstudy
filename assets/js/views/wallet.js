@@ -63,7 +63,7 @@
 
   /** Wallet words that are not library words yet (a word added elsewhere leaves quietly). */
   function waiting() {
-    VS.store.wallet().filter((e) => VS.byId[VS.wordKey(e.word)]).forEach((e) => VS.store.walletRemove(e.id));
+    VS.store.wallet().filter((e) => VS.findWord(e.word)).forEach((e) => VS.store.walletRemove(e.id));
     return VS.store.wallet().slice().reverse();      // newest first: what you just kept is at the top
   }
 

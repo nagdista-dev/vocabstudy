@@ -143,7 +143,7 @@
       box.className = "spell-check";
       box.setAttribute("role", "alert");
       // The right spelling may already be in the library: open it instead of adding it twice.
-      const have = VS.byId[VS.wordKey(fix)];
+      const have = VS.findWord(fix);
       box.innerHTML = String(have
         ? html`
           <p class="spell-check-q">${icon("bulb", "icon-sm")}<span>Did you mean <b>${fix}</b>? It's already in your library.</span></p>
@@ -231,7 +231,7 @@
         <p class="spell-check-q">${icon("book", "icon-sm")}<span><bdi lang="ar" dir="rtl">${ar}</bdi> in English — which one do you mean?</span></p>
         <div class="ar-pick-list">
           ${list.map((o, i) => html`<button class="ar-pick-opt ${i ? "" : "is-first"}" type="button" data-pick="${i}">
-            <b>${o.word}</b>${o.keys ? html`<small class="ar-pick-have">Your keyboard was in Arabic</small>` : ""}${VS.byId[VS.wordKey(o.word)] ? html`<small class="ar-pick-have">In your library</small>` : ""}${o.hint ? html`<bdi lang="ar" dir="rtl">${o.hint}</bdi>` : ""}</button>`)}
+            <b>${o.word}</b>${o.keys ? html`<small class="ar-pick-have">Your keyboard was in Arabic</small>` : ""}${VS.findWord(o.word) ? html`<small class="ar-pick-have">In your library</small>` : ""}${o.hint ? html`<bdi lang="ar" dir="rtl">${o.hint}</bdi>` : ""}</button>`)}
         </div>
         <p class="hint">Not here? Type it in English.</p>`);
       box.addEventListener("click", (e) => {
@@ -240,7 +240,8 @@
         e.stopPropagation();
         const pick = list[Number(b.dataset.pick)].word;
         // Already in the library: open it rather than "already in your library" after the tap.
-        if (VS.byId[VS.wordKey(pick)]) { close(null); openWord(VS.byId[VS.wordKey(pick)]); return; }
+        const have = VS.findWord(pick);
+        if (have) { close(null); openWord(have); return; }
         close(pick);
       });
       anchor.after(box);

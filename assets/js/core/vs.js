@@ -37,11 +37,53 @@
       .toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, " ");
 
   /**
-   * Put words in the library. Returns { added: [...], skipped: [...] }:
-   * a word already in the library is skipped, never duplicated.
+   * An Arabic meaning as a key: the short vowels and tatweel go, the alef and
+   * ya forms are unified, punctuation becomes a space, and a leading "ال" is
+   * dropped. So "البنك." and "بنك" are one meaning — and "ضفة" is another.
+   */
+  VS.arKey = (text) => String(text || "")
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/[.,،؛;:!?؟'"“”‘’()\[\]{}<>\/\\|+\-_=*&^%$#@~`]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/^ال(?=\S{3,})/, "");
+
+  /**
+   * A word's id: the headword (plus its sense), and — only when the same
+   * English word is kept with another Arabic meaning — a hidden variant:
+   * "bank" and "bank~ضفه". The variant never shows in the interface.
+   */
+  VS.wordId = (word, sense, variant) =>
+    VS.wordKey(word, sense) + (variant ? "~" + String(variant).trim() : "");
+
+  /** The id a stored word already has (library entries keep their variant). */
+  VS.idOf = (w) => VS.wordId(w && w.word, w && w.sense, w && w.variant);
+
+  /** The first word with this headword (and sense), whatever its Arabic meaning. */
+  VS.findWord = (word, sense) => {
+    const base = VS.wordKey(word, sense);
+    return VS.words.find((w) => VS.wordKey(w.word, w.sense) === base) || null;
+  };
+
+  /** The word with this headword AND this Arabic meaning — the duplicate test. */
+  VS.findSameWord = (word, sense, arabic) => {
+    const base = VS.wordKey(word, sense);
+    const ar = VS.arKey(arabic);
+    return VS.words.find((w) => VS.wordKey(w.word, w.sense) === base && VS.arKey(w.arabic) === ar) || null;
+  };
+
+  /**
+   * Put words in the library. Returns { added, skipped, needsArabic }:
+   * one English word lives once per Arabic meaning. The same word with a
+   * different Arabic meaning is a second word (with a hidden variant id);
+   * without Arabic there is no way to tell two meanings apart, so it waits.
    */
   VS.addWords = function (list) {
-    const out = { added: [], skipped: [] };
+    const out = { added: [], skipped: [], needsArabic: [] };
     (list || []).forEach((raw) => {
       if (!raw || !raw.word) return;
       const w = Object.assign({ sense: "" }, raw);
@@ -51,11 +93,10 @@
       // "Habit (N)": the sense only repeats the word type, which a badge already shows.
       if (/^(n|v|adj|adv|noun|verb|adjective|adverb)\.?$/i.test(w.sense)) w.sense = "";
       w.word = VS.naturalCase(String(w.word).trim(), w.example);
-      w.id = VS.wordKey(w.word, w.sense);
+      w.arabic = w.arabic || "";
       w.definition = w.definition || "";
       w.example = w.example || "";
       w.ipa = w.ipa || "";
-      w.arabic = w.arabic || "";
       w.level = w.level || "";                                         // only if you set it
       w.type = w.type || (/\s/.test(w.word) ? "Phrase" : "Noun");     // until auto-fill knows better
       w.tags = Array.isArray(w.tags) ? w.tags : VS.parseTags(w.tags);
@@ -65,6 +106,26 @@
       w.mine = Array.isArray(w.mine) ? w.mine : [];
       w.goes = Array.isArray(w.goes) ? w.goes : [];          // collocations: "heavy rain"
       w.added = w.added || VS.todayKey();
+
+      // The same English word may live twice only when its Arabic meaning differs.
+      const same = VS.findSameWord(w.word, w.sense, w.arabic);
+      if (same) { out.skipped.push(w); return; }
+      const base = VS.wordKey(w.word, w.sense);
+      const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === base);
+      let variant = String(raw.variant || "").trim();
+      if (twins.length) {
+        const ar = VS.arKey(w.arabic);
+        if (!ar) { out.needsArabic.push(w); return; }
+        // A word stored without a variant is the primary one: if it loads after
+        // its variant twin, it still takes the base id (its progress lives there).
+        if (!variant) variant = twins.some((x) => !x.variant) ? ar : "";
+        let n = 2;
+        const want = variant;
+        while (variant && twins.some((x) => x.variant === variant)) variant = want + "-" + n++;
+      }
+      w.variant = variant;
+      w.id = VS.wordId(w.word, w.sense, variant);
+
       if (VS.byId[w.id]) { out.skipped.push(w); return; }
       VS.words.push(w);
       VS.byId[w.id] = w;
