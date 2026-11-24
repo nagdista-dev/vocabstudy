@@ -24,7 +24,7 @@
 
   const st = {
     tab: "ai",                    // ai | type | text | paste | files
-    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "" },   // With AI
+    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "", ctx: {} },   // ctx: words from the wallet → { id, context, source }   // With AI
     collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
@@ -74,6 +74,8 @@
       return auto && missing ? Object.assign({}, w, { auto: "todo" }) : w;
     }));
     const ids = result.added.map((w) => w.id);
+    // A kept word that just became a library word leaves the wallet.
+    result.added.forEach((w) => VS.store.walletRemove(VS.wordKey(w.word)));
     st.recent = ids.slice().reverse().concat(st.recent.filter((id) => !ids.includes(id))).slice(0, 12);
     VS.autofill.fill(ids);
     VS.celebrateAdded(result.added);
@@ -218,7 +220,10 @@
     if (m === "topic") return VS.aiPromptTopic(st.ai.topic.trim(), st.ai.count);
     if (m === "arabic") return VS.aiPromptArabic(aiArabic());
     const words = aiWords();
-    return words.length === 1 ? VS.aiPrompt({ word: words[0] }) : VS.aiPromptMany(words);
+    // Words from the wallet bring the sentence they were met in: the AI must use THAT meaning.
+    const met = (w) => st.ai.ctx[w.toLowerCase()];
+    if (words.length === 1) return VS.aiPrompt({ word: words[0], context: met(words[0]) ? met(words[0]).context : "" });
+    return VS.aiPromptMany(words, words.map((w) => (met(w) ? met(w).context : "")));
   }
   const aiSelect = (name, values, current) => html`<select data-ai-in="${name}">${values.map((v) => html`<option value="${v}" ${String(v) === String(current) ? VS.raw("selected") : ""}>${v}</option>`)}</select>`;
   function aiStepOne() {
@@ -315,9 +320,9 @@
             const waiting = VS.autofill.pending(w.id);
             const s = VS.store.status(w.id);
             return html`<li class="${VS.justAdded.has(w.id) ? "just-added" : ""}">
-              <a class="recent-row ${w.word.length > 14 ? "is-long" : ""}" href="#/words?q=${encodeURIComponent(w.word)}">
-                <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b>${VS.cap(w.word)}</b></span>
-                <span class="recent-ar" lang="ar">${w.arabic || (waiting ? "…" : "—")}</span>
+              <a class="recent-row" href="#/words?q=${encodeURIComponent(w.word)}">
+                <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b title="${w.word}">${VS.cap(w.word)}</b></span>
+                <span class="recent-ar" lang="ar" title="${w.arabic || ""}">${w.arabic || (waiting ? "…" : "—")}</span>
                 <span class="recent-meta">${waiting ? html`<span>Filling in…</span>` : html`<span class="recent-state" data-s="${s}">${s === "new" ? "New" : s === "learning" ? "Learning" : "Mastered"}</span>`}${[w.type, w.level].filter(Boolean).map((x) => " · " + x).join("")}</span>
               </a>
             </li>`;
@@ -498,6 +503,36 @@
     }
   }
 
+  /* A word from the wallet arrives with its sentence when auto-fill is
+     off: nothing may leave the device, so the learner adds the details. */
+  function takeWalletDraft() {
+    const d = VS.walletDraft;
+    if (!d) return;
+    VS.walletDraft = null;
+    if (d.ai) {
+      // "Make with AI": the With AI tab, the words typed, each one's sentence kept for the prompt.
+      st.tab = "ai";
+      st.ai.ctx = {};
+      d.items.forEach((e) => { st.ai.ctx[e.word.toLowerCase()] = {
+        id: e.id, context: e.sentence || "",
+        source: e.source ? (e.kind === "meaning" ? "From the meaning of " : "From the example for ") + VS.cap(e.source) : "",
+      }; });
+      Object.assign(st.ai, { words: d.items.map((e) => e.word).join("\n"), answer: "", rows: [] });
+      return;
+    }
+    st.tab = "type";
+    st.form = { word: d.word, context: d.context, source: d.source };
+    st.openDetails = true;
+  }
+  /** The wallet entry a row from the AI belongs to: by the word typed, or by its base form. */
+  function walletMatch(word) {
+    const k = String(word || "").toLowerCase();
+    if (st.ai.ctx[k]) return st.ai.ctx[k];
+    const key = VS.wordKey(word);
+    const all = Object.values(st.ai.ctx);
+    return all.find((c) => c.id === key) || all.find((c) => c.context && VS.findIn({ word }, c.context)) || null;
+  }
+
   /* ── Tab 3: paste a table ──────────────────────────────────────── */
   function pasteTab() {
     return html`
@@ -623,6 +658,7 @@
     start(p) {
       const tab = new URLSearchParams(p.query || "").get("tab");
       if (TABS.some(([v]) => v === tab)) st.tab = tab;
+      takeWalletDraft();
       takeCapture();
     },
 
@@ -717,7 +753,12 @@
         // One typed word and an answer without a "word:" line: it's that word.
         if (st.ai.mode === "words" && rows.length === 1 && !rows[0].word && typed.length === 1) rows[0].word = typed[0];
         rows = rows.filter((r) => r.word && !VS.isArabicTyping(r.word));
-        st.ai.rows = rows.map((r) => Object.assign({ keep: true, dup: !!VS.byId[VS.wordKey(r.word, "")] }, r));
+        st.ai.rows = rows.map((r) => {
+          const row = Object.assign({ keep: true, dup: !!VS.byId[VS.wordKey(r.word, "")] }, r);
+          const m = walletMatch(r.word);
+          if (m) { row.walletId = m.id; if (m.context) row.context = m.context; if (m.source) row.source = m.source; }
+          return row;
+        });
         if (review) review.innerHTML = String(aiReview());
         const fine = st.ai.rows.filter((r) => !r.dup);
         VS.aiFillStatus(aiBox.closest(".ai-fill"), fine.map((r) => r.word), !!aiBox.value.trim());
@@ -780,15 +821,18 @@
         const tags = VS.parseTags(st.ai.tags);
         const words = st.ai.rows.filter((r) => r.keep && !r.dup).map((r) => {
           const w = { word: r.word, tags: tags.slice() };
-          ["arabic", "definition", "example", "type", "level", "ipa", "context"].forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
+          ["arabic", "definition", "example", "type", "level", "ipa", "context", "source"].forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
           if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
           return w;
         });
         if (!words.length) return;
         const r = save(words);
+        // A wallet word the AI turned into its base form ("postponed" → "postpone") leaves the wallet too.
+        const addedKeys = new Set(r.added.map((w) => VS.wordKey(w.word)));
+        st.ai.rows.forEach((row) => { if (row.walletId && addedKeys.has(VS.wordKey(row.word))) VS.store.walletRemove(row.walletId); });
         VS.sfx.play("pop");
         // Added: every field is empty again, ready for the next words (tags kept on purpose).
-        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [] });
+        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {} });
         VS.app.render();
       },
 

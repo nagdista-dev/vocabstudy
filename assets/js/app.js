@@ -17,6 +17,7 @@
      #/reset                 start over: backup first, then type RESET
      #/transfer              move words and progress to another device by QR code
      #/stats                 progress charts
+     #/wallet                words kept from examples, waiting to be learned
      #/week                  your week, Saturday to Friday (ready on Thursday)
      #/print/pick?level=B2   print or save as PDF (also /print/recall, /tricky, /all, /today, /new)
 
@@ -54,6 +55,7 @@
     if (parts[0] === "reset") return { view: "reset" };
     if (parts[0] === "transfer") return { view: "transfer" };
     if (parts[0] === "stats") return { view: "stats" };
+    if (parts[0] === "wallet") return { view: "wallet" };
     if (parts[0] === "week") return { view: "week", query };
     // An optional last part picks the layout: #/print/pick/test?level=B2
     if (parts[0] === "print" && PRINT_SCOPES.includes(parts[1])) return { view: "print", scope: parts[1], layout: parts[2], query };

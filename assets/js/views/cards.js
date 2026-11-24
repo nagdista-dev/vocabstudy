@@ -7,8 +7,8 @@
 
    New words are taught before they are tested. "Learn new words" runs in
    two steps: Meet — each word open on one card (meaning, Arabic, example,
-   sound, the trap), one "Next", nothing graded: you can't remember what
-   you have never seen. Then Check — the same words as flip cards, and
+   sound), one "Next", nothing graded: you can't remember what you have
+   never seen. Then Check — the same words as flip cards, and
    that answer feeds the schedule. "I already know this word" during Meet
    skips its check. The counter counts words, not cards: a word shown
    again says "Once more" instead of growing the total (6 → 9). */
@@ -18,23 +18,49 @@
   
   let s = null;   // session: { scope, queue, index, flipped, known, learning, again }
 
+  /* Every face on the study card shares three bands: a quiet meta row, the
+     reading body, and one line at the foot that says what to do next. The
+     bands are what make the card a page instead of floating pieces. */
+  function meta(w) {
+    return html`<div class="row flash-badges">${VS.ui.levelBadge(w)}${w.type ? html`<span class="badge">${w.type}</span>` : ""}${VS.ui.freq(w)}</div>`;
+  }
+
+  /** The speaker and the IPA as one pill, so pronunciation reads as a unit. */
+  function sound(w) {
+    return html`<div class="flash-sound ${w.ipa ? "" : "is-bare"}">${VS.ui.speakButton(w.word)}${w.ipa ? VS.ui.ipa(w) : ""}</div>`;
+  }
+
+  function foot(ico, text) {
+    return html`<div class="flash-foot"><p class="flash-tip">${icon(ico, "icon-sm")}<span>${text}</span></p></div>`;
+  }
+
   /** Arabic-first front (Settings → Study cards show first). */
   function arabicFront(w) {
     return html`
       <div class="flash-face flash-front" aria-hidden="${s.flipped}">
-        <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>${VS.ui.freq(w)}</div>
-        <p class="flash-ar" lang="ar">${w.arabic}</p>
-        ${w.definition ? html`<p class="flash-def">${w.definition}</p>` : ""}
-        <p class="flash-tip">${icon("flip", "icon-sm")} Say the English word, then tap to check</p>
+        <div class="flash-top">${meta(w)}</div>
+        <div class="flash-main">
+          <p class="flash-ar" lang="ar">${w.arabic}</p>
+          ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
+        </div>
+        ${foot("flip", "Say it in English, then tap to check")}
       </div>
       <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
-        <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
-        ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
-        <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
-        ${VS.ui.soundTraps(w, "flash-traps")}
-        ${VS.ui.similar(w, "flash-similar")}
-        ${VS.ui.context(w, "flash-met")}
-        ${w.example && !w.context ? html`<div class="flash-example"><p>${VS.ui.quote(w)}</p>${VS.ui.speakButton(w.example, "Hear the example")}</div>` : ""}
+        <div class="flash-top">${meta(w)}</div>
+        <div class="flash-main">
+          <div class="flash-answer">
+            <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
+            ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
+            ${sound(w)}
+          </div>
+          ${VS.ui.context(w, "flash-met")}
+          ${w.example && !w.context ? html`<div class="flash-example">
+            <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
+          </div>` : ""}
+          ${VS.ui.goes(w, "flash-related")}
+          ${VS.ui.similar(w, "flash-related")}
+        </div>
+        ${foot("text", "Say it once in a sentence")}
       </div>`;
   }
 
@@ -43,30 +69,36 @@
     return html`
       <div class="flash flash-teach">
         <div class="flash-face flash-open">
-          <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>${VS.ui.freq(w)}</div>
-          <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
-          ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
-          <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
-          ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
-          ${w.definition ? html`<p class="flash-def">${w.definition}</p>` : ""}
-
-          ${VS.ui.context(w, "flash-met")}
-          ${w.example && !w.context ? html`<div class="flash-example">
-            <p>${VS.ui.quote(w)}</p>
-            ${VS.ui.speakButton(w.example, "Hear the example")}
-          </div>` : ""}
-          ${!w.trusted && !w.confirmed && w.arabic && VS.autofill.enabled() ? html`
-            <div class="meaning-ask">
-              <p class="meaning-ask-q">${w.context ? "Is this the meaning you met?" : "Is this the meaning you need?"}</p>
-              <div class="row meaning-ask-actions">
-                <button class="btn btn-tonal" type="button" data-action="meaning-yes" data-id="${w.id}">${icon("check", "icon-sm")} Yes</button>
-                <button class="btn btn-quiet" type="button" data-action="meaning-list" data-id="${w.id}">Another meaning</button>
-              </div>
-              <div class="meanings" aria-live="polite"></div>
+          <div class="flash-top">${meta(w)}</div>
+          <div class="flash-main">
+            <div class="flash-answer">
+              <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
+              ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
+              ${sound(w)}
+            </div>
+            <div class="flash-meaning">
+              ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
+              ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
+            </div>
+            ${!w.trusted && !w.confirmed && w.arabic && VS.autofill.enabled() ? html`
+              <div class="meaning-ask">
+                <p class="meaning-ask-q">${w.context ? "Is this the meaning you met?" : "Is this the meaning you need?"}</p>
+                <div class="row meaning-ask-actions">
+                  <button class="btn btn-tonal" type="button" data-action="meaning-yes" data-id="${w.id}">${icon("check", "icon-sm")} Yes</button>
+                  <button class="btn btn-quiet" type="button" data-action="meaning-list" data-id="${w.id}">Another meaning</button>
+                </div>
+                <div class="meanings" aria-live="polite"></div>
+              </div>` : ""}
+            ${VS.ui.context(w, "flash-met")}
+            ${w.example && !w.context ? html`<div class="flash-example">
+              <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
             </div>` : ""}
-          ${VS.ui.soundTraps(w, "flash-traps")}
-          ${VS.ui.usage(w, 1, "flash-usage")}
-          ${VS.ui.goes(w, "flash-similar")}
+            ${VS.ui.goes(w, "flash-related")}
+            ${VS.ui.similar(w, "flash-related")}
+          </div>
+          ${w.example
+            ? foot("translate", "Tap a word you don't know to translate or keep it")
+            : foot("volume", "Read it, listen, say it once")}
         </div>
       </div>`;
   }
@@ -81,25 +113,29 @@
       <div class="flash ${s.flipped ? "is-flipped" : ""}" data-action="flip" role="button" tabindex="0"
            aria-label="${s.flipped ? "Card back" : "Card front. Press space to see the meaning"}">
         <div class="flash-face flash-front" aria-hidden="${s.flipped}">
-          <div class="row flash-badges">${VS.ui.levelBadge(w)}<span class="badge">${w.type}</span>${VS.ui.freq(w)}</div>
-          <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
-          ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
-          <div class="row flash-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
-          ${VS.ui.soundTraps(w, "flash-traps")}
-          <p class="flash-tip">${icon("flip", "icon-sm")} Tap to see the meaning · swipe to answer</p>
+          <div class="flash-top">${meta(w)}</div>
+          <div class="flash-main">
+            <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
+            ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
+            ${sound(w)}
+          </div>
+          ${foot("flip", "Tap to see the meaning")}
         </div>
         <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
-          <p class="flash-ar" lang="ar">${w.arabic}</p>
-          <p class="flash-def">${w.definition}</p>
-          ${VS.ui.context(w, "flash-met")}
-          ${w.example && !w.context ? html`<div class="flash-example">
-            <p>${VS.ui.quote(w)}</p>
-            ${VS.ui.speakButton(w.example, "Hear the example")}
-          </div>` : ""}
-          ${VS.ui.goes(w, "flash-similar")}
-          ${VS.ui.similar(w, "flash-similar")}
-          ${VS.ui.usage(w, 1, "flash-usage")}
-          <p class="flash-word-small">${VS.ui.headword(w)} <span class="ipa">${VS.ipaText(w)}</span></p>
+          <div class="flash-top">${meta(w)}</div>
+          <div class="flash-main">
+            <div class="flash-meaning">
+              ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
+              ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
+            </div>
+            ${VS.ui.context(w, "flash-met")}
+            ${w.example && !w.context ? html`<div class="flash-example">
+              <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
+            </div>` : ""}
+            ${VS.ui.goes(w, "flash-related")}
+            ${VS.ui.similar(w, "flash-related")}
+          </div>
+          ${foot("text", "Say it once in a sentence")}
         </div>
       </div>`;
   }

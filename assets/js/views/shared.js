@@ -219,7 +219,12 @@
   ];
 
   /** Several words I already know I want. */
-  VS.aiPromptMany = (words) => [meLine() + " For EACH of these English words, give one block:", words.join(", "), ...aiBlocks(false)].join("\n");
+  VS.aiPromptMany = (words, contexts) => {
+    const met = (contexts || []).map((c, i) => (c ? "- " + words[i] + ": “" + c + "”" : "")).filter(Boolean);
+    return [meLine() + " For EACH of these English words, give one block:", words.join(", "),
+      ...(met.length ? ["", "I met some of them in these sentences — use THAT meaning for each:", ...met] : []),
+      ...aiBlocks(false)].join("\n");
+  };
   /** The most useful words about a topic, at a level. */
   VS.aiPromptTopic = (topic, n) => [
     meLine() + " Choose the " + n + " most useful English words and phrases about “" + topic + "” for my level.",
@@ -488,7 +493,9 @@
     box.innerHTML = String(html`
       <ul class="more-ex-items">${shown.map((t) => {
         const hit = VS.findIn(w, t, true);
-        return html`<li><span class="more-ex-text">${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : t}</span>${VS.ui.speakButton(t, "Hear this sentence")}</li>`;
+        return html`<li><span class="more-ex-text tap-line" data-sentence="${t}" data-source="${w.word}">${hit
+          ? html`${VS.ui.tapWords(hit.before)}<mark class="mark">${hit.answer}</mark>${VS.ui.tapWords(hit.after)}`
+          : VS.ui.tapWords(t)}</span>${VS.ui.speakButton(t, "Hear this sentence")}</li>`;
       })}</ul>
       <p class="hint more-ex-credit">Sentences from <a href="https://tatoeba.org" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR).</p>`);
   };
@@ -557,8 +564,8 @@
      is one tap: "Use this meaning" (VS.store.applySense). "Yes" confirms. */
   const meaningLists = {};
   const meaningBox = (el) => {
-    const host = el.closest(".meaning-ask, .word-main, .word-check");
-    const scope = host && host.closest(".word-main, .meaning-ask") || host;
+    const host = el.closest(".meaning-ask, .word-entry, .word-check");
+    const scope = host && host.closest(".word-entry, .meaning-ask") || host;
     return scope && scope.querySelector(".meanings");
   };
   const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
@@ -590,17 +597,23 @@
       return;
     }
     box.innerHTML = String(list.length
-      ? html`<ol class="meaning-list">${list.map((m, i) => {
+      ? html`<ol class="meaning-list" aria-label="Meanings of “${w.word}”">${list.map((m, i) => {
           const current = same(m.definition, w.definition);
           const firstFromDictionary = !m.trusted && i > 0 && list[i - 1].trusted;
-          return html`${firstFromDictionary ? html`<li class="meaning-group" aria-hidden="true">From the dictionary</li>` : ""}<li class="${current ? "is-current" : ""}">
-            <p class="meaning-head"><span class="meaning-type">${m.type}</span>${m.arabic ? html`<bdi class="meaning-ar" lang="ar" dir="rtl">${m.arabic}</bdi>` : ""}</p>
-            <p class="meaning-def">${m.definition}</p>
-            ${m.example ? html`<p class="meaning-ex">“${m.example}”</p>` : ""}
-            ${current
-              ? html`<p class="meaning-this">${icon("check", "icon-sm")} This one</p>`
-              : html`<button class="btn btn-tonal" type="button" data-action="meaning-use" data-id="${w.id}" data-index="${i}"
-                  aria-label="Use this meaning: ${m.arabic || m.definition}">Use this meaning</button>`}
+          return html`${firstFromDictionary ? html`<li class="meaning-group" aria-hidden="true">From the dictionary</li>` : ""}<li class="meaning-item ${current ? "is-current" : ""}">
+            <span class="meaning-n" aria-hidden="true">${i + 1}</span>
+            <div class="meaning-body">
+              <div class="meaning-head">
+                ${m.type ? html`<span class="meaning-type">${m.type}</span>` : ""}
+                ${m.arabic ? html`<bdi class="meaning-ar" lang="ar" dir="rtl">${m.arabic}</bdi>` : ""}
+              </div>
+              <p class="meaning-def">${m.definition}</p>
+              ${m.example ? html`<p class="meaning-ex">“${m.example}”</p>` : ""}
+              <div class="meaning-foot">${current
+                ? html`<span class="meaning-this">${icon("check", "icon-sm")} In use</span>`
+                : html`<button class="btn btn-tonal meaning-use" type="button" data-action="meaning-use" data-id="${w.id}" data-index="${i}"
+                    aria-label="Use this meaning: ${m.arabic || m.definition}">Use this meaning</button>`}</div>
+            </div>
           </li>`;
         })}</ol>`
       : html`<p class="hint">${navigator.onLine ? "No other meanings found." : "You're offline — try again when you're online."}</p>`);
@@ -662,20 +675,203 @@
     const flag = VS.$(`.word-row[data-id="${CSS.escape(el.dataset.id)}"] .word-row-flag`);
     if (flag) flag.remove();
   };
+  /* A word met inside an example or a meaning. A tap opens a small card
+     under it with the word's Arabic already on its way, and one choice:
+     Keep in wallet. Nothing is kept until the learner asks: a stray tap
+     while reading must not fill the wallet. */
+  let pop = null, popFor = null, scrim = null, spot = null;
+  const arCache = {};
+  function closePop(back) {
+    if (!pop) return;
+    pop.remove(); pop = null;
+    // The page comes back: the dim fades out, the lifted word goes back into its line.
+    [scrim, spot].forEach((n) => { if (!n) return; n.classList.add("is-leaving"); setTimeout(() => n.remove(), 140); });
+    scrim = spot = null;
+    if (popFor) { popFor.setAttribute("aria-expanded", "false"); if (back) popFor.focus({ preventScroll: true }); }
+    popFor = null;
+  }
+  function placePop() {
+    if (!pop || !popFor) return;
+    const r = popFor.getBoundingClientRect();
+    // The word scrolled out of sight: the card has nothing to point at.
+    if (r.bottom < 0 || r.top > window.innerHeight) { closePop(); return; }
+    if (spot) Object.assign(spot.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", lineHeight: r.height + "px" });
+    const w = pop.offsetWidth, h = pop.offsetHeight, gap = 10, edge = 12;
+    const left = Math.max(edge, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - edge));
+    const below = r.bottom + gap + h <= window.innerHeight - edge || r.top - gap - h < edge;
+    pop.style.left = left + "px";
+    pop.style.top = (below ? r.bottom + gap : r.top - gap - h) + "px";
+    pop.classList.toggle("is-above", !below);
+    pop.style.setProperty("--pop-x", Math.max(18, Math.min(w - 18, r.left + r.width / 2 - left)) + "px");
+  }
+  /** The Arabic for one English word → { main, alts: [{ pos, terms }] }, or null.
+      Google first (it also gives the other meanings by part of speech),
+      MyMemory when Google is busy. Only the one word is sent. */
+  async function arabicWord(word) {
+    const k = word.toLowerCase();
+    if (arCache[k]) return arCache[k];
+    let out = null;
+    try {
+      const d = await VS.google.json({ sl: "en", tl: "ar", dt: ["t", "bd"], q: k }, 6000);
+      const main = (d.sentences || []).map((x) => x.trans || "").join("").trim();
+      // Other meanings by part of speech, each Arabic term once: "ريب شك"
+      // after "شك" adds nothing, so a term made only of words already shown is dropped.
+      const norm = (t) => String(t || "").replace(/[\u064B-\u0652\u0640]/g, "").replace(/[إأآ]/g, "ا").trim();
+      const seenWords = new Set(norm(main).split(/\s+/));
+      const alts = (d.dict || []).map((x) => ({
+        pos: x.pos || "",
+        terms: (x.terms || []).filter((t) => {
+          const ws = norm(t).split(/\s+/).filter(Boolean);
+          if (!ws.length || ws.every((w) => seenWords.has(w))) return false;
+          ws.forEach((w) => seenWords.add(w));
+          return true;
+        }).slice(0, 4),
+      })).filter((x) => x.terms.length).slice(0, 3);
+      if (main) out = { main, alts };
+    } catch (e) {
+      try {
+        const res = await fetch("https://api.mymemory.translated.net/get?langpair=en|ar&q=" + encodeURIComponent(k));
+        const d = res.ok ? await res.json() : {};
+        const t = String((d.responseData && d.responseData.translatedText) || "").trim();
+        if (/[؀-ۿ]/.test(t)) out = { main: t, alts: [] };
+      } catch (e2) { /* both dictionaries are out of reach */ }
+    }
+    if (out) arCache[k] = out;
+    return out;
+  }
+  /** The wallet uses the same lookup for a word kept by hand (only while Auto-fill is on). */
+  VS.arabicWord = async (word) => {
+    if (!VS.autofill.enabled() || !navigator.onLine) return "";
+    const found = await arabicWord(word);
+    return found ? found.main : "";
+  };
+  /** The meaning panel: waiting, found, not found, or translation switched off. */
+  async function fillMeaning(word) {
+    const box = pop && pop.querySelector(".word-pop-meaning");
+    if (!box) return;
+    const say = (body, cls) => { box.className = "word-pop-meaning " + (cls || ""); box.innerHTML = String(body); placePop(); };
+    if (!VS.autofill.enabled()) {
+      say(html`<p class="word-pop-msg">Translation is off. Turn on <b>Auto-fill</b> in Settings to see the Arabic here.</p>`, "is-msg");
+      return;
+    }
+    if (!navigator.onLine) { say(html`<p class="word-pop-msg">You're offline — the Arabic will show when you're back online.</p>`, "is-msg"); return; }
+    const cached = arCache[word.toLowerCase()];
+    if (!cached) say(html`<span class="word-pop-skel" aria-hidden="true"><i></i><i></i></span><span class="sr-only">Translating…</span>`, "is-loading");
+    const found = cached || await arabicWord(word);
+    if (!pop || !box.isConnected) return;
+    if (!found) {
+      say(html`<p class="word-pop-msg">The dictionary didn't answer.</p>
+        <button class="link-btn word-pop-retry" type="button" data-pop="retry">Try again</button>`, "is-msg");
+      return;
+    }
+    say(html`
+      <p class="word-pop-ar" lang="ar" dir="rtl">${found.main}</p>
+      ${found.alts.length ? html`<dl class="word-pop-senses">${found.alts.map((a) => html`
+        <div class="word-pop-sense">
+          <dt class="word-pop-pos">${a.pos || "also"}</dt>
+          <dd class="word-pop-terms" lang="ar" dir="rtl">${a.terms.map((t) => html`<span class="word-pop-term">${t}</span>`)}</dd>
+        </div>`)}</dl>` : ""}`, "is-found");
+  }
+  VS.actions["word-pop"] = (el) => {
+    if (popFor === el) { closePop(true); return; }
+    closePop();
+    const word = el.dataset.word;
+    const id = VS.wordKey(word);
+    const known = !!VS.byId[id];
+    const kept = VS.store.wallet().some((e) => e.id === id);
+    pop = document.createElement("div");
+    pop.className = "word-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-modal", "true");
+    pop.setAttribute("aria-label", `“${word}”`);
+    pop.tabIndex = -1;
+    pop.innerHTML = String(html`
+      <div class="word-pop-head">
+        <p class="word-pop-word">${word}</p>
+        ${VS.ui.speakButton(word, `Hear “${word}”`)}
+      </div>
+      <div class="word-pop-meaning" aria-live="polite"></div>
+      <div class="word-pop-foot">
+        ${known ? html`<p class="word-pop-state">${icon("check", "icon-sm")} Already one of your words</p>`
+          : kept ? html`<p class="word-pop-state">${icon("wallet", "icon-sm")} In your wallet · <a href="#/wallet">Open</a></p>`
+          : html`<button class="btn btn-tonal word-pop-keep" type="button" data-pop="keep">${icon("wallet", "icon-sm")} Keep in wallet</button>`}
+      </div>`);
+    // The card's own buttons; "speak" still goes through the app's click handler.
+    pop.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-pop]");
+      if (!b) return;
+      e.stopPropagation();
+      if (b.dataset.pop === "retry") { fillMeaning(word); return; }
+      const line = el.closest("[data-sentence]");
+      const r = VS.store.walletAdd(word, line ? line.dataset.sentence : "", line ? line.dataset.source : "", line ? line.dataset.kind : "",
+        arCache[word.toLowerCase()] ? arCache[word.toLowerCase()].main : "");
+      if (r.inLibrary) { VS.toast(`“${word}” is already one of your words.`); closePop(); return; }
+      if (!r.ok) return;
+      el.classList.add("is-kept");
+      b.outerHTML = String(html`<p class="word-pop-state is-new">${icon("check", "icon-sm")} Kept in your wallet · <a href="#/wallet">Open</a></p>`);
+      if (!r.existed) VS.sfx.play("pop");
+      const open = pop.querySelector(".word-pop-state a");
+      if (open) open.focus({ preventScroll: true });     // the button is gone: focus stays in the card
+      placePop();
+    });
+    pop.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { e.stopPropagation(); closePop(true); return; }
+      // Focus stays inside the card while it is open, like any dialog.
+      if (e.key !== "Tab") return;
+      const f = [...pop.querySelectorAll("button, a[href]")].filter((n) => !n.disabled);
+      if (!f.length) { e.preventDefault(); return; }
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === pop)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    // The page behind dims, and the tapped word is lifted above the dim, in
+    // its own place and type, so the eye goes from the word to its meaning.
+    scrim = document.createElement("div");
+    scrim.className = "word-pop-scrim";
+    scrim.setAttribute("aria-hidden", "true");
+    spot = document.createElement("span");
+    spot.className = "word-pop-spot";
+    spot.setAttribute("aria-hidden", "true");
+    spot.textContent = el.textContent;
+    const cs = getComputedStyle(el);
+    ["fontFamily", "fontSize", "fontWeight", "fontStyle", "letterSpacing"].forEach((k) => { spot.style[k] = cs[k]; });
+    document.body.append(scrim, spot);
+    document.body.appendChild(pop);
+    popFor = el;
+    el.setAttribute("aria-expanded", "true");
+    fillMeaning(word);
+    placePop();
+    // Follow the word every frame while open: a card still sliding in, a
+    // flip or a late layout shift must not leave the pointer behind.
+    let lastTop = NaN, lastLeft = NaN;
+    const follow = () => {
+      if (!pop || popFor !== el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top !== lastTop || r.left !== lastLeft) { lastTop = r.top; lastLeft = r.left; placePop(); }
+      requestAnimationFrame(follow);
+    };
+    requestAnimationFrame(follow);
+    (pop.querySelector(".word-pop-keep") || pop).focus({ preventScroll: true });
+  };
+  // A tap anywhere else, Escape, a resize or a new screen closes the card;
+  // a scroll carries it along with its word.
+  document.addEventListener("pointerdown", (e) => {
+    if (pop && !pop.contains(e.target) && !(e.target.closest && e.target.closest(".tap-word") === popFor)) closePop();
+  }, true);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && pop) closePop(true); });
+  window.addEventListener("scroll", () => placePop(), true);
+  window.addEventListener("resize", () => closePop());
+  window.addEventListener("hashchange", () => closePop());
   VS.actions["word-delete"] = async (el) => {
     const w = VS.byId[el.dataset.id];
     if (!w) return;
-    const yes = await VS.confirm({
-      title: `Delete “${w.word}”?`,
-      body: "Its progress, note and your sentences go too.",
-      confirmLabel: "Delete",
-    });
-    if (!yes) return;
+    // One tap: the learner asked for a quick delete. The loss is covered by
+    // Undo (the word, its progress, note and sentences all come back).
     // No reload: the list redraws, and Undo puts the word back where it was (V1.1).
     const snap = VS.store.snapshot([w.id]);
     VS.store.deleteUserWords([w.id]);
     VS.app.render();
-    VS.toast(`“${w.word}” deleted.`, { label: "Undo", run: () => { VS.store.restore(snap); VS.app.render(); refreshWord(w.id); } });
+    VS.toast(`“${w.word}” deleted, with its progress and notes.`, { label: "Undo", run: () => { VS.store.restore(snap); VS.app.render(); refreshWord(w.id); } });
   };
   /* "Reset to new" on one word: its schedule starts again; Undo gives it back. ("Start over" is
      only the whole app's, #/reset.) */
@@ -834,6 +1030,38 @@
     /** The example in quotes — or nothing at all when the word has none yet. */
     quote: (w) => (w.example ? html`“${VS.ui.example(w)}”` : ""),
 
+    /**
+     * Every word in a sentence becomes a button: tap one for a small pop-up
+     * that translates it or keeps it in the wallet, with this sentence. `o.tab === false` keeps a card's twenty
+     * sentence words out of the tab order; the word page leaves them in.
+     */
+    tapWords(text, o) {
+      const opts = o || {};
+      const skip = /^(a|an|the|and|or|but|if|so|to|of|in|on|at|by|for|with|from|as|is|are|was|were|be|been|being|am|do|does|did|have|has|had|will|would|can|could|should|may|might|must|i|you|he|she|it|we|they|me|him|her|us|them|my|your|his|its|our|their|this|that|these|those|there|here|not|no|yes|than|then|too|very)$/i;
+      return html`${String(text || "").split(/([A-Za-z][A-Za-z'’]*)/).map((t) => {
+        if (!/^[A-Za-z]/.test(t) || t.length < 3 || skip.test(t)) return t;
+        return VS.raw(`<button class="tap-word" type="button" data-action="word-pop" aria-haspopup="dialog" aria-expanded="false" data-word="${VS.escape(t)}"${opts.tab === false ? ' tabindex="-1"' : ""}>${VS.escape(t)}</button>`);
+      })}`;
+    },
+
+    /** The English meaning, every word tappable, kept with the meaning as its sentence. */
+    defTap(w, o) {
+      if (!w.definition) return "";
+      return html`<span class="tap-line" data-sentence="${w.definition}" data-source="${w.word}" data-kind="meaning">${VS.ui.tapWords(w.definition, o)}</span>`;
+    },
+
+    /** The example with its headword highlighted and every other word tappable. */
+    exampleTap(w, o) {
+      if (!w.example) return "";
+      const hit = VS.findInExample(w, true);
+      if (!hit) return html`${w.example}`;
+      // The highlighter takes the word's preposition with it ("depend on", "afraid of").
+      const prep = VS.ui.prepOf(w);
+      const m = prep && new RegExp("^(\\s+" + prep + ")\\b", "i").exec(hit.after);
+      const tail = m ? m[1] : "";
+      return html`<span class="tap-line" data-sentence="${w.example}" data-source="${w.word}">${VS.ui.tapWords(hit.before, o)}<mark class="mark">${hit.answer}${tail}</mark>${VS.ui.tapWords(hit.after.slice(tail.length), o)}</span>`;
+    },
+
     /** English text that may quote Arabic («يعتمد على»): each Arabic run is isolated,
         so the line reads in the right order in both directions. */
     mixed(text) {
@@ -932,11 +1160,11 @@
 
     /** The words it goes with ("heavy rain", "subtle difference"): English puts words together its own way. */
     goes: (w, cls) => (w.goes && w.goes.length
-      ? html`<p class="similar goes ${cls || ""}"><span>Goes with</span> ${w.goes.join("\u00A0· ")}</p>` : ""),
+      ? html`<div class="rel ${cls || ""}"><span class="rel-label">Goes with</span><span class="rel-chips">${w.goes.map((g) => html`<span class="rel-chip">${g}</span>`)}</span></div>` : ""),
 
     /** Similar words: another way in to the same meaning. */
     similar: (w, cls) => (w.synonyms && w.synonyms.length
-      ? html`<p class="similar ${cls || ""}"><span>Similar</span> ${w.synonyms.join("\u00A0· ")}</p>` : ""),
+      ? html`<div class="rel ${cls || ""}"><span class="rel-label">Similar</span><span class="rel-chips">${w.synonyms.map((g) => html`<span class="rel-chip">${g}</span>`)}</span></div>` : ""),
 
     /** One expandable row in a word list (day page and review page). */
     /** A small progress ring (SVG). `pct` 0–100; `label` sits in the middle. */
@@ -1004,13 +1232,13 @@
       const s = VS.store.status(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
       return html`
-        <details class="word-row ${w.word.length > 14 ? "is-long" : ""} ${VS.justAdded.has(w.id) ? "just-added" : ""}" data-status="${s}" data-id="${w.id}">
+        <details class="word-row ${VS.justAdded.has(w.id) ? "just-added" : ""}" data-status="${s}" data-id="${w.id}">
           <summary>
             <span class="word-row-word">
               <i class="word-row-dot" aria-hidden="true"></i>
-              <b>${VS.ui.headword(w)}</b>
+              <b title="${w.word}">${VS.ui.headword(w)}</b>
             </span>
-            ${w.arabic ? html`<span class="word-row-ar" lang="ar">${w.arabic}</span>`
+            ${w.arabic ? html`<span class="word-row-ar" lang="ar" title="${w.arabic}">${w.arabic}</span>`
               : html`<span class="word-row-ar hint">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No meaning yet"}</span>`}
             <span class="word-row-meta">
               <span class="word-row-state" data-s="${s}">${state}</span><span class="word-row-sep" aria-hidden="true">·</span>
@@ -1050,14 +1278,12 @@
                   ${VS.ui.speakButton(w.word)}
                   ${w.ipa ? html`<span class="word-sound-ipa">${VS.ui.ipa(w)}</span>` : ""}
                 </div>
-                <details class="lib-more word-menu">
-                  <summary class="icon-btn" aria-label="Manage “${w.word}”">${icon("more")}</summary>
-                  <div class="lib-more-menu">
-                    <button class="btn btn-quiet" type="button" data-action="word-edit" data-id="${w.id}">${icon("pen", "icon-sm")} Edit word</button>
-                    ${s === "new" ? "" : html`<button class="btn btn-quiet" type="button" data-action="forget" data-id="${w.id}">${icon("review", "icon-sm")} Reset to new</button>`}
-                    <button class="btn btn-quiet word-menu-danger" type="button" data-action="word-delete" data-id="${w.id}">${icon("x", "icon-sm")} Delete</button>
-                  </div>
-                </details>
+                <div class="word-tools" role="group" aria-label="Manage “${w.word}”">
+                  <button class="word-tool word-tool-edit" type="button" data-action="word-edit" data-id="${w.id}" title="Edit “${w.word}”">
+                    ${icon("pen", "icon-sm")}<span>Edit</span></button>
+                  <button class="word-tool word-tool-delete" type="button" data-action="word-delete" data-id="${w.id}"
+                    aria-label="Delete “${w.word}”" title="Delete “${w.word}” (you can undo)">${icon("trash", "icon-sm")}</button>
+                </div>
               </div>
 
               ${VS.ui.checkLine(w)}
@@ -1065,7 +1291,7 @@
 
               <div class="word-lead">
                 ${w.definition
-                  ? html`<p class="word-definition">${w.definition}</p>`
+                  ? html`<p class="word-definition">${VS.ui.defTap(w)}</p>`
                   : html`<p class="hint">No definition yet.
                       <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
                 ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}" aria-expanded="false">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
@@ -1075,9 +1301,10 @@
               <div class="word-example-block">
                 ${w.example ? html`
                   <figure class="word-example">
-                    <blockquote>${VS.ui.quote(w)}</blockquote>
+                    <blockquote>“${VS.ui.exampleTap(w)}”</blockquote>
                     <button class="icon-btn word-hear" type="button" data-action="speak" data-say="${w.example}" aria-label="Hear the sentence">${icon("volume", "icon-sm")}</button>
-                  </figure>` : html`<p class="hint word-no-ex">No example yet.
+                  </figure>
+                  <p class="tap-hint">${icon("translate", "icon-sm")}<span>Tap any word to see its Arabic or keep it.</span></p>` : html`<p class="hint word-no-ex">No example yet.
                     <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add an example</button></p>`}
                 <div class="word-ex-tools">${VS.ui.moreExamples(w)}</div>
               </div>
@@ -1086,7 +1313,8 @@
                 ${s === "new"
                   ? html`<p class="word-memory-line"><span>Not studied yet</span><span class="word-memory-sep" aria-hidden="true">·</span><span>added ${VS.ui.dateText(w.added)}</span></p>`
                   : html`<p class="word-memory-line"><span>Next recall</span> <b>${whenText(e.due)}</b></p>
-                    <span class="word-memory-right" title="${e.right} right · ${e.wrong} wrong">${VS.ui.ruler(e.box, true)}<span class="word-memory-score">${e.right} right · ${e.wrong} wrong</span></span>`}
+                    <span class="word-memory-right" title="${e.right} right · ${e.wrong} wrong">${VS.ui.ruler(e.box, true)}<span class="word-memory-score">${e.right} right · ${e.wrong} wrong</span>
+                      <button class="word-reset" type="button" data-action="forget" data-id="${w.id}" aria-label="Reset “${w.word}” to new" title="Start this word's schedule again (you can undo)">${icon("review", "icon-sm")}</button></span>`}
               </div>
 
               <div class="word-secs" role="group" aria-label="More about this word">

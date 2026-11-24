@@ -34,6 +34,7 @@ STYLES = [
     "assets/css/views/print.css",
     "assets/css/views/import.css",
     "assets/css/views/data.css",
+    "assets/css/views/wallet.css",
     "assets/css/views/reset.css",
     "assets/css/motion.css",
     "assets/css/system.css",        # the floors: 44px targets, visible focus, one stacking order (v10)
@@ -74,6 +75,7 @@ SCRIPTS = [
     "assets/js/views/week.js",
     "assets/js/views/print.js",
     "assets/js/views/import.js",
+    "assets/js/views/wallet.js",
     "assets/js/views/data.js",
     "assets/js/views/transfer.js",
     "assets/js/views/reset.js",

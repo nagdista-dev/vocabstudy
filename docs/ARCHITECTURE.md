@@ -45,7 +45,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/vs.js` | `VS`, `VS.addWords`, `VS.wordKey`, `VS.allTags`, `VS.html`, `VS.shuffle`, dates, toast |
 | `core/word-forms.js` | `VS.IRREGULAR`, `VS.STAND_INS` (brought ← bring, my ← your) |
 | `core/icons.js` | `VS.icon(name)`, `VS.brandMark` |
-| `core/store.js` | `VS.store` — library, progress, spaced repetition, settings, backup |
+| `core/store.js` | `VS.store` — library, progress, spaced repetition, settings, wallet, backup |
 | `core/speech.js` | `VS.speech.say()` — browser voices |
 | `core/listen.js` | `VS.listen.hear()` — speech recognition for Speak |
 | `core/sfx.js` | `VS.sfx.play()` — synthesised sound effects (Web Audio) |
@@ -62,7 +62,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `core/grammar.js` | `VS.grammar.check(text)` — LanguageTool for Use it: grammar and spelling, online and optional; skipped quietly when offline |
 | `views/shared.js` | `VS.ui.*` — word row, tags, note box, activity header, results, keyboard guard |
 | `views/home.js` | `VS.today` — today's plan, shown at the top of the library |
-| `views/*.js` | one screen each: library (home), cards, recall, quiz, spell, match, speak, write (Use it), stats, week, print, import, data, transfer |
+| `views/*.js` | one screen each: library (home), cards, recall, quiz, spell, match, speak, write (Use it), stats, week, print, import, data, transfer, wallet |
 | `app.js` | router, app bar, settings, click + keyboard handling, focus keeping, boot |
 
 ## Routes
@@ -79,6 +79,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `#/tricky/<mode>` | activity | words missed 3+ times |
 | `#/pick/<mode>?filters` | activity | a filtered list from the library |
 | `#/words?filters` | the library with filters (same screen as `#/`) | filtered and sorted |
+| `#/wallet` | words kept from examples, waiting to be learned | wallet entries |
 | `#/add[?tab=text]` | add words: type, from text, paste a list, upload | — |
 | `index.html?share-text=…` | text shared to the app (Share target, bookmarklet) → `VS.capture` → Add words | — |
 | `#/data` | backup, restore, export | — |
@@ -154,6 +155,32 @@ each word open on one card with a single "Next" (nothing graded), then
 *Check* runs the flip cards that feed the schedule. The counter counts words;
 a word shown again says "Once more".
 
+The card is one component with three bands (`views/cards.js` +
+`views/activities.css`): a meta band (level, type, frequency), a reading body,
+and a foot with the next micro-action. Front, back and Meet share the bands;
+Meet is left-aligned and never flips. The card caps at 660px so it shares an
+edge with the activity header and the answer bar. Sound is one pill (speaker
++ IPA, bare speaker when there is no IPA). Pronunciation and usage notes are
+not rendered on any card face — the word page and Speak own them.
+
+## The wallet (`core/store.js`, `views/wallet.js`)
+
+`state.wallet` is a list of `{ id, word, sentence, source, added }`, newest
+last, capped at 300. `walletAdd(word, sentence, source)` refuses a word already
+in the library and reports a duplicate; `walletRemove` returns the entry for
+Undo; `walletClear` returns everything removed. Adding a wallet word to the
+library removes it from the wallet (`views/import.js`). The wallet is content,
+so **Reset progress** keeps it and **Start over** deletes it; `exportJSON`
+includes it and `mergeJSON` unions by id, skipping words now in the library.
+`views/library.js` shows the *Saved for later* strip only while the wallet is
+not empty. `#/wallet` keeps typed words (`walletSetArabic` fills their Arabic
+later via `VS.arabicWord`, Auto-fill on only), searches past six entries, and
+offers two doors per word through `VS.walletDraft`: `{ ai: true, items }`
+opens Add → With AI with the words typed and their sentences in
+`st.ai.ctx`, so `VS.aiPrompt` / `VS.aiPromptMany` carry them ("use THAT
+meaning") and each added row keeps its `context` and `source`; `{ word,
+context, source }` opens the Add form. There is no sixth tab.
+
 ## Moving between devices (views/transfer.js)
 
 `store.exportJSON()` → deflate (`CompressionStream`) → base64 → frames of
@@ -173,6 +200,12 @@ dictionary proves, "wednesday" → "Wednesday", which keeps the id). Words added
 `editUserWord` refuses a change that would duplicate another word, and moves
 progress and notes when the word's id changes. `deleteUserWords` /
 `resetWords` work on any list (the library's actions).
+
+A closed row is one line: `views/shared.js` adds the full text as a `title`,
+and `views/library.css` clips the headword and the Arabic with an ellipsis.
+Opening the `<details>` switches both to normal wrapping, so the full meaning
+is readable on a phone; `views/import.js` applies the same single-line rule to
+"Just added" rows. There is no `is-long` branch — one rule at every width.
 
 ## Installable app (PWA)
 

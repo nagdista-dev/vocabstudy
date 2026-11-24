@@ -100,28 +100,31 @@
 .recent-list { list-style: none; padding: 0; display: grid; }
 .recent-list li { border-top: 1px solid var(--line); }
 .recent-list li:first-child { border-top: 0; }
+/* One scannable line per word: the headword and the Arabic are clipped with
+   an ellipsis, so every row keeps the same height. The full text is one tap
+   away on the word's page. */
 .recent-row {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 42%); align-items: baseline;
   gap: 1px 12px; min-height: 54px; padding: 9px 2px;
   color: inherit; text-decoration: none;
 }
 .recent-row:hover .recent-word b { color: var(--brand); }
 .recent-word { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.recent-word b { font-weight: 600; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
+.recent-word b {
+  min-width: 0; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .recent-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); align-self: center; }
 .recent-dot[data-s="learning"] { background: var(--mark); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-mark) 28%, transparent); }
 .recent-dot[data-s="mastered"] { background: var(--good); }
-.recent-ar { color: var(--ink-2); font-size: .98rem; text-align: end; max-width: 42vw; overflow-wrap: anywhere; }
+.recent-ar {
+  display: block; min-width: 0;
+  color: var(--ink-2); font-size: .98rem; text-align: end;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .recent-meta {
   grid-column: 1 / -1; font-size: var(--text-2xs); color: var(--ink-3);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-/* Long words take the full phone row: the Arabic meaning moves under the
-   word and the meta line follows, instead of fragmenting both columns. */
-@media (max-width: 599px) {
-  .recent-row.is-long { grid-template-columns: minmax(0, 1fr); row-gap: 2px; }
-  .recent-row.is-long .recent-ar { grid-column: 1; grid-row: 2; max-width: none; text-align: left; }
-  .recent-row.is-long .recent-meta { grid-row: 3; }
 }
 
 /* Empty library: one quiet explanation of the method instead of dead paper. */

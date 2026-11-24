@@ -172,7 +172,22 @@
 @media (hover: hover) { .word-row > summary:hover { background: var(--surface-hover); } }
 .word-row[open] .word-row-word b { font-size: 1.0625rem; }
 .word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
-.word-row-word b { font-weight: 600; overflow-wrap: anywhere; }
+.word-row-word b {
+  min-width: 0; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* A closed row is a single scannable line, like a spine on a shelf: long
+   Arabic is clipped with an ellipsis and comes back in full when the row
+   opens. Opening is the learner asking to read it. */
+.word-row-ar {
+  grid-area: ar; min-width: 0; text-align: left;
+  color: var(--ink-2); font-size: 1.02rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.word-row-ar.hint { font-size: var(--text-sm); }
+.word-row[open] .word-row-word b,
+.word-row[open] .word-row-ar { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.word-row[open] .word-row-ar { max-width: none; }
 /* One status treatment at every width: a dot by the word and the word
    "New / Learning / Mastered" leading the meta line (V3.8). */
 .word-row-dot {
@@ -194,8 +209,6 @@
 .word-row-state[data-s="learning"] { color: var(--on-mark-soft); }
 .word-row-state[data-s="mastered"] { color: var(--good); }
 .word-row-sep { margin-inline: 3px; color: var(--line-strong); }
-.word-row-ar { grid-area: ar; text-align: left; color: var(--ink-2); font-size: 1.02rem; overflow-wrap: anywhere; }
-.word-row-ar.hint { font-size: var(--text-sm); }
 .word-row-chev { grid-area: chev; color: var(--ink-3); transition: transform var(--fast); }
 .word-row[open] .word-row-chev { transform: rotate(90deg); }
 
@@ -205,11 +218,11 @@
    Everything else — mistakes, your sentences, goes-with, sound tips, your
    note — waits behind one row of small buttons, one section at a time.
    One reading column at every width. */
-.word-row[open] {
-  margin: var(--s-2) 0; border: 1px solid var(--line-strong) !important; border-radius: var(--r-lg);
-  box-shadow: var(--shadow-2); background: var(--surface);
-}
-.word-row[open] + .word-row { border-top: 0; }   /* the raised card needs no rule under it: the gap and its shadow separate it */
+/* The open word opens in place, inside the list's own frame: no second
+   border and shadow around it (a card in a card). The rule above it and a
+   firmer rule under it mark where it starts and ends. */
+.word-row[open] { margin: 0; border-radius: 0; box-shadow: none; background: var(--surface); }
+.word-row[open] + .word-row { border-top-color: var(--line-strong); }
 .word-row-body {
   container: word-entry / inline-size;
   padding: 0 var(--s-4) var(--s-4);
@@ -222,13 +235,40 @@
 .word-definition, .word-example { max-width: 68ch; }
 .word-entry > * { min-width: 0; }
 
-/* Sound + menu */
-.word-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+/* Sound + tools: the pronunciation capsule on the left; Edit and Delete in
+   view on the right, so managing a word is one tap, never a hidden menu. */
+.word-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-width: 0; }
 .word-sound-main { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
 .word-sound-ipa { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); min-width: 0; }
 .word-sound-ipa .ipa { font-size: 1rem; color: var(--ink-2); }
-.word-menu > summary { color: var(--ink-2); }
-.word-menu-danger, .word-menu-danger .icon { color: var(--bad) !important; }
+.word-tools { display: inline-flex; align-items: center; gap: var(--s-1); flex: none; }
+.word-tool {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-width: var(--tap); height: 40px; padding: 0 var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface);
+  color: var(--ink-2); font: inherit; font-size: var(--text-xs); font-weight: 600; cursor: pointer;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.word-tool .icon { width: 16px; height: 16px; }
+.word-tool:hover { border-color: var(--line-strong); background: var(--surface-hover); color: var(--ink); }
+.word-tool-edit:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+.word-tool-delete { width: 40px; padding: 0; color: var(--ink-3); }
+.word-tool-delete:hover, .word-tool-delete:focus-visible { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); }
+.word-tool:active { transform: scale(.96); }
+@media (pointer: coarse) { .word-tool { height: var(--tap); } .word-tool-delete { width: var(--tap); } }
+/* A narrow card: Edit keeps its icon and lets its label go, the capsule keeps the IPA. */
+@container word-entry (max-width: 340px) {
+  .word-tool-edit span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .word-tool-edit { width: 40px; padding: 0; }
+}
+/* Reset to new: a quiet icon at the end of the memory line. */
+.word-reset {
+  display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; margin: -7px -6px -7px 0;
+  border: 0; border-radius: 50%; background: none; color: var(--ink-3); cursor: pointer;
+}
+.word-reset .icon { width: 15px; height: 15px; }
+.word-reset:hover { background: var(--surface); color: var(--ink); }
+@media (pointer: coarse) { .word-reset { width: 40px; height: 40px; margin: -11px -8px -11px 0; } }
 
 /* Meaning and example */
 .word-lead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s-3); }
@@ -240,6 +280,10 @@
 }
 .word-other:hover { text-decoration: underline; text-underline-offset: 3px; }
 .word-example-block { display: grid; gap: 0; min-width: 0; }
+.word-example-block .tap-hint { justify-content: flex-start; align-items: flex-start; text-align: start; padding-inline-start: calc(var(--s-3) + 3px); margin-top: 4px; }
+.word-example-block .tap-hint .icon { margin-top: 2px; }
+.word-related .rel { justify-content: flex-start; }
+.word-related .rel-chips { justify-content: flex-start; }
 .word-example { display: flex; align-items: center; gap: var(--s-2); margin: 0; }
 .word-example blockquote {
   flex: 1; min-width: 0; margin: 0; padding: 1px 0 1px var(--s-3);
@@ -319,16 +363,16 @@
   .word-row-body { padding: 0 var(--s-4) var(--s-4); }
   .word-row-chev { align-self: center; }
 }
-/* A word too long for the two-column phone row gets the full width; its
-   Arabic and meta move underneath instead of squeezing both sides. */
 @media (max-width: 599px) {
-  .word-row.is-long > summary {
+  /* An opened row is being read, not scanned: the meaning gets the full
+     width and wraps instead of staying a clipped side column. */
+  .word-row[open] > summary {
     grid-template-columns: minmax(0, 1fr) 16px;
     grid-template-areas: "word chev" "ar chev" "meta chev";
-    align-items: start; row-gap: 1px; padding-block: 10px;
+    align-items: start; row-gap: 1px;
   }
-  .word-row.is-long .word-row-ar { max-width: none; text-align: left; }
-  .word-row.is-long .word-row-chev { align-self: center; }
+  .word-row[open] .word-row-ar { text-align: start; }
+  .word-row[open] .word-row-chev { align-self: center; }
 }
 /* At 320 with Larger text even an ordinary word runs out of room beside its
    meaning. Give the headword the whole line and put the Arabic underneath. */
@@ -473,7 +517,9 @@
   display: inline-flex; align-items: center; gap: var(--s-2);
   padding: 3px var(--s-3) 3px 3px; border-radius: var(--r-pill); background: var(--surface-2);
 }
-.word-sound-main .speak-btn { width: 36px; height: 36px; min-width: 36px; min-height: 36px; background: var(--surface); box-shadow: var(--shadow-1); }
+.word-sound-main .speak-btn { width: 36px; height: 36px; min-width: 36px; min-height: 36px; background: var(--surface); color: var(--brand); box-shadow: var(--shadow-1); }
+/* Playing: the speaker fills with the accent (it used to keep the white face and turn its icon white). */
+.word-sound-main .speak-btn.is-speaking { background: var(--brand); color: var(--on-brand); box-shadow: 0 0 0 3px var(--brand-soft); }
 .word-sound-main .ipa { font-size: var(--text-sm); color: var(--ink-2); }
 @media (pointer: coarse) { .word-sound-main .speak-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; } }
 
@@ -493,6 +539,7 @@
 .word-example blockquote { flex: 0 1 auto; }
 .word-hear { width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 50%; }
 .word-hear:hover { background: var(--surface-2); }
+.word-hear.is-speaking { background: var(--brand-soft); color: var(--brand); }
 .word-lead { gap: 0; }
 .word-lead .word-other { min-height: 28px; }
 @media (pointer: coarse) { .word-hear { width: 44px; height: 44px; } .word-lead .word-other { min-height: 36px; } }

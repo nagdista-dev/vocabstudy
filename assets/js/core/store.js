@@ -37,6 +37,7 @@
     lastBackup: "",                                // date of the last full backup download
     backupNudgeIgnored: "",                        // date the learner hid the weekly backup reminder
     installNudgeDismissed: "",                     // date the learner said "not now" to installing the app
+    wallet: [],                                    // words met in an example, kept for later: [{ id, word, sentence, source, added }]
     reminder: "",                                  // "9 PM": the daily calendar reminder the learner added (views/home.js)
     weekSeen: "",                                  // the Saturday of the last weekly report opened (core/week.js)
     milestone: 0,                                  // the highest mastered-words milestone celebrated
@@ -58,6 +59,10 @@
       // Light for everyone unless they chose Night or Auto themselves: an "auto" saved
       // as the old default (before anyone picked it) goes back to light.
       if (st.settings.theme === "auto" && !st.settings.themeChosen) st.settings.theme = "light";
+      // A wallet entry is a word the learner met and kept; it carries the sentence
+      // that made them tap. Old or damaged saves fall back to an empty wallet.
+      if (!Array.isArray(st.wallet)) st.wallet = [];
+      st.wallet = st.wallet.filter((e) => e && e.word).slice(-300);
       const g = st.settings.dailyGoal;
       if (g && ![20, 50, 100, 200].includes(g)) st.settings.dailyGoal = g < 75 ? 50 : g < 150 ? 100 : g <= 150 ? 100 : 200;
       return st;
@@ -337,6 +342,80 @@
     settings: () => state.settings,
     setSetting(name, value) { state.settings[name] = value; save(); },
 
+    /* ── The word wallet ──────────────────────────────────────────
+       A word the learner met inside an example and kept for later. It is
+       not a library word yet: it has no schedule, no note and no place in
+       the ruler. Adding it to the library is a separate, deliberate tap. */
+    wallet: () => state.wallet || [],
+
+    /**
+     * Keep one word from a sentence. Returns:
+     *   { ok: true, entry }            newly kept
+     *   { ok: true, entry, existed }   already in the wallet
+     *   { ok: false, inLibrary }       already one of the learner's words
+     */
+    walletAdd(word, sentence, source, kind, arabic) {
+      const text = String(word || "").trim().replace(/\s+/g, " ").slice(0, 80);
+      const id = VS.wordKey(text);
+      if (!text || !id) return { ok: false };
+      if (VS.byId[id]) return { ok: false, inLibrary: true, id };
+      const list = state.wallet || (state.wallet = []);
+      const found = list.find((e) => e.id === id);
+      if (found) return { ok: true, entry: found, existed: true };
+      const entry = {
+        id, word: text,
+        sentence: String(sentence || "").trim().slice(0, 300),
+        source: String(source || "").slice(0, 80),
+        added: VS.todayKey(),
+      };
+      if (kind === "meaning") entry.kind = "meaning";   // met in the English meaning, not the example
+      if (arabic) entry.arabic = String(arabic).slice(0, 120);   // the gloss the word card showed, if it had loaded
+      list.push(entry);
+      if (list.length > 300) list.splice(0, list.length - 300);
+      save();
+      return { ok: true, entry };
+    },
+
+    /** Fill in a kept word's Arabic later (looked up after it was kept). */
+    walletSetArabic(id, arabic) {
+      const e = (state.wallet || []).find((x) => x.id === id);
+      if (!e || !arabic || e.arabic) return;
+      e.arabic = String(arabic).slice(0, 120);
+      save();
+    },
+
+    /** Take one word out; returns it so a toast can put it back. */
+    walletRemove(id) {
+      const list = state.wallet || [];
+      const i = list.findIndex((e) => e.id === id);
+      if (i < 0) return null;
+      const [gone] = list.splice(i, 1);
+      save();
+      return gone;
+    },
+
+    /** Put kept words back (the Undo behind Remove and Clear). */
+    walletRestore(entries) {
+      if (!Array.isArray(entries) || !entries.length) return;
+      const list = state.wallet || (state.wallet = []);
+      const seen = new Set(list.map((e) => e.id));
+      entries.forEach((e) => {
+        if (!e || !e.word || !e.id || seen.has(e.id)) return;
+        list.push(e);
+        seen.add(e.id);
+      });
+      save();
+    },
+
+    /** Empty the wallet; returns what was removed, for Undo. */
+    walletClear() {
+      const gone = (state.wallet || []).slice();
+      if (!gone.length) return [];
+      state.wallet = [];
+      save();
+      return gone;
+    },
+
     notesAll: () => state.notes,
     lastBackup: () => state.lastBackup,
     markBackup() { state.lastBackup = VS.todayKey(); save(); },
@@ -385,6 +464,14 @@
       Object.entries(data.done || {}).forEach(([k, d]) => { if (!state.done[k] || d > state.done[k]) state.done[k] = d; });
       Object.entries(data.best || {}).forEach(([k, ms]) => { if (!state.best[k] || ms < state.best[k]) state.best[k] = ms; });
       if (data.streak && data.streak.last > state.streak.last) state.streak = data.streak;
+      // Both devices' wallets, one entry per word; never a word that is now in the library.
+      const wallet = state.wallet || (state.wallet = []);
+      const kept = new Set(wallet.map((e) => e.id));
+      (Array.isArray(data.wallet) ? data.wallet : []).forEach((e) => {
+        if (!e || !e.word || !e.id || kept.has(e.id) || VS.byId[e.id]) return;
+        wallet.push(e);
+        kept.add(e.id);
+      });
       save();
       return true;
     },
@@ -699,7 +786,8 @@
 
     resetProgress() {
       // Words you added are content, not progress: they survive a reset.
-      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), { settings: state.settings, library: state.library });
+      // The wallet is content too — words kept, not answers given.
+      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), { settings: state.settings, library: state.library, wallet: state.wallet });
       lastUndo = null;
       save();
     },

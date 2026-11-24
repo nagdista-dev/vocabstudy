@@ -621,10 +621,151 @@ kbd {
   .hint { font-size: max(.85rem, 13.5px); }
 }
 
-/* Similar words — under a meaning, on a card back, in a hint */
-.similar { font-size: var(--text-sm); color: var(--ink-2); }
-.similar > span { font-weight: 600; font-size: var(--text-sm); color: var(--ink-3); margin-inline-end: 4px; }
-.flash-similar { text-align: center; }
+/* Goes with / Similar — one phrase per chip, never one dotted paragraph.
+   The label stays quiet; the words are the thing to read. */
+.rel { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 6px 8px; max-width: 100%; min-width: 0; }
+.rel-label { flex: none; font-size: var(--text-xs); font-weight: 700; letter-spacing: .02em; color: var(--ink-3); }
+.rel-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-width: 0; }
+.rel-chip {
+  display: inline-flex; align-items: center; padding: 2px 9px;
+  border: 1px solid var(--line); border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--ink);
+  font-size: var(--text-sm); line-height: 1.5; overflow-wrap: anywhere;
+}
+.flash-similar { justify-self: center; max-width: 100%; }
+
+/* A word inside an example: tap it to keep it in the wallet. It reads as
+   text, not a link; the hint under the sentence tells you it is tappable. */
+.tap-line { display: inline; }
+.tap-word {
+  display: inline; padding: 1px 0; border: 0; background: none; color: inherit;
+  font: inherit; line-height: inherit; text-align: inherit; cursor: pointer;
+  text-decoration: underline 1px dotted transparent; text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
+.tap-word:hover { background: var(--surface-2); text-decoration-color: var(--line-strong); border-radius: 3px; }
+.tap-word.is-kept { color: var(--brand); text-decoration-color: var(--brand-soft); }
+.tap-hint {
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0;
+  color: var(--ink-3); font-size: var(--text-xs); line-height: 1.5; text-align: center;
+}
+.tap-hint .icon { flex: none; width: 14px; height: 14px; }
+
+/* A tapped word's card: the word, its Arabic, and one choice (Keep in
+   wallet). It floats (fixed) next to the word with a pointer, never moves
+   the text, and follows the word while the page scrolls. One elevation:
+   a hairline border with the app's float shadow, like every menu.
+   The Arabic sits in the app's --note panel: this is the app speaking,
+   not the learner's memory, so no highlighter yellow until it is kept. */
+.tap-word[aria-expanded="true"] {
+  background: var(--brand-soft); color: var(--ink); border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--brand-soft);
+}
+/* The focus moment: the page dims (no blur, per Motion), the word rides
+   above the dim in its own type, and the card sits above both. */
+.word-pop-scrim {
+  position: fixed; inset: 0; z-index: var(--z-sheet);
+  background: rgb(var(--shadow-rgb) / .32);
+  animation: fade-in var(--fast) var(--ease) both;
+}
+.word-pop-spot {
+  position: fixed; z-index: var(--z-sheet); box-sizing: content-box;
+  display: grid; place-items: center; margin: -2px 0 0 -5px; padding: 2px 5px;
+  border-radius: 6px; background: var(--surface); color: var(--ink);
+  box-shadow: 0 0 0 2px var(--brand), 0 6px 16px -6px rgb(var(--shadow-rgb) / .45);
+  white-space: nowrap; pointer-events: none;
+  animation: fade-in var(--fast) var(--ease) both;
+}
+.word-pop-scrim.is-leaving, .word-pop-spot.is-leaving { animation: fade-out var(--fast) var(--ease) forwards; }
+@keyframes fade-out { to { opacity: 0; } }
+.word-pop {
+  --pop-x: 50%;
+  position: fixed; z-index: var(--z-sheet);
+  width: min(calc(340px * var(--text-scale, 1)), calc(100vw - 24px));
+  display: grid; gap: var(--s-3); padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow-2);
+  font-size: var(--text-sm); line-height: 1.45; text-align: start;
+  transform-origin: var(--pop-x) top;
+  animation: menu-in var(--fast) var(--ease) both;
+}
+.word-pop.is-above { transform-origin: var(--pop-x) bottom; }
+.word-pop:focus { outline: none; }
+.word-pop:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+/* The pointer: a square turned 45°, carrying the card's border on its two outer sides. */
+.word-pop::before {
+  content: ""; position: absolute; top: -6px; left: calc(var(--pop-x) - 6px);
+  width: 11px; height: 11px; background: var(--surface);
+  border: 1px solid var(--line); border-right: 0; border-bottom: 0; border-top-left-radius: 3px;
+  transform: rotate(45deg);
+}
+.word-pop.is-above::before { top: auto; bottom: -6px; transform: rotate(225deg); }
+
+.word-pop-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); min-height: 32px; }
+.word-pop-word {
+  margin: 0; min-width: 0; overflow-wrap: anywhere;
+  font-size: var(--text-lg); font-weight: 700; line-height: 1.2; letter-spacing: -.01em;
+}
+.word-pop-head .speak-btn { flex: none; margin: -6px -4px -6px 0; }
+
+.word-pop-meaning {
+  display: grid; gap: 6px; min-height: 64px; align-content: center;
+  padding: var(--s-3) var(--s-3); border-radius: 10px;
+  background: var(--note-soft); color: var(--note-ink);
+}
+.word-pop-ar {
+  margin: 0; text-align: right; color: var(--ink); overflow-wrap: anywhere;
+  font-family: var(--font-arabic); font-weight: 600;
+  font-size: calc(var(--text-lg) * var(--arabic-scale)); line-height: 1.5;
+}
+/* Other meanings: one row per part of speech. The English label holds a
+   fixed column on the left (the interface is English); the Arabic terms
+   read right to left as separate chips, so each one is easy to pick out. */
+.word-pop-senses {
+  display: grid; gap: var(--s-2); margin: 0; padding-top: var(--s-3);
+  border-top: 1px solid var(--note-line);
+}
+.word-pop-sense {
+  display: grid; grid-template-columns: 4.75rem 1fr; align-items: start; gap: var(--s-2);
+}
+.word-pop-pos {
+  margin: 0; padding-top: 5px;
+  font-size: var(--text-xs); font-weight: 600; line-height: 1.4; color: var(--note);
+  text-transform: lowercase; letter-spacing: .01em;
+}
+.word-pop-terms {
+  display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 6px; margin: 0; min-width: 0;
+}
+.word-pop-term {
+  display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--r-pill);
+  background: var(--surface); border: 1px solid var(--note-line); color: var(--ink);
+  font-family: var(--font-arabic); font-size: calc(var(--text-xs) * var(--arabic-scale)); line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.word-pop-msg { margin: 0; color: var(--note-ink); font-size: var(--text-sm); }
+.word-pop-meaning.is-msg { justify-items: start; align-content: center; }
+.word-pop-retry { font-size: var(--text-sm); }
+/* Waiting: two still bars where the Arabic will be, right-aligned like it. No loop. */
+.word-pop-skel { display: grid; gap: 8px; justify-items: end; }
+.word-pop-skel i { display: block; height: 14px; width: 46%; border-radius: 7px; background: var(--note-line); opacity: .7; }
+.word-pop-skel i + i { width: 72%; height: 10px; opacity: .45; }
+.word-pop-meaning.is-found { animation: fade-in var(--fast) var(--ease) both; }
+
+.word-pop-foot { display: grid; }
+.word-pop-keep { width: 100%; min-height: var(--tap); justify-content: center; }
+.word-pop-state {
+  display: flex; align-items: center; gap: 6px; min-height: var(--tap); margin: 0;
+  color: var(--ink-2); font-size: var(--text-sm); font-weight: 600;
+}
+.word-pop-state .icon { color: var(--ink-3); }
+.word-pop-state.is-new .icon { color: var(--good); }
+.word-pop-state a { font-weight: 600; }
+
+/* Phones: wider, so the Arabic and the button breathe; Larger text never overflows. */
+@media (max-width: 599px) {
+  .word-pop { width: calc(100vw - 24px); max-width: 400px; }
+}
+@media (prefers-reduced-motion: reduce) { .word-pop, .word-pop-meaning.is-found, .word-pop-scrim, .word-pop-spot { animation: none; } }
 
 /* "Already in your library", while typing a new word */
 .dup-note { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); margin-top: var(--s-2);
@@ -733,6 +874,7 @@ kbd {
 }
 .more-ex-items .speak-btn:hover { background: var(--brand-soft); color: var(--brand); }
 .more-ex-items .speak-btn .icon { width: 15px; height: 15px; }
+.more-ex-items .speak-btn.is-speaking { background: var(--brand); color: var(--on-brand); }
 .more-ex-credit { margin-top: 12px; padding-inline-start: 15px; color: var(--ink-3); font-size: var(--text-xs); }
 .goes > span { color: var(--ink-3); }
 
@@ -765,20 +907,64 @@ kbd {
   border-radius: var(--r-md); background: var(--note-soft); color: var(--note-ink); font-size: var(--text-sm); line-height: 1.5; }
 .setting-status .icon { flex: none; margin-top: 3px; }
 
-/* A word's meanings, inline (views/shared.js meaning-list): read, compare, pick — no form. */
+/* A word's meanings, inline (views/shared.js meaning-list): read, compare,
+   pick — no form. One panel like a page of a learner's dictionary: rows
+   divided by hairlines, each numbered. The head holds the part of speech
+   (a quiet chip, left) and the Arabic (right, the app's Arabic face, a step
+   larger) — always at the same two edges, so the eye scans down a column.
+   The meaning in use wears the accent's soft fill and an "In use" mark. */
 .meanings:empty { display: none; }
 .meanings { margin-top: var(--s-2); }
-.meaning-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
-.meaning-list li { display: grid; gap: var(--s-1); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md);
-  background: var(--surface); text-align: start; }
-.meaning-list li.is-current { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
-.meaning-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3); margin: 0; }
-.meaning-type { font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); }
-.meaning-ar { font-family: var(--font-arabic); font-size: calc(var(--text-md) * var(--arabic-scale)); font-weight: 600; color: var(--ink); }
-.meaning-def { margin: 0; color: var(--ink); }
-.meaning-ex { margin: 0; color: var(--ink-2); font-style: italic; }
-.meaning-this { display: flex; align-items: center; gap: var(--s-1); margin: 0; color: var(--brand); font-weight: 600; font-size: var(--text-sm); }
-.meaning-list .btn { justify-self: start; min-height: var(--tap); }
+.meaning-list {
+  list-style: none; margin: 0; padding: 0; display: grid;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden;
+}
+.meaning-item {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) var(--s-3) var(--s-3); text-align: start;
+}
+.meaning-item + .meaning-item, .meaning-group + .meaning-item { border-top: 1px solid var(--line); }
+.meaning-item.is-current { background: var(--brand-soft); }
+.meaning-n {
+  display: grid; place-items: center; width: 26px; height: 26px; margin-top: 1px; border-radius: 50%;
+  background: var(--surface-2); color: var(--ink-2);
+  font-size: var(--text-xs); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.meaning-item.is-current .meaning-n { background: var(--brand); color: var(--on-brand); }
+.meaning-body { display: grid; gap: 6px; min-width: 0; }
+.meaning-head { display: flex; align-items: center; gap: var(--s-2) var(--s-3); min-height: 26px; margin: 0; }
+.meaning-type {
+  flex: none; padding: 1px 9px; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--ink-2);
+  font-size: var(--text-xs); font-weight: 600; line-height: 1.6;
+}
+.meaning-item.is-current .meaning-type { background: var(--surface); }
+.meaning-ar {
+  margin-left: auto; min-width: 0;   /* physical: the Arabic is dir=rtl, so its "start" is its right side */ text-align: right; overflow-wrap: anywhere;
+  font-family: var(--font-arabic); font-size: calc(var(--text-md) * var(--arabic-scale)); font-weight: 600;
+  line-height: 1.45; color: var(--ink);
+}
+.meaning-def { margin: 0; color: var(--ink); font-size: var(--text-md); line-height: 1.5; text-wrap: pretty; }
+.meaning-ex { margin: 0; color: var(--ink-2); font-size: var(--text-sm); font-style: italic; line-height: 1.55; overflow-wrap: anywhere; }
+.meaning-foot { display: flex; align-items: center; margin-top: 2px; }
+.meaning-this {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px;
+  color: var(--brand); font-size: var(--text-sm); font-weight: 700;
+}
+.meaning-this .icon { width: 16px; height: 16px; }
+.meaning-list .meaning-use { min-height: 36px; padding-inline: var(--s-4); font-size: var(--text-sm); }
+@media (pointer: coarse) { .meaning-list .meaning-use { min-height: var(--tap); } }
+.meaning-list .meaning-group {
+  padding: var(--s-2) var(--s-4); border-top: 1px solid var(--line); background: var(--surface-2);
+  font-size: var(--text-xs); font-weight: 600; color: var(--ink-3);
+}
+/* A narrow column (a phone, the Meet card): the number steps aside, the Arabic
+   takes its own line under the part of speech when the two don't fit. */
+@media (max-width: 420px) {
+  .meaning-item { grid-template-columns: minmax(0, 1fr); padding: var(--s-3); }
+  .meaning-n { display: none; }
+  .meaning-head { flex-wrap: wrap; }
+}
 
 /* Meet card: "Is this the meaning you met?" (views/cards.js) — a question, quiet, before the example. */
 .meaning-ask { justify-self: stretch; display: grid; gap: var(--s-2); padding: var(--s-3); border-radius: var(--r-md); background: var(--surface-2); text-align: start; }
@@ -804,7 +990,6 @@ kbd {
 .word-more > summary::-webkit-details-marker { display: none; }
 .word-more[open] .word-more-chev { transform: rotate(90deg); }
 .word-more-chev { transition: transform var(--fast); }
-.meaning-list .meaning-group { padding: var(--s-2) 0 0; border: 0; background: none; font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); }
 
 /* The ruler (VS.ui.ruler, V4.2): six spaced days as six cells of a school
    ruler. Reached days wear the highlighter; today's day is solid. */
@@ -896,28 +1081,45 @@ kbd {
 .me-chip.is-unset { border-color: var(--note-line); background: var(--note-soft); color: var(--note-ink); }
 .me-chip.is-unset > .icon { color: var(--note-ink); }
 
-/* The two choices (first run, or Change). */
+/* The two choices (first run, or Change). The sheet never borrows the
+   browser's form font: every line is the app's own, explicitly. */
+.profile-sheet, .profile-sheet .sheet-body, .profile-sheet .hint { font-family: var(--font-body); }
+.profile-sheet .sheet-head h2 { font-family: var(--font-display); }
 .profile-body { gap: var(--s-4); }
 .profile-set { display: grid; gap: var(--s-2); margin: 0; padding: 0; border: 0; min-width: 0; }
-.profile-set legend { padding: 0; margin-bottom: var(--s-2); font-weight: 700; font-size: var(--text-sm); }
+.profile-set legend { padding: 0; margin-bottom: var(--s-2); font-family: var(--font-body); font-weight: 700; font-size: var(--text-sm); }
 .profile-set legend .hint { font-weight: 500; }
 .profile-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); }
 .profile-dialects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; direction: rtl; }
-.profile-dialects button { min-height: 46px; padding: 4px var(--s-2); }
+.profile-dialects button { min-height: 46px; padding: 4px var(--s-2); font-family: var(--font-arabic); }
 .profile-dialects b { font-size: var(--text-sm); }
 .profile-dialects .is-msa { grid-column: 1 / -1; grid-auto-flow: column; justify-content: start; align-items: baseline; gap: var(--s-2); min-height: 40px; }
+@media (max-width: 430px) {
+  .profile-levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .profile-dialects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .profile-dialects .is-msa { grid-column: 1 / -1; }
+}
 @media (min-width: 600px) { .profile-dialects { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 600px) { .profile-sheet { width: min(560px, calc(100vw - 32px)); } }
 .profile-levels button, .profile-dialects button {
-  display: grid; gap: 1px; justify-items: start; min-height: 52px; min-width: 0; padding: 6px var(--s-3);
+  position: relative;
+  display: grid; gap: 1px; justify-items: start; min-height: 52px; min-width: 0; padding: 6px 26px 6px var(--s-3);
   border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink);
-  font: inherit; text-align: start; cursor: pointer; transition: border-color var(--fast), background var(--fast); }
+  font: inherit; font-family: var(--font-body); text-align: start; cursor: pointer;
+  transition: border-color var(--fast), background var(--fast); }
 .profile-levels b, .profile-dialects b { font-size: var(--text-md); }
+/* Arabic keeps its own face and size, even though the button resets the
+   font: the dialect names are the one place Arabic is the content. */
+.profile-dialects button { font-family: var(--font-arabic); font-size: calc(1rem * var(--arabic-scale)); }
 .profile-levels small, .profile-dialects small { font-size: var(--text-xs); color: var(--ink-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-levels button:hover, .profile-dialects button:hover { border-color: var(--line-strong); }
 .profile-levels button[aria-pressed="true"], .profile-dialects button[aria-pressed="true"] {
   border-color: var(--brand); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand); }
 .profile-levels button[aria-pressed="true"] b, .profile-dialects button[aria-pressed="true"] b { color: var(--brand); }
+.profile-levels button[aria-pressed="true"]::after, .profile-dialects button[aria-pressed="true"]::after {
+  content: "✓"; position: absolute; inset-inline-end: 8px; inset-block-start: 6px;
+  color: var(--brand); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 700; line-height: 1;
+}
 .profile-done { position: sticky; bottom: var(--s-3); width: 100%; box-shadow: 0 0 0 8px var(--surface); }
 /* Locked Start stays solid: it floats over the list, so nothing may show through it. */
 .profile-done:disabled { opacity: 1; background: var(--surface-2); color: var(--ink-3); border-color: var(--line); }

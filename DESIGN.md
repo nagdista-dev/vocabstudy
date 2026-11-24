@@ -89,8 +89,9 @@ one of — one border, brand on hover, brand-soft when chosen.
 
 **Yellow means memory.** The highlighter marks the word being learned, the
 due count, and what belongs to the learner's own memory: "Where you met it",
-their note's bulb, the ruler's reached days, a "Learning" status and words
-they keep from a text. Everything the *app* says — questions, warnings (the
+their note's bulb, the ruler's reached days, a "Learning" status, words
+they keep from a text, and the sentence kept in the wallet. Everything the
+*app* says — questions, warnings (the
 Arabic-keyboard line), hints, flags, the week's note, "saved but not checked"
 — uses `--note`. Counts that are not due (Learn, streak) are neutral; a
 right-answer streak (combo) is green.
@@ -105,6 +106,7 @@ right-answer streak (combo) is green.
 | Due | a word whose day on the ruler has come | Overdue, Late |
 | New / Learning / Mastered | a word's status | Box 3, Level 2 |
 | Your words | the library | Deck, Collection |
+| Wallet | words kept from examples, waiting to be learned | Saved, Inbox, Queue |
 | Where you met it | the learner's own sentence | Context, Source |
 | Checked by hand | a meaning from `overrides.js` | Verified, Official |
 | Backup file | the exported `.json` | Export, Dump |
@@ -268,7 +270,9 @@ JS). It keeps the same desk without imitating an app screen:
 
 ## Layout
 
-- Content max 1120px; activities max 720px — one task, centred.
+- Content max 1120px; activities max 720px — one task, centred. The study
+  card and its answer bar cap at 660px so the activity header, the card and
+  the bar share one edge.
 - 4px spacing grid (`--s-1` … `--s-8`).
 - App bar: 56px on phones, 64px from 1024px; opaque paper with a 1px line
   (under Glass: blurred glass). Desktop
@@ -287,6 +291,40 @@ JS). It keeps the same desk without imitating an app screen:
 - Touch targets ≥ 44px (`--tap`) on every touch screen — one block in
   `components.css` ("Touch screens") sets it for every component.
 
+## The study card (Learn)
+
+The screen a learner looks at for hours is composed like a page in a
+notebook, not a pile of centred pieces. Every face — front, back and Meet —
+shares three bands:
+
+| Band | What it holds |
+| --- | --- |
+| Top | CEFR level, word type and frequency — quiet, centred on a recall card, left on Meet |
+| Reading body | One idea at a time: the word or the Arabic is the largest thing; definition ≤ 52ch; example in a soft block |
+| Foot | The one small action after reading: "Say it in English, then tap to check", "Tap to see the meaning", "Say it once in a sentence", or the wallet hint |
+
+- **Shape.** 660px max, the same edge as the activity header and the answer
+  bar; 18px radius, one border, one shadow, no nested card. At 375px it is one
+  column and the fixed answer bar never covers the foot.
+- **Front, Arabic → English.** Arabic at display size, definition below it,
+  then the foot asking for the English out loud before the flip.
+- **Front, English → meaning.** The marked word, its sense, and pronunciation
+  as one pill: speaker + IPA. With no IPA the speaker stands bare — an empty
+  pill would read as missing data. Foot: "Tap to see the meaning".
+- **Back.** The answer (the English word when the front was Arabic; the Arabic
+  meaning when the front was English), the memory sentence in its yellow
+  band, the example, then "Goes with" / "Similar" as chips. Foot: "Say it once
+  in a sentence".
+- **Meet.** The same bands, read left-aligned like a dictionary entry: word,
+  sound, meaning, example, related words, wallet hint. Nothing is hidden and
+  nothing is graded; it does not flip.
+- **No notes on the card.** Pronunciation tips and usage traps were louder
+  than the word; they stay on the word page (Sounds / Mistakes) and in Speak.
+- **Type.** Body measure under 52ch; definition 20px; Arabic set larger than
+  the English; foot copy 15px, never under 13px. Motion is unchanged: the flip,
+  the highlighter drawing under the revealed word, the card leaving in the
+  answer's direction.
+
 ## Phones first
 
 Most learning happens on a phone, one-handed, by learners of every age.
@@ -303,9 +341,11 @@ with 22-letter words and long Arabic meanings:
 - Choices never hide off-screen: the status filter scrolls with an edge fade,
   and its sheet drops to one column when a select needs the width.
 - Word rows keep status (dot + word), type, level and frequency on the collapsed line; tags
-  wait in the expanded margin. A long word, or any word at 320px with Larger
-  text, stacks its Arabic and meta under the headword instead of breaking the
-  word mid-way.
+  wait in the expanded margin. A closed row is one scannable line: a long
+  headword or Arabic meaning clips with an ellipsis, so every row keeps the
+  same height. Opening the row is the learner asking to read it — the full
+  word and meaning then wrap on phones, with the meta line underneath. The
+  same rule holds for "Just added" rows on Add; `is-long` stacking is gone.
 - Week strips shorten "Today" to "Now" at ≤360px so seven labels never collide;
   charts use the same 2xs labels.
 
@@ -325,6 +365,22 @@ learner's notebook, not a stack of labelled cards.
   each sentence is one block of text, never broken into flex fragments, with a
   quiet speaker at its end; the Tatoeba credit closes the block, indented with
   the sentences.
+- **Opens in place.** The open word stays inside the list's frame: no second
+  border or shadow around it (a card in a card); a firmer rule closes it.
+- **Manage in view.** The sound capsule (speaker · IPA · stress) on the left;
+  `Edit` (pen + label, icon-only under a 340px card) and `Delete` (trash icon,
+  red only on hover/focus) on the right — no ⋯ menu. Delete is one tap and
+  the toast's Undo restores the word with its progress, note and sentences.
+  `Reset to new` is a quiet icon at the end of the memory line, with Undo.
+- **Playing.** Every speaker fills with the accent while it plays (the capsule
+  speaker and the More examples speakers kept their own face and lost the
+  icon); the example's speaker takes the soft accent.
+- **Other meanings.** One panel like a learner's dictionary page: rows divided
+  by hairlines, each numbered; the part of speech a quiet chip on the left and
+  the Arabic on the right edge (physical `margin-left: auto` — the Arabic is
+  `dir=rtl`), the definition, the example in italic, then `Use this meaning`.
+  The meaning in use wears the accent's soft fill, a filled number and "In use".
+  Under 420px the numbers step aside. The Meet card uses the same list.
 - **One card at a time.** Opening a word closes the one already open, so the
   library is always one reading column rather than a long stack of half-read
   cards. `toggle` does not bubble; the listener runs in the capture phase.
@@ -340,6 +396,68 @@ learner's notebook, not a stack of labelled cards.
   ghost buttons.
 - **Empty states keep the same order.** `No definition yet. Add a definition`,
   `Find a meaning`, `No example yet. Add an example`, then `More examples`.
+
+## The wallet (`#/wallet`)
+
+Words saved for later — typed here, or kept while reading — not a second
+library. Nothing in it is studied or scheduled until the learner chooses.
+
+- **What is kept.** `{ id, word, sentence, source, kind?, arabic?, added }` —
+  the word, the sentence it was met in (optional when typed), where it came
+  from (`kind: "meaning"` when tapped in a definition), the Arabic the word
+  card showed (or the lookup after it was typed, Auto-fill on only), and the
+  day. The id is the word, so it cannot be kept twice. At most 300.
+- **Two ways in.** The save bar under the title — one field and `Save` in one
+  frame that takes the accent only while typing; "Add where you met it" opens
+  an optional sentence under it; Undo in the toast. Or, reading, tap a word in
+  an example or a meaning → the word card → `Keep in wallet`.
+- **The page, from scratch (v12).** One calm 720px column, nothing competing:
+  the title and one sentence; the save bar (the page's only filled button);
+  then one list in one frame, hairlines between rows — no card grid, no
+  coloured panels. A bar above the list: the count, Search past six words,
+  and `Make all with AI` as a quiet accent text button. Each row: the word
+  (body face, 20px, bold) with its Arabic beside it in ink-2, the day on the
+  right; the sentence in italic with the word highlighted (clamped to three
+  lines); "From the example for …"; then the doors as text buttons
+  (`Make with AI` in the accent, `Add myself` in ink-2) and, at the end, the
+  speaker and remove as quiet icons. On phones the doors drop their icons so
+  the row stays one line. Empty: the same frame, one icon tile, two sentences.
+- **No scrollbars.** The app draws none (`base.css`); scrolling is unchanged.
+- **Two doors, never an instant add.** `Make with AI` (tonal) opens Add → With
+  AI with the word typed and its sentence carried into the prompt ("use THAT
+  meaning"); the learner asks ChatGPT or Claude, pastes, checks, then adds.
+  `Add myself` opens the Add form filled with the word and the sentence. When
+  the word joins the library — even as its base form — it leaves the wallet.
+- **On Today.** *Saved for later*: one link with an accent tile carrying the
+  count, the four newest words as chips (fading where the row runs out), and
+  Open (the arrow alone on phones). Only while the wallet has words.
+- **Loss is reversible.** Remove and Keep show Undo; Clear wallet asks in the
+  app's own sheet and offers Undo. Reset progress keeps the wallet; Start over
+  deletes it. Backup includes it; merge unions by id.
+
+## A tapped word (the word card)
+
+Any word in an example or an English meaning (word page, study cards, More
+examples) is a quiet button. A tap opens **the word card** — a focus moment,
+not a menu:
+
+- **Focus.** The page dims (`--shadow-rgb` at .32, no blur); the tapped word
+  is lifted above the dim in its own type with a 2px brand ring; the card
+  sits beside it with a pointer, on the sheet layer (only toasts are above).
+  Focus moves into the card and stays there (Tab cycles); Escape, a tap
+  outside or a new screen closes it and returns focus to the word. The card
+  follows its word every frame, so a card sliding in or a scroll never
+  leaves the pointer behind.
+- **Content.** The word and its speaker; then the Arabic, which loads by
+  itself the moment the card opens (Google, then MyMemory; only that one word
+  is sent, and only while Auto-fill is on). It sits in the app's `--note`
+  panel: the app speaking, not the learner's memory. The main meaning is
+  large IBM Plex Sans Arabic; under a hairline, one row per part of speech —
+  the English label in a fixed left column, each Arabic term its own chip.
+- **One choice.** `Keep in wallet` (tonal, full width). Nothing is kept on the
+  tap itself. Already kept or already a library word → a plain state line.
+- **States.** Waiting: two still bars (no loop). Offline, translation off,
+  or no answer → one sentence, with Try again where it helps.
 
 ## Confirming a loss
 
