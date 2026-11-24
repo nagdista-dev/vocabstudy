@@ -64,8 +64,9 @@
   font-family: var(--font-body); font-size: var(--text-md); font-weight: 700; line-height: 1.3; letter-spacing: 0;
   color: var(--ink);
 }
-.wallet-row-head .speak-btn { width: 32px; height: 32px; min-width: 32px; }
-.wallet-row-head .speak-btn .icon { width: 15px; height: 15px; }
+/* The app's speaker at its own icon size, one step smaller than the word page's. */
+.wallet-row-head .speak-btn { width: 36px; height: 36px; min-width: 36px; }
+@media (pointer: coarse) { .wallet-row-head .speak-btn { width: 40px; height: 40px; min-width: 40px; } }
 .wallet-ar { margin: -2px 0 0; justify-self: start; color: var(--ink-2); font-size: 1.05rem; line-height: 1.5; }
 .wallet-sentence {
   margin: 2px 0 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-md);

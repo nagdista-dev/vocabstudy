@@ -425,9 +425,9 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   `.field` past six words; the library's `.word-list` frame. A row is set like
   a word row: the word 17px/600 left, its Arabic ink-2 at the right edge; the
   sentence in italic with the word highlighted; one meta line; then two
-  `link-btn` actions (accent / ink-2, underline on hover) and two round 40px
-  icon buttons of one shape — the speaker (accent fill) and remove (paper,
-  red on hover). Buttons keep the app's rounded rectangles; no pills.
+  actions as the app's buttons — tonal `Make with AI`, quiet `Auto-add`, an
+  icon to remove (red on hover) — in a column on the right from 720px, one
+  line along the bottom on phones; the speaker sits beside the word. Buttons keep the app's rounded rectangles; no pills.
   `Clear wallet` is a `danger-link`; empty is `.empty`.
 - **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
   (app.js `NAV`, `barOnly`). Phones and tablets keep five tabs; the wallet is
@@ -442,11 +442,13 @@ library. Nothing in it is studied or scheduled until the learner chooses.
 - **Clean addresses.** The app lives at its folder (`/#/wallet`), never
   `index.html`: links point to `./`, the manifest uses `./#/…`, and arriving on
   `/index.html` rewrites the address in place (app.js `VS.cleanPath`).
-- **Two doors, never an instant add.** `Make with AI` (tonal) opens Add → With
-  AI with the word typed and its sentence carried into the prompt ("use THAT
-  meaning"); the learner asks ChatGPT or Claude, pastes, checks, then adds.
-  `Add myself` opens the Add form filled with the word and the sentence. When
-  the word joins the library — even as its base form — it leaves the wallet.
+- **Two doors.** `Make with AI` (tonal) opens Add → With AI with the word typed
+  and its sentence carried into the prompt ("use THAT meaning"); the learner
+  asks ChatGPT or Claude, pastes, checks, then adds. `Auto-add` (quiet) adds
+  the word now, its sentence as "where you met it", and Auto-fill completes
+  it in the background — edit it any time; Undo in the toast. With Auto-fill
+  off it opens the filled-in Add form instead (nothing leaves the device).
+  When the word joins the library — even as its base form — it leaves the wallet.
 - **On Today.** *Saved for later*: one link with an accent tile carrying the
   count, the four newest words as chips (fading where the row runs out), and
   Open (the arrow alone on phones). Only while the wallet has words.
