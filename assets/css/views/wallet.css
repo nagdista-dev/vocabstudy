@@ -1,188 +1,105 @@
 /* views/wallet.css — words saved for later.
    ------------------------------------------------------------------
-   One calm reading column, like a page torn from the learner's notebook:
-     1. the title and one sentence about what this place is;
-     2. one field to save a word (the page's only filled button);
-     3. one list in one frame — a row per word, hairlines between them.
-   No cards in a grid, no repeated filled buttons, no coloured panels:
-   the accent marks actions, the highlighter marks the word inside its
-   sentence (the learner's memory), and everything else is ink on paper. */
+   Built from the app's own parts, so the wallet reads as one more page of
+   the same notebook, not a new design:
+     .page / .page-head        the header every page uses (h1 + hint + one .btn)
+     .quick-add .add-line      Today's add box: one .field and one tonal .btn
+     .field                    the Words page search
+     .word-list                the library's frame: one surface, hairlines between rows
+     .link-btn / .icon-btn     small actions inside content; the speaker is VS.ui.speakButton
+     .danger-link / .empty     Clear wallet (asks first) and the empty state
+   This file only sets what is particular to a wallet row and the spacing
+   between the blocks. Buttons keep the app's rounded rectangles (--r-md);
+   focus rings come from system.css, one ring per field. */
 
-.wallet-page {
-  display: grid; gap: var(--s-5); align-content: start;
-  width: 100%; max-width: 720px; margin-inline: auto;
-}
+.wallet-page { display: grid; gap: var(--s-4); align-content: start; }
+.wallet-page .page-head { margin-bottom: var(--s-1); }
+.wallet-page .page-head .hint b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.wallet-all { gap: var(--s-2); }
 
-/* 1 · Title */
-.wallet-head { display: grid; gap: var(--s-2); }
-.wallet-head h1 {
-  margin: 0; font-family: var(--font-display); font-weight: 700;
-  font-size: clamp(1.875rem, 1.5rem + 1.2vw, 2.375rem); line-height: 1.1; letter-spacing: -.02em;
-}
-.wallet-head p { margin: 0; max-width: 52ch; color: var(--ink-2); font-size: var(--text-md); line-height: 1.55; text-wrap: pretty; }
-
-/* 2 · Save a word: one quiet bar — the field and Save share a frame, the
-   frame takes the accent only while you type in it. */
-.wallet-keep { display: grid; gap: var(--s-2); }
-.wallet-keep-bar {
-  display: flex; align-items: center; gap: var(--s-2);
-  min-height: 56px; padding: 6px 6px 6px var(--s-4);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
-  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
-}
-.wallet-keep-bar:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.wallet-keep-ico { display: grid; place-items: center; flex: none; color: var(--ink-3); }
-.wallet-keep-ico .icon { width: 18px; height: 18px; }
-.wallet-keep-field { flex: 1; min-width: 0; }
-.wallet-keep-field input {
-  width: 100%; min-height: 44px; padding: 0; border: 0; background: none; outline: none;
-  color: var(--ink); font: inherit; font-size: var(--text-md);
-}
-.wallet-keep-field input::placeholder { color: var(--ink-3); }
-.wallet-keep-btn {
-  flex: none; min-height: 44px; padding: 0 var(--s-5); border: 0; border-radius: var(--r-md);
-  background: var(--brand); color: var(--on-brand);
-  font: inherit; font-size: var(--text-sm); font-weight: 700; cursor: pointer;
-  transition: background var(--fast) var(--ease), transform var(--fast) var(--ease);
-}
-.wallet-keep-btn:hover { background: var(--brand-hover); }
-.wallet-keep-btn:active { transform: scale(.97); }
-.wallet-keep-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.wallet-keep-more {
-  justify-self: start; min-height: 32px; margin-inline-start: var(--s-4); padding: 0;
-  border: 0; background: none; cursor: pointer;
-  color: var(--ink-3); font: inherit; font-size: var(--text-xs); font-weight: 600;
-}
-.wallet-keep-more:hover { color: var(--brand); }
+/* Save a word: Today's add box, with the optional "where you met it" under it. */
+.wallet-keep { margin: 0; gap: var(--s-1); }
+.wallet-keep-more { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0;
+  color: var(--ink-3); font-size: var(--text-xs); text-decoration: none; }
+.wallet-keep-more:hover { color: var(--brand); text-decoration: underline; }
+.wallet-keep-more .icon { width: 14px; height: 14px; }
+.wallet-keep-sentence { align-items: stretch; padding: 0; }
 .wallet-keep-sentence textarea {
-  width: 100%; padding: var(--s-3) var(--s-4); resize: vertical;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
-  color: var(--ink); font: inherit; font-size: var(--text-sm); line-height: 1.55;
+  flex: 1; width: 100%; min-height: 64px; padding: var(--s-2) var(--s-3); resize: vertical;
+  border: 0; background: none; color: var(--ink); font: inherit; font-size: var(--text-sm); line-height: 1.55;
 }
-.wallet-keep-sentence textarea::placeholder { color: var(--ink-3); }
-.wallet-keep-sentence textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.wallet-keep-sentence textarea:focus-visible { outline: none; }   /* the field around it carries the ring */
 
-/* 3 · The list */
+/* Search, past six words: the Words page field; the count only while searching. */
 .wallet-section { display: grid; gap: var(--s-3); }
-.wallet-bar { display: flex; align-items: center; gap: var(--s-3); min-height: 40px; }
-.wallet-count { margin: 0; color: var(--ink-2); font-size: var(--text-sm); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wallet-search { position: relative; display: flex; align-items: center; flex: 0 1 15rem; min-width: 0; }
-.wallet-search .icon { position: absolute; inset-inline-start: 12px; width: 15px; height: 15px; color: var(--ink-3); pointer-events: none; }
-.wallet-search input {
-  width: 100%; min-height: 40px; padding: 0 var(--s-3) 0 36px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill);
-  color: var(--ink); font: inherit; font-size: var(--text-sm);
-}
-.wallet-search input::placeholder { color: var(--ink-3); }
-.wallet-search input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.wallet-all {
-  display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; flex: none;
-  min-height: 40px; padding: 0 var(--s-3); border: 0; border-radius: var(--r-pill); background: none; cursor: pointer;
-  color: var(--brand); font: inherit; font-size: var(--text-sm); font-weight: 700;
-  transition: background var(--fast) var(--ease);
-}
-.wallet-all:hover { background: var(--brand-soft); }
-.wallet-all .icon { width: 16px; height: 16px; }
+.wallet-tools { display: flex; align-items: center; gap: var(--s-3); }
+.wallet-search { flex: 0 1 22rem; }
+.wallet-search input { height: 44px; }
+.wallet-count { margin: 0; color: var(--ink-3); font-size: var(--text-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.wallet-list {
-  list-style: none; margin: 0; padding: 0;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden;
-}
+/* A row: set like a library word row — the word at 17px/600 on the left, its
+   Arabic at the right edge in ink-2; the sentence; one quiet meta line. */
 .wallet-row {
-  display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: var(--s-4) var(--s-5) var(--s-3);
-  transition: background var(--fast) var(--ease);
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px;
+  padding: var(--s-3) var(--s-4) var(--s-1);
+  background: var(--surface); border-top: 1px solid var(--line);
 }
-.wallet-row + .wallet-row { border-top: 1px solid var(--line); }
+.wallet-row:first-child { border-top: 0; }
 .wallet-row[hidden] { display: none; }
-@media (hover: hover) { .wallet-row:hover { background: var(--surface-hover); } }
-
-.wallet-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
-.wallet-name {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-3); min-width: 0; margin: 0;
-  font: inherit;
+.wallet-row-head { display: flex; align-items: baseline; gap: var(--s-3); min-width: 0; }
+.wallet-word {
+  margin: 0; min-width: 0; overflow-wrap: anywhere;
+  font-family: var(--font-body, inherit); font-size: var(--text-md); font-weight: 600; line-height: 1.35; letter-spacing: 0;
+  color: var(--ink);
 }
-.wallet-word { font-size: var(--text-lg); font-weight: 700; line-height: 1.25; color: var(--ink); overflow-wrap: anywhere; }
-.wallet-ar {
-  font-family: var(--font-arabic); font-size: calc(var(--text-md) * var(--arabic-scale)); font-weight: 500;
-  line-height: 1.4; color: var(--ink-2);
-}
-.wallet-when { flex: none; color: var(--ink-3); font-size: var(--text-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
-
+.wallet-ar { margin-left: auto; text-align: right; color: var(--ink-2); font-size: 1.02rem; line-height: 1.5; }   /* physical: it is dir=rtl */
 .wallet-sentence {
-  margin: 0; color: var(--ink-2); font-size: var(--text-sm); font-style: italic; line-height: 1.6;
-  overflow-wrap: anywhere; text-wrap: pretty;
+  margin: 0; max-width: 70ch; color: var(--ink-2); font-size: var(--text-sm); font-style: italic; line-height: 1.6;
+  overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
 }
 .wallet-sentence .mark { font-style: normal; }
-.wallet-from { margin: 0; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.5; }
-.wallet-from b { color: var(--ink-2); font-weight: 600; }
+.wallet-meta { margin: 0; color: var(--ink-3); font-size: var(--text-2xs); line-height: 1.5; }
+.wallet-meta b { color: var(--ink-2); font-weight: 600; }
+.wallet-sep { margin-inline: 5px; color: var(--line-strong); }
 
-/* The doors: text buttons, so twenty rows read as a list, not a wall of buttons. */
-.wallet-row-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s-2); margin-top: 2px; min-width: 0; }
-.wallet-doors { display: flex; align-items: center; gap: 2px; margin-inline-start: -10px; min-width: 0; }
+/* Two small actions (like "Other meanings" on a word page) and two icon buttons. */
+.wallet-row-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s-3); min-width: 0; }
+.wallet-doors { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-4); min-width: 0; }
 .wallet-door {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px;
-  border: 0; border-radius: var(--r-pill); background: none; cursor: pointer; white-space: nowrap;
-  color: var(--ink-2); font: inherit; font-size: var(--text-sm); font-weight: 600;
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0;
+  font-size: var(--text-sm); text-decoration: none; white-space: nowrap;
 }
+.wallet-door:hover { text-decoration: underline; text-underline-offset: 3px; }
 .wallet-door .icon { width: 15px; height: 15px; }
-.wallet-door:hover { background: var(--surface-2); color: var(--ink); }
-.wallet-door.is-ai { color: var(--brand); }
-.wallet-door.is-ai:hover { background: var(--brand-soft); color: var(--brand); }
-.wallet-row-tools { display: flex; align-items: center; gap: 2px; flex: none; margin-inline-end: -8px; }
-.wallet-row-tools .speak-btn, .wallet-icon {
-  display: inline-grid; place-items: center; width: 36px; height: 36px; min-width: 36px; padding: 0;
-  border: 0; border-radius: 50%; background: none; cursor: pointer; color: var(--ink-3);
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
-}
-.wallet-row-tools .speak-btn .icon, .wallet-icon .icon { width: 17px; height: 17px; }
-.wallet-row-tools .speak-btn:hover { background: var(--brand-soft); color: var(--brand); transform: none; }
-.wallet-row-tools .speak-btn.is-speaking { background: var(--brand); color: var(--on-brand); }
-.wallet-icon.is-remove:hover, .wallet-icon.is-remove:focus-visible { background: var(--bad-soft); color: var(--bad); }
-@media (pointer: coarse) {
-  .wallet-door { min-height: var(--tap); }
-  .wallet-row-tools .speak-btn, .wallet-icon { width: var(--tap); height: var(--tap); min-width: var(--tap); }
-}
+.wallet-door.is-quiet { color: var(--ink-2); }
+.wallet-door.is-quiet:hover { color: var(--ink); }
+.wallet-row-tools { display: flex; align-items: center; gap: var(--s-1); flex: none; margin-inline-end: -6px; }
+/* Speaker and remove: one size, one shape (the app's round speaker), two meanings —
+   the accent's soft fill for "hear it", red only when you reach for remove. */
+.wallet-row-tools .speak-btn, .wallet-remove { width: 40px; height: 40px; min-width: 40px; border-radius: 50%; }
+.wallet-remove { background: var(--surface-2); color: var(--ink-3); }
+.wallet-remove:hover, .wallet-remove:focus-visible { color: var(--bad); background: var(--bad-soft); }
+@media (pointer: coarse) { .wallet-row-tools .speak-btn, .wallet-remove { width: var(--tap); height: var(--tap); min-width: var(--tap); } }
 
-/* Just saved: the row arrives on the accent's soft fill, then settles to paper. */
+/* Just saved: the row arrives on the accent's soft fill, then settles. */
 .wallet-row.is-new { animation: wallet-new 1.2s var(--ease) both; }
 @keyframes wallet-new { from { background: var(--brand-soft); } }
+@media (prefers-reduced-motion: reduce) { .wallet-row.is-new { animation: none; } }
 
-.wallet-none { margin: 0; padding: var(--s-5) 0; text-align: center; color: var(--ink-3); font-size: var(--text-sm); }
+.wallet-none { margin: 0; padding: var(--s-4) 0; text-align: center; }
 .wallet-none b { color: var(--ink); }
 
-/* Empty: inside the same frame the list will fill. */
-.wallet-empty {
-  display: grid; justify-items: center; gap: var(--s-2); padding: var(--s-7) var(--s-5);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); text-align: center;
-}
-.wallet-empty-ico {
-  display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: var(--s-1);
-  border-radius: var(--r-md); background: var(--brand-soft); color: var(--brand);
-}
-.wallet-empty-ico .icon { width: 22px; height: 22px; }
-.wallet-empty-title { margin: 0; color: var(--ink); font-size: var(--text-md); font-weight: 700; }
-.wallet-empty p:not(.wallet-empty-title) { margin: 0; max-width: 44ch; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.6; }
+/* The end: where it lives, and Clear wallet (it asks first). */
+.wallet-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s-4); }
+.wallet-end .hint { margin: 0; font-size: var(--text-xs); }
+.wallet-end .danger-link { border: 0; background: none; cursor: pointer; font: inherit; font-size: var(--text-sm); font-weight: 600; color: var(--bad); min-height: var(--tap); }
+.wallet-end .danger-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-/* The end: where it lives, and the one way to empty it. */
-.wallet-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-4); }
-.wallet-end p { margin: 0; color: var(--ink-3); font-size: var(--text-xs); }
-.wallet-clear {
-  min-height: 40px; margin-inline-end: -10px; padding: 0 10px; border: 0; border-radius: var(--r-pill); background: none; cursor: pointer;
-  color: var(--ink-3); font: inherit; font-size: var(--text-xs); font-weight: 600;
-}
-.wallet-clear:hover { color: var(--bad); background: var(--bad-soft); }
-
-/* Phones: the same column, a little tighter; the search takes the room it needs. */
+/* Phones: the row's actions keep one line — the icons step aside. */
 @media (max-width: 599px) {
-  .wallet-page { gap: var(--s-4); }
-  .wallet-row { padding: var(--s-4) var(--s-4) var(--s-2); }
-  .wallet-keep-btn { padding: 0 var(--s-4); }
+  .wallet-row { padding-inline: var(--s-3); }
+  .wallet-door .icon { display: none; }
+  .wallet-doors { gap: 0 var(--s-3); }
   .wallet-search { flex: 1 1 auto; }
-  .wallet-search ~ .wallet-count { display: none; }
-  .wallet-door .icon { display: none; }          /* the words alone fit both doors and the tools on one line */
-  .wallet-door { padding: 0 8px; }
-  .wallet-doors { margin-inline-start: -8px; }
 }
-@media (prefers-reduced-motion: reduce) { .wallet-row.is-new { animation: none; } }

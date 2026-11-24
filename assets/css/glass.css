@@ -218,8 +218,8 @@
 
 /* A glass field needs an edge that survives its own pale ring. */
 :root[data-accent="glass"]:not([data-theme="night"]) .field:focus-within {
-  border-color: var(--lg-ink);
-  box-shadow: 0 0 0 3px rgb(38 56 74 / .14);
+  border-color: var(--lg-ink); outline-color: var(--lg-ink);   /* one ring, in the glass ink */
+  box-shadow: none;
 }
 
 /* ── Fallbacks ───────────────────────────────────────────────────

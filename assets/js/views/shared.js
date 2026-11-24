@@ -500,8 +500,14 @@
       <p class="hint more-ex-credit">Sentences from <a href="https://tatoeba.org" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR).</p>`);
   };
 
-  VS.actions["sentence-remove"] = (el) => {
+  VS.actions["sentence-remove"] = async (el) => {
     const id = el.dataset.id;
+    const yes = await VS.confirm({
+      title: "Remove this sentence?",
+      body: "It's one of your own sentences with this word. You can undo it right after.",
+      confirmLabel: "Remove",
+    });
+    if (!yes) return;
     const snap = VS.store.snapshot([id]);
     VS.store.removeSentence(id, Number(el.dataset.index));
     refreshWord(id);
@@ -808,6 +814,7 @@
       if (r.inLibrary) { VS.toast(`“${word}” is already one of your words.`); closePop(); return; }
       if (!r.ok) return;
       el.classList.add("is-kept");
+      VS.app.bar();
       b.outerHTML = String(html`<p class="word-pop-state is-new">${icon("check", "icon-sm")} Kept in your wallet · <a href="#/wallet">Open</a></p>`);
       if (!r.existed) VS.sfx.play("pop");
       const open = pop.querySelector(".word-pop-state a");
@@ -865,8 +872,14 @@
   VS.actions["word-delete"] = async (el) => {
     const w = VS.byId[el.dataset.id];
     if (!w) return;
-    // One tap: the learner asked for a quick delete. The loss is covered by
-    // Undo (the word, its progress, note and sentences all come back).
+    // Always asked first (the learner's rule: nothing is deleted without a yes);
+    // Undo still brings it all back right after.
+    const yes = await VS.confirm({
+      title: `Delete “${w.word}”?`,
+      body: "Its progress, note and your sentences go too. You can undo it right after.",
+      confirmLabel: "Delete",
+    });
+    if (!yes) return;
     // No reload: the list redraws, and Undo puts the word back where it was (V1.1).
     const snap = VS.store.snapshot([w.id]);
     VS.store.deleteUserWords([w.id]);
@@ -875,10 +888,16 @@
   };
   /* "Reset to new" on one word: its schedule starts again; Undo gives it back. ("Start over" is
      only the whole app's, #/reset.) */
-  VS.actions["forget"] = (el) => {
+  VS.actions["forget"] = async (el) => {
     const id = el.dataset.id;
     const w = VS.byId[id];
     if (!w) return;
+    const yes = await VS.confirm({
+      title: `Reset “${w.word}” to new?`,
+      body: "Its recall schedule starts again from the first day. Notes and sentences are kept.",
+      confirmLabel: "Reset to new",
+    });
+    if (!yes) return;
     const snap = VS.store.snapshot([id]);
     VS.store.forget(id);
     refreshWord(id);
@@ -1282,7 +1301,7 @@
                   <button class="word-tool word-tool-edit" type="button" data-action="word-edit" data-id="${w.id}" title="Edit “${w.word}”">
                     ${icon("pen", "icon-sm")}<span>Edit</span></button>
                   <button class="word-tool word-tool-delete" type="button" data-action="word-delete" data-id="${w.id}"
-                    aria-label="Delete “${w.word}”" title="Delete “${w.word}” (you can undo)">${icon("trash", "icon-sm")}</button>
+                    aria-label="Delete “${w.word}”" title="Delete “${w.word}”">${icon("trash", "icon-sm")}</button>
                 </div>
               </div>
 
@@ -1314,7 +1333,7 @@
                   ? html`<p class="word-memory-line"><span>Not studied yet</span><span class="word-memory-sep" aria-hidden="true">·</span><span>added ${VS.ui.dateText(w.added)}</span></p>`
                   : html`<p class="word-memory-line"><span>Next recall</span> <b>${whenText(e.due)}</b></p>
                     <span class="word-memory-right" title="${e.right} right · ${e.wrong} wrong">${VS.ui.ruler(e.box, true)}<span class="word-memory-score">${e.right} right · ${e.wrong} wrong</span>
-                      <button class="word-reset" type="button" data-action="forget" data-id="${w.id}" aria-label="Reset “${w.word}” to new" title="Start this word's schedule again (you can undo)">${icon("review", "icon-sm")}</button></span>`}
+                      <button class="word-reset" type="button" data-action="forget" data-id="${w.id}" aria-label="Reset “${w.word}” to new" title="Reset to new — start this word's schedule again">${icon("review", "icon-sm")}</button></span>`}
               </div>
 
               <div class="word-secs" role="group" aria-label="More about this word">

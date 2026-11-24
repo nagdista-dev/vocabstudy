@@ -12,7 +12,7 @@
 | W1 | Study cards lose the pronunciation and usage notes (front, back, Meet) | the notes were louder than the word; they stay in the word page and Speak |
 | W2 | "Goes with" and "Similar" become calm chips, one phrase each | a dot-separated paragraph read as one long note |
 | W3 | Tap any word in an example or the English meaning → the word card: page dims, Arabic loads by itself, one choice: Keep in wallet (DESIGN.md → A tapped word) | a learner meets unknown words while reading; a stray tap must not fill the wallet, and often a quick Arabic gloss is all they need |
-| W4 | Wallet page (save a word for later, search, Make with AI / Add myself) + a Saved for later strip on Today | it is where words wait until the learner is ready — never an instant add |
+| W4 | Wallet page (save a word for later, search, Make with AI / Add myself), reachable from the app bar on every screen | it is where words wait until the learner is ready — never an instant add |
 | W5 | "Make it yours" uses the app's own fonts, a 2-column dialect grid on small phones, a clearer selected state | the screen felt like a system form, not VocabStudy |
 | W6 | Build, checks, 375 / 768 / 1280 + Night + Larger text, detector, docs | it ships only when it looks right where it is used |
 

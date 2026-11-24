@@ -117,10 +117,14 @@
 .bar-link:hover { background: var(--surface-2); color: var(--ink); }
 .bar-link[aria-current="page"] { color: var(--brand); background: var(--brand-soft); }
 .bar-ico { position: relative; display: inline-grid; }
+/* Every count in the bars is one badge: solid accent, white bold figures
+   (Recall's due count used the highlighter yellow; now it matches the wallet's). */
 .bar-link .count {
   min-width: 19px; height: 19px; padding: 0 6px; border-radius: var(--r-pill);
-  background: var(--mark); color: var(--on-mark); font: 700 var(--text-badge)/19px var(--font-body); text-align: center;
+  background: var(--brand); color: var(--on-brand); font: 700 var(--text-badge)/19px var(--font-body); text-align: center;
+  font-variant-numeric: tabular-nums;
 }
+.bar-link[aria-current="page"] .count { box-shadow: 0 0 0 2px var(--brand-soft); }
 
 /* Bottom tab bar: phones and tablets only, hidden during activities */
 .tab-bar { display: none; }
@@ -149,7 +153,7 @@
   .tab-ico .count {
     position: absolute; z-index: var(--z-base);
     top: -5px; inset-inline-end: -9px; min-width: 18px; height: 18px; padding: 0 5px;
-    background: var(--mark); color: var(--on-mark);
+    background: var(--brand); color: var(--on-brand); font-weight: 700; font-variant-numeric: tabular-nums;
     border: 2px solid var(--surface); font-size: var(--text-badge); line-height: 14px;
   }
   .toast { bottom: calc(72px + env(safe-area-inset-bottom)); }
@@ -316,7 +320,7 @@
   border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
   color: var(--ink-3);
 }
-.field:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.field:focus-within { border-color: var(--brand); }   /* the ring itself: system.css, one line */
 .field input { flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: none; height: 46px; color: var(--ink); }
 /* A field never grows past its container, whatever the text size: an input's natural width must not widen the page. */
 .field { min-width: 0; max-width: 100%; }
@@ -1138,3 +1142,18 @@ kbd {
 .remind-sum { display: flex; align-items: center; gap: var(--s-2); margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
   background: var(--brand-soft); color: var(--ink); font-size: var(--text-sm); }
 .remind-sum .icon { color: var(--brand); flex: none; }
+
+/* The wallet's door. Desktop: a labelled link in the top nav like every other
+   destination (app.js NAV, barOnly), its count a solid accent badge — yellow
+   belongs to Recall (what is due is memory), red means wrong. Phones and tablets keep five
+   tabs, so the door is the top bar's icon, beside Settings, with the same chip. */
+/* The count must be seen at a glance: a solid accent badge, white bold
+   figures, a ring of the bar's own paper so it reads on any background. */
+.wallet-btn { text-decoration: none; }
+.wallet-btn .count {
+  top: 2px; inset-inline-end: 0; min-width: 19px; height: 19px; padding: 0 5px; line-height: 19px;
+  background: var(--brand); color: var(--on-brand); box-shadow: 0 0 0 2px var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+.wallet-btn[aria-current="page"] { color: var(--brand); background: var(--brand-soft); }
+@media (min-width: 1024px) { .wallet-btn { display: none; } }

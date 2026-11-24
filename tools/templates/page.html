@@ -36,10 +36,11 @@ try { var s = JSON.parse(localStorage.getItem("vocabstudy") || "{}").settings ||
 <a class="skip-link" href="#view">Skip to content</a>
 <header class="app-bar">
   <div class="app-bar-inner">
-    <a class="brand" id="brandLink" href="{{ROOT}}index.html"><span>VocabStudy</span></a>
+    <a class="brand" id="brandLink" href="{{ROOT}}./"><span>VocabStudy</span></a>
     <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
     <div class="bar-actions">
       <nav class="bar-nav" id="barNav" aria-label="Main"></nav>
+      <a class="icon-btn wallet-btn" id="walletBtn" href="#/wallet" aria-label="Wallet — words saved for later" title="Wallet"></a>
       <button class="icon-btn" id="settingsBtn" type="button" data-action="open-settings" aria-label="Settings" title="Settings"></button>
     </div>
   </div>

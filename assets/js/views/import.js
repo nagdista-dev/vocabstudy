@@ -458,7 +458,7 @@
 
   /* On a computer: a bookmark that sends the selected words of any page here. */
   function bookmarklet() {
-    const app = location.origin + location.pathname;
+    const app = location.origin + VS.cleanPath();
     if (!/^https?:/.test(app)) return "";
     const code = "javascript:(function(){var g=getSelection(),s=String(g).trim(),n=g.anchorNode,e=n&&(n.nodeType===1?n:n.parentElement),"
       + "b=e&&e.closest('p,li,td,blockquote,h1,h2,h3,span,div'),c=b?b.innerText.trim().slice(0,600):'';"

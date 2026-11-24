@@ -28,36 +28,35 @@
     return html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}`;
   }
 
-  /** One row: the word, its sound and Arabic; the sentence; where and when; two doors. */
+  /** One row, set like a word row in the library: the word left, its Arabic at
+      the right edge; the sentence; one quiet meta line; then two small actions
+      (the app's link buttons), its speaker and remove (the app's icon buttons). */
   function row(e) {
-    const from = e.source ? html`${e.kind === "meaning" ? "From the meaning of" : "From the example for"} <b>${VS.cap(e.source)}</b>` : "";
+    const from = e.source ? html`${e.kind === "meaning" ? "From the meaning of" : "From the example for"} <b>${VS.cap(e.source)}</b><span class="wallet-sep" aria-hidden="true">·</span>` : "";
     return html`
-      <li class="wallet-row" data-id="${e.id}">
+      <article class="wallet-row" data-id="${e.id}" aria-label="${VS.cap(e.word)}">
         <div class="wallet-row-head">
-          <h2 class="wallet-name">
-            <span class="wallet-word">${VS.cap(e.word)}</span>
-            ${e.arabic ? html`<bdi class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</bdi>` : ""}
-          </h2>
-          <span class="wallet-when">${VS.cap(VS.ui.dateText(e.added))}</span>
+          <h2 class="wallet-word">${VS.cap(e.word)}</h2>
+          ${e.arabic ? html`<span class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</span>` : ""}
         </div>
         ${e.sentence ? html`<p class="wallet-sentence">${sentence(e)}</p>` : ""}
-        ${from ? html`<p class="wallet-from">${from}</p>` : ""}
+        <p class="wallet-meta">${from}<span>Saved ${VS.ui.dateText(e.added)}</span></p>
         <div class="wallet-row-foot">
           <div class="wallet-doors">
-            <button class="wallet-door is-ai" type="button" data-action="wallet-ai" data-id="${e.id}"
+            <button class="link-btn wallet-door" type="button" data-action="wallet-ai" data-id="${e.id}"
               title="Ask ChatGPT or Claude for its Arabic, definition and example — then check it and add it">
               ${icon("bolt", "icon-sm")}<span>Make with AI</span></button>
-            <button class="wallet-door" type="button" data-action="wallet-add" data-id="${e.id}"
+            <button class="link-btn wallet-door is-quiet" type="button" data-action="wallet-add" data-id="${e.id}"
               title="Open the Add form with this word${e.sentence ? " and its sentence" : ""} filled in">
               ${icon("pen", "icon-sm")}<span>Add myself</span></button>
           </div>
           <div class="wallet-row-tools">
             ${VS.ui.speakButton(e.word, `Hear “${e.word}”`)}
-            <button class="wallet-icon is-remove" type="button" data-action="wallet-remove" data-id="${e.id}"
-              aria-label="Remove “${e.word}” from your wallet" title="Remove (you can undo)">${icon("trash", "icon-sm")}</button>
+            <button class="icon-btn wallet-remove" type="button" data-action="wallet-remove" data-id="${e.id}"
+              aria-label="Remove “${e.word}” from your wallet" title="Remove from your wallet">${icon("trash", "icon-sm")}</button>
           </div>
         </div>
-      </li>`;
+      </article>`;
   }
 
   /** Wallet words that are not library words yet (a word added elsewhere leaves quietly). */
@@ -89,8 +88,8 @@
     VS.arabicWord(r.entry.word).then((ar) => {
       if (!ar) return;
       VS.store.walletSetArabic(r.entry.id, ar);
-      const name = document.querySelector(`.wallet-row[data-id="${CSS.escape(r.entry.id)}"] .wallet-name`);
-      if (name && !name.querySelector(".wallet-ar")) name.insertAdjacentHTML("beforeend", String(html`<bdi class="wallet-ar" lang="ar" dir="rtl">${ar}</bdi>`));
+      const head = document.querySelector(`.wallet-row[data-id="${CSS.escape(r.entry.id)}"] .wallet-row-head`);
+      if (head && !head.querySelector(".wallet-ar")) head.insertAdjacentHTML("beforeend", String(html`<span class="wallet-ar" lang="ar" dir="rtl">${ar}</span>`));
     });
   }
 
@@ -110,7 +109,7 @@
     const none = root.querySelector(".wallet-none");
     if (none) { none.hidden = shown > 0; none.querySelector("b").textContent = st.q; }
     const count = root.querySelector(".wallet-count");
-    if (count) count.textContent = q ? `${shown} of ${VS.plural(VS.store.wallet().length, "word")}` : VS.plural(VS.store.wallet().length, "word");
+    if (count) count.textContent = q ? `${shown} of ${VS.store.wallet().length}` : "";
   }
 
   VS.views.wallet = {
@@ -122,51 +121,52 @@
       const n = list.length;
       return html`
         <div class="page wallet-page view-enter">
-          <header class="wallet-head">
-            <h1>Wallet</h1>
-            <p>Words you're saving for later. Nothing here is studied until you choose to learn it.</p>
+          <header class="page-head">
+            <div>
+              <h1>Wallet</h1>
+              <p class="hint">${n
+                ? html`<b>${VS.plural(n, "word")}</b> saved for later. Nothing here is studied until you choose to learn it.`
+                : "Words you're saving for later. Nothing here is studied until you choose to learn it."}</p>
+            </div>
+            ${n > 1 ? html`<button class="btn btn-primary wallet-all" type="button" data-action="wallet-ai-all"
+                title="One prompt for ${n > 30 ? "the 30 newest words" : "every word here"}, each with its sentence">
+                ${icon("bolt", "icon-sm")}<span>Make ${n > 30 ? "30" : "all"} with AI</span></button>` : ""}
           </header>
 
-          <form class="wallet-keep" data-form="wallet-keep" autocomplete="off" aria-label="Save a word for later">
-            <div class="wallet-keep-bar">
-              <span class="wallet-keep-ico" aria-hidden="true">${icon("plus", "icon-sm")}</span>
-              <label class="wallet-keep-field"><span class="sr-only">A word or phrase to save for later</span>
-                <input name="word" dir="ltr" lang="en" placeholder="Save a word for later" spellcheck="false" autocapitalize="off" maxlength="80" enterkeyhint="done" required></label>
-              <button class="wallet-keep-btn" type="submit">Save</button>
+          <form class="quick-add is-compact wallet-keep" data-form="wallet-keep" autocomplete="off" aria-label="Save a word for later">
+            <div class="add-line">
+              <span class="field field-xl">
+                <input name="word" dir="ltr" lang="en" placeholder="Save a word for later" aria-label="A word or phrase to save for later"
+                  spellcheck="false" autocapitalize="off" maxlength="80" enterkeyhint="done" required/>
+              </span>
+              <button class="btn btn-tonal btn-lg" type="submit" aria-label="Save this word for later">${icon("plus", "icon-sm")}<span class="add-label">Save</span></button>
             </div>
             ${st.sentence
-              ? html`<label class="wallet-keep-sentence"><span class="sr-only">Where you met it (optional)</span>
+              ? html`<label class="field wallet-keep-sentence"><span class="sr-only">Where you met it (optional)</span>
                   <textarea name="sentence" rows="2" dir="auto" maxlength="300" placeholder="Where you met it — the sentence you read or heard (optional)"></textarea></label>`
-              : html`<button class="wallet-keep-more" type="button" data-action="wallet-keep-more">Add where you met it</button>`}
+              : html`<button class="link-btn wallet-keep-more" type="button" data-action="wallet-keep-more">${icon("plus", "icon-sm")}<span>Add where you met it</span></button>`}
           </form>
 
-          <section class="wallet-section" aria-label="Saved words">
-            ${n ? html`
-              <div class="wallet-bar">
-                ${n > 6
-                  ? html`<label class="wallet-search">${icon("search", "icon-sm")}<span class="sr-only">Search your wallet</span>
-                      <input type="search" data-wallet-q value="${st.q}" placeholder="Search" autocomplete="off" spellcheck="false"></label>`
-                  : ""}
-                <p class="wallet-count" aria-live="polite">${VS.plural(n, "word")}</p>
-                ${n > 1 ? html`<button class="wallet-all" type="button" data-action="wallet-ai-all"
-                    title="One prompt for ${n > 30 ? "the 30 newest words" : "every word here"}, each with its sentence">
-                    ${icon("bolt", "icon-sm")}<span>Make ${n > 30 ? "30" : "all"} with AI</span></button>` : ""}
-              </div>
-              <ol class="wallet-list">${list.map(row)}</ol>
-              <p class="wallet-none" hidden>Nothing matches “<b></b>”.</p>`
-            : html`
-              <div class="wallet-empty">
-                <span class="wallet-empty-ico" aria-hidden="true">${icon("wallet")}</span>
-                <p class="wallet-empty-title">Your wallet is empty</p>
-                <p>Type a word above to save it for later. Or, while reading an example or a meaning, tap a word you don't know and keep it — with its sentence.</p>
-              </div>`}
-          </section>
-
           ${n ? html`
+            <section class="wallet-section" aria-label="Saved words">
+              ${n > 6 ? html`<div class="wallet-tools">
+                <label class="field wallet-search">${icon("search", "icon-sm")}<span class="sr-only">Search your wallet</span>
+                  <input type="search" data-wallet-q value="${st.q}" placeholder="Search your wallet" autocomplete="off" spellcheck="false"/></label>
+                <p class="wallet-count" aria-live="polite"></p>
+              </div>` : ""}
+              <div class="word-list">${list.map(row)}</div>
+              <p class="wallet-none hint" hidden>Nothing in your wallet matches “<b></b>”.</p>
+            </section>
             <footer class="wallet-end">
-              <p>Saved on this device, inside your backup.</p>
-              <button class="wallet-clear" type="button" data-action="wallet-clear">Clear wallet</button>
-            </footer>` : ""}
+              <p class="hint">Saved on this device, inside your backup.</p>
+              <button class="danger-link" type="button" data-action="wallet-clear">Clear wallet</button>
+            </footer>`
+          : html`
+            <div class="empty">
+              <h2>Your wallet is empty</h2>
+              <p>Type a word above to save it for later. Or, reading an example or a meaning, tap a word you don't know and keep it — with its sentence.</p>
+              <div class="row empty-actions"><a class="btn" href="#/words">Open your words</a></div>
+            </div>`}
         </div>`;
     },
 
@@ -213,7 +213,15 @@
         location.hash = "#/add?tab=type";
       },
 
-      "wallet-remove"(el) {
+      async "wallet-remove"(el) {
+        const e = VS.store.wallet().find((x) => x.id === el.dataset.id);
+        if (!e) return;
+        const yes = await VS.confirm({
+          title: `Remove “${e.word}” from your wallet?`,
+          body: e.sentence ? "The sentence you kept with it goes too. You can undo it right after." : "You can undo it right after.",
+          confirmLabel: "Remove",
+        });
+        if (!yes) return;
         const gone = VS.store.walletRemove(el.dataset.id);
         if (!gone) return;
         VS.app.render();

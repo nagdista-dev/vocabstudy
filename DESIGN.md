@@ -365,6 +365,14 @@ learner's notebook, not a stack of labelled cards.
   each sentence is one block of text, never broken into flex fragments, with a
   quiet speaker at its end; the Tatoeba credit closes the block, indented with
   the sentences.
+- **Focus while open (v12).** Opening a word keeps it under the finger while
+  the open one folds, then settles it at one place under the top bar (8px from
+  the top on phones). The card lifts (hairline + one soft shadow); every other
+  row and section stays visible at 45% (85% under the pointer) — opacity only.
+  Closing fades the body (150ms) before it folds; Esc closes it.
+- **Nothing is removed without a yes.** Delete a word, Reset to new, remove a
+  sentence, remove from the wallet, Clear wallet: each asks in the app's sheet
+  (Cancel holds the focus), and Undo follows.
 - **Opens in place.** The open word stays inside the list's frame: no second
   border or shadow around it (a card in a card); a firmer rule closes it.
 - **Manage in view.** The sound capsule (speaker · IPA · stress) on the left;
@@ -411,18 +419,29 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   frame that takes the accent only while typing; "Add where you met it" opens
   an optional sentence under it; Undo in the toast. Or, reading, tap a word in
   an example or a meaning → the word card → `Keep in wallet`.
-- **The page, from scratch (v12).** One calm 720px column, nothing competing:
-  the title and one sentence; the save bar (the page's only filled button);
-  then one list in one frame, hairlines between rows — no card grid, no
-  coloured panels. A bar above the list: the count, Search past six words,
-  and `Make all with AI` as a quiet accent text button. Each row: the word
-  (body face, 20px, bold) with its Arabic beside it in ink-2, the day on the
-  right; the sentence in italic with the word highlighted (clamped to three
-  lines); "From the example for …"; then the doors as text buttons
-  (`Make with AI` in the accent, `Add myself` in ink-2) and, at the end, the
-  speaker and remove as quiet icons. On phones the doors drop their icons so
-  the row stays one line. Empty: the same frame, one icon tile, two sentences.
+- **The page (v13), built from the app's own parts.** `page-head` (h1 + hint,
+  `Make all with AI` as the page's primary `.btn`); Today's add box
+  (`quick-add` · `add-line` · `.field` + tonal `Save`); the Words search
+  `.field` past six words; the library's `.word-list` frame. A row is set like
+  a word row: the word 17px/600 left, its Arabic ink-2 at the right edge; the
+  sentence in italic with the word highlighted; one meta line; then two
+  `link-btn` actions (accent / ink-2, underline on hover) and two round 40px
+  icon buttons of one shape — the speaker (accent fill) and remove (paper,
+  red on hover). Buttons keep the app's rounded rectangles; no pills.
+  `Clear wallet` is a `danger-link`; empty is `.empty`.
+- **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
+  (app.js `NAV`, `barOnly`). Phones and tablets keep five tabs; the wallet is
+  the top bar's icon beside Settings. Its count is a solid accent badge with
+  white figures — the same badge as Recall's due count (red means wrong). No strip on Today.
+- **Counts in the bars.** Recall (due) and Wallet share one badge: solid accent,
+  white bold figures, a 2px paper ring on the tab bar. (The due count used the
+  highlighter until v13; on the learner's word it now matches the rest.)
 - **No scrollbars.** The app draws none (`base.css`); scrolling is unchanged.
+- **One focus ring per field.** `.field:focus-within` draws a single 2px accent
+  ring over its own border (system.css); inputs inside it draw none.
+- **Clean addresses.** The app lives at its folder (`/#/wallet`), never
+  `index.html`: links point to `./`, the manifest uses `./#/…`, and arriving on
+  `/index.html` rewrites the address in place (app.js `VS.cleanPath`).
 - **Two doors, never an instant add.** `Make with AI` (tonal) opens Add → With
   AI with the word typed and its sentence carried into the prompt ("use THAT
   meaning"); the learner asks ChatGPT or Claude, pastes, checks, then adds.

@@ -172,8 +172,8 @@ Undo; `walletClear` returns everything removed. Adding a wallet word to the
 library removes it from the wallet (`views/import.js`). The wallet is content,
 so **Reset progress** keeps it and **Start over** deletes it; `exportJSON`
 includes it and `mergeJSON` unions by id, skipping words now in the library.
-`views/library.js` shows the *Saved for later* strip only while the wallet is
-not empty. `#/wallet` keeps typed words (`walletSetArabic` fills their Arabic
+The wallet is reached from the app bar on every screen (`NAV` link on desktop,
+`#walletBtn` beside Settings below 1024px, with a count badge). `#/wallet` keeps typed words (`walletSetArabic` fills their Arabic
 later via `VS.arabicWord`, Auto-fill on only), searches past six entries, and
 offers two doors per word through `VS.walletDraft`: `{ ai: true, items }`
 opens Add → With AI with the words typed and their sentences in

@@ -245,7 +245,7 @@
 .word-tool {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-width: var(--tap); height: 40px; padding: 0 var(--s-3);
-  border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);   /* the app's button shape */
   color: var(--ink-2); font: inherit; font-size: var(--text-xs); font-weight: 600; cursor: pointer;
   transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);
 }
@@ -280,7 +280,8 @@
 }
 .word-other:hover { text-decoration: underline; text-underline-offset: 3px; }
 .word-example-block { display: grid; gap: 0; min-width: 0; }
-.word-example-block .tap-hint { justify-content: flex-start; align-items: flex-start; text-align: start; padding-inline-start: calc(var(--s-3) + 3px); margin-top: 4px; }
+/* The quote, then air, then the hint — they were touching (the hint read as part of the sentence). */
+.word-example-block .tap-hint { justify-content: flex-start; align-items: flex-start; text-align: start; padding-inline-start: calc(var(--s-3) + 3px); margin-top: var(--s-2); }
 .word-example-block .tap-hint .icon { margin-top: 2px; }
 .word-related .rel { justify-content: flex-start; }
 .word-related .rel-chips { justify-content: flex-start; }
@@ -531,6 +532,7 @@
 .word-other:hover, .word-ex-tools .more-ex .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; color: var(--brand); }
 .word-ex-tools { padding-inline-start: calc(var(--s-3) + 3px); }   /* under the quote's text, not its rule */
 .word-example-block { gap: 2px; }
+.word-example-block .word-ex-tools { margin-top: 2px; }
 .word-memory { margin-top: var(--s-1); }
 
 /* The example's speaker sits right after the sentence (it floated at the far
@@ -553,4 +555,37 @@
   .lib-actions { position: relative; }
   .lib-actions > .lib-more { position: static; }
   .lib-modes-menu { width: min(320px, calc(100vw - 2 * var(--gutter))); }
+}
+
+/* ── Focus on the open word (v12) ─────────────────────────────────
+   Opening a word is a moment of study: the card lifts (one soft shadow
+   and a firm hairline), and everything else stays where it is but steps
+   back to 45% — still readable, still one tap away (hover brings a row
+   back to 85%), never hidden. No blur, no filters: opacity only. The
+   card settles at one place under the top bar (app.js openRow). */
+.word-row, .home-main > *, .home-rail, .word-list > .btn {
+  transition: opacity var(--base) var(--ease), box-shadow var(--base) var(--ease);
+}
+.word-list:has(> .word-row[open]) { overflow: visible; }
+.word-list > .word-row:first-child { border-top-left-radius: calc(var(--r-lg) - 1px); border-top-right-radius: calc(var(--r-lg) - 1px); }
+.word-list > .word-row:last-child { border-bottom-left-radius: calc(var(--r-lg) - 1px); border-bottom-right-radius: calc(var(--r-lg) - 1px); }
+.word-list > .word-row[open] {
+  position: relative; z-index: 1; border-radius: var(--r-lg);
+  box-shadow: 0 0 0 1px var(--line-strong), 0 22px 48px -22px rgb(var(--shadow-rgb) / .38);
+}
+.word-list:has(> .word-row[open]) > .word-row:not([open]),
+.word-list:has(> .word-row[open]) > .btn,
+.home-main:has(.word-row[open]) > :not(:has(.word-row[open])),
+.home-grid:has(.word-row[open]) > .home-rail { opacity: .45; }
+@media (hover: hover) {
+  .word-list:has(> .word-row[open]) > .word-row:not([open]):hover,
+  .home-main:has(.word-row[open]) > :not(:has(.word-row[open])):hover,
+  .home-grid:has(.word-row[open]) > .home-rail:hover { opacity: .85; }
+}
+/* Closing: the body fades and rises a little, then the card folds (app.js closeRow). */
+.word-row.is-closing > .word-row-body { animation: row-out 150ms var(--ease) forwards; }
+@keyframes row-out { to { opacity: 0; transform: translateY(-4px); } }
+@media print {
+  .word-list > .word-row[open] { box-shadow: none; }
+  .word-list:has(> .word-row[open]) > *, .home-main > *, .home-rail { opacity: 1 !important; }
 }

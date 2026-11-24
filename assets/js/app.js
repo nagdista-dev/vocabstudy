@@ -41,7 +41,12 @@
   const SCOPES = ["new", "today", "all", "tricky", "pick", "word"];
   const PRINT_SCOPES = ["recall", "tricky", "all", "today", "new", "pick"];
 
-  VS.homeHref = "index.html";
+  /* Clean addresses: the app lives at its folder ("/" or "/vocabstudy/"), never
+     at ".../index.html". Arriving on index.html quietly rewrites the address,
+     keeping the screen (#/…) and any shared text (?share-…). */
+  VS.cleanPath = () => location.pathname.replace(/index\.html$/, "");
+  if (/index\.html$/.test(location.pathname)) history.replaceState(null, "", VS.cleanPath() + location.search + location.hash);
+  VS.homeHref = "./";
 
   /* ── Routing ──────────────────────────────────────────────────── */
   function parse(hash) {
@@ -140,6 +145,7 @@
     applySettings,
     params: () => current.params,
     current: () => current && current.name,
+    bar: () => renderBar(),                  // the bar alone (the wallet count after a word is kept)
   };
 
   /* ── Navigation ──────────────────────────────────────────────────
@@ -152,15 +158,19 @@
     { id: "recall", label: "Recall", icon: "review", href: () => "#/recall", match: ["recall"] },
     { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats", "week"] },
     { id: "add", label: "Add", icon: "plus", href: () => "#/add", match: ["import"] },
+    // Desktop only: phones and tablets keep five tabs and reach the wallet from the top bar's icon.
+    { id: "wallet", label: "Wallet", icon: "wallet", href: () => "#/wallet", match: ["wallet"], barOnly: true },
   ];
   const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak", "write"];
 
   function navMarkup(due, cls) {
     // Today is in both bars: on a desktop the logo was the only way home.
-    return NAV.map((n) => {
+    const kept = VS.store.wallet().length;
+    return NAV.filter((n) => !(n.barOnly && cls === "tab")).map((n) => {
       const on = n.match.includes(current.name) && !(n.id === "recall" && current.params.scope === "day") &&
         !(n.id === "home" && current.params.words) && !(n.id === "words" && !current.params.words);
-      const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>` : "";
+      const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>`
+        : n.id === "wallet" && kept ? html`<span class="count">${kept > 99 ? "99+" : kept}</span>` : "";
       return html`<a class="${cls}-link" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
         ${n.id === "recall" ? VS.raw(`aria-label="Recall — ${due ? due + " words due" : "nothing due"}"`) : ""}>
         <span class="${cls}-ico">${icon(n.icon)}${cls === "tab" ? count : ""}</span><span class="${cls}-label">${n.label}</span>${cls === "bar" ? count : ""}</a>`;
@@ -191,6 +201,15 @@
     const barNav = VS.$("#barNav"), tabBar = VS.$("#tabBar");
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
+    // The wallet's door, always in the bar (next to Settings): reachable from any
+    // screen, even before anything is saved; the count says what is waiting.
+    const walletBtn = VS.$("#walletBtn");
+    if (walletBtn) {
+      const kept = VS.store.wallet().length;
+      walletBtn.innerHTML = String(html`${icon("wallet")}${kept ? html`<span class="count">${kept > 99 ? "99+" : kept}</span>` : ""}`);
+      walletBtn.setAttribute("aria-label", kept ? `Wallet — ${VS.plural(kept, "word")} saved for later` : "Wallet — words saved for later");
+      if (current.name === "wallet") walletBtn.setAttribute("aria-current", "page"); else walletBtn.removeAttribute("aria-current");
+    }
     crumbsEl.innerHTML = String(html`
       ${crumbs.length ? html`<a href="#/">Today</a>` : ""}
       ${crumbs.map((c) => html`<span aria-hidden="true">/</span>${c.href ? html`<a href="${c.href}">${c.label}</a>` : html`<span aria-current="page">${c.label}</span>`}`)}`);
@@ -575,21 +594,75 @@
   // One word open at a time: opening a card closes the one already open,
   // so the library stays one reading column instead of a long stack.
   // (toggle does not bubble; a capture listener still hears it.)
+  /* Opening a word is a focus moment (v12): the word opens where the learner
+     tapped it — the one that was open closes without shifting it — then the
+     page settles it at ONE place, just under the top bar, every time. The
+     rest of the page stays visible but steps back (CSS: .word-row[open] and
+     :has()), so the eye stays on the card. Closing fades the card's body out
+     before it folds. Esc closes it; tapping its title closes it too. */
+  const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const barH = () => (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bar-h")) || 64);
+  function settle(row, smooth) {
+    const top = row.getBoundingClientRect().top;
+    const want = (innerWidth < 600 ? 8 : barH() + 12);       // phones: the bar is at the bottom
+    if (Math.abs(top - want) > 4) window.scrollBy({ top: top - want, behavior: smooth && !calm() ? "smooth" : "auto" });
+  }
+  function openRow(row) {
+    const before = row.getBoundingClientRect().top;
+    VS.$$(".word-row[open]").forEach((other) => { if (other !== row) { other.classList.remove("is-closing"); other.open = false; } });
+    row._mine = true;                             // the toggle listener leaves the scrolling to us
+    row.open = true;
+    VS.ui.fillRow(row);
+    // The word stays under the finger while the old one folds away above it…
+    const shift = row.getBoundingClientRect().top - before;
+    if (shift) window.scrollBy({ top: shift, behavior: "auto" });
+    // …then glides to its one place.
+    requestAnimationFrame(() => settle(row, true));
+  }
+  function closeRow(row) {
+    if (row.classList.contains("is-closing")) return;
+    if (calm()) { row.open = false; return; }
+    row.classList.add("is-closing");
+    setTimeout(() => {
+      if (!row.classList.contains("is-closing")) return;
+      row.classList.remove("is-closing");
+      row.open = false;
+      // A long card folded: keep its title in view instead of leaving the learner far below it.
+      const top = row.getBoundingClientRect().top;
+      if (top < barH()) settle(row, false);
+    }, 150);
+  }
+  VS.openRow = openRow;
+  VS.closeRow = closeRow;
+  document.addEventListener("click", (e) => {
+    const summary = e.target.closest(".word-row > summary");
+    if (!summary || e.target.closest("[data-action]")) return;     // a speaker inside the summary keeps its own job
+    e.preventDefault();
+    const row = summary.parentElement;
+    if (row.open) closeRow(row); else openRow(row);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || e.defaultPrevented) return;
+    if (document.querySelector("dialog[open], .word-pop")) return;           // a sheet or the word card goes first
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "")) return;
+    const row = VS.$(".word-row[open]");
+    if (!row) return;
+    closeRow(row);
+    const s = row.querySelector("summary");
+    if (s) s.focus({ preventScroll: true });
+  });
   document.addEventListener("toggle", (e) => {
     const row = e.target;
-    // A word's page is built when it opens (VS.ui.fillRow), then brought up under the bar if it opened low.
-    if (row.classList && row.classList.contains("word-row") && row.open) {
-      VS.ui.fillRow(row);
-      requestAnimationFrame(() => {
-        const top = row.getBoundingClientRect().top;
-        if (top < 56 || top > innerHeight * 0.45) {
-          row.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-        }
-      });
-    }
     if (!row.classList || !row.classList.contains("word-row") || !row.open) return;
+    // Opened by code (a search hit, a refreshed word): build it, one open at a time, and settle it.
+    VS.ui.fillRow(row);
     VS.$$(".word-row[open]").forEach((other) => { if (other !== row) other.open = false; });
     hideNudge();                                  // the card must never cover an open word
+    if (row._mine) { row._mine = false; return; }
+    requestAnimationFrame(() => {
+      const top = row.getBoundingClientRect().top;
+      if (top < barH() || top > innerHeight * 0.6) settle(row, true);
+    });
   }, true);
 
   // Quiz question types (Settings): keep at least one switched on.
@@ -629,7 +702,7 @@
 
   /* ── Shared to the app ──────────────────────────────────────────
      Share → VocabStudy on a phone (manifest share_target), or the
-     bookmarks-bar button on a computer, opens index.html?share-text=…
+     bookmarks-bar button on a computer, opens the app with ?share-text=…
      The text waits in VS.capture for Add words (views/import.js). */
   function readShare() {
     const q = new URLSearchParams(location.search);
@@ -639,7 +712,7 @@
     let source = strip(q.get("share-title"));
     if (!source && url) { try { source = new URL(url).hostname.replace(/^www\./, ""); } catch (e) { /* not a URL */ } }
     VS.capture = { text: strip(q.get("share-text")).slice(0, 2000), context: strip(q.get("share-context")).slice(0, 800), source: source.slice(0, 80) };
-    history.replaceState(null, "", location.pathname + "#/add?from=share");
+    history.replaceState(null, "", VS.cleanPath() + "#/add?from=share");
   }
 
   /* ── Boot ─────────────────────────────────────────────────────────

@@ -223,24 +223,6 @@
       </div>`;
   }
 
-  /* Saved for later: one strip, only while the wallet has words. The newest
-     words show as chips so the learner sees what is waiting at a glance;
-     the whole strip opens the wallet. Not a sixth tab — a stop on the way. */
-  function walletStrip() {
-    const list = VS.store.wallet();
-    if (!list.length) return "";
-    const newest = list.slice(-4).reverse();
-    return html`
-      <a class="wallet-strip" href="#/wallet" aria-label="Saved for later: ${VS.plural(list.length, "word")}. Open your wallet">
-        <span class="wallet-strip-ico" aria-hidden="true">${icon("wallet", "icon-sm")}<b>${list.length > 99 ? "99+" : list.length}</b></span>
-        <span class="wallet-strip-copy">
-          <span class="wallet-strip-title">Saved for later</span>
-          <span class="wallet-strip-words">${newest.map((e) => html`<span class="wallet-strip-chip">${VS.cap(e.word)}</span>`)}</span>
-        </span>
-        <span class="wallet-strip-go"><span class="wallet-strip-go-label">Open</span>${icon("arrow-right", "icon-sm")}</span>
-      </a>`;
-  }
-
   /* Desktop rail: the week at a glance, Quick 5, and the numbers that keep
      a learner going. Hidden on phones, where the hero already carries them. */
   function rail() {
@@ -409,7 +391,6 @@
             <div class="home-grid">
               <div class="home-main">
                 ${VS.today.strip()}
-                ${walletStrip()}
                 ${weekReady()}
                 ${addBox(true)}
                 ${backupNudge()}
