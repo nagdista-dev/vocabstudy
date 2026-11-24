@@ -456,14 +456,21 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   app's own sheet and offers Undo. Reset progress keeps the wallet; Start over
   deletes it. Backup includes it; merge unions by id.
 
-## The lockup — "لكل العرب"
+## The lockup — "For all Arabs · 100% free"
 
-The wordmark carries who the app is for, with pride and in their own script:
-`VocabStudy` with **لكل العرب** under it, aligned to the wordmark's end, IBM
-Plex Sans Arabic 600 at 13px in ink-2, over a 3px yellow stroke — the same
-stroke as in the mark — so it reads as part of the logo, not a caption. Same
-lockup in the app bar (app.js) and on the About page. ("لكل العرب", not
-"للعرب فقط": pride and welcome, never a wall.)
+The wordmark says who the app is for and what it costs: `VocabStudy` ·
+**For all Arabs · 100% free**, beside it after a hairline, the body face at
+14px — "For all Arabs" in ink-2, "100% free" wearing the app's highlighter (a
+half band by day, the full band with dark text at night). One line on wider
+screens; on phones the two parts stack as two 13px lines; hidden under
+360px. Same lockup in the app bar and on the About page.
+
+## The app bar on desktop (≥1024px)
+
+Two groups: the lockup on the left; on the right the destinations, a hairline,
+then Settings. No breadcrumbs in the bar (the highlighted link and the page
+title say where you are; phones never showed them). From 1024 to 1199px the
+nav keeps its words and drops its icons, so the lockup always has room.
 
 ## Still being built, and feedback
 

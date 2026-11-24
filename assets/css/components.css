@@ -1187,19 +1187,57 @@ body[data-mode="activity"] .dev-note { display: none; }
 /* Settings: the same two buttons, for good. */
 .feedback-setting .row .btn { gap: var(--s-2); }
 
-/* ── The lockup: VocabStudy, and under it "لكل العرب" ─────────────────
-   Who the app is for, said with pride and in their own script: the Arabic
-   line sits under the wordmark, aligned to its end, in the app's Arabic
-   face, with a short yellow stroke under it — the same stroke as in the
-   mark — so it reads as part of the logo, not a caption. */
-.brand-text { display: inline-grid; justify-items: end; gap: 1px; line-height: 1; }
-.brand-name { line-height: 1.05; }
+/* ── The lockup: VocabStudy · For all Arabs · 100% free ────────────────
+   Who it is for and what it costs, in the logo. Beside the wordmark, after a
+   hairline: "For all Arabs" in ink, then "100% free" wearing the app's own
+   highlighter (a half band by day; at night the app's full band with dark
+   text takes over). One line on wider screens; on a phone the two parts
+   stack as two short lines, so the bar never crowds its icons. */
+.brand-text { display: inline-flex; align-items: center; gap: 10px; line-height: 1; }
+.brand-name { line-height: 1.1; }
 .brand-tag {
-  position: relative; padding-bottom: 3px;
-  font-family: var(--font-arabic); font-weight: 600; font-size: .8125rem; letter-spacing: 0;
-  line-height: 1.15; color: var(--ink-2);
+  display: inline-flex; align-items: center; gap: 6px; padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--line-strong);
+  font-family: var(--font-body, inherit); font-weight: 700; font-size: .875rem; letter-spacing: .005em;
+  line-height: 1.5; color: var(--ink); white-space: nowrap;
 }
-.brand-tag::after {
-  content: ""; position: absolute; right: 0; bottom: 0; width: 100%; height: 3px;
-  border-radius: 2px; background: var(--mark);
+.brand-tag-a { color: var(--ink-2); font-weight: 600; }
+.brand-tag-b::before { content: "·"; margin-inline-end: 6px; color: var(--ink-3); font-weight: 400; }
+.brand-tag .mark {
+  padding: 0 .3em; border-radius: 2px; color: inherit;
+  background: linear-gradient(transparent 55%, var(--mark) 55%, var(--mark) 92%, transparent 92%);
+}
+@media (max-width: 599px) {
+  .brand-text { gap: 8px; }
+  .brand-tag { display: inline-grid; justify-items: start; gap: 0; padding-inline-start: 8px; font-size: .8125rem; line-height: 1.3; }
+  .brand-tag-b::before { content: none; }
+}
+@media (max-width: 359px) { .brand-tag { display: none; } }     /* the smallest phones keep the bar uncrowded */
+
+/* ── The desktop bar: two groups ──────────────────────────────────────
+   The lockup on the left; on the right, the destinations and then Settings,
+   a hairline between the two kinds — one tidy group, no stray gaps.
+   The breadcrumbs leave the bar: the highlighted nav link and each page's
+   own title already say where you are (phones never showed them). The
+   tagline steps back so the wordmark leads: "For all Arabs" in ink-3,
+   only "100% free" keeps the highlighter. */
+@media (min-width: 1024px) {
+  .app-bar-inner { display: grid; grid-template-columns: minmax(max-content, 1fr) auto auto; align-items: center; gap: var(--s-2); }
+  .app-bar-inner > .brand { justify-self: start; }
+  .app-bar-inner > .crumbs { display: none; }
+  .app-bar-inner > .bar-actions { display: contents; }
+  .bar-actions > .bar-nav { grid-column: 2; }
+  .bar-actions > #settingsBtn { grid-column: 3; position: relative; margin-inline-start: var(--s-2); }
+  .bar-actions > #settingsBtn::before {                 /* destinations | settings: a hairline between the two kinds */
+    content: ""; position: absolute; inset-inline-start: calc(var(--s-2) * -1 - 1px); top: 25%; bottom: 25%;
+    width: 1px; background: var(--line-strong);
+  }
+  .brand-tag { font-size: .8125rem; }
+  .brand-tag-a { color: var(--ink-3); font-weight: 500; }
+}
+/* A narrower desktop (1024–1199px): the nav keeps its words and lets its icons go,
+   so the lockup and the links keep a real gap between them. */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .bar-nav .bar-ico { display: none; }
+  .bar-link { padding-inline: 10px; }
 }

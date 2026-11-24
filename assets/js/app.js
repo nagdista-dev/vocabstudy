@@ -773,9 +773,9 @@
     if (markup) el.innerHTML = String(markup);
     if (href) el.href = href;
   };
-  fill("brandLink", html`${VS.brandMark}<span class="brand-text"><span class="brand-name">VocabStudy</span><span class="brand-tag" lang="ar" dir="rtl">لكل العرب</span></span>`, VS.homeHref);
+  fill("brandLink", html`${VS.brandMark}<span class="brand-text"><span class="brand-name">VocabStudy</span><span class="brand-tag"><span class="brand-tag-a">For all Arabs</span><span class="brand-tag-b"><span class="mark">100% free</span></span></span></span>`, VS.homeHref);
   const brandLink = VS.$("#brandLink");
-  if (brandLink) brandLink.setAttribute("aria-label", "VocabStudy — for all Arabs. Today");
+  if (brandLink) brandLink.setAttribute("aria-label", "VocabStudy, for all Arabs, 100% free — Today");
   fill("settingsBtn", icon("gear"));
   applySettings();
   VS.store.onChange(() => current && renderBar());
