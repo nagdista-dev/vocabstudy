@@ -61,6 +61,8 @@
     if (parts[0] === "transfer") return { view: "transfer" };
     if (parts[0] === "stats") return { view: "stats" };
     if (parts[0] === "wallet") return { view: "wallet" };
+    if (parts[0] === "share") return { view: "share", query };          // Share with: send words (docs/SHARE.md)
+    if (parts[0] === "shared") return { view: "shared", query };        // …and open words a friend sent
     if (parts[0] === "week") return { view: "week", query };
     // An optional last part picks the layout: #/print/pick/test?level=B2
     if (parts[0] === "print" && PRINT_SCOPES.includes(parts[1])) return { view: "print", scope: parts[1], layout: parts[2], query };
@@ -744,5 +746,6 @@
   window.addEventListener("hashchange", go);
   go();
   // The first time: two quick choices (level and Arabic) before anything else.
-  if (!VS.profileSet()) VS.openProfile(true);
+  // A friend's shared words open first; the level and Arabic questions wait for the next visit.
+  if (!VS.profileSet() && !/^#\/shared\b/.test(location.hash)) VS.openProfile(true);
 })();

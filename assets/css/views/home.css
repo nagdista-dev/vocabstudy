@@ -570,3 +570,6 @@
   .word-row:not([open]) .word-row-ar { justify-self: end; text-align: right; }
 }
 .today-tomorrow p { font-size: var(--text-sm); }   /* one quiet line, not a second headline */
+/* Share and Print side by side in the Words header. */
+.words-head-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.words-head-actions .btn { gap: var(--s-2); }

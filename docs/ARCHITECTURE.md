@@ -181,6 +181,18 @@ opens Add → With AI with the words typed and their sentences in
 meaning") and each added row keeps its `context` and `source`; `{ word,
 context, source }` opens the Add form. There is no sixth tab.
 
+## Sharing words with a friend (core/share.js, views/share.js)
+
+`VS.share.encode({ title, from, note, keys, words })` packs a list as rows of
+values (`k` names the fields: a d e p l i c), deflate-raw + base64url, marked
+`z.` (or `u.` where CompressionStream is missing); `VS.share.link(payload)`
+puts it after `#/shared?d=`, so no server ever receives it. `decode` throws
+`broken` (a cut link), `old-browser` or `version`. `#/share` builds the
+payload a moment after each change and paints the send panel in place;
+`#/shared` adds through `VS.saveWords` (views/import.js: Auto-fill, wallet
+clean-up) or keeps them in the wallet (`walletAdd(…, "shared", arabic)`).
+Limits: 200 words a link, a QR while the link is ≤ 1,800 characters.
+
 ## Moving between devices (views/transfer.js)
 
 `store.exportJSON()` → deflate (`CompressionStream`) → base64 → frames of

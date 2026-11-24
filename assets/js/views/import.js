@@ -82,6 +82,8 @@
     return result;
   }
 
+  VS.saveWords = save;          // Share with (views/share.js) adds a received list the same way
+
   /**
    * Add one word — the library's add box and the form here both use it.
    * Returns the new word, or null (with a toast saying why).

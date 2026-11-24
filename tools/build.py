@@ -35,6 +35,7 @@ STYLES = [
     "assets/css/views/import.css",
     "assets/css/views/data.css",
     "assets/css/views/wallet.css",
+    "assets/css/views/share.css",
     "assets/css/views/reset.css",
     "assets/css/motion.css",
     "assets/css/system.css",        # the floors: 44px targets, visible focus, one stacking order (v10)
@@ -61,6 +62,7 @@ SCRIPTS = [
     "assets/js/core/autofill.js",
     "assets/js/core/spelling.js",      # "Did you mean receive?" before a typo becomes a lesson
     "assets/js/core/grammar.js",       # grammar check for Use it (LanguageTool, online, optional)
+    "assets/js/core/share.js",         # words in a link: the Share with page (docs/SHARE.md)
     "assets/js/views/shared.js",
     "assets/js/views/home.js",
     "assets/js/views/cards.js",
@@ -76,6 +78,7 @@ SCRIPTS = [
     "assets/js/views/print.js",
     "assets/js/views/import.js",
     "assets/js/views/wallet.js",
+    "assets/js/views/share.js",        # Share with: send words as a link / QR / message / file, and receive them
     "assets/js/views/data.js",
     "assets/js/views/transfer.js",
     "assets/js/views/reset.js",

@@ -589,3 +589,8 @@
   .word-list > .word-row[open] { box-shadow: none; }
   .word-list:has(> .word-row[open]) > *, .home-main > *, .home-rail { opacity: 1 !important; }
 }
+
+/* Share from a word's page: a square tool beside Edit and Delete (views/share.js). */
+.word-tool-share { width: 40px; padding: 0; color: var(--ink-3); text-decoration: none; }
+.word-tool-share:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+@media (pointer: coarse) { .word-tool-share { width: var(--tap); } }

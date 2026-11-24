@@ -125,6 +125,7 @@
           <summary class="btn lib-more-btn" aria-label="Manage this list">${icon("more")}<span class="lib-more-label">Manage</span></summary>
           <div class="lib-more-menu">
             <p class="lib-menu-head">${VS.plural(n, "word")}</p>
+            <a class="btn btn-quiet" href="#/share${query() ? "?" + query() : ""}">${icon("share", "icon-sm")} Share these words</a>
             <a class="btn btn-quiet" href="#/print/pick${query() ? "?" + query() : ""}">${icon("print", "icon-sm")} Print or PDF</a>
             <button class="btn btn-quiet" type="button" data-action="lib-export">${icon("book", "icon-sm")} Export CSV</button>
             <hr class="lib-menu-sep">
@@ -416,7 +417,10 @@
                   <p class="lib-stats"><b>${s.total}</b> words<span aria-hidden="true">·</span><b>${s.learning}</b> learning<span aria-hidden="true">·</span><b>${s.mastered}</b> mastered</p>
                 </div>
                 <!-- Print & PDF in plain sight (it hid in the ⋯ menu): the words on screen, ready for paper. -->
-                <a class="btn words-print" href="#/print/pick${query() ? "?" + query() : ""}">${icon("print", "icon-sm")} Print &amp; PDF</a>
+                <div class="words-head-actions">
+                  <a class="btn words-print" href="#/share${query() ? "?" + query() : ""}">${icon("share", "icon-sm")} Share</a>
+                  <a class="btn words-print" href="#/print/pick${query() ? "?" + query() : ""}">${icon("print", "icon-sm")} Print &amp; PDF</a>
+                </div>
               </header>
 
               ${s.total < EARLY ? "" : html`<div class="lib-tools">

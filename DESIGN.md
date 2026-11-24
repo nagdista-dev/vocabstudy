@@ -456,6 +456,35 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   app's own sheet and offers Undo. Reset progress keeps the wallet; Start over
   deletes it. Backup includes it; merge unions by id.
 
+## Share with (`#/share`, `#/shared`)
+
+Send words to a friend; the friend opens them and learns them too
+(docs/SHARE.md). The words travel inside the link's `#` part — no server,
+no account; progress, notes and your own sentences are never sent.
+
+- **Send** — four numbered steps (`.act-n`): Choose the words (starts from
+  where you came: the Words filter, one word's page, or All/New/Learning/
+  Mastered + a tag; a search; ticks; "12 of 40 chosen"), Say what it is
+  (title, your name — kept as the `shareFrom` setting — a note), What goes
+  (Arabic · definition and example · part of speech/level/IPA · where I met
+  it, or Words only), Send (the phone's share sheet, Copy link, Copy message,
+  QR code while the link fits one, Download a file). The link line says how
+  long the link is and warns in `--note` past ~6,000 characters.
+- **Receive** — the title as the heading, "From X · N words · K already
+  yours", the friend's note in a `--note` panel, the words as full rows (word,
+  Arabic, definition, example, where they met it, speaker; already-yours rows
+  unticked and faded), a tag (the title), "Use their Arabic", then `Add N to
+  my words` or `Save for later` (wallet, "Shared by X"). Done: `Learn them
+  now` (`#/pick/cards?tag=…`), See them in Words, Share them on. A cut link
+  opens a calm page that says what to ask for. First run waits: the shared
+  words come before the level/dialect sheet.
+- **Layout** — desktop: the words left, the steps right (380px); below 1024px
+  one column and a bottom bar (on `<body>`, so the page's entrance transform
+  can't pin it) that brings you to Send while it is out of sight. Phones:
+  one action per line; the Arabic sits under the word.
+- **Ways in** — Share beside Print & PDF on Words, "Share these words" in
+  Manage, a share tool beside Edit and Delete on a word's page.
+
 ## A tapped word (the word card)
 
 Any word in an example or an English meaning (word page, study cards, More

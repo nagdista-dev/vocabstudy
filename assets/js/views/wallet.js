@@ -33,7 +33,8 @@
       what to do with it (Make with AI · Auto-add · remove). Desktop puts the
       actions in a column on the right; phones put them along the bottom. */
   function row(e) {
-    const from = e.source ? html`${e.kind === "meaning" ? "From the meaning of" : "From the example for"} <b>${VS.cap(e.source)}</b><span class="wallet-sep" aria-hidden="true">·</span>` : "";
+    const lead = e.kind === "shared" ? "Shared by" : e.kind === "meaning" ? "From the meaning of" : "From the example for";
+    const from = e.source ? html`${lead} <b>${e.kind === "shared" ? e.source : VS.cap(e.source)}</b><span class="wallet-sep" aria-hidden="true">·</span>` : "";
     return html`
       <article class="wallet-row" data-id="${e.id}" aria-label="${VS.cap(e.word)}">
         <div class="wallet-main">

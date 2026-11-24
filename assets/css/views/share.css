@@ -1,0 +1,148 @@
+/* views/share.css — Share with: send words to a friend, and receive them.
+   ------------------------------------------------------------------
+   Built from the app's own parts: page-head, .card, .seg, .field,
+   .form-field, .check, .word-list, the app's buttons (rounded rectangles)
+   and the numbered steps (.act-n). This file sets the layout and the row.
+     Desktop (≥1024)  the words on the left, the send column on the right
+     Below            one column; a bottom bar brings you to Send
+   Colour keeps its meanings: the accent for actions and chosen rows,
+   --note for what the app says (a long-link warning, the friend's note),
+   green only for "never sent" / "already yours" reassurance ticks. */
+
+.share-page { display: grid; gap: var(--s-5); align-content: start; }
+
+.share-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+@media (min-width: 1024px) {
+  .share-grid { grid-template-columns: minmax(0, 1fr) 380px; gap: var(--s-6); }
+}
+
+/* Step headings: the app's numbered steps, one size for all four. */
+.share-step-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3); }
+.share-page h2 { display: flex; align-items: baseline; gap: var(--s-2); margin: 0; font-size: var(--text-lg); }
+.share-page h2 small { color: var(--ink-3); font-family: var(--font-body); font-size: var(--text-xs); font-weight: 500; }
+.share-picked { margin: 0; color: var(--ink-2); font-size: var(--text-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* 1 · Choose the words */
+.share-pick { display: grid; gap: var(--s-3); min-width: 0; }
+.share-sources { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-width: 0; }
+.share-seg { max-width: 100%; }
+.share-tag select {
+  min-height: 44px; padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); font: inherit; font-size: var(--text-sm);
+}
+.share-tools { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+.share-search { flex: 1 1 auto; }
+.share-search input { height: 44px; }
+.share-tools .btn { flex: none; }
+
+/* A row: tick, the word and a quiet line, its Arabic at the right edge. */
+.share-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-3);
+  padding: 10px var(--s-4); border-top: 1px solid var(--line); background: var(--surface); cursor: pointer;
+  transition: background var(--fast) var(--ease);
+}
+.share-row:first-child { border-top: 0; }
+@media (hover: hover) { .share-row:hover { background: var(--surface-hover); } }
+.share-row input { width: 20px; height: 20px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+.share-row.is-on { background: color-mix(in srgb, var(--brand-soft) 45%, var(--surface)); }
+.share-row-main { display: grid; gap: 2px; min-width: 0; }
+.share-row-word { font-size: var(--text-md); font-weight: 600; line-height: 1.3; color: var(--ink); overflow-wrap: anywhere; }
+.share-row-meta { color: var(--ink-3); font-size: var(--text-2xs); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.share-row-ar { margin-left: auto; text-align: right; color: var(--ink-2); font-size: 1.02rem; line-height: 1.5; }   /* physical: dir=rtl */
+.share-more, .share-none { margin: 0; text-align: center; }
+.share-none { padding: var(--s-5) 0; }
+
+/* The received row: the whole word — definition, example, where they met it — and its sound. */
+.share-row.is-full { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: start; padding: var(--s-3) var(--s-4); }
+.share-row.is-full input { margin-top: 3px; }
+.share-row-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-2); }
+.share-row-def { color: var(--ink); font-size: var(--text-sm); line-height: 1.5; }
+.share-row-ex { color: var(--ink-2); font-size: var(--text-sm); font-style: italic; line-height: 1.5; }
+.share-row-met { color: var(--ink-3); font-size: var(--text-xs); line-height: 1.5; }
+/* The Arabic under the word: phones only (wider rows keep it at the right edge). */
+.share-row-ar-under { display: none; justify-self: start; color: var(--ink-2); font-size: 1.02rem; line-height: 1.5; }
+.share-row-have { display: inline-flex; align-items: center; gap: 4px; color: var(--good); font-size: var(--text-xs); font-weight: 600; }
+.share-row-have .icon { width: 14px; height: 14px; }
+.share-row.is-mine { cursor: default; }
+.share-row.is-mine .share-row-main, .share-row.is-mine .share-row-ar { opacity: .6; }
+.share-row .speak-btn { width: 36px; height: 36px; min-width: 36px; }
+@media (pointer: coarse) { .share-row .speak-btn { width: 40px; height: 40px; min-width: 40px; } }
+
+/* 2–4 · The send column */
+.share-side { display: grid; gap: var(--s-4); min-width: 0; }
+.share-card { display: grid; gap: var(--s-3); padding: var(--s-4); box-shadow: none; }
+.share-card .form-field input, .share-card .form-field textarea { width: 100%; }
+.share-checks { display: grid; gap: var(--s-1); transition: opacity var(--fast) var(--ease); }
+.share-checks.is-off { opacity: .45; }
+.share-card .check { display: flex; align-items: flex-start; gap: var(--s-2); min-height: 32px; color: var(--ink); font-size: var(--text-sm); line-height: 1.45; cursor: pointer; }
+.share-card .check input { flex: none; margin-top: 1px; }
+.share-card .check small { color: var(--ink-3); }
+.share-only { padding-top: var(--s-2); border-top: 1px solid var(--line); }
+.share-only b { font-weight: 700; }
+.share-private { display: flex; align-items: flex-start; gap: var(--s-2); margin: 0; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.5; }
+.share-private .icon { flex: none; width: 15px; height: 15px; margin-top: 1px; color: var(--good); }
+.share-tag-hint { margin: -4px 0 0; font-size: var(--text-xs); }
+
+.share-status { display: flex; align-items: flex-start; gap: var(--s-2); margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-md);
+  background: var(--surface-2); color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
+.share-status .icon { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--ink-3); }
+.share-status.is-ok .icon { color: var(--good); }
+.share-status.is-warn { background: var(--note-soft); color: var(--note-ink); }
+.share-status.is-warn .icon { color: var(--note); }
+
+.share-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); }
+.share-actions .btn { gap: var(--s-2); justify-content: center; min-height: 44px; }
+.share-actions .btn-lg, .share-actions .btn-primary { grid-column: 1 / -1; }
+.share-actions .btn-quiet { grid-column: 1 / -1; }
+.share-actions .btn:disabled { opacity: .5; cursor: not-allowed; }
+.share-qr { display: grid; justify-items: center; gap: var(--s-2); padding-top: var(--s-2); }
+.share-qr[hidden] { display: none; }
+.share-qr canvas { width: min(260px, 100%); height: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--r-md); background: #fff; image-rendering: pixelated; }
+.share-qr .hint { margin: 0; text-align: center; font-size: var(--text-xs); }
+
+/* The friend's note: the app showing someone's words to you — --note, quoted. */
+.share-note { display: grid; gap: var(--s-1); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
+  background: var(--note-soft); color: var(--note-ink); }
+.share-note p { margin: 0; font-size: var(--text-md); line-height: 1.55; }
+.share-note footer { color: var(--note); font-size: var(--text-xs); font-weight: 600; }
+
+/* Done */
+.share-done { display: grid; justify-items: center; gap: var(--s-3); padding: var(--s-6) var(--s-5); text-align: center; box-shadow: none; }
+.share-done-ico { display: grid; place-items: center; width: 56px; height: 56px; border-radius: var(--r-lg); background: var(--brand-soft); color: var(--brand); }
+.share-done-ico .icon { width: 26px; height: 26px; }
+.share-done h2 { display: block; font-size: var(--text-xl); text-align: center; }   /* one sentence, not flex pieces */
+.share-done p { margin: 0; max-width: 46ch; color: var(--ink-2); }
+.share-done-actions { justify-content: center; gap: var(--s-2); }
+.share-done-actions .btn { gap: var(--s-2); }
+
+/* Phones and tablets: a bottom bar to Send, only while the send panel is out of sight. */
+.share-dock { display: none; }
+@media (max-width: 1023px) {
+  .share-dock {
+    position: fixed; z-index: var(--z-float); left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom));
+    display: block; padding: var(--s-2) var(--gutter);
+    background: linear-gradient(to top, var(--paper) 70%, transparent);
+    transform: translateY(120%); opacity: 0; pointer-events: none;
+    transition: transform var(--base) var(--ease), opacity var(--base) var(--ease);
+  }
+  .share-dock.is-on { transform: none; opacity: 1; pointer-events: auto; }
+  .share-dock .btn { min-height: 48px; gap: var(--s-2); box-shadow: var(--shadow-2); }
+  .share-page { padding-bottom: calc(var(--s-8) + 64px); }
+}
+@media (max-width: 599px) {
+  .share-row { padding-inline: var(--s-3); }
+  .share-row.is-full { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .share-row.is-full .share-row-ar { display: none; }              /* on a phone the Arabic sits under the word instead */
+  .share-row.is-full .share-row-ar-under { display: block; }
+  .share-tools .btn { padding-inline: var(--s-2); }
+  .share-actions { grid-template-columns: minmax(0, 1fr); }      /* one button per line: no label wraps */
+}
+.share-actions .btn { white-space: nowrap; }
+@media print { .share-dock, .share-side { display: none; } }
+
+/* Hooks the script also reads, each with its own job here. */
+.share-list { scroll-margin-top: calc(var(--bar-h) + var(--s-4)); }
+.share-send { scroll-margin-top: calc(var(--bar-h) + var(--s-4)); }
+.share-send h2 span { color: var(--ink-3); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; }
+.share-status.is-idle { color: var(--ink-3); }
+@media (min-width: 1024px) { .share-grid.is-receive { grid-template-columns: minmax(0, 1fr) 340px; } }

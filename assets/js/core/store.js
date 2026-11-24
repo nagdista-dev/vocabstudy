@@ -368,7 +368,7 @@
         source: String(source || "").slice(0, 80),
         added: VS.todayKey(),
       };
-      if (kind === "meaning") entry.kind = "meaning";   // met in the English meaning, not the example
+      if (kind === "meaning" || kind === "shared") entry.kind = kind;   // met in a meaning, or sent by a friend
       if (arabic) entry.arabic = String(arabic).slice(0, 120);   // the gloss the word card showed, if it had loaded
       list.push(entry);
       if (list.length > 300) list.splice(0, list.length - 300);

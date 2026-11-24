@@ -1300,6 +1300,8 @@
                 <div class="word-tools" role="group" aria-label="Manage “${w.word}”">
                   <button class="word-tool word-tool-edit" type="button" data-action="word-edit" data-id="${w.id}" title="Edit “${w.word}”">
                     ${icon("pen", "icon-sm")}<span>Edit</span></button>
+                  <a class="word-tool word-tool-share" href="#/share?ids=${encodeURIComponent(w.id)}" aria-label="Share “${w.word}” with a friend" title="Share with a friend">
+                    ${icon("share", "icon-sm")}</a>
                   <button class="word-tool word-tool-delete" type="button" data-action="word-delete" data-id="${w.id}"
                     aria-label="Delete “${w.word}”" title="Delete “${w.word}”">${icon("trash", "icon-sm")}</button>
                 </div>
