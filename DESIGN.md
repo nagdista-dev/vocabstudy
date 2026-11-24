@@ -431,11 +431,11 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   `Clear wallet` is a `danger-link`; empty is `.empty`.
 - **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
   (app.js `NAV`, `barOnly`). Phones and tablets keep five tabs; the wallet is
-  the top bar's icon beside Settings. Its count is a solid accent badge with
-  white figures — the same badge as Recall's due count (red means wrong). No strip on Today.
-- **Counts in the bars.** Recall (due) and Wallet share one badge: solid accent,
-  white bold figures, a 2px paper ring on the tab bar. (The due count used the
-  highlighter until v13; on the learner's word it now matches the rest.)
+  the top bar's icon beside Settings. Its count is the same yellow badge as
+  Recall's. No strip on Today.
+- **Counts in the bars.** Recall (due) and Wallet share one badge: the
+  highlighter yellow with dark bold figures, a 2px paper ring where it sits on
+  an icon.
 - **No scrollbars.** The app draws none (`base.css`); scrolling is unchanged.
 - **One focus ring per field.** `.field:focus-within` draws a single 2px accent
   ring over its own border (system.css); inputs inside it draw none.

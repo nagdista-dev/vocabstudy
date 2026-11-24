@@ -28,33 +28,32 @@
     return html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}`;
   }
 
-  /** One row, set like a word row in the library: the word left, its Arabic at
-      the right edge; the sentence; one quiet meta line; then two small actions
-      (the app's link buttons), its speaker and remove (the app's icon buttons). */
+  /** One row: what the word is (word, its sound, its Arabic), where you met it
+      (the sentence in a soft quote panel, where it came from and when), and
+      what to do with it (Make with AI · Add myself · remove). Desktop puts the
+      actions in a column on the right; phones put them along the bottom. */
   function row(e) {
     const from = e.source ? html`${e.kind === "meaning" ? "From the meaning of" : "From the example for"} <b>${VS.cap(e.source)}</b><span class="wallet-sep" aria-hidden="true">·</span>` : "";
     return html`
       <article class="wallet-row" data-id="${e.id}" aria-label="${VS.cap(e.word)}">
-        <div class="wallet-row-head">
-          <h2 class="wallet-word">${VS.cap(e.word)}</h2>
-          ${e.arabic ? html`<span class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</span>` : ""}
-        </div>
-        ${e.sentence ? html`<p class="wallet-sentence">${sentence(e)}</p>` : ""}
-        <p class="wallet-meta">${from}<span>Saved ${VS.ui.dateText(e.added)}</span></p>
-        <div class="wallet-row-foot">
-          <div class="wallet-doors">
-            <button class="link-btn wallet-door" type="button" data-action="wallet-ai" data-id="${e.id}"
-              title="Ask ChatGPT or Claude for its Arabic, definition and example — then check it and add it">
-              ${icon("bolt", "icon-sm")}<span>Make with AI</span></button>
-            <button class="link-btn wallet-door is-quiet" type="button" data-action="wallet-add" data-id="${e.id}"
-              title="Open the Add form with this word${e.sentence ? " and its sentence" : ""} filled in">
-              ${icon("pen", "icon-sm")}<span>Add myself</span></button>
-          </div>
-          <div class="wallet-row-tools">
+        <div class="wallet-main">
+          <div class="wallet-row-head">
+            <h2 class="wallet-word">${VS.cap(e.word)}</h2>
             ${VS.ui.speakButton(e.word, `Hear “${e.word}”`)}
-            <button class="icon-btn wallet-remove" type="button" data-action="wallet-remove" data-id="${e.id}"
-              aria-label="Remove “${e.word}” from your wallet" title="Remove from your wallet">${icon("trash", "icon-sm")}</button>
           </div>
+          ${e.arabic ? html`<p class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</p>` : ""}
+          ${e.sentence ? html`<blockquote class="wallet-sentence">“${sentence(e)}”</blockquote>` : ""}
+          <p class="wallet-meta">${from}<span>Saved ${VS.ui.dateText(e.added)}</span></p>
+        </div>
+        <div class="wallet-actions">
+          <button class="btn btn-tonal wallet-ai" type="button" data-action="wallet-ai" data-id="${e.id}"
+            title="Ask ChatGPT or Claude for its Arabic, definition and example — then check it and add it">
+            ${icon("bolt", "icon-sm")}<span>Make with AI</span></button>
+          <button class="btn btn-quiet" type="button" data-action="wallet-add" data-id="${e.id}"
+            title="Open the Add form with this word${e.sentence ? " and its sentence" : ""} filled in">
+            ${icon("pen", "icon-sm")}<span>Add myself</span></button>
+          <button class="icon-btn wallet-remove" type="button" data-action="wallet-remove" data-id="${e.id}"
+            aria-label="Remove “${e.word}” from your wallet" title="Remove from your wallet">${icon("trash", "icon-sm")}</button>
         </div>
       </article>`;
   }
@@ -89,7 +88,7 @@
       if (!ar) return;
       VS.store.walletSetArabic(r.entry.id, ar);
       const head = document.querySelector(`.wallet-row[data-id="${CSS.escape(r.entry.id)}"] .wallet-row-head`);
-      if (head && !head.querySelector(".wallet-ar")) head.insertAdjacentHTML("beforeend", String(html`<span class="wallet-ar" lang="ar" dir="rtl">${ar}</span>`));
+      if (head && !head.parentElement.querySelector(".wallet-ar")) head.insertAdjacentHTML("afterend", String(html`<p class="wallet-ar" lang="ar" dir="rtl">${ar}</p>`));
     });
   }
 
