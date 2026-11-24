@@ -120,7 +120,12 @@
     if (!open) return;
     const o = open;
     open = null;
+    if (o.cleanup) o.cleanup();
     o.box.remove();
+    // Cancelling returns the learner to the box they were in, not to <body>.
+    if (value == null && o.back && o.back.isConnected) {
+      try { o.back.focus({ preventScroll: true }); } catch (e) { /* the screen changed under it */ }
+    }
     o.resolve(value);
   }
 
@@ -204,7 +209,9 @@
     const ar = String(text || "").trim();
     close(null);
     if (!VS.autofill.enabled() || !navigator.onLine) {
-      VS.toast(navigator.onLine ? "That's Arabic — switch your keyboard to English." : "That's Arabic. Finding the English word needs the internet — or switch your keyboard.");
+      VS.toast(!VS.autofill.enabled()
+        ? "That's Arabic. Finding the English word needs Auto-fill — turn it on in Settings, or type it in English."
+        : "That's Arabic. Finding the English word needs the internet — type it in English for now.");
       return null;
     }
     if (checking === ar) return null;
@@ -221,23 +228,35 @@
         : "Couldn't reach the translation service. Try again — or type the word in English.");
       return null;
     }
-    if (!list.length) { VS.toast("No English word found for that. Try another Arabic word — or type it in English."); return null; }
+    if (!list.length) {
+      VS.toast(ar.split(/\s+/).length > 3
+        ? "No single English word found for that. For a whole text, use Add words → From Arabic."
+        : "No English word found for that. Try another Arabic word — or type it in English.");
+      return null;
+    }
     if (!anchor || !anchor.isConnected) return null;
     return new Promise((resolve) => {
       const box = document.createElement("div");
       box.className = "spell-check ar-pick";
-      box.setAttribute("role", "alert");
+      box.setAttribute("role", "group");
+      box.setAttribute("aria-labelledby", "arPickQ");
       box.innerHTML = String(html`
-        <p class="spell-check-q">${icon("book", "icon-sm")}<span><bdi lang="ar" dir="rtl">${ar}</bdi> in English — which one do you mean?</span></p>
+        <div class="ar-pick-top">
+          <p class="spell-check-q" id="arPickQ">${icon("book", "icon-sm")}<span><bdi lang="ar" dir="rtl">${ar}</bdi> in English — which one do you mean?</span></p>
+          <button class="icon-btn ar-pick-close" type="button" data-pick="cancel" aria-label="Close">${icon("x")}</button>
+        </div>
         <div class="ar-pick-list">
           ${list.map((o, i) => html`<button class="ar-pick-opt ${i ? "" : "is-first"}" type="button" data-pick="${i}">
             <b>${o.word}</b>${o.keys ? html`<small class="ar-pick-have">Your keyboard was in Arabic</small>` : ""}${VS.findWord(o.word) ? html`<small class="ar-pick-have">In your library</small>` : ""}${o.hint ? html`<bdi lang="ar" dir="rtl">${o.hint}</bdi>` : ""}</button>`)}
         </div>
-        <p class="hint">Not here? Type it in English.</p>`);
+        <p class="hint">Not here? Close this and type it in English.</p>`);
+      const back = document.activeElement;
+      let cleanup = null;
       box.addEventListener("click", (e) => {
         const b = e.target.closest("[data-pick]");
         if (!b) return;
         e.stopPropagation();
+        if (b.dataset.pick === "cancel") { close(null); return; }
         const pick = list[Number(b.dataset.pick)].word;
         // Already in the library: open it rather than "already in your library" after the tap.
         const have = VS.findWord(pick);
@@ -248,8 +267,17 @@
       // The "Arabic? Press Add" note has done its job: the choices replace it.
       const warn = anchor.parentElement && anchor.parentElement.querySelector(":scope > .kb-warn");
       if (warn) warn.hidden = true;
-      open = { typed: ar, resolve, box };
-      const first = box.querySelector("[data-pick]");
+      // Escape or a tap anywhere else closes it, with no word saved.
+      const onKey = (ev) => { if (ev.key === "Escape") { ev.preventDefault(); close(null); } };
+      const onDown = (ev) => { if (!box.contains(ev.target)) close(null); };
+      document.addEventListener("keydown", onKey);
+      document.addEventListener("pointerdown", onDown, true);
+      cleanup = () => {
+        document.removeEventListener("keydown", onKey);
+        document.removeEventListener("pointerdown", onDown, true);
+      };
+      open = { typed: ar, resolve, box, back, cleanup };
+      const first = box.querySelector(".ar-pick-opt");
       if (first) first.focus({ preventScroll: true });
     });
   }

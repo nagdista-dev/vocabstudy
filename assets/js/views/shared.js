@@ -222,11 +222,17 @@
     "If a word has two common meanings, give it two blocks — same word, each with its own arabic and tags.",
   ];
 
-  /** Several words I already know I want. */
-  VS.aiPromptMany = (words, contexts) => {
-    const met = (contexts || []).map((c, i) => (c ? "- " + words[i] + ": “" + c + "”" : "")).filter(Boolean);
+  /** Several words I already know I want — with the sentences they were
+      met in and the Arabic meanings the learner already knows. */
+  VS.aiPromptMany = (words, contexts, arabics) => {
+    const met = words.map((word, i) => {
+      const c = (contexts || [])[i];
+      const ar = (arabics || [])[i];
+      if (!c && !ar) return "";
+      return "- " + word + (c ? ": “" + c + "”" : "") + (ar ? " — the meaning I know: " + ar : "");
+    }).filter(Boolean);
     return [meLine() + " For EACH of these English words, give one block:", words.join(", "),
-      ...(met.length ? ["", "I met some of them in these sentences — use THAT meaning for each:", ...met] : []),
+      ...(met.length ? ["", "I met some of them in these sentences, and I know some in Arabic — use THAT meaning for each:", ...met] : []),
       ...aiBlocks(false)].join("\n");
   };
   /** The most useful words about a topic, at a level. */
@@ -978,9 +984,10 @@
       }
       const update = () => {
         const on = ARABIC.test(input.value);
-        // In an add box Arabic is a way in: Add finds the English word (core/spelling.js).
+        // In an add box Arabic is a way in: the button finds the English word (core/spelling.js).
+        const verb = opts && typeof opts.lookup === "string" ? opts.lookup : "Add";
         note.textContent = !on ? ""
-          : opts && opts.lookup && VS.autofill.enabled() ? "Arabic? Press Add and pick the English word."
+          : opts && opts.lookup && VS.autofill.enabled() ? "Arabic? Press " + verb + " and pick the English word."
           : "Your keyboard is in Arabic — switch it to English to type this word.";
         note.hidden = !on;
       };
@@ -990,10 +997,33 @@
     },
 
     /**
-     * Watch an "add a word" input: a word already in the library is named
-     * while you type, before you press Add — with a link to it.
+     * The highlighter under an add field grows with exactly what is typed
+     * (canvas measures the text). Arabic draws from the right, in its own face.
      */
-    watchDuplicate(input, after) {
+    watchMark(input) {
+      if (!input) return () => {};
+      const ctx = document.createElement("canvas").getContext("2d");
+      const draw = () => {
+        const cs = getComputedStyle(input);
+        ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+        const w = input.value ? ctx.measureText(input.value).width + 8 : 0;
+        input.style.setProperty("--mark-w", Math.min(w, input.clientWidth) + "px");
+        input.style.backgroundPosition = cs.direction === "rtl"
+          ? "right " + Math.max(0, parseFloat(cs.paddingRight) - 4) + "px top 0"
+          : (parseFloat(cs.paddingLeft) - 4) + "px 0";
+      };
+      input.addEventListener("input", draw);
+      draw();
+      return draw;
+    },
+
+    /**
+     * Watch an "add a word" input: a word already in the library is named
+     * while you type, before you press Add — with a link to it. In wallet
+     * mode the note says the word needs no saving here, because it is
+     * already learned.
+     */
+    watchDuplicate(input, after, opts) {
       if (!input || !after) return;
       const note = document.createElement("p");
       note.className = "dup-note";
@@ -1004,7 +1034,8 @@
         const twins = VS.words.filter((w) => VS.wordKey(w.word) === VS.wordKey(input.value) && input.value.trim());
         const w = twins[0];
         note.hidden = !w;
-        note.innerHTML = w ? String(html`${icon("check", "icon-sm")} <span>“${w.word}” is already in your library${twins.length > 1 ? " (" + twins.length + " meanings)" : ""}. Add a different Arabic meaning to keep another one.</span>
+        note.innerHTML = w ? String(html`${icon("check", "icon-sm")} <span>“${w.word}” is already in your library${twins.length > 1 ? " (" + twins.length + " meanings)" : ""}. ${
+            opts && opts.wallet ? "You don't need it in your wallet." : "Add a different Arabic meaning to keep another one."}</span>
           <a href="#/words?q=${encodeURIComponent(w.word)}">Show it</a>`) : "";
       };
       input.addEventListener("input", update);

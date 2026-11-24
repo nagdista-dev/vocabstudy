@@ -169,21 +169,36 @@ not rendered on any card face — the word page and Speak own them.
 
 ## The wallet (`core/store.js`, `views/wallet.js`)
 
-`state.wallet` is a list of `{ id, word, sentence, source, added }`, newest
-last, capped at 300. `walletAdd(word, sentence, source)` refuses a word already
-in the library and reports a duplicate; `walletRemove` returns the entry for
-Undo; `walletClear` returns everything removed. Adding a wallet word to the
+`state.wallet` is a list of `{ id, word, sentence, source, kind?, arabic?, added }`,
+newest last, capped at 300. `walletAdd(word, sentence, source, kind, arabic)`
+refuses a word already in the library and reports a duplicate; the Arabic may
+come from the learner (typed Arabic, or the gloss on a word card) or from the
+quiet lookup after an English word is typed. `walletRemove` returns the entry
+for Undo; `walletClear` returns everything removed. Adding a wallet word to the
 library removes it from the wallet (`views/import.js`). The wallet is content,
 so **Reset progress** keeps it and **Start over** deletes it; `exportJSON`
 includes it and `mergeJSON` unions by id, skipping words now in the library.
+
 The wallet is reached from the app bar on every screen (`NAV` link on desktop,
-`#walletBtn` beside Settings below 1024px, with a count badge). `#/wallet` keeps typed words (`walletSetArabic` fills their Arabic
-later via `VS.arabicWord`, Auto-fill on only), searches past six entries, and
-offers two doors per word through `VS.walletDraft`: `{ ai: true, items }`
-opens Add → With AI with the words typed and their sentences in
-`st.ai.ctx`, so `VS.aiPrompt` / `VS.aiPromptMany` carry them ("use THAT
-meaning") and each added row keeps its `context` and `source`; `{ word,
-context, source }` opens the Add form. There is no sixth tab.
+`#walletBtn` beside Settings below 1024px, with a count badge). `VS.walletCapture`
+is the one capture path shared by the wallet's pocket and Today's compact box:
+it resolves typed Arabic through `VS.spelling.chooseEnglish`, keeps the typed
+Arabic as the entry's meaning, refuses words already in the library or the
+wallet (with a toast), plays the pop, offers Undo, and looks up the Arabic of a
+typed English word afterwards (`VS.arabicWord`, Auto-fill on and online only).
+The wallet searches past six entries and offers two doors per word through
+`VS.walletDraft`: `{ ai: true, items }` opens Add → With AI with the words typed
+and their sentences and Arabic in `st.ai.ctx`, so `VS.aiPrompt` /
+`VS.aiPromptMany` carry them ("use THAT meaning") and each added row keeps its
+`context`, `source` and (when missing) its wallet `arabic`; `{ word, context,
+source, arabic }` opens the Add form. There is no sixth tab.
+
+Today's compact add box (`data-capture="wallet"`) routes its submit to
+`VS.walletCapture`; a pasted English sentence of five or more words still opens
+Add → From text, checked after Arabic. The first-run box
+(`data-capture="library"`) keeps creating the first library word, because its
+example card is the screen's promise. The wallet count in the note and the bar
+comes from the same `state.wallet`.
 
 ## Sharing words with a friend (core/share.js, views/share.js)
 

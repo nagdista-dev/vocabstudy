@@ -271,25 +271,36 @@
      a numbered label, the field, and the quiet other ways in (Enter, paste,
      upload). Once there are words it becomes a compact utility. */
   function addBox(compact) {
+    const kept = compact ? walletWaiting() : 0;
     return html`
-      <form class="quick-add ${compact ? "is-compact" : "first-add"}" data-form="quick-add" autocomplete="off">
+      <form class="quick-add ${compact ? "is-compact" : "first-add"}" data-form="quick-add"
+        data-capture="${compact ? "wallet" : "library"}" autocomplete="off">
         ${compact ? "" : html`
           <label class="quick-label first-label" for="quickWord"><span class="act-n" aria-hidden="true">1</span> A word you met today</label>
           <p class="first-form-where" id="firstWhere">In a book, a series, at work — anywhere.</p>`}
         <div class="add-line">
           <span class="field field-xl">
-            <input id="quickWord" dir="auto" placeholder="${compact ? "Add a word or phrase" : "Type a word"}"
+            <input id="quickWord" dir="auto" placeholder="${compact ? "Save a word or phrase" : "Type a word"}"
               ${compact
-                ? VS.raw('aria-label="An English word or phrase you want to remember"')
+                ? VS.raw('aria-label="A word or phrase — English or Arabic — saved to your wallet"')
                 : VS.raw('aria-describedby="firstWhere firstHow"')}
               spellcheck="false" autocapitalize="off" enterkeyhint="done"/>
           </span>
-          <button class="btn ${compact ? "btn-tonal" : "btn-primary"} btn-lg" type="submit" aria-label="Add this word">${icon("plus", "icon-sm")}<span class="add-label">Add</span></button>
+          <button class="btn ${compact ? "btn-tonal" : "btn-primary"} btn-lg" type="submit"
+            aria-label="${compact ? "Save this word in your wallet" : "Add this word"}">${icon("plus", "icon-sm")}<span class="add-label">${compact ? "Save" : "Add"}</span></button>
         </div>
-        ${compact ? "" : html`<p class="first-form-how" id="firstHow">${VS.autofill.enabled()
+        ${compact ? html`<p class="quick-wallet">
+          <span>English or Arabic · saves to your wallet</span>
+          ${kept ? html`<a href="#/wallet">${VS.plural(kept, "word")} in your wallet ${icon("arrow-right", "icon-sm")}</a>` : ""}
+        </p>` : html`<p class="first-form-how" id="firstHow">${VS.autofill.enabled()
           ? html`<span class="first-how-key">Press Add — or </span><span class="first-how-touch">Or </span><a href="#/add">paste a list or upload a file</a>.`
           : html`Auto-fill is off — <a href="#/add">add the details in Add words</a>.`}</p>`}
       </form>`;
+  }
+
+  /** Words held in the wallet that are not library words yet. */
+  function walletWaiting() {
+    return VS.store.wallet().filter((e) => !VS.findWord(e.word)).length;
   }
 
   /* The example card: what one typed word becomes. The promise is shown,
@@ -462,44 +473,53 @@
       }
       const add = VS.$("#quickWord", root);
       if (add) {
-        VS.ui.watchKeyboard(add, { lookup: true });
-        VS.ui.watchDuplicate(add, add.closest(".add-line"));
-        // The highlighter grows under exactly what you type (canvas measures the text).
-        const ctx = document.createElement("canvas").getContext("2d");
-        const mark = () => {
-          const cs = getComputedStyle(add);
-          ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
-          const w = add.value ? ctx.measureText(add.value).width + 8 : 0;
-          add.style.setProperty("--mark-w", Math.min(w, add.clientWidth) + "px");
-          add.style.backgroundPosition = (parseFloat(cs.paddingLeft) - 4) + "px 0";
-        };
-        add.addEventListener("input", mark);
+        const addForm = VS.$("[data-form='quick-add']", root);
+        const toWallet = addForm && addForm.dataset.capture === "wallet";
+        VS.ui.watchKeyboard(add, { lookup: toWallet ? "Save" : "Add" });
+        VS.ui.watchDuplicate(add, add.closest(".add-line"), { wallet: toWallet });
+        // The highlighter grows under exactly what you type (shared: VS.ui.watchMark).
+        VS.ui.watchMark(add);
         add.addEventListener("input", () => VS.spelling.cancel());      // a new word: the old question is gone
       }
       const addForm = VS.$("[data-form='quick-add']", root);
       if (addForm) addForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        // Pasted a sentence? Let the learner tap the words they mean, and keep the sentence.
-        if (add.value.trim().split(/\s+/).length >= 5) {
-          VS.capture = { text: add.value.trim(), context: "", source: "" };
+        const text = add.value.trim();
+        if (!text) { add.focus(); return; }
+        // Arabic typed: find the English word first («تحدي» → challenge).
+        const fromArabic = VS.isArabicTyping(text);
+        // Pasted a sentence? Let the learner tap the words they mean, and keep
+        // the sentence. Arabic is a word (or a phrase), never that route.
+        if (!fromArabic && text.split(/\s+/).length >= 5) {
+          VS.capture = { text, context: "", source: "" };
           location.hash = "#/add?tab=text";
           return;
         }
-        // Arabic typed: find the English word first («تحدي» → challenge).
-        let text = add.value;
-        const fromArabic = VS.isArabicTyping(text);
+        // Today's box keeps the word in the wallet; the learner decides there
+        // when (and how) it becomes a library word.
+        if (addForm.dataset.capture === "wallet") {
+          const kept = await VS.walletCapture({ word: text, input: add, anchor: add.closest(".add-line") });
+          if (!kept.ok) return;
+          VS.app.render();
+          const again = VS.$("#quickWord");
+          if (again) again.focus();
+          return;
+        }
+        // The first-run box still makes the first library word: its example
+        // card is the promise the screen is making.
+        let word = text;
         if (fromArabic) {
-          text = await VS.spelling.chooseEnglish(text, add.closest(".add-line"));
-          if (!text) return;
-          add.value = text;
+          word = await VS.spelling.chooseEnglish(text, add.closest(".add-line"));
+          if (!word) return;
+          add.value = word;
         }
         // A typo would be taught as the right answer: ask first (core/spelling.js).
-        const typed = VS.addWordReady(text);
+        const typed = VS.addWordReady(word);
         if (!typed) return;
-        const word = fromArabic ? typed : await VS.spelling.confirm(typed, add.closest(".add-line"));
-        if (!word) return;
+        const fixed = fromArabic ? typed : await VS.spelling.confirm(typed, add.closest(".add-line"));
+        if (!fixed) return;
         const wasEmpty = !VS.allWords().length;
-        const w = VS.addWord({ word });
+        const w = VS.addWord({ word: fixed });
         if (!w) return;
         VS.app.render();
         // On the first word, let the screen settle on today's plan instead

@@ -279,9 +279,10 @@ JS). It keeps the same desk without imitating an app screen:
   navigation lives in the bar; ≤1023px uses the bottom tab bar (Today, Words,
   Recall, Progress, Add) so the thumb reaches every destination.
 - **Today and Words are two pages** (v10 final): Today (#/) is the plan, the
-  add box and the newest five words with "All N words →"; Words (#/words) is
-  the whole library — title, search, status chips, filters, the list. Every
-  review found the plan and the library crowded together on one phone screen.
+  add box (which saves to the wallet for later) and the newest five words with
+  "All N words →"; Words (#/words) is the whole library — title, search, status
+  chips, filters, the list. Every review found the plan and the library crowded
+  together on one phone screen.
 - Activities ≤1023px hide the app bar and show their own header: exit, title,
   scope, count, 4px progress. Print stays a browse screen and keeps the tab bar.
 - Phones (≤ 599px): answer buttons sit in a fixed opaque bar under the thumb;
@@ -426,27 +427,32 @@ library. Nothing in it is studied or scheduled until the learner chooses.
 
 - **What is kept.** `{ id, word, sentence, source, kind?, arabic?, added }` —
   the word, the sentence it was met in (optional when typed), where it came
-  from (`kind: "meaning"` when tapped in a definition), the Arabic the word
-  card showed (or the lookup after it was typed, Auto-fill on only), and the
-  day. The id is the word, so it cannot be kept twice. At most 300.
-- **Two ways in.** The save bar under the title — one field and `Save` in one
-  frame that takes the accent only while typing; "Add where you met it" opens
-  an optional sentence under it; Undo in the toast. Or, reading, tap a word in
-  an example or a meaning → the word card → `Keep in wallet`.
-- **The page (v13), built from the app's own parts.** `page-head` (h1 + hint,
-  `Make all with AI` as the page's primary `.btn`); Today's add box
-  (`quick-add` · `add-line` · `.field` + tonal `Save`); the Words search
-  `.field` past six words; the library's `.word-list` frame. A row is set like
-  a word row: the word 17px/600 left, its Arabic ink-2 at the right edge; the
-  sentence in italic with the word highlighted; one meta line; then two
-  actions as the app's buttons — tonal `Make with AI`, quiet `Auto-add`, an
-  icon to remove (red on hover) — in a column on the right from 720px, one
-  line along the bottom on phones; the speaker sits beside the word. Buttons keep the app's rounded rectangles; no pills.
-  `Clear wallet` is a `danger-link`; empty is `.empty`.
+  from (`kind: "meaning"` when tapped in a definition), the Arabic the learner
+  typed or the word card showed (or the lookup after an English word was typed,
+  Auto-fill on and online only), and the day. The id is the word, so it cannot
+  be kept twice. At most 300.
+- **Three ways in.** The pocket's capture line — one field and `Save`, English
+  or Arabic; Arabic finds the English word first and keeps the typed Arabic as
+  its meaning. "Add where you met it" opens an optional sentence under it; Undo
+  in the toast. Or, reading, tap a word in an example or a meaning → the word
+  card → `Keep in wallet`. Or a friend shares a list (`#/shared`).
+- **The page (v14): a pocket of slips.** Two columns from 900px — a 340px
+  sticky pocket and the slips it holds — and one column on tablets and phones,
+  pocket first. The pocket is a card with two stacked slip edges peeking above
+  it (`wallet-pocket-edge`), so it reads as a place words go, not a toolbar. It
+  holds "Keep a word", the saved count, the capture line and, in its foot, the
+  bulk AI action as a tonal button — never the page's primary action. Slips are
+  loose cards, not the library's bound `.word-list`: a quiet numbered chip
+  (`01`), the word at 17px/700 with the speaker, its Arabic in ink-2, the
+  sentence in a soft quote with the word marked, one meta line (where it came
+  from · saved when), then the two doors and remove below a hairline. On a phone
+  the doors keep their words and drop their icons. `Clear wallet` is a
+  `danger-link`; empty is `.empty` with a quiet wallet tile. Tokens only, 13px
+  text floor, 44px targets, Light and Night.
 - **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
   (app.js `NAV`, `barOnly`). Phones and tablets keep five tabs; the wallet is
   the top bar's icon beside Settings. Its count is the same yellow badge as
-  Recall's. No strip on Today.
+  Recall's.
 - **Counts in the bars.** Recall (due) and Wallet share one badge: the
   highlighter yellow with dark bold figures, a 2px paper ring where it sits on
   an icon.
@@ -456,16 +462,22 @@ library. Nothing in it is studied or scheduled until the learner chooses.
 - **Clean addresses.** The app lives at its folder (`/#/wallet`), never
   `index.html`: links point to `./`, the manifest uses `./#/…`, and arriving on
   `/index.html` rewrites the address in place (app.js `VS.cleanPath`).
-- **Two doors.** `Make with AI` (tonal) opens Add → With AI with the word typed
-  and its sentence carried into the prompt ("use THAT meaning"); the learner
-  asks ChatGPT or Claude, pastes, checks, then adds. `Auto-add` (quiet) adds
-  the word now, its sentence as "where you met it", and Auto-fill completes
-  it in the background — edit it any time; Undo in the toast. With Auto-fill
-  off it opens the filled-in Add form instead (nothing leaves the device).
-  When the word joins the library — even as its base form — it leaves the wallet.
-- **On Today.** *Saved for later*: one link with an accent tile carrying the
-  count, the four newest words as chips (fading where the row runs out), and
-  Open (the arrow alone on phones). Only while the wallet has words.
+- **Two doors.** `Make with AI` (tonal) opens Add → With AI with the word typed,
+  its sentence and its Arabic carried into the prompt ("use THAT meaning"); the
+  learner asks ChatGPT or Claude, pastes, checks, then adds. `Add now` (quiet)
+  adds the word to the library now, its sentence as "where you met it", its
+  Arabic kept, and Auto-fill completes the rest in the background — edit it any
+  time; Undo in the toast. With Auto-fill off it opens the filled-in Add form
+  instead (nothing leaves the device). When the word joins the library — even as
+  its base form — it leaves the wallet.
+- **On Today.** The compact box under the plan saves to the wallet, not the
+  library: placeholder `Save a word or phrase`, button `Save`, and one quiet
+  note under it — `English or Arabic · saves to your wallet`, plus
+  `N in your wallet →` while the wallet has words. A pasted English sentence
+  (5+ words) still opens Add → From text, and Arabic is checked before that
+  route. The first-run box still creates the first library word: its example
+  card is the promise that screen is making. The learner decides in the wallet
+  when a kept word becomes a library word.
 - **Loss is reversible.** Remove and Keep show Undo; Clear wallet asks in the
   app's own sheet and offers Undo. Reset progress keeps the wallet; Start over
   deletes it. Backup includes it; merge unions by id.

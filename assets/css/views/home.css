@@ -150,17 +150,31 @@
   background-size: var(--mark-w, 0px) 100%;
   transition: background-size 260ms var(--ease);
 }
+/* Arabic typed into the capture box reads in its own face, right to left. */
+.quick-add .field-xl input:dir(rtl) { font-family: var(--font-arabic); }
 .quick-add .add-line .btn { flex: none; padding: 0 var(--s-4); }
 .quick-add.is-compact { margin: var(--s-3) 0 0; }
 .quick-add.is-compact .field { box-shadow: none; }
 .quick-add.is-compact .field-xl input { font-weight: 500; }
 .quick-add.is-compact .btn { min-height: 46px; }
-/* The smallest phones: the compact utility keeps its plus-only button,
+/* The compact box keeps a word for later: its one quiet note says so, and
+   the wallet count is the way in when there is something waiting there. */
+.quick-wallet {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s-3);
+  margin: 1px 0 0; color: var(--ink-3);
+  font-size: max(.82rem, 13px); line-height: 1.5;
+}
+.quick-wallet a {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--brand); font-weight: 600; text-decoration: none;
+}
+.quick-wallet a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.quick-wallet a .icon { width: 14px; height: 14px; }
+/* The smallest phones: the compact box keeps "Save" — it is short enough —
    while the first-run form stacks so the field and the one action both
    get the full width instead of a clipped placeholder and a tiny target. */
 @media (max-width: 374px) {
-  .quick-add.is-compact .add-label { display: none; }
-  .quick-add.is-compact .add-line .btn { width: 46px; padding: 0; }
+  .quick-add.is-compact .add-line .btn { padding: 0 12px; }
   .first-add .add-line { grid-template-columns: minmax(0, 1fr); }
   .first-add .add-line .btn { width: 100%; }
 }

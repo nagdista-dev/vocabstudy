@@ -24,7 +24,7 @@
 
   const st = {
     tab: "ai",                    // ai | type | text | paste | files
-    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "", ctx: {} },   // ctx: words from the wallet → { id, context, source }   // With AI
+    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "", ctx: {} },   // ctx: words from the wallet → { id, context, arabic, source }   // With AI
     collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
@@ -309,10 +309,12 @@
     if (m === "topic") return VS.aiPromptTopic(st.ai.topic.trim(), st.ai.count);
     if (m === "arabic") return VS.aiPromptArabic(aiArabic());
     const words = aiWords();
-    // Words from the wallet bring the sentence they were met in: the AI must use THAT meaning.
+    // Words from the wallet bring the sentence they were met in and the
+    // Arabic the learner already knows: the AI must use THAT meaning.
     const met = (w) => st.ai.ctx[w.toLowerCase()];
-    if (words.length === 1) return VS.aiPrompt({ word: words[0], context: met(words[0]) ? met(words[0]).context : "" });
-    return VS.aiPromptMany(words, words.map((w) => (met(w) ? met(w).context : "")));
+    const at = (w, k) => (met(w) && met(w)[k]) || "";
+    if (words.length === 1) return VS.aiPrompt({ word: words[0], context: at(words[0], "context"), arabic: at(words[0], "arabic") });
+    return VS.aiPromptMany(words, words.map((w) => at(w, "context")), words.map((w) => at(w, "arabic")));
   }
   const aiSelect = (name, values, current) => html`<select data-ai-in="${name}">${values.map((v) => html`<option value="${v}" ${String(v) === String(current) ? VS.raw("selected") : ""}>${v}</option>`)}</select>`;
   function aiStepOne() {
@@ -595,18 +597,19 @@
     if (!d) return;
     VS.walletDraft = null;
     if (d.ai) {
-      // "Make with AI": the With AI tab, the words typed, each one's sentence kept for the prompt.
+      // "Make with AI": the With AI tab, the words typed, each one's sentence
+      // and Arabic kept for the prompt.
       st.tab = "ai";
       st.ai.ctx = {};
       d.items.forEach((e) => { st.ai.ctx[e.word.toLowerCase()] = {
-        id: e.id, context: e.sentence || "",
+        id: e.id, context: e.sentence || "", arabic: e.arabic || "",
         source: e.source ? (e.kind === "meaning" ? "From the meaning of " : "From the example for ") + VS.cap(e.source) : "",
       }; });
       Object.assign(st.ai, { words: d.items.map((e) => e.word).join("\n"), answer: "", rows: [] });
       return;
     }
     st.tab = "type";
-    st.form = { word: d.word, context: d.context, source: d.source };
+    st.form = { word: d.word, context: d.context, source: d.source, arabic: d.arabic || "" };
     st.openDetails = true;
   }
   /** The wallet entry a row from the AI belongs to: by the word typed, or by its base form. */
@@ -841,7 +844,14 @@
         st.ai.rows = rows.map((r) => {
           const row = Object.assign({ keep: true }, r);
           const m = walletMatch(r.word);
-          if (m) { row.walletId = m.id; if (m.context) row.context = m.context; if (m.source) row.source = m.source; }
+          if (m) {
+            row.walletId = m.id;
+            if (m.context) row.context = m.context;
+            if (m.source) row.source = m.source;
+            // The learner already knew this meaning when they kept the word:
+            // show it in the card so it is checked, not looked up again.
+            if (!row.arabic && m.arabic) row.arabic = m.arabic;
+          }
           return row;
         });
         if (review) review.innerHTML = String(aiReview());

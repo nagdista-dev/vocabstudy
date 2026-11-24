@@ -21,10 +21,10 @@
 .brand { min-height: var(--tap); display: inline-flex; align-items: center; }
 
 /* Inline links that stay small to the eye: the touch area grows invisibly around them. */
-.tag, .rail-head a, .crumbs a, .first-foot a, .hint a, .word-row-flag {
+.tag, .rail-head a, .crumbs a, .first-foot a, .hint a, .word-row-flag, .quick-wallet a {
   position: relative;
 }
-.tag::after, .rail-head a::after, .crumbs a::after {
+.tag::after, .rail-head a::after, .crumbs a::after, .quick-wallet a::after {
   content: ""; position: absolute; inset: 50% auto auto 50%;
   width: max(100%, var(--tap)); height: max(100%, var(--tap)); transform: translate(-50%, -50%);
 }
