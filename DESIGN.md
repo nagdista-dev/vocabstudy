@@ -40,6 +40,7 @@ Everything serves long, focused sessions:
 | `--note` / `-soft` / `-line` / `-ink` | `#3b5b8c` / `#eef2f8` / `#c8d3e6` / `#22344f` | the app asking or warning: "Which meaning?", spelling checks, flags, status lines, milestones |
 | `--good` / `--bad` | `#0f744f` / `#b3302f` | right / wrong (≥ 5:1 on their soft fills) |
 | `--lvl-a/b/c` | teal / blue / violet | CEFR level badges |
+| `--photo-frame` / `-line` / `--photo-ink` / `--photo-ink-2` | `#ffffff` / `#e1e5ec` / `#141b2d` / `#465066` | a photograph's paper frame and caption; fixed in both themes, like a real print |
 
 ## The system (`assets/css/system.css`, v10 V3)
 
@@ -217,6 +218,12 @@ The empty library is the first lesson, not an empty state: three acts read
 top to bottom — one action, the artifact it produces, then the schedule that
 keeps it.
 
+- **A desk before the lesson.** A photograph of a real page being written
+  (hands, coffee, a notebook) runs as a wide band above both columns, then
+  the lesson begins. It is a print on a paper frame with a caption in the
+  teacher's voice, not decoration; the form is still the first thing after
+  the headline. On a phone the band is 132–190px tall, so the field stays in
+  the first viewport at 320px.
 - **1 · A word you met today.** The h1 states the promise; the form is the
   page's only action. A numbered label, one line saying where words come
   from, the field and Add, then the keyboard / paste / upload hint. At
@@ -239,8 +246,33 @@ keeps it.
 - **Handoff.** The page opens at the heading, not the field. After the first
   word is added, focus moves to the new screen so a phone keyboard closes
   instead of covering today's plan.
-- **Trust.** The footer keeps the local-first promise and links to the Arabic
-  About page; the example speaker is omitted when speech is unavailable.
+- **Trust.** The footer is a colophon: the V mark and wordmark, the
+  local-first promise, "Made by Nagdista", and the Arabic About page. The
+  example speaker is omitted when speech is unavailable.
+
+## The desk, photographed (`assets/css/photos.css`)
+
+Three photographs carry the identity into the places text alone was doing
+all the work. They are prints on the same desk, not stock decoration:
+
+| Print | Where | Its job |
+| --- | --- | --- |
+| `desk-writing.webp` | first run, 3:1 band | show the physical act the app is for: a word written by hand |
+| `wallet-page.webp` | empty wallet | an empty page waiting for the first kept word |
+| `library-aisle.webp` | about.html, full width | where the words come from |
+
+- **The frame is paper.** 8px white mat, one hairline, the app's 18px
+  corner, a short shadow. It stays white in Night, because a print is a
+  physical object on the desk; its caption uses the fixed `--photo-ink*`
+  tokens so it never turns pale on white.
+- **One caption voice.** A bold phrase, then one quiet sentence. The
+  highlighter may mark one word in the phrase, never the whole caption.
+- **Bundled, not hotlinked.** Webp files live in `assets/img`, are listed in
+  the service worker and in `tools/build.py`, and have intrinsic
+  width/height on the `<img>` so the frame never shifts. The local-first
+  promise holds offline.
+- **Credit is quiet.** The photographers are named once in the about.html
+  footer and in the README, never on the working screens.
 
 ## The About page (`about.html`)
 
@@ -251,6 +283,10 @@ JS). It keeps the same desk without imitating an app screen:
   hero: the claim on one side, a CSS-drawn mini home screen on the other. The
   preview is decorative (`aria-hidden`, no focusables), so it can never drift
   from the real UI the way a screenshot would.
+- Between the teacher and privacy sections, a full-width photograph of a
+  library aisle in a paper frame, captioned "كل كلمة ليها مكان." It is the
+  page's one atmospheric breath, and the only place the app's photography is
+  wide rather than a detail. Photographers are credited in the footer.
 - Numbered step cards, a six-tick review ruler, a pair of teacher specimens
   (trap + checked sentence), a hairline feature list, a split privacy card,
   three install cards, native `<details>` FAQ and a tinted final CTA.
@@ -576,10 +612,34 @@ not a menu:
 The browser's `confirm()` is never used: it blocks the page, wears the
 browser's voice and cannot be styled. `VS.confirm({ title, body,
 confirmLabel })` returns a promise and renders the app's own sheet:
-`role="alertdialog"`, the loss stated in one sentence, Cancel first with the
-focus, and the action named in red (`btn-danger`). Escape or the backdrop
-answers no. On phones it rises from the thumb edge like every other sheet; on
-wide screens it is a small centred page.
+`role="alertdialog"`, a red trash mark in a soft tile, the loss stated in one
+sentence, Cancel first with the focus, and the action named in red
+(`btn-danger`). Escape or the backdrop answers no. On phones it rises from
+the thumb edge like every other sheet; on wide screens it is a small centred
+page.
+
+## The floating note
+
+"VocabStudy is still being built" is the app speaking, so it wears `--note`,
+not the highlighter. It is a fixed card in the empty corner of the desk —
+bottom-inline-end on tablets and desktops, full width above the tab bar on
+phones — never a band that pushes the page down. The icon and sentence come first, then
+WhatsApp and Email; the × remembers the note's id in `devNoteHidden`, so a
+new note can return after a big change. It never appears on the first run
+(the form is the only action), steps aside during an activity
+(`body[data-mode="activity"]`), never prints, and sits on `--z-float`, below
+toasts and dialogs. While a new-version bar is on screen the note steps
+aside; choosing Later brings it back. Settings keeps the same two feedback
+buttons forever.
+
+## The profile chip
+
+Who the AI writes for is a small bookplate, not a settings row: a soft
+`--brand` tile with the CEFR level (`B1`), "Written for Intermediate · مصري",
+and an underlined Change. The level tile is information, not an action, so
+it never uses the highlighter; the dialect keeps its Arabic face and RTL
+isolation. On a narrow screen the text ellipses but the level and Change
+stay whole, and the whole chip is one ≥44px target.
 
 ## Starting over (`#/reset`)
 

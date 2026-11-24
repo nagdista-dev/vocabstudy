@@ -117,10 +117,9 @@
   VS.levelPick = () => {
     const d = VS.myDialect();
     return html`<button type="button" class="me-chip ${VS.profileSet() ? "" : "is-unset"}" data-action="open-profile">
-      ${icon("target", "icon-sm")}
       ${VS.profileSet()
-        ? html`<span class="me-chip-text">Written for <b>${VS.myLevel()}</b> · <bdi lang="ar" dir="rtl">${dialectLabel(d)}</bdi></span><span class="me-chip-edit">Change</span>`
-        : html`<span class="me-chip-text">Choose your level and Arabic first</span><span class="me-chip-edit">Choose</span>`}
+        ? html`<span class="me-chip-level" aria-hidden="true">${VS.myLevel()}</span><span class="me-chip-text">Written for <b>${LEVEL_NAMES[VS.myLevel()] || VS.myLevel()}</b> · <bdi lang="ar" dir="rtl">${dialectLabel(d)}</bdi></span><span class="me-chip-edit">Change</span>`
+        : html`${icon("target", "icon-sm")}<span class="me-chip-text">Choose your level and Arabic first</span><span class="me-chip-edit">Choose</span>`}
     </button>`;
   };
 

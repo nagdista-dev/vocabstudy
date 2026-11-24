@@ -160,13 +160,8 @@
 .wallet-none { margin: 0; padding: var(--s-4) 0; text-align: center; }
 .wallet-none b { color: var(--ink); }
 
-/* The empty wallet: the app's empty state, with its own quiet mark. */
-.wallet-empty .wallet-empty-ico {
-  display: inline-grid; place-items: center;
-  width: 48px; height: 48px; margin-bottom: var(--s-3);
-  border-radius: var(--r-md);
-  background: var(--surface-2); color: var(--ink-2);
-}
+/* The empty wallet: the app's empty state, with a page waiting on the desk. */
+.wallet-empty { padding-top: var(--s-4); }
 .wallet-empty h2 { margin-bottom: var(--s-2); }
 .wallet-empty p { max-width: 52ch; margin-inline: auto; }
 

@@ -375,6 +375,11 @@
         return html`
           <div class="page home-page first-run view-enter">
             <div class="first-hero">
+              <figure class="desk-photo photo-ribbon">
+                <img src="assets/img/desk-writing.webp" width="1400" height="933" fetchpriority="high" decoding="async"
+                  alt="A learner writing an English sentence in a notebook, beside a cup of coffee.">
+                <figcaption><b>The desk, most days.</b> A word you meet, a page that keeps it.</figcaption>
+              </figure>
               <div class="first-copy">
                 <h1 class="first-title">Start with <mark class="mark">one word</mark>.</h1>
                 <p class="first-lede">Type a word you met today. VocabStudy adds the meaning, Arabic, example and sound — then brings it back on the days you're about to forget it.</p>
@@ -388,9 +393,15 @@
             </div>
             ${firstRecall()}
             <footer class="first-foot">
-              <p>Free and open source. No account, no server: <b>your words stay on this device</b>.
-                <span class="first-credit">Made by ${VS.credit.link()}.</span></p>
-              <a href="about.html" hreflang="ar" lang="ar" dir="rtl">اقرأ عن التطبيق بالعربي</a>
+              <div class="first-foot-brand">
+                ${VS.brandMark}
+                <span class="first-foot-name">VocabStudy</span>
+              </div>
+              <div class="first-foot-copy">
+                <p>Free and open source. No account, no server: <b>your words stay on this device</b>.</p>
+                <p class="first-credit">Made by ${VS.credit.link()}.</p>
+              </div>
+              <a class="first-foot-about" href="about.html" hreflang="ar" lang="ar" dir="rtl">اقرأ عن التطبيق بالعربي</a>
             </footer>
           </div>`;
       }

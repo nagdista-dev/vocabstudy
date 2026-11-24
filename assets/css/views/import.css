@@ -1,6 +1,6 @@
 /* views/import.css — the "Add words" screen: paste → check → save. */
 
-.import-page { display: grid; gap: var(--s-5); }
+.import-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
 /* Desktop "Type a word": the form and the shelf sit side by side instead of
    stretching one input across the whole page. Other tabs keep the full width
    their table or text preview needs. */
@@ -37,7 +37,7 @@
 .file-list { display: grid; gap: var(--s-2); }
 .file-row { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); }
 .file-name { display: grid; flex: 1; min-width: 180px; }
-.import-step { padding: var(--s-5); display: grid; gap: var(--s-4); }
+.import-step { padding: var(--s-5); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
 .import-step h2 { display: flex; align-items: center; gap: var(--s-3); font-size: var(--text-lg); }
 .import-step h2 .step-n { width: 30px; height: 30px; font-size: var(--text-sm); background: var(--brand); color: var(--on-brand); }
 
@@ -208,7 +208,7 @@
 .add-form .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
 
 /* ── Add → With AI: four numbered steps — words, prompt, answer, cards ── */
-.ai-add { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
+.ai-add { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); margin-top: var(--s-4); }
 .ai-add .ai-step { margin-top: var(--s-2); }
 .ai-add .ai-step:first-child { margin-top: 0; }
 .ai-add-words, .ai-add .ai-fill, .ai-add .ai-review, .ai-in-row, .ai-add .ai-ask {

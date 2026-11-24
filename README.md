@@ -180,6 +180,7 @@ index.html, sw.js         generated — don't edit (tools/build.py)
 assets/css/               tokens → base → components → screens → motion → glass
 assets/js/core/           library, progress (spaced repetition), filters, auto-fill, speech, importer
 assets/fonts, assets/vendor  self-hosted fonts, PDF maker and QR libraries (tools/vendor.py)
+assets/img/               the desk photographs, bundled as webp so they work offline
 assets/data/frequency.js  the 30,000 most used English words (tools/frequency.py, wordfreq, CC BY-SA 4.0)
 about.html                the Arabic introduction page (the app itself stays English)
 assets/js/views/          one file per screen
@@ -215,5 +216,7 @@ untouched by updates.
 ## License
 
 [MIT](LICENSE) — free to use, change and share.
+
+The photographs in `assets/img/` are from [Cathryn Lavery](https://unsplash.com/@cathrynlavery) and [Giammarco Boscaro](https://unsplash.com/photos/book-lot-on-black-wooden-shelf-zeH-ljawHtg) on Unsplash, and [Tirachard Kumtanom](https://www.pexels.com/photo/white-blank-notebook-733857/) on Pexels — free to use under their licences.
 
 Made by [Nagdista](https://nagdista.com/?utm_source=vocabstudy&utm_medium=readme&utm_campaign=credit).

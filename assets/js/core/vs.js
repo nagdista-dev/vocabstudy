@@ -345,6 +345,7 @@
       dlg.setAttribute("aria-describedby", "confirmBody");
       dlg.innerHTML = `
         <div class="confirm-body">
+          <span class="confirm-mark" aria-hidden="true">${VS.icon("trash", "icon-lg")}</span>
           <h2 id="confirmTitle"></h2>
           <p id="confirmBody"></p>
         </div>

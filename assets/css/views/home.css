@@ -399,10 +399,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The colophon: the trust line, then the Arabic About page. */
+/* The colophon: the mark that signs the desk, the trust line, then the
+   Arabic About page. It is the same lockup as the bar, one size quieter. */
 .first-foot {
-  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
-  gap: 10px var(--s-6);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center;
+  gap: var(--s-4) var(--s-6);
   margin-top: var(--s-7);
   padding-top: var(--s-4);
   border-top: 1px solid var(--line);
@@ -410,10 +411,24 @@
   font-size: var(--text-xs);
   line-height: 1.5;
 }
-.first-foot p { max-width: 60ch; }
+.first-foot-brand { display: flex; align-items: center; gap: var(--s-2); color: var(--ink); }
+.first-foot-brand .brand-mark { width: 30px; height: 30px; }
+.first-foot-name {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--text-md);
+  line-height: 1; letter-spacing: -.015em;
+}
+.first-foot-copy { display: grid; gap: 2px; max-width: 54ch; }
 .first-foot b { color: var(--ink-2); font-weight: 600; }
-.first-foot a { flex: none; font-weight: 600; }
-.first-foot .first-credit { display: block; margin-top: 2px; }
+.first-foot a { font-weight: 600; }
+.first-foot .first-credit { margin: 0; }
+.first-foot-about {
+  display: inline-flex; align-items: center; min-height: var(--tap);
+  color: var(--ink-2); text-decoration: none; white-space: nowrap;
+}
+.first-foot-about:hover { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 767px) {
+  .first-foot { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+}
 
 /* Tablet portrait: one centred column, wide enough to read, narrow
    enough that the card and the copy stay a single lesson. */

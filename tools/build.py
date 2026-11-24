@@ -27,6 +27,7 @@ STYLES = [
     "assets/css/tokens.css",
     "assets/css/base.css",
     "assets/css/components.css",
+    "assets/css/photos.css",        # the desk, photographed: shared picture frames
     "assets/css/views/home.css",
     "assets/css/views/library.css",
     "assets/css/views/activities.css",
@@ -139,6 +140,8 @@ def write_service_worker() -> None:
     files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / "assets" / "fonts").glob("*.woff2"))
     files += ["assets/vendor/html2pdf.bundle.min.js", "assets/vendor/qrcode.js", "assets/vendor/jsQR.js",
               "assets/data/frequency.js"]
+    # The photographs are part of the offline promise, not a remote asset.
+    files += ["assets/img/desk-writing.webp", "assets/img/wallet-page.webp", "assets/img/library-aisle.webp"]
     stamp = hashlib.sha1("|".join(files).encode()).hexdigest()[:10]
     sw = (ROOT / "tools" / "templates" / "sw.js").read_text(encoding="utf-8")
     sw = sw.replace("{{VERSION}}", stamp).replace("{{PRECACHE}}", json.dumps(files, indent=2))

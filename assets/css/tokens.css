@@ -48,6 +48,13 @@
   --hairline: rgb(20 27 45 / .10);   /* a rule drawn on a tint */
   --shadow-rgb: 20 27 45;
 
+  /* Photographs are prints on a physical desk: their paper frame and the
+     ink of its caption stay light in Night too, the way a real print would. */
+  --photo-frame: #ffffff;
+  --photo-line: #e1e5ec;
+  --photo-ink: #141b2d;
+  --photo-ink-2: #465066;
+
   /* Feedback */
   --good:      #0f744f;   /* ≥ 5:1 on --good-soft: the answer buttons */
   --good-soft: #dcf4e9;

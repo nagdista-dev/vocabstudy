@@ -216,7 +216,11 @@
                 </footer>`
               : html`
                 <div class="empty wallet-empty">
-                  <span class="wallet-empty-ico" aria-hidden="true">${icon("wallet", "icon-lg")}</span>
+                  <figure class="desk-photo wallet-print">
+                    <img src="assets/img/wallet-page.webp" width="1000" height="668" loading="lazy" decoding="async"
+                      alt="A blank notebook and a pen on a pale desk, waiting for a first word.">
+                    <figcaption><b>An empty pocket</b> is how every wallet starts. The first word can come from anywhere.</figcaption>
+                  </figure>
                   <h2>Your wallet is empty</h2>
                   <p>Keep a word here when you meet it — type it in the pocket, or tap a word you don't know while reading and save it with its sentence.</p>
                   <div class="row empty-actions"><a class="btn" href="#/words">Open your words</a></div>

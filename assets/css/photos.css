@@ -1,0 +1,84 @@
+/* photos.css — the desk, photographed.
+   ------------------------------------------------------------------
+   The app's identity is a study desk: paper, ink, a highlighter. These
+   three photographs are prints from that same desk, never decoration:
+
+     .desk-photo   one photograph printed on a light paper frame, with a
+                   caption in the teacher's voice. The frame stays paper
+                   white at night too, because a print is a physical thing.
+     .photo-ribbon the first-run band: the desk you meet before the app.
+     .wallet-print the empty wallet's page, waiting for its first word.
+     .about-print  the library on about.html: where the words come from.
+
+   Images ship with the app (assets/img, webp, no remote hotlink), so the
+   local-first promise holds offline. CSS controls the crop; the intrinsic
+   width/height on each <img> stops layout shift. */
+
+.desk-photo {
+  margin: 0;
+  padding: 8px 8px 0;
+  background: var(--photo-frame);
+  border: 1px solid var(--photo-line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 10px 26px -24px rgb(var(--shadow-rgb) / .5), var(--shadow-1);
+}
+.desk-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--surface-2);
+  border-radius: calc(var(--r-lg) - 9px);
+}
+.desk-photo figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--s-2);
+  padding: 9px 4px 10px;
+  color: var(--photo-ink-2);
+  font-size: var(--text-2xs);
+  line-height: 1.45;
+}
+.desk-photo figcaption b { color: var(--photo-ink); font-weight: 700; }
+.desk-photo figcaption .mark {
+  padding: 0 .18em;
+  border-radius: 2px;
+  background: linear-gradient(transparent 54%, var(--mark) 54%, var(--mark) 92%, transparent 92%);
+  color: var(--photo-ink);
+}
+.desk-photo figcaption a { color: var(--photo-ink-2); font-weight: 600; text-underline-offset: 2px; }
+.desk-photo figcaption a:hover { color: var(--brand); }
+
+/* The first-run band. It is a horizon line above the lesson: a real desk,
+   then "start with one word". The crop keeps the writing hand and page. */
+.photo-ribbon { grid-column: 1 / -1; }
+.photo-ribbon img {
+  height: clamp(148px, 24vw, 288px);
+  object-position: 50% 64%;
+}
+
+/* The wallet's empty page: smaller than the band, centred in the slips
+   column, so the way to add a word stays the loudest thing there. */
+.wallet-print {
+  width: min(100%, 380px);
+  margin: 0 auto var(--s-4);
+  text-align: start;
+}
+.wallet-print img { aspect-ratio: 16 / 10; object-position: 50% 50%; }
+
+/* about.html: a full-width print between the long reads. */
+.about-print { margin-block: clamp(28px, 5vw, 52px); }
+.about-print img { aspect-ratio: 21 / 9; object-position: 50% 46%; }
+
+@media (max-width: 599px) {
+  .photo-ribbon img { height: clamp(132px, 38vw, 190px); object-position: 50% 62%; }
+  .about-print img { aspect-ratio: 16 / 10; }
+  .desk-photo { padding: 6px 6px 0; }
+  .desk-photo img { border-radius: calc(var(--r-lg) - 7px); }
+  .desk-photo figcaption { padding: 8px 5px 9px; }
+}
+
+@media print {
+  .desk-photo { box-shadow: none; }
+}

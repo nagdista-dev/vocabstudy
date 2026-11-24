@@ -446,7 +446,9 @@ body:has(.activity) .update-bar { display: none; }       /* one bar at a time at
 .toast-action { min-height: var(--tap); padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent;
   color: var(--mark); font: inherit; font-weight: 700; cursor: pointer; }
 .toast-action:hover { background: rgb(255 255 255 / .08); }
-@media (max-width: 599px) { .toast { bottom: calc(72px + env(safe-area-inset-bottom)); } }
+/* Phones and tablets both have the fixed tab bar: a toast sits above it,
+   never over the tabs. */
+@media (max-width: 1023px) { .toast { bottom: calc(72px + env(safe-area-inset-bottom)); } }
 
 .sheet {
   /* base.css zeroes every margin; a modal <dialog> needs margin:auto to centre. */
@@ -487,12 +489,20 @@ body:has(.activity) .update-bar { display: none; }       /* one bar at a time at
 
 /* Confirm — a question, not a form: one sentence, then two answers.
    Quiet paper, the safe answer on the left, the loss named in red. */
-.confirm { width: min(420px, calc(100vw - 32px)); }
+.confirm { width: min(440px, calc(100vw - 32px)); }
 .confirm-body { display: grid; gap: var(--s-2); padding: var(--s-6) var(--s-5) var(--s-5); }
+.confirm-mark {
+  display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: var(--s-2);
+  border-radius: var(--r-md); background: var(--bad-soft); color: var(--bad);
+}
+.confirm-mark .icon { width: 22px; height: 22px; }
 .confirm-body h2 { font-size: var(--text-xl); line-height: 1.3; text-wrap: balance; }
 .confirm-body p { max-width: 42ch; color: var(--ink-2); font-size: var(--text-md); line-height: 1.6; text-wrap: pretty; }
 .confirm-foot { display: flex; justify-content: flex-end; gap: var(--s-2); padding: 0 var(--s-5) var(--s-5); }
 @media (max-width: 599px) {
+  /* A phone sheet is full width and rises from the thumb; only the
+     desktop confirm is a small centred page. */
+  .confirm { width: 100%; }
   .confirm-body { padding: var(--s-5) var(--s-4) var(--s-4); }
   .confirm-body h2 { font-size: var(--text-lg); }
   .confirm-foot { padding: 0 var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom)); }
@@ -1099,16 +1109,23 @@ kbd {
 .ai-fill-foot { margin: 0; font-size: var(--text-xs); color: var(--ink-3); }
 
 /* Who the AI writes for — one quiet line where the AI is used (opens the choice). */
-.me-chip { display: inline-flex; align-items: center; gap: var(--s-2); justify-self: start; max-width: 100%; min-height: 36px;
-  padding: 0 var(--s-1) 0 var(--s-3); border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+.me-chip { display: inline-flex; align-items: center; gap: 10px; justify-self: start; max-width: 100%; min-height: var(--tap);
+  padding: 4px 10px 4px 4px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
   font: inherit; font-size: var(--text-xs); color: var(--ink-2); cursor: pointer; }
-.me-chip > .icon { width: 14px; height: 14px; flex: none; color: var(--brand); }
+.me-chip > .icon { width: 14px; height: 14px; flex: none; margin-inline-start: 6px; color: var(--brand); }
+.me-chip-level {
+  flex: none; display: grid; place-items: center; min-width: 40px; height: 34px; padding: 0 7px;
+  border-radius: var(--r-sm); background: var(--brand-soft); color: var(--brand);
+  font-family: var(--font-display); font-size: var(--text-sm); font-weight: 700; letter-spacing: .02em;
+}
 .me-chip-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .me-chip-text b { color: var(--ink); }
-.me-chip-edit { flex: none; padding: 4px 10px; border-radius: 999px; font-weight: 700; color: var(--brand); background: var(--brand-soft); }
+.me-chip-edit { flex: none; font-weight: 700; color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
 .me-chip:hover { border-color: var(--line-strong); }
+.me-chip:hover .me-chip-edit { text-decoration-thickness: 2px; }
 .me-chip.is-unset { border-color: var(--note-line); background: var(--note-soft); color: var(--note-ink); }
 .me-chip.is-unset > .icon { color: var(--note-ink); }
+.me-chip.is-unset .me-chip-edit { color: var(--note-ink); }
 
 /* The two choices (first run, or Change). The sheet never borrows the
    browser's form font: every line is the app's own, explicitly. */
@@ -1181,31 +1198,75 @@ kbd {
 @media (min-width: 1024px) { .wallet-btn { display: none; } }
 
 /* ── "Still being built" (app.js devNote) ───────────────────────────
-   The app speaking, so --note, not the highlighter: a calm band under the
-   app bar, the content width of every page. One line on a desktop (icon,
-   sentence, WhatsApp, Email, hide); on a phone the sentence, then the two
-   buttons, with hide at the corner. It steps aside during an activity. */
-.dev-note { width: 100%; max-width: var(--content-max); margin: var(--s-3) auto 0; padding-inline: var(--gutter); }
-.dev-note-inner {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: var(--s-3);
-  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
-  border: 1px solid var(--note-line); border-radius: var(--r-lg); background: var(--note-soft); color: var(--note-ink);
+   A floating note, not a band in the page: it sits in the empty corner of
+   the desk (bottom-inline-end) and scrolls with nothing, so every screen
+   keeps its full height. The app speaking, so --note, not the highlighter.
+   Icon and sentence, then WhatsApp and Email; hide at the corner. It steps
+   aside during an activity and never prints. */
+.dev-note {
+  position: fixed; z-index: var(--z-float);
+  inset-inline-end: var(--s-5); bottom: var(--s-5);
+  width: min(380px, calc(100vw - 32px));
+  margin: 0;
+  animation: dev-note-in var(--base) var(--ease) both;
 }
-.dev-note-ico { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-md); background: var(--surface); color: var(--note); }
+@keyframes dev-note-in { from { opacity: 0; transform: translateY(10px); } }
+.dev-note-inner {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start;
+  gap: var(--s-2) var(--s-3);
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
+  border: 1px solid var(--note-line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--note-ink);
+  box-shadow: var(--shadow-2);
+}
+.dev-note-ico {
+  display: grid; place-items: center; width: 34px; height: 34px; margin-top: 1px;
+  border-radius: var(--r-md); background: var(--note-soft); color: var(--note);
+}
 .dev-note-ico .icon { width: 18px; height: 18px; }
-.dev-note-text { margin: 0; max-width: none; font-size: var(--text-sm); line-height: 1.5; }
+.dev-note-text { margin: 0; max-width: none; font-size: var(--text-sm); line-height: 1.45; }
 .dev-note-text b { color: var(--ink); font-weight: 700; }
-.dev-note-actions { display: flex; gap: var(--s-2); }
+.dev-note-actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.dev-note-actions .btn {
+  flex: 1 1 0; min-width: 0; min-height: var(--tap); justify-content: center;
+  padding-inline: 10px; font-size: var(--text-xs);
+}
 .btn-small { min-height: 38px; padding: 0 var(--s-3); gap: 6px; font-size: var(--text-sm); }
-.dev-note-actions .btn { background: var(--surface); border-color: var(--note-line); color: var(--note-ink); }
-.dev-note-actions .btn:hover { border-color: var(--note); color: var(--ink); }
-.dev-note-close { color: var(--note); }
-.dev-note-close:hover { background: var(--surface); color: var(--ink); }
-@media (max-width: 767px) {
-  .dev-note-inner { grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; padding: var(--s-3); }
-  .dev-note-actions { grid-column: 2 / -1; grid-row: 2; }
-  .dev-note-actions .btn { flex: 1 1 0; justify-content: center; }
-  .dev-note-close { grid-column: 3; grid-row: 1; margin: -6px -6px 0 0; }
+.dev-note-actions .btn { background: var(--note-soft); border-color: var(--note-line); color: var(--note-ink); }
+.dev-note-actions .btn:hover { border-color: var(--note); background: var(--surface); color: var(--ink); }
+.dev-note-close { grid-column: 3; grid-row: 1; margin: -4px -4px 0 0; color: var(--note); }
+.dev-note-close:hover { background: var(--note-soft); color: var(--ink); }
+/* Phones: the note spans the thumb edge, above the tab bar. */
+@media (max-width: 599px) {
+  .dev-note {
+    inset-inline: var(--gutter);
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    width: auto;
+  }
+  /* The floating card may sit over the page, but the page can always
+     scroll its last line above it: the inset equals the card's height. */
+  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(92px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+}
+/* Tablets: a small card in the corner, still above the tab bar. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .dev-note {
+    inset-inline-start: auto;
+    inset-inline-end: var(--s-5);
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    width: min(380px, calc(100vw - 32px));
+  }
+  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(96px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+}
+/* While the note floats on a phone or tablet, a toast sits above it, so
+   Undo and the note's feedback buttons are both readable. In an activity
+   the note is gone, so the toast keeps the normal height. */
+@media (max-width: 1023px) {
+  body.has-dev-note[data-mode="browse"] .toast { bottom: calc(84px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+}
+@media (min-width: 1024px) {
+  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--dev-note-h, 116px) + 48px); }
 }
 @media (pointer: coarse) { .btn-small { min-height: var(--tap); } }
 body[data-mode="activity"] .dev-note { display: none; }

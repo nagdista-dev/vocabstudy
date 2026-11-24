@@ -161,16 +161,29 @@
       <a class="btn ${cls || ""}" href="${VS.feedback.email}">${icon("mail", "icon-sm")}<span>Email</span></a>`,
   };
 
-  /* ── "Still being built": a note on every screen until it is hidden ──
+  /* ── "Still being built": a floating note once there is a word ──────
      It says the app is growing and asks for ideas and problems. Hiding it
      is remembered (the setting holds the note's id, so a new note can come
      back after a big change); Settings keeps the same two buttons forever.
-     It steps aside during an activity, and never prints. */
+     It never covers the first run's one action, steps aside during an
+     activity, and never prints. */
   const DEV_NOTE = "2026-11";
   function devNote() {
     const old = VS.$("#devNote");
     const hidden = VS.store.settings().devNoteHidden === DEV_NOTE;
-    if (hidden) { if (old) old.remove(); return; }
+    // The first run has one action: add a word. A floating card over the
+    // form would be the only thing in the app that interrupts it. The
+    // feedback buttons stay in Settings, and the note arrives with word one.
+    // While a new version waits, its bar owns the bottom corner; the note
+    // comes back if the learner chooses Later.
+    const updating = !!VS.$(".update-bar");
+    if (hidden || !VS.allWords().length || updating) {
+      if (old) old.remove();
+      if (VS._devNoteRO) { VS._devNoteRO.disconnect(); VS._devNoteRO = null; }
+      document.body.classList.remove("has-dev-note");
+      document.body.style.removeProperty("--dev-note-h");
+      return;
+    }
     if (old) return;
     const el = document.createElement("aside");
     el.id = "devNote";
@@ -179,11 +192,22 @@
     el.innerHTML = String(html`
       <div class="dev-note-inner">
         <span class="dev-note-ico" aria-hidden="true">${icon("tool")}</span>
-        <p class="dev-note-text"><b>VocabStudy is still being built.</b> New things arrive often — tell me what you'd add, change or remove, or anything that isn't working.</p>
+        <p class="dev-note-text"><b>Still being built.</b> Tell me what to add, change, or fix.</p>
         <div class="dev-note-actions">${VS.feedback.buttons("btn-small")}</div>
         <button class="icon-btn dev-note-close" type="button" data-action="dev-note-hide" aria-label="Hide this note" title="Hide this note">${icon("x", "icon-sm")}</button>
       </div>`);
-    viewRoot.parentNode.insertBefore(el, viewRoot);
+    document.body.appendChild(el);
+    // The note floats above the page; the page keeps a matching bottom
+    // inset so its last lines can always be scrolled clear of it. The
+    // height is measured because 1.25× text makes the card taller.
+    document.body.classList.add("has-dev-note");
+    const measure = () => document.body.style.setProperty("--dev-note-h", el.offsetHeight + "px");
+    measure();
+    if (window.ResizeObserver) {
+      if (VS._devNoteRO) VS._devNoteRO.disconnect();
+      VS._devNoteRO = new ResizeObserver(measure);
+      VS._devNoteRO.observe(el);
+    }
   }
   (VS.actions = VS.actions || {})["dev-note-hide"] = () => {
     VS.store.setSetting("devNoteHidden", DEV_NOTE);
@@ -281,6 +305,7 @@
         <button class="btn btn-primary" type="button" data-action="reload">Update now</button>
         <button class="icon-btn" type="button" data-action="update-later" aria-label="Later — update next time you open the app">${icon("x", "icon-sm")}</button>`);
       document.body.appendChild(bar);
+      devNote();                                  // one floating card at the bottom, not two
     });
   }
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
@@ -560,7 +585,7 @@
     speak(el) { VS.speech.say(el.dataset.say, el); },
     reload() { location.reload(); },
     // The new version also loads by itself next time the app opens.
-    "update-later"() { const bar = document.querySelector(".update-bar"); if (bar) bar.remove(); },
+    "update-later"() { const bar = document.querySelector(".update-bar"); if (bar) bar.remove(); devNote(); },
     "open-settings"() {
       const dlg = VS.$("#settings");
       dlg.innerHTML = String(settingsMarkup());
