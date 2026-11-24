@@ -456,6 +456,15 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   app's own sheet and offers Undo. Reset progress keeps the wallet; Start over
   deletes it. Backup includes it; merge unions by id.
 
+## The lockup — "لكل العرب"
+
+The wordmark carries who the app is for, with pride and in their own script:
+`VocabStudy` with **لكل العرب** under it, aligned to the wordmark's end, IBM
+Plex Sans Arabic 600 at 13px in ink-2, over a 3px yellow stroke — the same
+stroke as in the mark — so it reads as part of the logo, not a caption. Same
+lockup in the app bar (app.js) and on the About page. ("لكل العرب", not
+"للعرب فقط": pride and welcome, never a wall.)
+
 ## Still being built, and feedback
 
 - **The note** (`app.js devNote`): a `--note` band under the app bar on every
