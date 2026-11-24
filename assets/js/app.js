@@ -150,6 +150,47 @@
     bar: () => renderBar(),                  // the bar alone (the wallet count after a word is kept)
   };
 
+  /* ── Feedback: always one tap away, for as long as the app lives ──
+     WhatsApp or Gmail — the learner picks. The links only open their own
+     app with a greeting typed; nothing is sent until they send it. */
+  VS.feedback = {
+    whatsapp: "https://wa.me/201143044699?text=" + encodeURIComponent("Hi! About VocabStudy: "),
+    email: "mailto:nagdista@gmail.com?subject=" + encodeURIComponent("VocabStudy feedback") + "&body=" + encodeURIComponent("Hi!\n\n"),
+    buttons: (cls) => html`
+      <a class="btn ${cls || ""}" href="${VS.feedback.whatsapp}" target="_blank" rel="noopener">${icon("chat", "icon-sm")}<span>WhatsApp</span></a>
+      <a class="btn ${cls || ""}" href="${VS.feedback.email}">${icon("mail", "icon-sm")}<span>Email</span></a>`,
+  };
+
+  /* ── "Still being built": a note on every screen until it is hidden ──
+     It says the app is growing and asks for ideas and problems. Hiding it
+     is remembered (the setting holds the note's id, so a new note can come
+     back after a big change); Settings keeps the same two buttons forever.
+     It steps aside during an activity, and never prints. */
+  const DEV_NOTE = "2026-11";
+  function devNote() {
+    const old = VS.$("#devNote");
+    const hidden = VS.store.settings().devNoteHidden === DEV_NOTE;
+    if (hidden) { if (old) old.remove(); return; }
+    if (old) return;
+    const el = document.createElement("aside");
+    el.id = "devNote";
+    el.className = "dev-note";
+    el.setAttribute("aria-label", "About this version");
+    el.innerHTML = String(html`
+      <div class="dev-note-inner">
+        <span class="dev-note-ico" aria-hidden="true">${icon("tool")}</span>
+        <p class="dev-note-text"><b>VocabStudy is still being built.</b> New things arrive often — tell me what you'd add, change or remove, or anything that isn't working.</p>
+        <div class="dev-note-actions">${VS.feedback.buttons("btn-small")}</div>
+        <button class="icon-btn dev-note-close" type="button" data-action="dev-note-hide" aria-label="Hide this note" title="Hide this note">${icon("x", "icon-sm")}</button>
+      </div>`);
+    viewRoot.parentNode.insertBefore(el, viewRoot);
+  }
+  (VS.actions = VS.actions || {})["dev-note-hide"] = () => {
+    VS.store.setSetting("devNoteHidden", DEV_NOTE);
+    devNote();
+    VS.toast("Hidden. You can always send feedback from Settings.");
+  };
+
   /* ── Navigation ──────────────────────────────────────────────────
      One list of destinations, drawn twice: labelled links in the top bar
      on wide screens, a bottom tab bar on phones and tablets (where the
@@ -205,6 +246,7 @@
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
     // The wallet's door, always in the bar (next to Settings): reachable from any
     // screen, even before anything is saved; the count says what is waiting.
+    devNote();
     const walletBtn = VS.$("#walletBtn");
     if (walletBtn) {
       const kept = VS.store.wallet().length;
@@ -426,6 +468,11 @@
         <div class="setting"><b>Theme</b><div class="seg">${choice("theme", "light", "Light")}${choice("theme", "night", "Night")}${choice("theme", "auto", "Auto")}</div>
           <span class="hint">Night is easier in a dark room. Auto follows your device. Printing and PDFs are always light.</span></div>
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
+
+        <h3 class="sheet-group">Help shape VocabStudy</h3>
+        <div class="setting feedback-setting"><b>Ideas, problems, anything</b>
+          <p class="hint">The app is still being built. Something you'd add, change or remove — or something that isn't working? Send it on WhatsApp or by email; every message is read.</p>
+          <div class="row">${VS.feedback.buttons()}</div></div>
 
         <h3 class="sheet-group">App &amp; data</h3>
         ${VS.speech.supported ? "" : html`<p class="hint">This browser has no built-in voices, so words can't be read aloud.</p>`}

@@ -30,6 +30,23 @@
     return html`<div class="flash-sound ${w.ipa ? "" : "is-bare"}">${VS.ui.speakButton(w.word)}${w.ipa ? VS.ui.ipa(w) : ""}</div>`;
   }
 
+  /** Everything under the headword, in ONE column of one width with one left
+      edge: where you met it (or the example), then "Goes with" and "Similar"
+      as label | chips rows. The headword above stays centred; this column is
+      the entry's body, set apart by a hairline. */
+  function extra(w) {
+    const parts = [
+      VS.ui.context(w, "flash-met"),
+      w.example && !w.context ? html`<div class="flash-example">
+        <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
+      </div>` : "",
+      VS.ui.goes(w, "flash-related"),
+      VS.ui.similar(w, "flash-related"),
+    ];
+    if (!parts.some((x) => String(x).trim())) return "";
+    return html`<div class="flash-extra">${parts}</div>`;
+  }
+
   function foot(ico, text) {
     return html`<div class="flash-foot"><p class="flash-tip">${icon(ico, "icon-sm")}<span>${text}</span></p></div>`;
   }
@@ -53,12 +70,7 @@
             ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
             ${sound(w)}
           </div>
-          ${VS.ui.context(w, "flash-met")}
-          ${w.example && !w.context ? html`<div class="flash-example">
-            <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
-          </div>` : ""}
-          ${VS.ui.goes(w, "flash-related")}
-          ${VS.ui.similar(w, "flash-related")}
+          ${extra(w)}
         </div>
         ${foot("text", "Say it once in a sentence")}
       </div>`;
@@ -71,15 +83,15 @@
         <div class="flash-face flash-open">
           <div class="flash-top">${meta(w)}</div>
           <div class="flash-main">
-            <div class="flash-answer">
-              <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
-              ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
-              ${sound(w)}
+            <div class="flash-headrow">
+              <div class="flash-answer">
+                <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
+                ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
+                ${sound(w)}
+              </div>
+              ${w.arabic ? html`<p class="flash-ar" lang="ar" dir="rtl">${w.arabic}</p>` : ""}
             </div>
-            <div class="flash-meaning">
-              ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
-              ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
-            </div>
+            ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
             ${!w.trusted && !w.confirmed && w.arabic && VS.autofill.enabled() ? html`
               <div class="meaning-ask">
                 <p class="meaning-ask-q">${w.context ? "Is this the meaning you met?" : "Is this the meaning you need?"}</p>
@@ -89,12 +101,7 @@
                 </div>
                 <div class="meanings" aria-live="polite"></div>
               </div>` : ""}
-            ${VS.ui.context(w, "flash-met")}
-            ${w.example && !w.context ? html`<div class="flash-example">
-              <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
-            </div>` : ""}
-            ${VS.ui.goes(w, "flash-related")}
-            ${VS.ui.similar(w, "flash-related")}
+            ${extra(w)}
           </div>
           ${w.example
             ? foot("translate", "Tap a word you don't know to translate or keep it")
@@ -128,12 +135,7 @@
               ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
               ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
             </div>
-            ${VS.ui.context(w, "flash-met")}
-            ${w.example && !w.context ? html`<div class="flash-example">
-              <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
-            </div>` : ""}
-            ${VS.ui.goes(w, "flash-related")}
-            ${VS.ui.similar(w, "flash-related")}
+            ${extra(w)}
           </div>
           ${foot("text", "Say it once in a sentence")}
         </div>

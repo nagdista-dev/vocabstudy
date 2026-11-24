@@ -456,6 +456,26 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   app's own sheet and offers Undo. Reset progress keeps the wallet; Start over
   deletes it. Backup includes it; merge unions by id.
 
+## Still being built, and feedback
+
+- **The note** (`app.js devNote`): a `--note` band under the app bar on every
+  browse screen — "VocabStudy is still being built" + WhatsApp + Email + hide.
+  Hiding is remembered (`devNoteHidden` holds the note's id, so a new note can
+  return after a big change). It steps aside in activities and never prints.
+- **Feedback for good** (`VS.feedback`): Settings → *Help shape VocabStudy*
+  keeps the same two buttons forever — WhatsApp (+20 114 304 4699, a greeting
+  typed) and Gmail (nagdista@gmail.com, a subject typed). Nothing is sent
+  until the learner sends it.
+
+## The study card's body (v13)
+
+The headword and its sound stay centred on a check card; everything under
+them is ONE column (32rem, one left edge) under a hairline: where you met it
+(or the example), then "Goes with" and "Similar" as label | chips rows with a
+fixed 5.75rem label column (stacked under 420px). On Meet, the head is a
+bilingual-dictionary row — the English word and sound left, the Arabic on the
+right edge — with the definition under both (stacked under 480px).
+
 ## Share with (`#/share`, `#/shared`)
 
 Send words to a friend; the friend opens them and learns them too

@@ -1153,3 +1153,36 @@ kbd {
 }
 .wallet-btn[aria-current="page"] { color: var(--brand); background: var(--brand-soft); }
 @media (min-width: 1024px) { .wallet-btn { display: none; } }
+
+/* ── "Still being built" (app.js devNote) ───────────────────────────
+   The app speaking, so --note, not the highlighter: a calm band under the
+   app bar, the content width of every page. One line on a desktop (icon,
+   sentence, WhatsApp, Email, hide); on a phone the sentence, then the two
+   buttons, with hide at the corner. It steps aside during an activity. */
+.dev-note { width: 100%; max-width: var(--content-max); margin: var(--s-3) auto 0; padding-inline: var(--gutter); }
+.dev-note-inner {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: var(--s-3);
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
+  border: 1px solid var(--note-line); border-radius: var(--r-lg); background: var(--note-soft); color: var(--note-ink);
+}
+.dev-note-ico { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-md); background: var(--surface); color: var(--note); }
+.dev-note-ico .icon { width: 18px; height: 18px; }
+.dev-note-text { margin: 0; max-width: none; font-size: var(--text-sm); line-height: 1.5; }
+.dev-note-text b { color: var(--ink); font-weight: 700; }
+.dev-note-actions { display: flex; gap: var(--s-2); }
+.btn-small { min-height: 38px; padding: 0 var(--s-3); gap: 6px; font-size: var(--text-sm); }
+.dev-note-actions .btn { background: var(--surface); border-color: var(--note-line); color: var(--note-ink); }
+.dev-note-actions .btn:hover { border-color: var(--note); color: var(--ink); }
+.dev-note-close { color: var(--note); }
+.dev-note-close:hover { background: var(--surface); color: var(--ink); }
+@media (max-width: 767px) {
+  .dev-note-inner { grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; padding: var(--s-3); }
+  .dev-note-actions { grid-column: 2 / -1; grid-row: 2; }
+  .dev-note-actions .btn { flex: 1 1 0; justify-content: center; }
+  .dev-note-close { grid-column: 3; grid-row: 1; margin: -6px -6px 0 0; }
+}
+@media (pointer: coarse) { .btn-small { min-height: var(--tap); } }
+body[data-mode="activity"] .dev-note { display: none; }
+@media print { .dev-note { display: none; } }
+/* Settings: the same two buttons, for good. */
+.feedback-setting .row .btn { gap: var(--s-2); }
