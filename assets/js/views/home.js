@@ -306,20 +306,5 @@
       </section>`;
   }
 
-  /* The invitation on Today: one slip, one action. The message itself is
-     already written in the learner's own Arabic (shared.js); this only asks
-     whether they know someone who could use it. */
-  function shareCard() {
-    return html`
-      <aside class="today-share" aria-labelledby="today-share-title">
-        <span class="today-share-ico" aria-hidden="true">${icon("share", "icon-sm")}</span>
-        <div class="today-share-copy">
-          <b id="today-share-title">Know someone learning English?</b>
-          <span>Pass it on. The message is already written in your Arabic — free, no account, works offline.</span>
-        </div>
-        <button class="btn today-share-btn" type="button" data-action="share-app">Share the app</button>
-      </aside>`;
-  }
-
-  VS.today = { plan, strip, shareCard };
+  VS.today = { plan, strip };
 })();

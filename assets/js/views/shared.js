@@ -547,6 +547,7 @@
           <button class="btn btn-tonal" type="button" data-action="app-share-copy">${icon("copy", "icon-sm")} Copy the message</button>
           <button class="btn btn-quiet" type="button" data-action="app-share-link">${icon("link", "icon-sm")} Copy the link</button>
         </div>
+        <p class="hint app-share-community"><a href="${VS.COMMUNITY_URL}" target="_blank" rel="noopener">${icon("whatsapp", "icon-sm")} Join the VocabStudy community</a></p>
         <p class="hint app-share-free">Free, no account, and it works offline. The link is only the app — nothing about you.</p>
       </div>`);
     if (!dlg.open) dlg.showModal();
@@ -1578,17 +1579,40 @@
     },
 
     /** English text that may quote Arabic («يعتمد على»): each Arabic run is isolated,
-        so the line reads in the right order in both directions. */
+        so the line reads in the right order in both directions. In an Arabic
+        sentence, the English words are isolated too — otherwise the Arabic
+        isolates make the bidi algorithm lay the English runs out in the
+        wrong order (first word left, second word right). */
     mixed(text) {
-      const safe = VS.escape(text);
-      // Every Arabic run is isolated, so an English sentence never drags its
-      // punctuation to the wrong end. The class is the visual chip; the <bdi>
-      // is what actually keeps the two directions from touching.
+      const raw = String(text || "");
+      const rtl = this.textDir(raw) === "rtl";
       const AR = "\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF";
       const JOIN = AR + "\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\s،؛؟٪ـ-";
       const run = new RegExp("«?([" + AR + "](?:[" + JOIN + "]*[" + AR + "])?)»?", "g");
-      return VS.raw(safe.replace(run,
-        (_, ar) => '<bdi class="ar-chip" lang="ar" dir="rtl">' + ar + "</bdi>"));
+      // Split keeps the captured Arabic runs at the odd indices.
+      const parts = raw.split(run);
+      const english = (s) => {
+        let out = "", last = 0, m;
+        const words = /[A-Za-z][A-Za-z0-9'’\-]*(?:[ \t]+[A-Za-z][A-Za-z0-9'’\-]*)*/g;
+        while ((m = words.exec(s))) {
+          out += VS.escape(s.slice(last, m.index)) + '<bdi dir="ltr">' + VS.escape(m[0]) + "</bdi>";
+          last = m.index + m[0].length;
+        }
+        return out + VS.escape(s.slice(last));
+      };
+      const html = parts.map((s, i) => i % 2
+        ? '<bdi class="ar-chip" lang="ar" dir="rtl">' + VS.escape(s) + "</bdi>"
+        : rtl ? english(s) : VS.escape(s)).join("");
+      return VS.raw(html);
+    },
+
+    /** The direction a mixed line should read: its first letter decides.
+        `dir="auto"` cannot do this job once the Arabic runs are wrapped in
+        `<bdi dir="rtl">` — the parent skips them and finds the English word
+        first, laying an Arabic sentence out left to right. */
+    textDir(text) {
+      const first = String(text || "").match(/[A-Za-z\u0600-\u06FF]/);
+      return first && /[\u0600-\u06FF]/.test(first[0]) ? "rtl" : "ltr";
     },
 
     /** How common the word is (core/frequency.js): five bars, like signal strength.
@@ -1627,7 +1651,7 @@
               <p class="usage-kind">${t.label}</p>
               ${t.wrong ? html`<p class="usage-wrong">${icon("x", "icon-sm")}<span>${t.wrong}</span></p>` : ""}
               ${t.right ? html`<p class="usage-right">${icon("check", "icon-sm")}<span>${t.right}</span></p>` : ""}
-              ${t.why ? html`<p class="usage-why">${VS.ui.mixed(t.why)}</p>` : ""}
+              ${t.why ? html`<p class="usage-why" dir="${VS.ui.textDir(t.why)}">${VS.ui.mixed(t.why)}</p>` : ""}
             </div>`)}
         </div>`;
     },
@@ -1663,7 +1687,7 @@
               ? html`${m.slice(0, at)}<del class="pen-wrong">${bad}</del>${m.slice(at + bad.length)}`
               : hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m;
             return html`<li class="${unsure ? "is-unsure" : ""}" dir="auto"><span>${body}${unsure
-                ? html`<small class="mine-unsure">${fixed
+                ? html`<small class="mine-unsure" dir="${fixed ? "ltr" : trap ? VS.ui.textDir(trap.why) : "ltr"}">${fixed
                     ? html`One thing to fix: <b>${fixed}</b>`
                     : trap ? html`${VS.ui.mixed(trap.why)}` : "May have a mistake — not used in Recall"}</small>
                   ${fixed && removable ? html`<button class="link-btn mine-fix" type="button" data-action="sentence-fix" data-id="${w.id}" data-index="${i}">Use the fix</button>` : ""}` : ""}</span>
@@ -1755,6 +1779,7 @@
     wordRow(w) {
       const s = VS.store.status(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
+      const waiting = VS.autofill.pending(w.id);
       return html`
         <div class="word-row ${VS.justAdded.has(w.id) ? "just-added" : ""}" data-status="${s}" data-id="${w.id}">
           <button class="word-row-open" type="button" data-action="word-open" data-id="${w.id}" aria-haspopup="dialog">
@@ -1763,11 +1788,10 @@
               <b title="${w.word}">${VS.cap(w.word)}</b>
               ${VS.ui.senseOf(w) ? html`<span class="sense">(${VS.ui.senseOf(w).toLowerCase()})</span>` : ""}
             </span>
-            ${w.arabic ? html`<span class="word-row-ar" lang="ar" dir="rtl" title="${w.arabic}">${w.arabic}</span>`
-              : html`<span class="word-row-ar hint">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No meaning yet"}</span>`}
             ${w.example ? html`<span class="word-row-ex" dir="auto" title="${w.example}">${w.example}</span>` : html`<span class="word-row-ex is-empty" aria-hidden="true"></span>`}
             <span class="word-row-meta">
-              <span class="word-row-state" data-s="${s}">${state}</span><span class="word-row-sep" aria-hidden="true">·</span>
+              ${waiting ? html`<span class="word-row-filling">${navigator.onLine ? "Filling in…" : "Fills in when online"}</span>`
+                : html`<span class="word-row-state" data-s="${s}">${state}</span>`}<span class="word-row-sep" aria-hidden="true">·</span>
               ${w.check && w.check.kind === "spelling" ? "" : html`<span>${w.type}${w.level ? " · " + w.level : ""}</span>`}
               ${w.check && w.check.kind === "spelling" ? "" : VS.frequency.band(w) ? html`<span class="word-row-freq">${VS.frequency.band(w).label}</span>` : ""}
               ${VS.ui.checkFlag(w)}
@@ -1866,7 +1890,7 @@
               ${sec("memory", "Memory", "الذاكرة", html`
                 ${w.memory ? html`<div class="word-memory-hook">
                   ${icon("bulb", "icon-sm")}
-                  <div><span>A way to remember</span><p dir="auto">${VS.ui.mixed(w.memory)}</p></div>
+                  <div><span>A way to remember</span><p dir="${VS.ui.textDir(w.memory)}">${VS.ui.mixed(w.memory)}</p></div>
                 </div>` : ""}
                 <div class="word-memory">
                   <div class="word-memory-head">

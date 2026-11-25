@@ -150,6 +150,12 @@
     bar: () => renderBar(),                  // the bar alone (the wallet count after a word is kept)
   };
 
+  /* ── The community: one door, on every screen ─────────────────────
+     Updates, ideas and app talk happen in one WhatsApp group. The URL is
+     the single source for the app; the static About page repeats it in its
+     own HTML because it has no app JavaScript. */
+  VS.COMMUNITY_URL = "https://chat.whatsapp.com/EHuPYovOMIvCGPRdAZ28kT";
+
   /* ── Feedback: always one tap away, for as long as the app lives ──
      WhatsApp or Gmail — the learner picks. The links only open their own
      app with a greeting typed; nothing is sent until they send it. */
@@ -223,10 +229,11 @@
     { id: "home", label: "Today", icon: "home", href: () => "#/", match: ["library"] },
     { id: "words", label: "Words", icon: "book", href: () => "#/words", match: ["library"] },
     { id: "recall", label: "Recall", icon: "review", href: () => "#/recall", match: ["recall"] },
-    { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats", "week"] },
+    // Desktop keeps Progress in the bar; phones reach it from More, so the
+    // tab bar stays four destinations plus one distinct Add action.
+    { id: "stats", label: "Progress", icon: "chart", href: () => "#/stats", match: ["stats", "week"], barOnly: true },
+    { id: "wallet", label: "Wallet", icon: "wallet", href: () => "#/wallet", match: ["wallet"] },
     { id: "add", label: "Add", icon: "plus", href: () => "#/add", match: ["import"] },
-    // Desktop only: phones and tablets keep five tabs and reach the wallet from the top bar's icon.
-    { id: "wallet", label: "Wallet", icon: "wallet", href: () => "#/wallet", match: ["wallet"], barOnly: true },
   ];
   const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak", "write"];
 
@@ -238,7 +245,7 @@
         !(n.id === "home" && current.params.words) && !(n.id === "words" && !current.params.words);
       const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>`
         : n.id === "wallet" && kept ? html`<span class="count">${kept > 99 ? "99+" : kept}</span>` : "";
-      return html`<a class="${cls}-link" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
+      return html`<a class="${cls}-link ${n.id === "add" ? cls + "-add" : ""}" data-id="${n.id}" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
         ${n.id === "recall" ? VS.raw(`aria-label="Recall — ${due ? due + " words due" : "nothing due"}"`) : ""}>
         <span class="${cls}-ico">${icon(n.icon)}${cls === "tab" ? count : ""}</span><span class="${cls}-label">${n.label}</span>${cls === "bar" ? count : ""}</a>`;
     });
@@ -268,21 +275,78 @@
     const barNav = VS.$("#barNav"), tabBar = VS.$("#tabBar");
     if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
     if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
-    // The wallet's door, always in the bar (next to Settings): reachable from any
-    // screen, even before anything is saved; the count says what is waiting.
     devNote();
     const shareBtn = VS.$("#shareAppBtn");
     if (shareBtn) shareBtn.innerHTML = String(icon("share"));
-    const walletBtn = VS.$("#walletBtn");
-    if (walletBtn) {
-      const kept = VS.store.wallet().length;
-      walletBtn.innerHTML = String(html`${icon("wallet")}${kept ? html`<span class="count">${kept > 99 ? "99+" : kept}</span>` : ""}`);
-      walletBtn.setAttribute("aria-label", kept ? `Wallet — ${VS.plural(kept, "word")} saved for later` : "Wallet — words saved for later");
-      if (current.name === "wallet") walletBtn.setAttribute("aria-current", "page"); else walletBtn.removeAttribute("aria-current");
-    }
+    const moreBtn = VS.$("#moreBtn");
+    if (moreBtn) moreBtn.innerHTML = String(icon("more"));
+    const communityBtn = VS.$("#communityBtn");
+    if (communityBtn) communityBtn.href = VS.COMMUNITY_URL;
     crumbsEl.innerHTML = String(html`
       ${crumbs.length ? html`<a href="#/">Today</a>` : ""}
       ${crumbs.map((c) => html`<span aria-hidden="true">/</span>${c.href ? html`<a href="${c.href}">${c.label}</a>` : html`<span aria-current="page">${c.label}</span>`}`)}`);
+  }
+
+  /* ── More: the phone's one menu ─────────────────────────────────
+     Progress, Share and Settings leave the crowded bar; the community is
+     the first row, because it is the one door that is not about this device.
+     A native dialog gives focus trapping, Escape and a dimmed page for
+     free. The sheet is rebuilt on every open, so its notes stay true. */
+  function moreMarkup() {
+    return html`
+      <div class="sheet-head"><h2 id="moreTitle">More</h2>
+        <button class="icon-btn" type="button" data-action="close-more" aria-label="Close">${icon("x")}</button></div>
+      <div class="sheet-body more-body">
+        <a class="more-community" href="${VS.COMMUNITY_URL}" target="_blank" rel="noopener" data-action="close-more">
+          <span class="more-ico" aria-hidden="true">${icon("whatsapp")}</span>
+          <span class="more-copy"><b>Join the community</b><small>Updates, ideas and app talk on WhatsApp</small></span>
+          ${icon("external", "icon-sm more-go")}
+        </a>
+        <div class="more-list">
+          <a class="more-item" href="#/stats" data-action="close-more">
+            <span class="more-ico" aria-hidden="true">${icon("chart")}</span>
+            <span class="more-copy"><b>Progress</b><small>Your week and your all-time streak</small></span>
+            ${icon("chevron-right", "icon-sm more-go")}
+          </a>
+          <button class="more-item" type="button" data-action="more-share">
+            <span class="more-ico" aria-hidden="true">${icon("share")}</span>
+            <span class="more-copy"><b>Share VocabStudy</b><small>Send it to a friend</small></span>
+            ${icon("chevron-right", "icon-sm more-go")}
+          </button>
+          <button class="more-item" type="button" data-action="more-settings">
+            <span class="more-ico" aria-hidden="true">${icon("gear")}</span>
+            <span class="more-copy"><b>Settings</b><small>Level, Arabic, theme and data</small></span>
+            ${icon("chevron-right", "icon-sm more-go")}
+          </button>
+          <a class="more-item" href="about.html" data-action="close-more">
+            <span class="more-ico" aria-hidden="true">${icon("info")}</span>
+            <span class="more-copy"><b>About VocabStudy</b><small>What it does and why, in Arabic</small></span>
+            ${icon("chevron-right", "icon-sm more-go")}
+          </a>
+        </div>
+      </div>`;
+  }
+  function openMore() {
+    let dlg = VS.$("#moreSheet");
+    if (!dlg) {
+      dlg = document.createElement("dialog");
+      dlg.id = "moreSheet";
+      dlg.className = "sheet more-sheet";
+      dlg.tabIndex = -1;
+      dlg.setAttribute("aria-labelledby", "moreTitle");
+      dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = String(moreMarkup());
+    if (!dlg.open) {
+      dlg.showModal();
+      dlg.focus();                 // open on the sheet itself, not a row: no ring until the learner chooses
+    }
+    hideNudge();
+  }
+  function closeMore() {
+    const dlg = VS.$("#moreSheet");
+    if (dlg && dlg.open) dlg.close();
   }
 
   /* ── Installable app (PWA) ─────────────────────────────────────
@@ -497,6 +561,9 @@
         <div class="setting"><b>Text size</b><div class="seg">${choice("textScale", 1, "Normal")}${choice("textScale", 1.12, "Large")}${choice("textScale", 1.25, "Larger")}</div></div>
 
         <h3 class="sheet-group">Help shape VocabStudy</h3>
+        <div class="setting"><b>Community</b>
+          <p class="hint">Updates, suggestions and app talk with other learners — one WhatsApp group.</p>
+          <div class="row"><a class="btn" href="${VS.COMMUNITY_URL}" target="_blank" rel="noopener">${icon("whatsapp", "icon-sm")} Join the community</a></div></div>
         <div class="setting feedback-setting"><b>Ideas, problems, anything</b>
           <p class="hint">The app is still being built. Something you'd add, change or remove — or something that isn't working? Send it on WhatsApp or by email; every message is read.</p>
           <div class="row">${VS.feedback.buttons()}</div></div>
@@ -586,6 +653,10 @@
   Object.assign(GLOBAL, {
     speak(el) { VS.speech.say(el.dataset.say, el); },
     "share-app"() { VS.openAppShare(); },
+    "open-more"() { openMore(); },
+    "close-more"() { closeMore(); },
+    "more-share"() { closeMore(); VS.openAppShare(); },
+    "more-settings"() { closeMore(); VS.actions["open-settings"](); },
     reload() { location.reload(); },
     // The new version also loads by itself next time the app opens.
     "update-later"() { const bar = document.querySelector(".update-bar"); if (bar) bar.remove(); devNote(); },
@@ -731,6 +802,8 @@
   fill("brandLink", html`${VS.brandMark}<span class="brand-text"><span class="brand-name">VocabStudy</span><span class="brand-tag"><span class="brand-tag-a">For all Arabs</span><span class="brand-tag-b"><span class="mark">100% free</span></span></span></span>`, VS.homeHref);
   const brandLink = VS.$("#brandLink");
   if (brandLink) brandLink.setAttribute("aria-label", "VocabStudy, for all Arabs, 100% free — Today");
+  fill("communityBtn", html`${icon("whatsapp", "icon-sm")}<span class="bar-community-label">Community</span>`);
+  fill("moreBtn", icon("more"));
   fill("settingsBtn", icon("gear"));
   applySettings();
   VS.store.onChange(() => current && renderBar());

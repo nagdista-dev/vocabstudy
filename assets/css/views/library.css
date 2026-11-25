@@ -182,11 +182,13 @@
 }
 .word-row:first-child { border-top: 0; }
 /* Three fixed lines — word, one clipped example, meta — so every row is the
-   same height whether the example is long, short or missing. */
+   same height whether the example is long, short or missing. The Arabic is
+   not one of them: the list stays English, and the card is where the
+   translation appears. */
 .word-row-open {
-  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr);
-  grid-template-areas: "word ar" "ex ex" "meta meta";
-  align-items: center; column-gap: var(--s-3); row-gap: 2px;
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "word" "ex" "meta";
+  align-items: center; row-gap: 2px;
   width: 100%; min-height: 86px; padding: 9px 4px 9px var(--s-4);
   font: inherit; color: inherit; text-align: start; cursor: pointer;
   transition: background var(--fast);
@@ -211,14 +213,9 @@
   color: var(--ink-3); font-weight: 400; font-size: .86em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* Arabic is the hand that helps: quieter than the English, at the far end,
-   clipped with an ellipsis and read in full in the word card. */
-.word-row-ar {
-  grid-area: ar; min-width: 0; text-align: right;
-  color: var(--ink-3); font-size: 1.02rem;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.word-row-ar.hint { font-size: var(--text-sm); }
+/* Auto-fill is still working: a quiet English status where the state would
+   be, so the row never pretends to be finished. */
+.word-row-filling { color: var(--ink-3); font-weight: 500; }
 /* One example line under the word. It never wraps; the full sentence is in
    the card, and the title attribute shows it on hover. */
 .word-row-ex {
@@ -340,11 +337,9 @@
 @media (max-width: 599px) { .word-edit-mistake-grid { grid-template-columns: 1fr; } }
 
 @media (max-width: 1023px) {
-  .word-row-open { padding-inline-start: 14px; column-gap: 10px; }
+  .word-row-open { padding-inline-start: 14px; }
   .word-row-word { gap: 7px; }
   .word-row-word b { font-size: 1rem; line-height: 1.35; }
-  .word-row-ar { max-width: 38vw; font-size: .98rem; line-height: 1.45; }
-  .word-row-ar.hint { font-size: var(--text-2xs); }
   .word-row-meta { font-size: var(--text-2xs); line-height: 1.35; }
   .word-row-freq { white-space: nowrap; }
   .word-row-note { display: none; }

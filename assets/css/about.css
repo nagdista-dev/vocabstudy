@@ -451,6 +451,30 @@ h2 { font-size: clamp(1.55rem, 1.25rem + 1.3vw, 2.15rem); line-height: 1.45; }
 .faq details p { padding: 0 22px 22px; color: var(--ink-2); font-size: 1rem; line-height: 1.85; }
 
 /* ── Final call: a tinted card, not a dark band ───────────────── */
+/* ── The community invitation ───────────────────────────────────
+   A quiet card before the last "start with one word" block: the app is the
+   main door, the group is the side door for updates and suggestions. */
+.community-cta {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px 18px; align-items: start;
+  margin-block: 8px 18px; padding: clamp(20px, 3vw, 30px);
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+}
+.community-mark {
+  display: grid; place-items: center; width: 44px; height: 44px;
+  border-radius: 50%; background: var(--brand-soft); color: var(--brand);
+}
+.community-mark svg {
+  width: 22px; height: 22px; fill: currentColor; stroke: none;
+}
+.community-kicker { margin-bottom: 2px; color: var(--ink-3); font-size: .82rem; font-weight: 700; letter-spacing: .04em; }
+.community-copy h2 { font-size: clamp(1.25rem, 1.1rem + .7vw, 1.55rem); line-height: 1.5; }
+.community-copy p { margin-top: 4px; color: var(--ink-2); font-size: .98rem; line-height: 1.75; }
+.community-cta .btn { grid-column: 2; justify-self: start; }
+@media (min-width: 820px) {
+  .community-cta { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+  .community-cta .btn { grid-column: auto; }
+}
+
 .final {
   display: grid; gap: 18px;
   margin-block: 8px clamp(32px, 5vw, 52px);

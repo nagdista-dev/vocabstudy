@@ -101,7 +101,7 @@
   .brand-mark { width: 28px; height: 28px; }
   /* The page headline already names the screen; the bar stays brand chrome. */
   .crumbs { display: none; }
-  .bar-actions { gap: 0; }
+  .bar-actions { gap: 4px; }
 }
 /* An activity is a focused task, not a place to browse: the phone shows its
    own header with one exit, so the app bar would only repeat it. */
@@ -130,36 +130,66 @@
 .tab-bar { display: none; }
 @media (max-width: 1023px) {
   .bar-nav { display: none; }
+  .bar-actions > #shareAppBtn, .bar-actions > #settingsBtn { display: none; }
+  /* Four destinations, then one action: Add keeps the fifth slot but wears
+     a filled brand tile, so it reads as "do something", not "go somewhere". */
   .tab-bar {
     position: fixed; z-index: var(--z-bar); left: 0; right: 0; bottom: 0;
-    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;          /* as many columns as links */
-    padding: 3px 6px calc(3px + env(safe-area-inset-bottom));
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(62px, auto);
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
     background: var(--surface);
     border-top: 1px solid var(--line);
     box-shadow: 0 -6px 18px -18px rgb(var(--shadow-rgb) / .35);
   }
   body[data-mode="activity"] .tab-bar { display: none; }
-  body[data-mode="browse"] main { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+  body[data-mode="browse"] main { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
   .tab-link {
-    display: grid; justify-items: center; align-content: center; gap: 1px;
-    min-height: 54px; padding: 3px 2px; border-radius: var(--r-md);
+    display: grid; justify-items: center; align-content: center; gap: 2px;
+    min-height: 58px; padding: 3px 2px; border-radius: var(--r-md);
     color: var(--ink-3); text-decoration: none; font-size: var(--text-2xs); font-weight: 600;
     letter-spacing: .005em; transition: color var(--fast);
   }
   .tab-link .icon { width: 22px; height: 22px; }
   .tab-link[aria-current="page"] { color: var(--brand); }
   .tab-link[aria-current="page"] .tab-ico { background: var(--brand-soft); }
-  .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 27px; border-radius: var(--r-pill); }
+  .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 28px; border-radius: var(--r-pill); }
   .tab-ico .count {
     position: absolute; z-index: var(--z-base);
     top: -5px; inset-inline-end: -9px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
     background: var(--mark); color: var(--on-mark); font-weight: 700; font-variant-numeric: tabular-nums;
     border: 2px solid var(--surface); font-size: var(--text-badge); line-height: 14px;
   }
-  .toast { bottom: calc(72px + env(safe-area-inset-bottom)); }
-  .break-card { bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .tab-add { color: var(--brand); font-weight: 700; }
+  .tab-add .tab-ico {
+    width: 40px; height: 34px; border-radius: 11px;
+    background: var(--brand); color: var(--on-brand);
+    box-shadow: 0 8px 18px -14px rgb(var(--shadow-rgb) / .75);
+  }
+  .tab-add .tab-ico .icon { width: 20px; height: 20px; color: var(--on-brand); }
+  .tab-add[aria-current="page"] .tab-ico {
+    background: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-soft), 0 8px 18px -14px rgb(var(--shadow-rgb) / .75);
+  }
+  .toast { bottom: calc(82px + env(safe-area-inset-bottom)); }
+  .break-card { bottom: calc(82px + env(safe-area-inset-bottom)); }
 }
 .bar-actions { margin-inline-start: auto; display: flex; align-items: center; gap: var(--s-1); }
+
+/* The community door: a labelled pill on phones, icon-only under 360px.
+   It is a door, not a destination: paper, a WhatsApp mark and one word. */
+.bar-community {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: var(--tap); padding: 0 12px 0 10px; border-radius: var(--r-pill);
+  color: var(--ink-2); text-decoration: none; font-size: var(--text-2xs); font-weight: 700;
+  white-space: nowrap; transition: background var(--fast), color var(--fast);
+}
+.bar-community .icon { color: var(--brand); }
+.bar-community:hover { background: var(--brand-soft); color: var(--brand); }
+.more-btn { flex: none; }
+@media (max-width: 359px) {
+  .bar-community { width: var(--tap); padding: 0; }
+  .bar-community-label { display: none; }
+}
 
 /* ── Icons ─────────────────────────────────────────────────────── */
 .icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor;
@@ -406,7 +436,7 @@
    "not now", and is hidden on anything wider than a phone. */
 .install-nudge {
   position: fixed; z-index: var(--z-float); inset-inline: 12px;
-  bottom: calc(60px + 12px + env(safe-area-inset-bottom));
+  bottom: calc(70px + 12px + env(safe-area-inset-bottom));
   width: min(440px, calc(100vw - 24px));
   margin-inline: auto;
   padding: 14px 16px 16px;
@@ -456,7 +486,7 @@ body:has(.activity) .update-bar { display: none; }       /* one bar at a time at
 .toast-action:hover { background: rgb(255 255 255 / .08); }
 /* Phones and tablets both have the fixed tab bar: a toast sits above it,
    never over the tabs. */
-@media (max-width: 1023px) { .toast { bottom: calc(72px + env(safe-area-inset-bottom)); } }
+@media (max-width: 1023px) { .toast { bottom: calc(82px + env(safe-area-inset-bottom)); } }
 
 .sheet {
   /* base.css zeroes every margin; a modal <dialog> needs margin:auto to centre. */
@@ -488,6 +518,50 @@ body:has(.activity) .update-bar { display: none; }       /* one bar at a time at
 .sheet-head h2 { font-size: var(--text-lg); }
 .sheet-head .icon-btn { margin-inline-start: auto; }
 .sheet-body { padding: var(--s-4) var(--s-5) var(--s-5); display: grid; gap: var(--s-5); }
+
+/* ── More: the phone's one menu ──────────────────────────────────
+   A short list, not a settings page. The community is the only tinted row;
+   everything else is quiet paper with one line of explanation. */
+/* Phones use the sheet's full-width bottom placement; only the wider
+   version is narrower than the paper. */
+@media (min-width: 600px) { .more-sheet { width: min(420px, calc(100vw - 32px)); } }
+.more-sheet:focus-visible { outline: none; }   /* the sheet itself takes focus, not a row */
+.more-body { padding: var(--s-3) var(--s-4) var(--s-5); gap: var(--s-2); }
+.more-community, .more-item {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center;
+  gap: var(--s-3); width: 100%; min-width: 0; text-align: start; text-decoration: none;
+}
+.more-community {
+  padding: var(--s-3); border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--line));
+  border-radius: var(--r-md); background: var(--brand-soft); color: var(--ink);
+}
+.more-community:hover { border-color: color-mix(in srgb, var(--brand) 32%, var(--line)); }
+.more-ico {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--ink-2);
+}
+.more-community .more-ico { background: var(--surface); color: var(--brand); }
+.more-community .more-ico .icon { width: 22px; height: 22px; }
+.more-copy { display: grid; gap: 1px; min-width: 0; }
+.more-copy b { font-size: var(--text-sm); font-weight: 700; color: var(--ink); }
+.more-community .more-copy b { color: var(--brand); }
+.more-copy small {
+  min-width: 0; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.35;
+  white-space: normal; overflow-wrap: anywhere;
+}
+.more-community .more-copy small { color: var(--ink-2); }
+.more-go { color: var(--ink-3); }
+.more-community .more-go { color: var(--brand); }
+.more-list { display: grid; gap: 2px; }
+.more-item {
+  min-height: 56px; padding: 8px var(--s-2); border: 0; border-radius: var(--r-md);
+  background: transparent; color: inherit; font: inherit; cursor: pointer;
+  transition: background var(--fast);
+}
+.more-item:hover, .more-item:focus-visible { background: var(--surface-2); }
+@media (max-width: 599px) {
+  .more-body { padding: var(--s-2) var(--s-3) calc(var(--s-4) + env(safe-area-inset-bottom)); }
+}
 /* When a copy button is blocked: the text is already selected, so it reads
    like something to take, not another field to fill in. */
 .copy-sheet-body { gap: var(--s-3); }
@@ -569,8 +643,11 @@ kbd {
 }
 .danger-link { color: var(--bad); font-weight: 600; font-size: var(--text-sm); justify-self: start; padding: var(--s-2) 0; }
 
-/* ── Entrance: one quiet fade when a screen changes ────────────── */
-.view-enter { animation: view-in var(--slow) var(--ease) both; }
+/* ── Entrance: one quiet fade when a screen changes ──────────────
+   No fill mode: once the animation ends, the page must return to
+   `transform: none`. A retained identity transform would create a stacking
+   context and trap the Manage scrim below the app bar and tab bar. */
+.view-enter { animation: view-in var(--slow) var(--ease); }
 
 /* "A new version is ready" (app.js, after a deploy) */
 .update-bar {
@@ -604,7 +681,7 @@ kbd {
 .break-card[hidden] { display: none; }
 .break-card p { color: var(--ink-2); font-size: var(--text-sm); }
 .break-card .row { margin-top: var(--s-2); }
-@media (max-width: 599px) { .break-card { right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); } }
+@media (max-width: 599px) { .break-card { right: 16px; bottom: calc(82px + env(safe-area-inset-bottom)); } }
 
 /* Sound traps (core/sound-traps.js): what an Arabic speaker should listen for.
    Quiet ink, never a colour of its own — it's advice, not right/wrong. */
@@ -1202,18 +1279,6 @@ kbd {
   background: var(--brand-soft); color: var(--ink); font-size: var(--text-sm); }
 .remind-sum .icon { color: var(--brand); flex: none; }
 
-/* The wallet's door. Desktop: a labelled link in the top nav like every other
-   destination (app.js NAV, barOnly), its count the same yellow badge as Recall's. Phones and tablets keep five
-   tabs, so the door is the top bar's icon, beside Settings, with the same chip. */
-.wallet-btn { text-decoration: none; }
-.wallet-btn .count {
-  top: 2px; inset-inline-end: 0; min-width: 19px; height: 19px; padding: 0 5px; line-height: 19px;
-  background: var(--mark); color: var(--on-mark); box-shadow: 0 0 0 2px var(--surface);
-  font-variant-numeric: tabular-nums;
-}
-.wallet-btn[aria-current="page"] { color: var(--brand); background: var(--brand-soft); }
-@media (min-width: 1024px) { .wallet-btn { display: none; } }
-
 /* ── "Still being built" (app.js devNote) ───────────────────────────
    A floating note, not a band in the page: it sits in the empty corner of
    the desk (bottom-inline-end) and scrolls with nothing, so every screen
@@ -1259,28 +1324,28 @@ kbd {
 @media (max-width: 599px) {
   .dev-note {
     inset-inline: var(--gutter);
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    bottom: calc(82px + env(safe-area-inset-bottom));
     width: auto;
   }
   /* The floating card may sit over the page, but the page can always
      scroll its last line above it: the inset equals the card's height. */
-  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(92px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(102px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
 }
 /* Tablets: a small card in the corner, still above the tab bar. */
 @media (min-width: 600px) and (max-width: 1023px) {
   .dev-note {
     inset-inline-start: auto;
     inset-inline-end: var(--s-5);
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    bottom: calc(82px + env(safe-area-inset-bottom));
     width: min(380px, calc(100vw - 32px));
   }
-  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(96px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(106px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
 }
 /* While the note floats on a phone or tablet, a toast sits above it, so
    Undo and the note's feedback buttons are both readable. In an activity
    the note is gone, so the toast keeps the normal height. */
 @media (max-width: 1023px) {
-  body.has-dev-note[data-mode="browse"] .toast { bottom: calc(84px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+  body.has-dev-note[data-mode="browse"] .toast { bottom: calc(94px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
 }
 @media (min-width: 1024px) {
   body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--dev-note-h, 116px) + 48px); }
@@ -1316,22 +1381,24 @@ body[data-mode="activity"] .dev-note { display: none; }
   .brand-tag { display: inline-grid; justify-items: start; gap: 0; padding-inline-start: 8px; font-size: .8125rem; line-height: 1.3; }
   .brand-tag-b::before { content: none; }
 }
-@media (max-width: 359px) { .brand-tag { display: none; } }     /* the smallest phones keep the bar uncrowded */
+/* The tagline needs room to breathe. Below a wide desktop it is the first
+   thing to go; the accessible name still carries it. */
+@media (max-width: 1199px) { .brand-tag { display: none; } }
 
 /* ── The desktop bar: two groups ──────────────────────────────────────
-   The lockup on the left; on the right, the destinations and then Settings,
-   a hairline between the two kinds — one tidy group, no stray gaps.
-   The breadcrumbs leave the bar: the highlighted nav link and each page's
-   own title already say where you are (phones never showed them). The
-   tagline steps back so the wordmark leads: "For all Arabs" in ink-3,
-   only "100% free" keeps the highlighter. */
+   The lockup on the left; on the right, the destinations, the community
+   door, Share and Settings — a hairline before Settings. The breadcrumbs
+   leave the bar: the highlighted nav link and each page's own title already
+   say where you are (phones never showed them). The tagline steps back so
+   the wordmark leads: "For all Arabs" in ink-3, only "100% free" keeps the
+   highlighter. */
 @media (min-width: 1024px) {
-  .app-bar-inner { display: grid; grid-template-columns: minmax(max-content, 1fr) auto auto; align-items: center; gap: var(--s-2); }
-  .app-bar-inner > .brand { justify-self: start; }
+  .app-bar-inner { gap: var(--s-3); }
   .app-bar-inner > .crumbs { display: none; }
-  .app-bar-inner > .bar-actions { display: contents; }
-  .bar-actions > .bar-nav { grid-column: 2; }
-  .bar-actions > #settingsBtn { grid-column: 3; position: relative; margin-inline-start: var(--s-2); }
+  .bar-actions { margin-inline-start: auto; }
+  .bar-actions > #moreBtn { display: none; }
+  .bar-community { margin-inline-start: var(--s-2); }
+  .bar-actions > #settingsBtn { position: relative; margin-inline-start: var(--s-2); }
   .bar-actions > #settingsBtn::before {                 /* destinations | settings: a hairline between the two kinds */
     content: ""; position: absolute; inset-inline-start: calc(var(--s-2) * -1 - 1px); top: 25%; bottom: 25%;
     width: 1px; background: var(--line-strong);

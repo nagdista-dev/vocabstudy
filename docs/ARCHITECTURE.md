@@ -179,8 +179,9 @@ library removes it from the wallet (`views/import.js`). The wallet is content,
 so **Reset progress** keeps it and **Start over** deletes it; `exportJSON`
 includes it and `mergeJSON` unions by id, skipping words now in the library.
 
-The wallet is reached from the app bar on every screen (`NAV` link on desktop,
-`#walletBtn` beside Settings below 1024px, with a count badge). `VS.walletCapture`
+The wallet is reached from the bottom tab bar on phones and tablets (fourth
+tab, with a count badge) and from the `NAV` link on desktop. Progress is not a
+tab: it lives in More on phones and tablets. `VS.walletCapture`
 is the one capture path shared by the wallet's pocket and Today's compact box:
 it resolves typed Arabic through `VS.spelling.chooseEnglish`, keeps the typed
 Arabic as the entry's meaning, refuses words already in the library or the

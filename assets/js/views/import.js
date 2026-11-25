@@ -461,7 +461,6 @@
             return html`<li class="${VS.justAdded.has(w.id) ? "just-added" : ""}">
               <a class="recent-row" href="#/words?q=${encodeURIComponent(w.word)}">
                 <span class="recent-word"><i class="recent-dot" data-s="${s}" aria-hidden="true"></i><b title="${w.word}">${VS.cap(w.word)}</b></span>
-                <span class="recent-ar" lang="ar" title="${w.arabic || ""}">${w.arabic || (waiting ? "…" : "—")}</span>
                 <span class="recent-meta">${waiting ? html`<span>Filling in…</span>` : html`<span class="recent-state" data-s="${s}">${s === "new" ? "New" : s === "learning" ? "Learning" : "Mastered"}</span>`}${[w.type, w.level].filter(Boolean).map((x) => " · " + x).join("")}</span>
               </a>
             </li>`;

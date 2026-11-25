@@ -310,10 +310,12 @@ JS). It keeps the same desk without imitating an app screen:
   card and its answer bar cap at 660px so the activity header, the card and
   the bar share one edge.
 - 4px spacing grid (`--s-1` … `--s-8`).
-- App bar: 56px on phones, 64px from 1024px; opaque paper with a 1px line
-  (under Glass: blurred glass). Desktop
-  navigation lives in the bar; ≤1023px uses the bottom tab bar (Today, Words,
-  Recall, Progress, Add) so the thumb reaches every destination.
+- App bar: 56px on phones, 64px from 600px; opaque paper with a 1px line
+  (under Glass: blurred glass). Desktop navigation lives in the bar; ≤1023px
+  uses the bottom tab bar (Today, Words, Recall, Wallet, Add) so the thumb
+  reaches every destination, with Progress in More. The phone bar keeps the
+  brand, one community pill (icon only under 360px) and one More button;
+  Share and Settings moved into More, and the tagline waits for 1200px.
 - **Today and Words are two pages** (v10 final): Today (#/) is the plan, the
   add box (which saves to the wallet for later) and the newest five words with
   "All N words →"; Words (#/words) is the whole library — title, search, status
@@ -377,12 +379,14 @@ with 22-letter words and long Arabic meanings:
 - Textareas never resize by hand; they grow with the text.
 - Choices never hide off-screen: the status filter scrolls with an edge fade,
   and its sheet drops to one column when a select needs the width.
-- Word rows are three fixed lines: the headword with its muted `(sense)` and
-  the Arabic at the far end on the first, a one-line ellipsised example on the
-  second, status · type · level · frequency on the third. A visible 44px delete
-  sits at the end, a sibling of the row button. The headword never gives way to
-  its sense — the sense clips first — so rows keep the same height at 320 and
-  at 1280. The same rule holds for "Just added" rows on Add.
+- Word rows are three fixed lines: the headword with its muted `(sense)` on
+  the first, a one-line ellipsised example on the second, status · type ·
+  level · frequency on the third. A visible 44px delete sits at the end, a
+  sibling of the row button. The headword never gives way to its sense — the
+  sense clips first — so rows keep the same height at 320 and at 1280. The
+  Arabic is deliberately absent (v16): it is the reward for opening the word
+  card, not a label in the list. The same rule holds for "Just added" rows on
+  Add.
 - Week strips shorten "Today" to "Now" at ≤360px so seven labels never collide;
   charts use the same 2xs labels.
 
@@ -533,9 +537,9 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   `danger-link`; empty is `.empty` with a quiet wallet tile. Tokens only, 13px
   text floor, 44px targets, Light and Night.
 - **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
-  (app.js `NAV`, `barOnly`). Phones and tablets keep five tabs; the wallet is
-  the top bar's icon beside Settings. Its count is the same yellow badge as
-  Recall's.
+  (app.js `NAV`). Phones and tablets: Wallet is the fourth bottom tab, and
+  Progress moved into More; the wallet no longer has a top-bar icon. Its count
+  is the same yellow badge as Recall's.
 - **Counts in the bars.** Recall (due) and Wallet share one badge: the
   highlighter yellow with dark bold figures, a 2px paper ring where it sits on
   an icon.
@@ -651,10 +655,10 @@ no account; progress, notes and your own sentences are never sent.
 
 A separate, faster flow from sending words: the whole app, in one message.
 
-- **Where.** A share mark sits in the app bar on every screen — beside Settings
-  on phones, in the desktop nav — and Today carries an invitation card: "Know
-  someone learning English?" with `Share the app`. Two taps from anywhere open
-  the sheet.
+- **Where.** A share mark sits in the desktop app bar beside Settings; on
+  phones and tablets it is a row in More. Two taps from anywhere open the
+  sheet. Today no longer carries an invitation card (v16): the home screen is
+  the plan, not a billboard.
 - **What it says.** The message is built from the learner's chosen dialect
   (Egyptian, Gulf, Levantine, Maghrebi, Iraqi, Yemeni, and a simple MSA
   fallback) and stays simple enough for any Arabic reader: free, no account,
@@ -669,15 +673,58 @@ A separate, faster flow from sending words: the whole app, in one message.
 - **Nothing to measure.** No tracking pixel, no third-party script and no
   learner data in the link — the URL is only the app.
 
+## The community door (v16)
+
+One URL, several handles, no network call: `VS.COMMUNITY_URL` in `app.js`,
+and the identical literal in the static About page (which has no app JS).
+It opens `https://chat.whatsapp.com/EHuPYovOMIvCGPRdAZ28kT` in a new tab.
+
+- **Top bar.** A labelled WhatsApp pill sits beside the brand on every browse
+  screen. Under 360px it keeps the 44px target and drops the word, so the bar
+  still fits at 320. It is a door, not a destination: paper, a brand-coloured
+  mark, no green fill.
+- **More.** The first row of the phone menu, the only tinted one, with
+  "Updates, ideas and app talk on WhatsApp" and an external arrow.
+- **Elsewhere.** Settings → Help shape VocabStudy, one quiet line under the
+  share sheet's channels, and a CTA on the Arabic About page. The community
+  never becomes a nav destination and never floats over the page.
+
+## The phone menu and the bottom bar (v16)
+
+The phone chrome is now one community door, one More button, and four
+destinations plus one action.
+
+- **Top bar.** Brand, community pill, More. Share and Settings left the phone
+  bar for More; the wallet icon is gone because Wallet is a tab. The tagline
+  is hidden below 1200px. The bar keeps its right gutter at 320–430px.
+- **More** is a native `<dialog class="sheet more-sheet">` created lazily by
+  `app.js`: a pinned head, the tinted community row, then Progress, Share
+  VocabStudy, Settings and About. Choosing a row closes More before opening
+  its sheet or screen; the backdrop, the × and Escape also close it, and
+  focus returns to More. It is a bottom sheet on phones and a centred 420px
+  sheet from 600px.
+- **Bottom bar.** Four peer destinations — Today, Words, Recall, Wallet — in
+  `1fr` columns, then a 62px Add slot with a filled brand tile and a bold
+  label. Progress is not a fifth destination: it lives in More on phones and
+  tablets and in the desktop bar. The bar is 72px with safe-area padding;
+  browse pages, toasts and the break card offset to it.
+- **Focus.** More focuses the dialog itself, not a row, so opening it is
+  quiet; the sheet suppresses its own focus outline because the sheet edge
+  and scrim already show where focus went.
+
 ## Mixed direction and the AI hand-off (v15)
 
 Arabic and English share almost every screen, so direction is explicit instead
-of guessed. Every Arabic display carries `lang="ar" dir="rtl"`; every mixed
+of guessed. Every Arabic display carries `lang="ar" dir="rtl"`. Every mixed
 line (context, example, memory hook, note, learner sentence, wallet sentence,
-AI context) carries `dir="auto"`; and `VS.ui.mixed()` wraps each detected run
-in an isolating `<bdi>`, including Arabic punctuation and digits. `.ar-chip`
-is `unicode-bidi: isolate`. The result is that an Arabic phrase inside an
-English sentence keeps its order at 320px and in Night.
+AI context) asks `VS.ui.textDir()` for its paragraph direction — taken from
+the first letter — and renders through `VS.ui.mixed()`, which wraps each
+detected run in an isolating `<bdi>`, including Arabic punctuation and digits.
+On an Arabic-first line `mixed()` also wraps the English runs in
+`<bdi dir="ltr">`; `dir="auto"` alone misreads such a line because the Arabic
+run is itself isolated, so the auto scan never sees the first Arabic letter.
+`.ar-chip` is `unicode-bidi: isolate`. The result is that an Arabic phrase
+inside an English sentence keeps its order at 320px and in Night.
 
 The AI open is synchronous on purpose: the clipboard write starts while the
 tap still has focus, the chat opens in the same turn with the prompt in the
@@ -835,6 +882,11 @@ animates layout: only opacity and transform move (the highlighter's
 | Charts and the progress ring | bars rise and the ring draws once from its base |
 | Presses | options and tiles sink 1.5% while held, nav icons 6%; the hero arrow leans on hover |
 | Speak | the mic pulses only while it is listening — the app's one loop |
+
+The screen entrance (`.view-enter`) runs `view-in` with no fill mode. `both`
+would leave the final transform on `.page`, create a stacking context and trap
+the fixed Practise / Manage scrim below the app bar and tab bar. A future
+entrance that needs a fill uses `backwards`, never `both`.
 
 `prefers-reduced-motion` sets every animation and transition to 1ms and every
 delay to 0 (`base.css`), so nothing is still waiting to start after the screen

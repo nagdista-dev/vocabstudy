@@ -49,7 +49,7 @@
       return html`
         <div class="feedback ${unchecked ? "is-note" : "is-right"} write-ok" role="status">
           <p class="feedback-title">${icon(unchecked ? "bulb" : "check", "icon-sm")} ${unchecked ? "Saved — the word is used well; grammar not checked" : r.unsure ? "Kept with the word" : "Kept with the word — no mistakes found"}</p>
-          <p class="write-saved">${VS.ui.mixed(r.clean)}</p>
+          <p class="write-saved" dir="${VS.ui.textDir(r.clean)}">${VS.ui.mixed(r.clean)}</p>
           ${r.tips.length ? html`<p class="hint">${r.tips.join(" ")} (Fixed in the saved copy.)</p>` : ""}
           <p class="hint">${r.unsure
             ? "Kept as you wrote it. It may have a mistake, so Recall won't use it — write another one later."
@@ -67,13 +67,13 @@
                      ${p.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.found}</span><small>you wrote</small></span>` : ""}
                      ${p.fixed ? html`<span class="usage-right">${icon("check", "icon-sm")}<span>${p.fixed}</span><small>your sentence, fixed</small></span>
                        ${fixPasses(p.fixed) ? html`<button class="btn btn-tonal write-use-fix" type="button" data-action="use-fix" data-fix="${p.fixed}">Use this sentence</button>` : ""}` : ""}
-                     <span class="usage-why">${VS.ui.mixed(p.text)}</span>`
+                     <span class="usage-why" dir="${VS.ui.textDir(p.text)}">${VS.ui.mixed(p.text)}</span>`
               : p.grammar
               ? html`<span class="usage-kind">${p.grammar.label}</span>
                      ${p.grammar.found ? html`<span class="usage-wrong">${icon("x", "icon-sm")}<span>${p.grammar.found}</span><small>you wrote</small></span>` : ""}
                      ${p.grammar.fixes.length ? html`<span class="usage-right">${icon("check", "icon-sm")}<span>${p.grammar.fixes.join(" / ")}</span></span>` : ""}
-                     <span class="usage-why">${p.text}</span>`
-              : html`<span>${VS.ui.mixed(p.text)}</span>`}</li>`)}
+                     <span class="usage-why" dir="auto">${p.text}</span>`
+              : html`<span dir="${VS.ui.textDir(p.text)}">${VS.ui.mixed(p.text)}</span>`}</li>`)}
         </ul>
         ${r.canKeep ? html`<p class="hint write-keep">Sure it's right? A checker can be wrong too.
           <button class="link-btn" type="button" data-action="keep">Keep it anyway</button>
