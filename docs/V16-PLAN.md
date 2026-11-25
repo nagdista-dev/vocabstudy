@@ -234,8 +234,8 @@ origin, not a bar control. Only the popover is bright.
       `node mcp/test.js`.
 - [x] Browser pass at 320 / 360 / 390 / 768 / 1024 / 1280 in Light and
       Night, reduced motion, 1.25× text, keyboard focus.
-- [ ] Commit and push; confirm the Pages workflow.
-- [ ] Send the Arabic report.
+- [x] Commit and push; confirm the Pages workflow.
+- [x] Send the Arabic report.
 
 ## Acceptance criteria
 
@@ -314,4 +314,6 @@ Filled after the browser pass.
   in `<bdi dir="ltr">`; an English-first trap line stayed `ltr` with the
   Arabic chip isolated. Both read in the right order on screen.
 - **Build.** `tools/build.py`, `tools/check.py` and `node mcp/test.js` pass;
-  the site was checked locally at every width in the matrix.
+  the site was checked locally at every width in the matrix. Commit
+  `7500c11` is on `main`; the “Publish site” workflow completed and the live
+  site served the new bar, tabs and More rows at 360px.
