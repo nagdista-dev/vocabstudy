@@ -138,12 +138,10 @@
 
 /* ── Word rows ──────────────────────────────────────────────────
    One grouped card with hairline dividers reads faster than 24 floating
-   cards. The summary is the entry's title. Opening it turns the row into
-   a word page: how to say it, what it means, the sentence and a way to
-   practise it — then the learner's own memory of the word, and a quiet
-   record of where it is in the schedule.
-   Phone: two summary lines (word + Arabic, then one quiet meta line).
-   Desktop: word + meta on the left, Arabic on the right, badges, chevron. */
+   cards. Every row is one button: tapping it opens the word card over
+   the list, while the list itself stays exactly where it was.
+   Phone: two lines (word + Arabic, then one quiet meta line).
+   Desktop: word + meta on the left, Arabic on the right, chevron. */
 .word-list {
   display: grid; gap: 0;
   background: var(--surface);
@@ -159,35 +157,33 @@
 
 .word-row { background: var(--surface); border: 0; border-top: 1px solid var(--line); border-radius: 0; }
 .word-row:first-child { border-top: 0; }
-.word-row[open] { position: relative; }
-.word-row > summary {
+.word-row-open {
   display: grid; grid-template-columns: fit-content(42%) minmax(0, 1fr) 20px;
   grid-template-areas: "word ar chev" "meta meta chev";
   align-items: center; column-gap: var(--s-4); row-gap: 0;
-  min-height: 58px; padding: 9px var(--s-4);
-  cursor: pointer; list-style: none;
+  width: 100%; min-height: 58px; padding: 9px var(--s-4);
+  font: inherit; color: inherit; text-align: start; cursor: pointer;
   transition: background var(--fast);
 }
-.word-row > summary::-webkit-details-marker { display: none; }
-@media (hover: hover) { .word-row > summary:hover { background: var(--surface-hover); } }
-.word-row[open] .word-row-word b { font-size: 1.0625rem; }
+.word-row-open:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; border-radius: 0; }
+@media (hover: hover) {
+  .word-row-open:hover { background: var(--surface-hover); }
+  .word-row-open:hover .word-row-chev { transform: translateX(2px); }
+}
 .word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
 .word-row-word b {
   min-width: 0; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* A closed row is a single scannable line, like a spine on a shelf: long
-   Arabic is clipped with an ellipsis and comes back in full when the row
-   opens. Opening is the learner asking to read it. */
+/* A row is a single scannable line, like a spine on a shelf: long Arabic
+   is clipped with an ellipsis and comes back in full in the word card.
+   Opening the card is the learner asking to read it. */
 .word-row-ar {
   grid-area: ar; min-width: 0; text-align: left;
   color: var(--ink-2); font-size: 1.02rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .word-row-ar.hint { font-size: var(--text-sm); }
-.word-row[open] .word-row-word b,
-.word-row[open] .word-row-ar { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-.word-row[open] .word-row-ar { max-width: none; }
 /* One status treatment at every width: a dot by the word and the word
    "New / Learning / Mastered" leading the meta line (V3.8). */
 .word-row-dot {
@@ -210,57 +206,17 @@
 .word-row-state[data-s="mastered"] { color: var(--good); }
 .word-row-sep { margin-inline: 3px; color: var(--line-strong); }
 .word-row-chev { grid-area: chev; color: var(--ink-3); transition: transform var(--fast); }
-.word-row[open] .word-row-chev { transform: rotate(90deg); }
 
-/* ── The open word (v10 final redesign) ──────────────────────────
-   Short and calm. Always in view: how it sounds (+ one ⋯ menu), what it
-   means, one example, and one thin line for where it stands in memory.
-   Everything else — mistakes, your sentences, goes-with, sound tips, your
-   note — waits behind one row of small buttons, one section at a time.
-   One reading column at every width. */
-/* The open word opens in place, inside the list's own frame: no second
-   border and shadow around it (a card in a card). The rule above it and a
-   firmer rule under it mark where it starts and ends. */
-.word-row[open] { margin: 0; border-radius: 0; box-shadow: none; background: var(--surface); }
-.word-row[open] + .word-row { border-top-color: var(--line-strong); }
-.word-row-body {
-  container: word-entry / inline-size;
-  padding: 0 var(--s-4) var(--s-4);
-  background: var(--surface);
-  text-align: start;
-}
+/* ── The word's reading column ──────────────────────────────────
+   The card itself lives in views/word-card.css. These pieces are the
+   word's own: the meaning, the example, the memory line, the note and
+   the edit form — the same at every width. */
 .word-entry { display: grid; gap: var(--s-3); min-width: 0; text-align: start; overflow-wrap: anywhere; }
 /* Boxes span the card so every right edge lines up; only running text keeps a
    comfortable line length. */
 .word-definition, .word-example { max-width: 68ch; }
 .word-entry > * { min-width: 0; }
 
-/* Sound + tools: the pronunciation capsule on the left; Edit and Delete in
-   view on the right, so managing a word is one tap, never a hidden menu. */
-.word-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-width: 0; }
-.word-sound-main { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
-.word-sound-ipa { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-2); min-width: 0; }
-.word-sound-ipa .ipa { font-size: 1rem; color: var(--ink-2); }
-.word-tools { display: inline-flex; align-items: center; gap: var(--s-1); flex: none; }
-.word-tool {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-width: var(--tap); height: 40px; padding: 0 var(--s-3);
-  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);   /* the app's button shape */
-  color: var(--ink-2); font: inherit; font-size: var(--text-xs); font-weight: 600; cursor: pointer;
-  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);
-}
-.word-tool .icon { width: 16px; height: 16px; }
-.word-tool:hover { border-color: var(--line-strong); background: var(--surface-hover); color: var(--ink); }
-.word-tool-edit:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
-.word-tool-delete { width: 40px; padding: 0; color: var(--ink-3); }
-.word-tool-delete:hover, .word-tool-delete:focus-visible { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); }
-.word-tool:active { transform: scale(.96); }
-@media (pointer: coarse) { .word-tool { height: var(--tap); } .word-tool-delete { width: var(--tap); } }
-/* A narrow card: Edit keeps its icon and lets its label go, the capsule keeps the IPA. */
-@container word-entry (max-width: 340px) {
-  .word-tool-edit span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .word-tool-edit { width: 40px; padding: 0; }
-}
 /* Reset to new: a quiet icon at the end of the memory line. */
 .word-reset {
   display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; margin: -7px -6px -7px 0;
@@ -316,32 +272,26 @@
 .word-memory .ruler-mini.is-compact li.is-now { background: var(--mark); }
 .word-memory-score { margin-inline-start: auto; color: var(--ink-3); font-size: var(--text-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* More: one row of small buttons; the open one shows its section under the row */
-.word-secs { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.word-sec {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 var(--s-3);
-  border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface);
-  color: var(--ink-2); font: inherit; font-size: var(--text-xs); font-weight: 600; text-decoration: none; cursor: pointer;
-}
-.word-sec .icon { width: 14px; height: 14px; color: var(--ink-3); }
-.word-sec b { min-width: 18px; padding: 0 5px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--ink-2); font-size: var(--text-badge); text-align: center; line-height: 18px; }
-.word-sec:hover { border-color: var(--line-strong); color: var(--ink); }
-.word-sec[aria-expanded="true"] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
-.word-sec[aria-expanded="true"] .icon { color: var(--brand); }
-.word-panel { display: grid; gap: var(--s-3); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
-.word-panel[hidden] { display: none; }
-.word-panel .usage { max-width: none; }
-.word-panel .mine { margin: 0; }
-.word-panel .note textarea { background: var(--surface); }
 .word-write { justify-self: start; }
 .word-related { gap: 2px; }
 .word-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .word-edit { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
 .word-edit .is-wide { grid-column: 1 / -1; }
+/* One mistake, kept apart from the facts of the word: it is advice, not data. */
+.word-edit-mistake {
+  margin: 0; padding: var(--s-3); min-width: 0;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2);
+}
+.word-edit-mistake legend {
+  padding: 0 6px; font-size: var(--text-xs); font-weight: 700; color: var(--ink-2);
+}
+.word-edit-mistake legend .hint { font-weight: 400; }
+.word-edit-mistake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+@media (max-width: 599px) { .word-edit-mistake-grid { grid-template-columns: 1fr; } }
 
 @media (max-width: 1023px) {
-  .word-row > summary {
+  .word-row-open {
     grid-template-columns: minmax(0, 1fr) auto 16px;
     grid-template-areas: "word ar chev" "meta meta chev";
     min-height: 58px; padding: 8px 14px; column-gap: 10px;
@@ -361,24 +311,12 @@
   .word-row-freq { white-space: nowrap; }
   .word-row-ar { text-align: end; }
   .word-row-note { display: none; }
-  .word-row-body { padding: 0 var(--s-4) var(--s-4); }
   .word-row-chev { align-self: center; }
 }
-@media (max-width: 599px) {
-  /* An opened row is being read, not scanned: the meaning gets the full
-     width and wraps instead of staying a clipped side column. */
-  .word-row[open] > summary {
-    grid-template-columns: minmax(0, 1fr) 16px;
-    grid-template-areas: "word chev" "ar chev" "meta chev";
-    align-items: start; row-gap: 1px;
-  }
-  .word-row[open] .word-row-ar { text-align: start; }
-  .word-row[open] .word-row-chev { align-self: center; }
-}
-/* At 320 with Larger text even an ordinary word runs out of room beside its
-   meaning. Give the headword the whole line and put the Arabic underneath. */
 @media (max-width: 374px) {
-  .word-row > summary {
+  /* At 320 with Larger text even an ordinary word runs out of room beside its
+     meaning. Give the headword the whole line and put the Arabic underneath. */
+  .word-row-open {
     grid-template-columns: minmax(0, 1fr) 16px;
     grid-template-areas: "word chev" "ar chev" "meta chev";
     align-items: start; row-gap: 1px; padding-block: 10px;
@@ -419,7 +357,7 @@
   .lib-filter-btn .lib-filter-label { display: inline; }
 }
 @media (min-width: 600px) {
-  .word-row > summary { min-height: 58px; }
+  .word-row-open { min-height: 58px; }
 }
 @media (max-width: 599px) {
   .word-edit { grid-template-columns: 1fr; }
@@ -454,23 +392,8 @@
 .filter-more[open] .filter-more-chev { transform: rotate(90deg); }
 .filter-more .lib-panel-grid { margin-top: var(--s-2); }
 
-/* An opened word scrolls up to sit just under the app bar, not behind it (app.js toggle). */
+/* A row reached by search scrolls clear of the app bar. */
 .word-row { scroll-margin-top: calc(var(--bar-h) + var(--s-2)); }
-
-
-/* ── The open word's header (v10 final) ──────────────────────────
-   Opening a row turns its line into the page title: the word large in the
-   word face, the Arabic on its own line beneath — not two small labels. */
-.word-row[open] > summary {
-  grid-template-columns: minmax(0, 1fr) 20px;
-  grid-template-areas: "word chev" "ar chev" "meta chev";
-  row-gap: 4px; padding-block: var(--s-4) var(--s-3);
-}
-.word-row[open] .word-row-word b { font-size: clamp(1.45rem, 1.2rem + 1vw, 1.85rem); font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
-.word-row[open] .word-row-dot { margin-top: .62em; width: 8px; height: 8px; }
-.word-row[open] .word-row-ar { max-width: none; justify-self: start; text-align: left; color: var(--ink); font-size: 1.2rem; line-height: 1.5; }   /* under the word, not across the card */
-.word-row[open] .word-row-ar.hint { font-size: var(--text-sm); color: var(--ink-3); }
-.word-row[open] .word-row-meta { white-space: normal; }
 
 .word-edit .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
 
@@ -483,46 +406,15 @@
 @container word-entry (max-width: 420px) {
   .word-memory .word-memory-score { display: none; }     /* the ruler says it; the numbers wait in the tooltip */
 }
-.word-secs { gap: 6px; }
-.word-sec { padding: 0 10px; }
 /* Nothing empty takes space in the card: the other-meanings slot and the
    examples list only exist once they have something to show. */
 .word-entry > .meanings:empty { display: none; }
-/* The section buttons: one row, never a second line — on a narrow card the row
-   scrolls sideways (fading at the edge), like any app's filter chips. */
-.word-secs {
-  flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
-  margin-inline: calc(var(--s-4) * -1); padding-inline: var(--s-4);
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--s-4), #000 calc(100% - 28px), transparent);
-          mask-image: linear-gradient(to right, transparent 0, #000 var(--s-4), #000 calc(100% - 28px), transparent);
-}
-.word-secs::-webkit-scrollbar { display: none; }
-.word-sec { flex: none; }
-/* An open section is just its content — no frame around a framed box. */
-.word-panel { padding: 0; border: 0; background: none; }
-.word-panel.word-related, .word-panel[data-panel="note"] { padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); }
 .word-entry .met, .word-entry .word-check { max-width: none; width: 100%; }   /* every box ends on the card's edge */
 
-/* An open word never outgrows its card, on any phone: every part may shrink,
-   long words and Arabic phrases wrap, and the button row scrolls inside itself. */
-.word-row, .word-row-body, .word-entry, .word-entry > :not(.word-secs) { min-width: 0; max-width: 100%; }
-.word-row[open] { overflow: clip; }
-.word-row-body { overflow-wrap: anywhere; }
-
-/* ── The open word, refined (v11.4) ─────────────────────────────────
-   Pronunciation is one capsule (speaker · IPA · stress), the two small
-   links share one style and sit against what they belong to, and spacing
-   follows one rhythm: tight inside a group, wider between groups. */
-.word-entry { gap: var(--s-4); }
-.word-sound-main {
-  display: inline-flex; align-items: center; gap: var(--s-2);
-  padding: 3px var(--s-3) 3px 3px; border-radius: var(--r-pill); background: var(--surface-2);
-}
-.word-sound-main .speak-btn { width: 36px; height: 36px; min-width: 36px; min-height: 36px; background: var(--surface); color: var(--brand); box-shadow: var(--shadow-1); }
-/* Playing: the speaker fills with the accent (it used to keep the white face and turn its icon white). */
-.word-sound-main .speak-btn.is-speaking { background: var(--brand); color: var(--on-brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.word-sound-main .ipa { font-size: var(--text-sm); color: var(--ink-2); }
-@media (pointer: coarse) { .word-sound-main .speak-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; } }
+/* The word's parts never outgrow the card: long words and Arabic phrases
+   wrap, and the ruler steps aside on a narrow card. */
+.word-entry { container: word-entry / inline-size; gap: var(--s-4); min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.word-entry > * { min-width: 0; max-width: 100%; }
 
 .word-lead { display: grid; gap: 2px; justify-items: start; }
 .word-other, .word-ex-tools .more-ex .link-btn {
@@ -549,7 +441,8 @@
 /* Edit word: with "Fill it in with AI" open, the fields step aside — the AI box,
    then Save / Cancel. Close the panel to see (and change) every field. */
 .word-edit:has(.ai-fill[open]) > .form-field,
-.word-edit:has(.ai-fill[open]) > .sense-pick { display: none; }
+.word-edit:has(.ai-fill[open]) > .sense-pick,
+.word-edit:has(.ai-fill[open]) > .word-edit-mistake { display: none; }
 /* On a phone the menus open from the toolbar's edge, so a wide one never leaves the screen. */
 @media (max-width: 599px) {
   .lib-actions { position: relative; }
@@ -557,40 +450,8 @@
   .lib-modes-menu { width: min(320px, calc(100vw - 2 * var(--gutter))); }
 }
 
-/* ── Focus on the open word (v12) ─────────────────────────────────
-   Opening a word is a moment of study: the card lifts (one soft shadow
-   and a firm hairline), and everything else stays where it is but steps
-   back to 45% — still readable, still one tap away (hover brings a row
-   back to 85%), never hidden. No blur, no filters: opacity only. The
-   card settles at one place under the top bar (app.js openRow). */
-.word-row, .home-main > *, .home-rail, .word-list > .btn {
-  transition: opacity var(--base) var(--ease), box-shadow var(--base) var(--ease);
-}
-.word-list:has(> .word-row[open]) { overflow: visible; }
+/* ── Rows stay still ───────────────────────────────────────────────
+   A word now opens in its own dialog, so the list never moves, dims or
+   reflows. The first and last rows keep the card's rounded corners. */
 .word-list > .word-row:first-child { border-top-left-radius: calc(var(--r-lg) - 1px); border-top-right-radius: calc(var(--r-lg) - 1px); }
 .word-list > .word-row:last-child { border-bottom-left-radius: calc(var(--r-lg) - 1px); border-bottom-right-radius: calc(var(--r-lg) - 1px); }
-.word-list > .word-row[open] {
-  position: relative; z-index: 1; border-radius: var(--r-lg);
-  box-shadow: 0 0 0 1px var(--line-strong), 0 22px 48px -22px rgb(var(--shadow-rgb) / .38);
-}
-.word-list:has(> .word-row[open]) > .word-row:not([open]),
-.word-list:has(> .word-row[open]) > .btn,
-.home-main:has(.word-row[open]) > :not(:has(.word-row[open])),
-.home-grid:has(.word-row[open]) > .home-rail { opacity: .45; }
-@media (hover: hover) {
-  .word-list:has(> .word-row[open]) > .word-row:not([open]):hover,
-  .home-main:has(.word-row[open]) > :not(:has(.word-row[open])):hover,
-  .home-grid:has(.word-row[open]) > .home-rail:hover { opacity: .85; }
-}
-/* Closing: the body fades and rises a little, then the card folds (app.js closeRow). */
-.word-row.is-closing > .word-row-body { animation: row-out 150ms var(--ease) forwards; }
-@keyframes row-out { to { opacity: 0; transform: translateY(-4px); } }
-@media print {
-  .word-list > .word-row[open] { box-shadow: none; }
-  .word-list:has(> .word-row[open]) > *, .home-main > *, .home-rail { opacity: 1 !important; }
-}
-
-/* Share from a word's page: a square tool beside Edit and Delete (views/share.js). */
-.word-tool-share { width: 40px; padding: 0; color: var(--ink-3); text-decoration: none; }
-.word-tool-share:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
-@media (pointer: coarse) { .word-tool-share { width: var(--tap); } }

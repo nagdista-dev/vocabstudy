@@ -104,7 +104,7 @@
             ${extra(w)}
           </div>
           ${w.example
-            ? foot("translate", "Tap a word you don't know to translate or keep it")
+            ? foot("translate", "Tap a dotted word to translate or keep it")
             : foot("volume", "Read it, listen, say it once")}
         </div>
       </div>`;

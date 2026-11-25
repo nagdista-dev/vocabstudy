@@ -386,59 +386,66 @@ with 22-letter words and long Arabic meanings:
 - Week strips shorten "Today" to "Now" at ≤360px so seven labels never collide;
   charts use the same 2xs labels.
 
-## The word page (an open library row)
+## The word page (a dialog over the list)
 
-The summary is the entry's title; opening it turns the row into a page in a
-learner's notebook, not a stack of labelled cards.
+A word row opens the whole word in one native `<dialog>`; the row itself stays
+in place underneath. The page behind is inert, keeps its scroll, and dims
+under a plain scrim. On a computer the dialog is a centred 760px page
+(max 88dvh); on a phone it rises from the bottom as a 92dvh sheet with rounded
+top corners and safe-area padding. Opening puts focus on the dialog; Esc, the
+close button and the backdrop close it; focus returns to the row that asked.
 
-- **Summary.** Headword, Arabic beside it on wide screens, status/type/level/
-  frequency on a quiet second line. Badges and the chevron sit at the end.
-- **Reading column.** One sound strip (speaker, IPA, stress, a `Sound tips`
-  disclosure), the meaning as the largest text, a quiet `Other meanings` link,
-  the example as an italic pull quote with a highlighter rule, and one tools
-  row: `Hear the sentence` left, `More examples` right. The primary
-  `Write a sentence` action follows.
-- **More examples.** The list opens under the quote, inside the same hairline:
-  each sentence is one block of text, never broken into flex fragments, with a
-  quiet speaker at its end; the Tatoeba credit closes the block, indented with
-  the sentences.
-- **Focus while open (v12).** Opening a word keeps it under the finger while
-  the open one folds, then settles it at one place under the top bar (8px from
-  the top on phones). The card lifts (hairline + one soft shadow); every other
-  row and section stays visible at 45% (85% under the pointer) — opacity only.
-  Closing fades the body (150ms) before it folds; Esc closes it.
+- **A cream head, white chapters.** The status line, hero and the learner's own
+  paper blocks share one cream tint. The chapters between them stay white, and
+  a single hairline divides chapters — no boxes, no stacked cards.
+- **Hero.** The headword in the spelling face (`--font-word`), letter by
+  letter, with one highlighter swipe under it; the speaker sits beside it. The
+  IPA follows, then type · level · frequency as one quiet line without chips.
+  The Arabic meaning is a right-aligned margin note under "In Arabic" — the
+  two languages are separated by whitespace, not a rule.
+- **Tags and actions.** Tags are plain `#hashtags` with a dotted underline;
+  `Edit`, `Share` and `Delete` are three equal text actions (icon + word,
+  44px) with no fills. Delete turns red only on hover/focus.
+- **Bilingual chapter heads.** `Meaning · المعنى`, `In context · في السياق`,
+  `Memory · الذاكرة`, `Your sentences · جُملك`, `Good to know · للمعرفة`. The
+  English title uses the display face; the Arabic gloss is small and quiet.
+- **Meaning and the example.** The definition is the largest reading text.
+  `Other meanings` is a quiet brand link. The example is a serif italic pull
+  quote without a bar; one quiet row under it holds `Hear it` and
+  `More examples`. More examples open in the same chapter with a thin rule at
+  the start, each with its own speaker, and end with the Tatoeba credit.
+- **Paper for what the learner owns.** `In context`, `Memory` and `My note`
+  share the same cream paper. The note is a ruled line, not a grey input inside
+  a card, and saves when it loses focus. `Your sentences` lists their own lines
+  with a quiet remove; `Write a sentence` is a brand-coloured underlined link.
+- **Memory.** A memory hook, when the AI wrote one, is a paper note at the top
+  of this chapter: the bulb in the margin, a quiet label, and the sentence in
+  the learner's language. Under it, a six-stop ruler (1 · 3 · 7 · 14 · 30 · 60)
+  drawn as circles on a connecting line: past stops are soft yellow, the
+  reached day is solid, the days ahead are quiet. `Next recall today` and
+  `right · wrong` sit above and below it; `Reset to new` is a quiet icon at
+  the end, with Undo.
+- **Good to know.** Mistakes, sounds and related words. A mistake written for
+  this meaning comes first under `Mistake to avoid`; a trap may show only the
+  rule when that is all the AI knew. Related words are read, not pressed:
+  `Goes with`, `Similar` and `Opposite` are plain words separated by a middle
+  dot. The block becomes two columns at a 620px container; on a phone it stays
+  one.
+- **Words inside the text.** Every English word in a definition, example or
+  context is dotted-underlined at rest; a tap opens the small word card inside
+  the dialog — Arabic senses, speaker, and `Keep in wallet` — without leaving
+  the word. Esc closes that card first, then the page.
+- **One page at a time.** Opening another word replaces the dialog's contents;
+  leaving the route, following a tag or Share closes it before the next screen
+  is drawn. Native modal behavior keeps Tab inside; a small handler closes the
+  reverse-Tab gap so Shift+Tab from the first control reaches the note.
 - **Nothing is removed without a yes.** Delete a word, Reset to new, remove a
-  sentence, remove from the wallet, Clear wallet: each asks in the app's sheet
-  (Cancel holds the focus), and Undo follows.
-- **Opens in place.** The open word stays inside the list's frame: no second
-  border or shadow around it (a card in a card); a firmer rule closes it.
-- **Manage in view.** The sound capsule (speaker · IPA · stress) on the left;
-  `Edit` (pen + label, icon-only under a 340px card) and `Delete` (trash icon,
-  red only on hover/focus) on the right — no ⋯ menu. Delete is one tap and
-  the toast's Undo restores the word with its progress, note and sentences.
-  `Reset to new` is a quiet icon at the end of the memory line, with Undo.
-- **Playing.** Every speaker fills with the accent while it plays (the capsule
-  speaker and the More examples speakers kept their own face and lost the
-  icon); the example's speaker takes the soft accent.
-- **Other meanings.** One panel like a learner's dictionary page: rows divided
-  by hairlines, each numbered; the part of speech a quiet chip on the left and
-  the Arabic on the right edge (physical `margin-left: auto` — the Arabic is
-  `dir=rtl`), the definition, the example in italic, then `Use this meaning`.
-  The meaning in use wears the accent's soft fill, a filled number and "In use".
-  Under 420px the numbers step aside. The Meet card uses the same list.
-- **One card at a time.** Opening a word closes the one already open, so the
-  library is always one reading column rather than a long stack of half-read
-  cards. `toggle` does not bubble; the listener runs in the capture phase.
-- **Memory.** Personal blocks wear the highlighter tint (where you met the
-  word); the learner's own sentences follow, then teacher corrections when the
-  word has a usage trap, then `Goes with` / `Similar`.
-- **The margin.** On a wide card (container query, 620px) the learner's note,
-  tags, next recall, memory box and three plain text actions sit beside the
-  reading column behind a hairline. On a phone they follow it.
-- **No labels for their own sake.** No all-caps section labels and no nested
-  white cards: type size, spacing and the highlighter carry the order. Actions
-  are underlined text or plain text with hairline separators, not rows of
-  ghost buttons.
+  sentence: each asks in the app's confirm sheet, Cancel holds focus, and the
+  toast's Undo restores the word with its progress and note.
+- **Night and motion.** The cream head becomes `--surface-2` at night; the
+  highlighter becomes a solid band with dark ink. The sheet animates only
+  transform (`card-rise` / `card-up`), never opacity; reduced motion turns the
+  entrance off and forced colors keep every control legible.
 - **Empty states keep the same order.** `No definition yet. Add a definition`,
   `Find a meaning`, `No example yet. Add an example`, then `More examples`.
 
@@ -450,11 +457,36 @@ provider cards — ChatGPT with the OpenAI knot, Claude with its starburst, and
 `Copy prompt` for Gemini or any chat. Each mark sits in its own soft tile
 (mint for ChatGPT, terracotta for Claude; both lighten at night); at 480px the
 provider cards lose their second line, under 720px they become two cards with
-Copy full width. The answer lands as one card per word with its Arabic, tags,
-definition and example in editable fields, a status chip that explains what
-will happen, and one checkbox to skip it. A word already kept with another
-meaning says **Another meaning** and keeps its own Arabic and tags; a duplicate
-says **In your library** and folds its fields away.
+Copy full width.
+
+**One card per meaning.** The prompt asks for complete cards, not a word and a
+translation. A lone word with no context may come back with up to four blocks —
+`play` = يلعب (games and sport) and `play` = يعزف (music) are two cards — but a
+sentence, an Arabic meaning or a sense label locks the answer to exactly one
+meaning. Several typed words get one block each (two only for a very common
+second meaning); a topic gets one per word; Arabic gets one per item. Every
+block carries the same lines: `word`, `sense`, `arabic`, `definition`,
+`example`, `type`, `level`, `ipa`, `synonyms`, `antonyms`, `goes with`,
+`memory`, a `wrong` / `right` / `why` mistake, and `tags`. A dash (`—`) means
+"nothing honest to say", never an empty field to fill with invention.
+
+**Checking the answer.** The answer lands as a numbered card per meaning, with
+the sense label beside the headword and type · level · IPA underneath. The
+first fields are the meaning itself — Arabic, sense, definition, example,
+type, level, IPA, tags — and `More of the card` starts the second half:
+similar, opposite, word partners, memory hook, and a boxed `Mistake to avoid`
+with Wrong / Right / Why. Each card has one checkbox; its status chip says
+**Ready**, **Another meaning**, **Needs Arabic**, **In your library** or
+**Repeated**. A word already kept with another Arabic meaning says **Another
+meaning** and keeps its fields; a duplicate of the same headword and the same
+Arabic says **In your library** and folds them away. The sense label names a
+meaning, but the Arabic is what decides whether two cards are the same word.
+
+**Copy is never a dead end.** `Copy prompt` uses the Clipboard API, falls back
+to the old selection trick, and if the browser blocks both, opens a sheet with
+the prompt already selected plus `Try again`. It never writes the prompt into
+the learner's answer box. In Edit, a parsed answer fills the fields, closes the
+AI panel and puts focus on the first filled field so Save is in reach.
 
 ## The wallet (`#/wallet`)
 

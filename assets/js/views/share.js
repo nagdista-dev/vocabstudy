@@ -295,8 +295,8 @@
      with the same Arabic meaning. Without Arabic on either side there is no
      way to tell two meanings apart, so it counts as yours. */
   const mine = (w) => {
-    const base = VS.wordKey(w.word, w.sense);
-    const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === base);
+    const head = VS.wordKey(w.word);
+    const twins = VS.words.filter((x) => VS.wordKey(x.word) === head);
     if (!twins.length) return false;
     const ar = VS.arKey(w.arabic);
     return !ar || twins.some((x) => VS.arKey(x.arabic) === ar);

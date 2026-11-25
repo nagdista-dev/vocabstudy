@@ -17,10 +17,14 @@
 (function () {
   "use strict";
 
-  const FIELDS = ["word", "definition", "example", "type", "level", "ipa", "arabic", "tags", "synonyms", "context", "source"];
+  /* A headerless table keeps its old order (word first, then the details);
+     the newer fields live at the end so a table pasted last year still reads
+     the same. With a header, any of these names works in any order. */
+  const FIELDS = ["word", "definition", "example", "type", "level", "ipa", "arabic", "tags", "synonyms",
+                  "context", "source", "sense", "antonyms", "goes", "memory", "mistakeWrong", "mistakeRight", "mistakeWhy"];
   const ALIASES = {
     word: ["word", "filename", "file", "name", "term", "headword", "vocab", "vocabulary", "english", "phrase", "expression"],
-    sense: ["sense", "meaningnote"],
+    sense: ["sense", "meaningnote", "meaninglabel", "senselabel"],
     definition: ["definition", "def", "meaning", "explanation", "englishmeaning", "description"],
     example: ["example", "examples", "sentence", "examplesentence", "usage"],
     type: ["type", "category", "pos", "partofspeech", "class", "wordtype", "kind"],
@@ -29,6 +33,12 @@
     arabic: ["arabic", "ar", "translation", "arabicmeaning", "meaningar", "عربي", "المعنى", "الترجمة"],
     tags: ["tags", "tag", "labels", "label", "group", "list", "topic"],
     synonyms: ["synonyms", "synonym", "similar", "similarwords"],
+    antonyms: ["antonyms", "antonym", "opposites", "opposite", "oppositewords", "عكس"],
+    goes: ["goeswith", "goes", "collocations", "collocation", "wordpartners", "partners"],
+    memory: ["memory", "memoryhook", "memorytrick", "mnemonic", "note"],
+    mistakeWrong: ["wrong", "wrongsentence", "commonmistake", "mistake", "خطأ"],
+    mistakeRight: ["right", "rightsentence", "correct", "correctsentence", "الصواب"],
+    mistakeWhy: ["why", "reason", "rule", "explanation", "السبب"],
     context: ["context", "wheremet", "whereimetit", "sentenceimet", "metin", "originalsentence"],
     source: ["source", "from", "where"],
   };
@@ -97,7 +107,9 @@
     return { rows, columns, hasHeader, delimiter };
   }
 
-  const blank = () => ({ word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "", tags: "", synonyms: "", context: "", source: "" });
+  const blank = () => ({ word: "", sense: "", definition: "", example: "", type: "", level: "", ipa: "", arabic: "",
+    tags: "", synonyms: "", antonyms: "", goes: "", memory: "", mistakeWrong: "", mistakeRight: "", mistakeWhy: "",
+    context: "", source: "" });
 
   /** Clean one word and list what's missing. Used by tables, files and the one-word form. */
   function checkWord(w, line) {

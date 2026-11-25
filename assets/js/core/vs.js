@@ -23,10 +23,12 @@
      twice, and progress belongs to the word, not to when it was added.
 
      Each word: { id, word, sense, type, level, ipa, definition, example,
-                  arabic, synonyms: [], tags: [], added: "YYYY-MM-DD",
+                  arabic, synonyms: [], antonyms: [], tags: [], added: "YYYY-MM-DD",
                   context, source,   where the learner met it (the sentence, and where)
                   mine: [],          sentences the learner wrote with it ("Use it")
                   goes: [],          the words it goes with ("heavy rain"), from auto-fill
+                  memory,            one memory hook, often from the AI
+                  mistake: { wrong, right, why }   one mistake worth avoiding
                   audio: { us, uk }  recordings from the dictionary (auto-fill) }
      Every word is the learner's own: the app ships with none. They are
      saved by core/store.js and join VS.words at start-up. */
@@ -63,18 +65,49 @@
   /** The id a stored word already has (library entries keep their variant). */
   VS.idOf = (w) => VS.wordId(w && w.word, w && w.sense, w && w.variant);
 
-  /** The first word with this headword (and sense), whatever its Arabic meaning. */
-  VS.findWord = (word, sense) => {
-    const base = VS.wordKey(word, sense);
-    return VS.words.find((w) => VS.wordKey(w.word, w.sense) === base) || null;
+  /** The first word with this headword, whatever its sense or Arabic meaning. */
+  VS.findWord = (word) => {
+    const head = VS.wordKey(word);
+    return VS.words.find((w) => VS.wordKey(w.word) === head) || null;
   };
 
-  /** The word with this headword AND this Arabic meaning — the duplicate test. */
+  /** The word with this headword AND this Arabic meaning — the duplicate test.
+      A sense label only names a meaning; the Arabic is what tells two apart. */
   VS.findSameWord = (word, sense, arabic) => {
-    const base = VS.wordKey(word, sense);
+    const head = VS.wordKey(word);
     const ar = VS.arKey(arabic);
-    return VS.words.find((w) => VS.wordKey(w.word, w.sense) === base && VS.arKey(w.arabic) === ar) || null;
+    return VS.words.find((w) => VS.wordKey(w.word) === head && VS.arKey(w.arabic) === ar) || null;
   };
+
+  /** "—", "n/a", "none"… mean the AI had nothing to give, not a value. */
+  const NO_VALUE = /^(?:—|–|-|n\/?a|none|null|nil|nothing|لا يوجد|لا|غير متاح|<.*>)$/i;
+
+  /**
+   * One mistake worth avoiding, cleaned: { wrong, right, why } or null.
+   * Accepts the AI's object, its three flat fields, or one line written as
+   * "what learners say → the fix". The AI is allowed to know only the rule
+   * (why) or only the two sentences; nothing is invented to fill a gap.
+   */
+  VS.cleanMistake = function (m) {
+    if (!m) return null;
+    if (typeof m === "string") {
+      const line = m.trim();
+      if (!line || NO_VALUE.test(line)) return null;
+      const parts = line.split(/\s*(?:→|->|=>)\s*/);
+      return parts.length === 2
+        ? { wrong: parts[0].trim().slice(0, 300), right: parts[1].trim().slice(0, 300), why: "" }
+        : { wrong: "", right: "", why: line.slice(0, 300) };
+    }
+    const take = (v) => { const s = String(v == null ? "" : v).trim(); return !s || NO_VALUE.test(s) ? "" : s.slice(0, 300); };
+    const wrong = take(m.wrong), right = take(m.right), why = take(m.why);
+    return wrong || right || why ? { wrong, right, why } : null;
+  };
+  /** The mistake fields as they arrive from the AI parser or a table row. */
+  VS.mistakeOf = (r) => VS.cleanMistake({
+    wrong: r.mistakeWrong || (r.mistake && typeof r.mistake === "object" ? r.mistake.wrong : ""),
+    right: r.mistakeRight || (r.mistake && typeof r.mistake === "object" ? r.mistake.right : ""),
+    why: r.mistakeWhy || (typeof r.mistake === "string" ? r.mistake : r.mistake && r.mistake.why),
+  });
 
   /**
    * Put words in the library. Returns { added, skipped, needsArabic }:
@@ -90,6 +123,7 @@
       // Type and level get display defaults below; remember whether they were
       // really given, so the store saves only those and auto-fill can fill the rest.
       Object.defineProperty(w, "given", { value: { type: !!raw.type, level: !!raw.level }, enumerable: false });
+      w.sense = String(w.sense || "").trim().slice(0, 60);
       // "Habit (N)": the sense only repeats the word type, which a badge already shows.
       if (/^(n|v|adj|adv|noun|verb|adjective|adverb)\.?$/i.test(w.sense)) w.sense = "";
       w.word = VS.naturalCase(String(w.word).trim(), w.example);
@@ -101,15 +135,25 @@
       w.type = w.type || (/\s/.test(w.word) ? "Phrase" : "Noun");     // until auto-fill knows better
       w.tags = Array.isArray(w.tags) ? w.tags : VS.parseTags(w.tags);
       w.synonyms = Array.isArray(w.synonyms) ? w.synonyms : VS.parseTags(w.synonyms).slice(0, 6);
+      w.antonyms = (Array.isArray(w.antonyms) ? w.antonyms : VS.parseTags(w.antonyms)).slice(0, 4);
+      w.goes = (Array.isArray(w.goes) ? w.goes : VS.parseTags(w.goes)).slice(0, 6);   // collocations: "heavy rain"
+      w.memory = String(w.memory || "").trim().slice(0, 300);
+      w.mistake = VS.cleanMistake(w.mistake || { wrong: w.mistakeWrong, right: w.mistakeRight, why: w.mistakeWhy });
+      delete w.mistakeWrong; delete w.mistakeRight; delete w.mistakeWhy;
       w.context = String(w.context || "").trim();
       w.source = String(w.source || "").trim();
       w.mine = Array.isArray(w.mine) ? w.mine : [];
-      w.goes = Array.isArray(w.goes) ? w.goes : [];          // collocations: "heavy rain"
       w.added = w.added || VS.todayKey();
 
       // The same English word may live twice only when its Arabic meaning differs.
       const same = VS.findSameWord(w.word, w.sense, w.arabic);
       if (same) { out.skipped.push(w); return; }
+      // Without Arabic, a second meaning of the same headword cannot be told
+      // apart from the first — whatever its sense label says.
+      const head = VS.wordKey(w.word);
+      if (!VS.arKey(w.arabic) && VS.words.some((x) => VS.wordKey(x.word) === head)) {
+        out.needsArabic.push(w); return;
+      }
       const base = VS.wordKey(w.word, w.sense);
       const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === base);
       let variant = String(raw.variant || "").trim();

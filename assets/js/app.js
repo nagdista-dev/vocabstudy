@@ -341,7 +341,7 @@
     // app does, and isn't in the middle of adding or reading a word.
     return !isStandalone() && !installedNow && phoneOnly() && !nudgeSnoozed() && VS.roundsDone > 0
       && current && current.name === "library" && VS.allWords().length > 0 && !typing
-      && !document.querySelector("#settings[open], dialog[open], .update-bar, .toast.is-on, .word-row[open]");
+      && !document.querySelector("#settings[open], dialog[open], .update-bar, .toast.is-on");
   }
 
   function removeNudge() {
@@ -660,84 +660,10 @@
     const name = el.dataset.action;
     const handler = (current.view.actions && current.view.actions[name]) || GLOBAL[name];
     if (!handler) return;
-    // A speak button inside a <summary> must not also open/close the row.
+    // A speak button inside a link or a row button must not also follow/open it.
     if (name === "speak") e.preventDefault();
     handler.call(current.view.actions && current.view.actions[name] ? current.view.actions : GLOBAL, el, e);
   });
-
-  // One word open at a time: opening a card closes the one already open,
-  // so the library stays one reading column instead of a long stack.
-  // (toggle does not bubble; a capture listener still hears it.)
-  /* Opening a word is a focus moment (v12): the word opens where the learner
-     tapped it — the one that was open closes without shifting it — then the
-     page settles it at ONE place, just under the top bar, every time. The
-     rest of the page stays visible but steps back (CSS: .word-row[open] and
-     :has()), so the eye stays on the card. Closing fades the card's body out
-     before it folds. Esc closes it; tapping its title closes it too. */
-  const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const barH = () => (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bar-h")) || 64);
-  function settle(row, smooth) {
-    const top = row.getBoundingClientRect().top;
-    const want = (innerWidth < 600 ? 8 : barH() + 12);       // phones: the bar is at the bottom
-    if (Math.abs(top - want) > 4) window.scrollBy({ top: top - want, behavior: smooth && !calm() ? "smooth" : "auto" });
-  }
-  function openRow(row) {
-    const before = row.getBoundingClientRect().top;
-    VS.$$(".word-row[open]").forEach((other) => { if (other !== row) { other.classList.remove("is-closing"); other.open = false; } });
-    row._mine = true;                             // the toggle listener leaves the scrolling to us
-    row.open = true;
-    VS.ui.fillRow(row);
-    // The word stays under the finger while the old one folds away above it…
-    const shift = row.getBoundingClientRect().top - before;
-    if (shift) window.scrollBy({ top: shift, behavior: "auto" });
-    // …then glides to its one place.
-    requestAnimationFrame(() => settle(row, true));
-  }
-  function closeRow(row) {
-    if (row.classList.contains("is-closing")) return;
-    if (calm()) { row.open = false; return; }
-    row.classList.add("is-closing");
-    setTimeout(() => {
-      if (!row.classList.contains("is-closing")) return;
-      row.classList.remove("is-closing");
-      row.open = false;
-      // A long card folded: keep its title in view instead of leaving the learner far below it.
-      const top = row.getBoundingClientRect().top;
-      if (top < barH()) settle(row, false);
-    }, 150);
-  }
-  VS.openRow = openRow;
-  VS.closeRow = closeRow;
-  document.addEventListener("click", (e) => {
-    const summary = e.target.closest(".word-row > summary");
-    if (!summary || e.target.closest("[data-action]")) return;     // a speaker inside the summary keeps its own job
-    e.preventDefault();
-    const row = summary.parentElement;
-    if (row.open) closeRow(row); else openRow(row);
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || e.defaultPrevented) return;
-    if (document.querySelector("dialog[open], .word-pop")) return;           // a sheet or the word card goes first
-    if (/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "")) return;
-    const row = VS.$(".word-row[open]");
-    if (!row) return;
-    closeRow(row);
-    const s = row.querySelector("summary");
-    if (s) s.focus({ preventScroll: true });
-  });
-  document.addEventListener("toggle", (e) => {
-    const row = e.target;
-    if (!row.classList || !row.classList.contains("word-row") || !row.open) return;
-    // Opened by code (a search hit, a refreshed word): build it, one open at a time, and settle it.
-    VS.ui.fillRow(row);
-    VS.$$(".word-row[open]").forEach((other) => { if (other !== row) other.open = false; });
-    hideNudge();                                  // the card must never cover an open word
-    if (row._mine) { row._mine = false; return; }
-    requestAnimationFrame(() => {
-      const top = row.getBoundingClientRect().top;
-      if (top < barH() || top > innerHeight * 0.6) settle(row, true);
-    });
-  }, true);
 
   // Quiz question types (Settings): keep at least one switched on.
   document.addEventListener("change", (e) => {
@@ -767,7 +693,8 @@
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey || VS.$("#settings")?.open) return;
+    // A dialog (settings or a word) owns the keyboard while it is open.
+    if (e.ctrlKey || e.metaKey || e.altKey || VS.$("#settings")?.open || VS.$("#wordCard")?.open) return;
     const tag = document.activeElement && document.activeElement.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
     if (tag === "BUTTON" && (e.key === "Enter" || e.key === " ")) return;   // let the focused button act
@@ -813,7 +740,7 @@
   // How common each word is: a 113 KB list, loaded after the first screen is drawn.
   // Redrawn only if the learner isn't in the middle of something (an open word, a focused field).
   setTimeout(() => VS.frequency.load().then(() => {
-    const busy = VS.$(".word-row[open]") || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
+    const busy = VS.$("#wordCard[open]") || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
     if (current && current.name === "library" && VS.frequency.ready && !busy) render();
   }), 0);
   readShare();

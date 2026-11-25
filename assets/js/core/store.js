@@ -557,16 +557,22 @@
       const next = Object.assign({}, prev, changes);
       delete next.check;                 // edited by hand: the learner has checked it
       if ("context" in changes && changes.context !== prev.context) delete next.fromContext;
+      if ("mistake" in changes) {
+        const mistake = VS.cleanMistake(changes.mistake);
+        if (mistake) next.mistake = mistake; else delete next.mistake;
+      }
       // One English word, one Arabic meaning. A different Arabic meaning is a
-      // second word; no Arabic cannot tell two meanings apart.
+      // second word; no Arabic cannot tell two meanings apart. The sense label
+      // names a meaning but never makes the same Arabic a different word.
       const base = VS.wordKey(next.word, next.sense);
       const ar = VS.arKey(next.arabic);
-      const twins = VS.words.filter((x) => x.id !== id && VS.wordKey(x.word, x.sense) === base);
-      const same = twins.find((x) => VS.arKey(x.arabic) === ar);
+      const sameWord = VS.words.filter((x) => x.id !== id && VS.wordKey(x.word) === VS.wordKey(next.word));
+      const same = sameWord.find((x) => VS.arKey(x.arabic) === ar);
       if (same) return { error: "duplicate", word: same };
-      if (twins.length && !ar) return { error: "needsArabic", word: twins[0] };
+      if (sameWord.length && !ar) return { error: "needsArabic", word: sameWord[0] };
       // The primary word keeps the base id while its headword stays the same;
       // a word taking over another headword (or already a variant) gets one.
+      const twins = sameWord.filter((x) => VS.wordKey(x.word, x.sense) === base);
       const headChanged = VS.wordKey(prev.word, prev.sense) !== base;
       next.variant = twins.length && (prev.variant || headChanged) ? ar : "";
       const newId = VS.wordId(next.word, next.sense, next.variant);
@@ -873,10 +879,15 @@
   /** A word as it is stored: only the fields you typed (ids are derived). */
   function plain(w) {
     const out = {};
-    ["word", "sense", "variant", "type", "level", "ipa", "definition", "example", "arabic", "synonyms", "context", "source",
+    ["word", "sense", "variant", "type", "level", "ipa", "definition", "example", "arabic",
+     "synonyms", "antonyms", "context", "source", "memory", "mistake",
      "mine", "unsure", "audio", "goes", "tags", "added", "auto", "partial", "tries"].forEach((k) => {
       if (w.given && (k === "type" || k === "level") && !w.given[k]) return;     // a display default, not your choice
-      if (w[k] !== undefined && w[k] !== "" && !(Array.isArray(w[k]) && !w[k].length)) out[k] = w[k];
+      const v = w[k];
+      if (v == null || v === "") return;
+      if (Array.isArray(v) && !v.length) return;
+      if (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length) return;
+      out[k] = v;
     });
     return out;
   }

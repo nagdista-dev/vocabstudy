@@ -282,13 +282,10 @@
     });
   }
 
-  /** Show a word that's already in the library: its search, with its page open. */
+  /** Show a word that's already in the library: its search, with its card open. */
   function openWord(w) {
     const hash = "#/words?q=" + encodeURIComponent(w.word);
-    const show = () => setTimeout(() => {
-      const row = VS.$(`.word-row[data-id="${CSS.escape(w.id)}"]`);
-      if (row) { row.open = true; VS.ui.fillRow(row); }
-    }, 60);
+    const show = () => setTimeout(() => VS.openWordCard(w.id), 60);
     if (location.hash === hash) { VS.app.render(); show(); }
     else { window.addEventListener("hashchange", show, { once: true }); location.hash = hash; }
   }

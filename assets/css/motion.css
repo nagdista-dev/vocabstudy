@@ -73,6 +73,10 @@
 @keyframes sheet-up { from { opacity: 0; transform: translateY(28px); } }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
 @keyframes open-in { from { opacity: 0; transform: translateY(-4px); } }
+/* The word card arrives by moving, never by fading: a page that is already
+   opaque reads faster, and a paused frame can never look see-through. */
+@keyframes card-rise { from { transform: translateY(14px) scale(.992); } }
+@keyframes card-up { from { transform: translateY(36px); } }
 
 .sheet[open] { animation: sheet-in var(--base) var(--ease); }
 .sheet[open]::backdrop { animation: fade-in var(--fast) var(--ease); }
@@ -83,7 +87,11 @@
   animation: menu-in var(--fast) var(--ease) both;
 }
 .lib-more.is-up[open] .lib-more-menu { transform-origin: bottom center; }
-.word-row[open] .word-row-body,
+.word-card[open] .word-card-shell { animation: card-rise var(--base) var(--ease); }
+.word-card[open]::backdrop { animation: fade-in var(--fast) var(--ease); }
+@media (max-width: 599px) {
+  .word-card[open] .word-card-shell { animation-name: card-up; }
+}
 .word-traps[open] .traps,
 .add-more[open] .word-form { animation: open-in var(--base) var(--ease) both; }
 

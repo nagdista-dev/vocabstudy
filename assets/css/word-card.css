@@ -1,0 +1,411 @@
+/* word-card.css — one word, opened over the list.
+   A native <dialog> in the top layer: the list behind keeps its place, the
+   card traps focus while it is open, Esc closes it, and focus returns to the
+   row that asked for it (views/shared.js).
+
+   The card is a page from a learner's notebook: a cream bilingual hero, one
+   hairline between chapters, a serif example, and the learner's own words on
+   the same paper. On a phone it is a bottom sheet; on a computer a centred
+   page. */
+
+/* The page behind never scrolls under the card. */
+html.word-card-open,
+html.word-card-open body { overflow: hidden; }
+
+.word-card {
+  margin: auto;
+  width: min(760px, calc(100vw - 40px));
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  overflow: visible;
+}
+/* Only an open dialog is laid out: a bare .word-card rule would show the
+   closed one, because it would beat the browser's dialog:not([open]). */
+.word-card[open] { display: flex; }
+.word-card:focus,
+.word-card:focus-visible { outline: none; }
+.word-card::backdrop { background: rgb(10 14 25 / .5); }
+
+.word-card-shell {
+  /* Cream paper for the head, the hero and the learner's blocks; the chapters
+     between them stay white so the page breathes. At night the same material
+     becomes the quiet raised surface, never a glowing cream. */
+  --card-paper: color-mix(in srgb, var(--mark-soft) 38%, var(--surface));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  max-height: min(88dvh, 920px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 34px 90px -32px rgb(var(--shadow-rgb) / .55), 0 8px 26px -14px rgb(var(--shadow-rgb) / .3);
+  overflow: hidden;
+}
+:root[data-theme="night"] .word-card-shell { --card-paper: var(--surface-2); }
+
+/* ── Head: where the word stands, and one way out ───────────────── */
+.word-card-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  min-height: 54px;
+  padding: 6px 8px 6px var(--s-5);
+  background: var(--card-paper);
+}
+/* A status line, not a pill: a dot, a word, and air. */
+.word-card-state {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--text-xs); font-weight: 600; color: var(--ink-2);
+}
+.word-card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); }
+.word-card-state[data-s="learning"] .word-card-dot { background: var(--mark); }
+.word-card-state[data-s="mastered"] { color: var(--good); }
+.word-card-state[data-s="mastered"] .word-card-dot { background: var(--good); }
+.word-card-close { flex: none; width: var(--tap); height: var(--tap); color: var(--ink-2); }
+.word-card-close .icon { width: 18px; height: 18px; }
+.word-card-close:hover { background: var(--surface); color: var(--ink); }
+
+/* ── Body: one reading column, scrolled under a fixed head ──────── */
+.word-card-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.word-card-body:focus { outline: none; }
+/* The card's own spacing lives on the hero and the chapters; the shared
+   .word-entry gap would double it. */
+.word-card .word-entry { gap: 0; }
+
+/* ── Hero: the word and its Arabic, side by side ────────────────── */
+.word-card-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(8rem, .55fr);
+  grid-template-areas: "main ar" "foot foot";
+  column-gap: var(--s-5); row-gap: var(--s-4);
+  padding: var(--s-5);
+  background: var(--card-paper);
+}
+.word-card-hero-main { grid-area: main; min-width: 0; }
+.word-card-title-row { display: flex; align-items: center; justify-content: flex-start; gap: var(--s-3); }
+/* The word being learned wears the spelling face, never the display face:
+   the learner is reading it letter by letter. */
+.word-card-title {
+  flex: 0 1 auto; min-width: 0;
+  font-family: var(--font-word); font-weight: 700;
+  font-size: clamp(2.1rem, 1.6rem + 1.7vw, 2.7rem);
+  line-height: 1.06;
+  letter-spacing: -.025em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+/* One bold mark: a highlighter swipe under the word itself. */
+.word-card-title > span:first-child {
+  padding-inline: .06em; margin-inline: -.06em;
+  background-image: linear-gradient(transparent 58%, color-mix(in srgb, var(--mark) 82%, transparent) 58%);
+  background-repeat: no-repeat; background-size: 100% 100%;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+:root[data-theme="night"] .word-card-title > span:first-child {
+  background-image: none; background-color: var(--mark); color: var(--on-mark);
+  border-radius: 4px;
+}
+.word-card-title .sense {
+  font-family: var(--font-body); font-size: .48em; font-weight: 500;
+  letter-spacing: 0; color: var(--ink-3); white-space: nowrap;
+}
+.word-card-title-row .speak-btn { margin-top: 2px; }
+.word-card-sound { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; margin-top: 5px; }
+.word-card-sound .ipa { font-size: 1.05rem; }
+/* Type, level and frequency in one quiet line — a dot between facts, not a
+   chip for every one. */
+.word-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; margin-top: 10px; }
+.word-card-meta > * + *::before {
+  content: "·"; margin-inline: 9px; color: var(--line-strong); font-weight: 400;
+}
+.word-card-type { font-size: var(--text-sm); font-weight: 600; color: var(--ink-2); }
+.word-card-level { font-size: var(--text-sm); font-weight: 700; color: var(--lvl-b); }
+.word-card-meta .lvl-a { color: var(--lvl-a); }
+.word-card-meta .lvl-c { color: var(--lvl-c); }
+
+/* The Arabic column: a margin note on the paper, not a decorated slab.
+   English reads from the left, Arabic from the right; whitespace is the seam. */
+.word-card-ar {
+  grid-area: ar; align-self: center;
+  display: grid; justify-items: end; gap: 1px;
+  min-width: 0;
+  text-align: end;
+}
+.word-card-ar-label { font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); }
+.word-card-ar p {
+  max-width: none; margin: 0;
+  color: var(--ink); font-size: 1.6rem; font-weight: 500; line-height: 1.55;
+  overflow-wrap: break-word;
+}
+.word-card-ar-empty {
+  font-family: var(--font-body); font-size: var(--text-sm); font-style: normal;
+  font-weight: 400; line-height: 1.5; color: var(--ink-3); text-align: end;
+}
+
+.word-card-hero-foot { grid-area: foot; display: grid; gap: var(--s-3); min-width: 0; }
+/* Tags are index slips, not a row of pills: the # is the shape. */
+.word-card-tags { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.word-card-tags .tag {
+  min-height: 0; padding: 0; border: 0; border-radius: 0;
+  background: none; color: var(--ink-3);
+  font-size: var(--text-xs); font-weight: 600;
+  text-decoration: underline 1px dotted color-mix(in srgb, var(--ink-3) 46%, transparent);
+  text-underline-offset: 4px;
+}
+.word-card-tags .tag:hover { background: none; color: var(--brand); text-decoration-color: var(--brand); }
+.word-card-hero .word-check { margin: 0; }
+
+/* Three quiet text actions, one line, one height. The icon and the word are
+   the affordance; the underline is the hover, not a permanent box. */
+.word-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4); }
+.word-card-act {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap); padding: 0;
+  border: 0; background: none; color: var(--ink-2);
+  font: 600 var(--text-sm)/1 var(--font-body); text-decoration: none; cursor: pointer;
+}
+.word-card-act .icon { width: 15px; height: 15px; }
+.word-card-act:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.word-card-edit { color: var(--ink); }
+.word-card-share:hover { color: var(--brand); }
+.word-card-delete { color: var(--ink-3); }
+.word-card-delete:hover { color: var(--bad); }
+
+/* ── Chapters: one hairline between them, nothing else ──────────── */
+.word-card-sec {
+  display: grid; gap: var(--s-3);
+  padding: var(--s-5);
+  border-top: 1px solid var(--line);
+}
+.word-card-sec-title {
+  display: flex; align-items: baseline; gap: 0;
+  margin: 0;
+  font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;
+  letter-spacing: -.015em; color: var(--ink);
+}
+.word-card-sec-en { min-width: 0; }
+.word-card-sec-en::after {
+  content: "·"; margin-inline: 10px;
+  color: var(--line-strong); font-weight: 400;
+}
+/* The same chapter, named again in Arabic: a small bilingual margin. */
+.word-card-sec-ar {
+  font-family: var(--font-arabic); font-size: .92rem; font-weight: 500;
+  letter-spacing: 0; color: var(--ink-3);
+}
+.word-card-sec .word-check { margin: 0; }
+
+/* The meaning and its example read as one chapter. */
+.word-card-sec[data-sec="meaning"] .word-definition {
+  max-width: 64ch; margin: 0;
+  font-size: var(--text-md); font-weight: 500; line-height: 1.6;
+  text-wrap: pretty;
+}
+.word-card-sec[data-sec="meaning"] .word-example { margin-top: var(--s-2); }
+.word-card-sec[data-sec="meaning"] .word-ex-tools { margin-top: 2px; padding-inline-start: 0; }
+
+/* The example is a pull quote from a dictionary: serif, italic, no bar. */
+.word-card .word-example { display: block; }
+.word-card .word-example blockquote {
+  flex: none; min-width: 0; margin: 0; padding: 0; border: 0;
+  font-family: var(--font-ipa); font-size: 1.1rem; font-style: italic;
+  line-height: 1.6; color: var(--ink); text-wrap: balance;
+}
+/* One quiet row under the quote: listen, then more examples. */
+.word-card .word-ex-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--s-4); }
+.word-card .word-hear {
+  display: inline-flex; align-items: center; gap: 6px;
+  width: auto; min-width: 0; height: auto; min-height: var(--tap);
+  padding: 0; border: 0; border-radius: 0; background: none;
+  color: var(--ink-3); font: 600 var(--text-xs)/1 var(--font-body); cursor: pointer;
+}
+.word-card .word-hear .icon { width: 14px; height: 14px; }
+.word-card .word-hear:hover { background: none; color: var(--brand); }
+.word-card .word-hear.is-speaking { background: var(--brand-soft); color: var(--brand); border-radius: 6px; }
+.word-card .word-ex-tools .more-ex .link-btn {
+  min-height: var(--tap); padding: 0; color: var(--ink-3);
+  font-size: var(--text-xs); font-weight: 600;
+}
+.word-card .word-ex-tools .more-ex .link-btn:hover { color: var(--brand); }
+.word-card .word-ex-tools .more-ex-items {
+  margin-top: var(--s-2); padding-inline-start: 14px;
+  border-inline-start: 1px solid var(--line);
+}
+.word-card .word-other { color: var(--brand); }
+
+/* ── Memory: a way to remember, then the learner's journey ─────── */
+/* The AI's hook is written on the same paper as the rest of Memory, but
+   with the bulb in the margin: a note beside the card, not a badge on it. */
+.word-memory-hook {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-2) var(--s-3);
+  margin: 0 0 var(--s-3); padding: var(--s-3) var(--s-4);
+  border-inline-start: 2px solid var(--mark);
+  background: color-mix(in srgb, var(--mark-soft) 45%, transparent);
+}
+.word-memory-hook > .icon { width: 16px; height: 16px; margin-top: 3px; color: var(--on-mark-soft); }
+.word-memory-hook span {
+  display: block; font-size: var(--text-2xs); font-weight: 700;
+  letter-spacing: .04em; color: var(--ink-3);
+}
+.word-memory-hook p { margin: 2px 0 0; font-size: var(--text-sm); line-height: 1.55; color: var(--ink); }
+.word-card .word-memory {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3);
+  margin: 0; padding: var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--card-paper);
+}
+.word-memory-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-2); }
+.word-memory-label { font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); }
+.word-memory-head b { font-size: var(--text-md); font-weight: 700; color: var(--ink); }
+.word-memory-note { margin: 0; font-size: var(--text-sm); color: var(--ink-2); }
+.word-memory-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.word-memory-score { font-size: var(--text-xs); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.word-card .word-memory .word-reset { margin: -6px -6px -6px 0; }
+
+/* The ruler becomes a journey: six stops on one line, the day reached lit,
+   the day ahead quiet. */
+.word-card .word-memory .ruler-mini {
+  position: relative; width: 100%; max-width: none; gap: 0;
+}
+.word-card .word-memory .ruler-mini::before {
+  content: ""; position: absolute; z-index: 0;
+  inset-inline: calc(100% / 12); top: 17.5px; height: 1px;
+  background: var(--line-strong);
+}
+.word-card .word-memory .ruler-mini li {
+  position: relative; z-index: 1; justify-self: center;
+  width: 36px; min-height: 36px; height: 36px;
+  border-radius: 50%; border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--ink-3);
+}
+.word-card .word-memory .ruler-mini li.is-past {
+  background: var(--mark-soft); border-color: var(--mark); color: var(--on-mark-soft);
+}
+.word-card .word-memory .ruler-mini li.is-now {
+  background: var(--mark); border-color: var(--mark); color: var(--on-mark);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mark) 30%, transparent);
+}
+.word-card .word-memory .ruler-mini li.is-now b { font-weight: 700; }
+
+/* ── Good to know: secondary notes in two columns ───────────────── */
+.word-card-grid { display: grid; gap: var(--s-4); align-items: start; }
+.word-card-block { display: grid; gap: var(--s-2); min-width: 0; }
+.word-card-subtitle {
+  margin: 0;
+  font-family: var(--font-body); font-size: var(--text-xs); font-weight: 700;
+  color: var(--ink-2);
+}
+.word-card-block .rel,
+.word-card-block .rel-chips { justify-content: flex-start; }
+.word-card-block .rel { gap: 2px 8px; }
+.word-card-block .rel-chips { gap: 2px 10px; }
+/* Related words are read, not pressed: plain words separated by a dot. */
+.word-card-block .rel-chip {
+  display: inline; padding: 0; border: 0; border-radius: 0;
+  background: none; color: var(--ink); font-weight: 500;
+}
+.word-card-block .rel-chip + .rel-chip::before {
+  content: "·"; margin-inline-end: 10px; color: var(--line-strong); font-weight: 400;
+}
+.word-card-block .traps,
+.word-card-block .usage { max-width: none; }
+.word-card-block .usage-trap { background: var(--card-paper); }
+@container word-entry (min-width: 620px) {
+  .word-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Your sentences and the note: the learner's own page ─────────── */
+.word-card .mine ul { gap: var(--s-2); }
+.word-card .mine li { line-height: 1.55; }
+.word-card .mine li > span { min-width: 0; }
+.word-write {
+  display: inline-flex; align-items: center; gap: 6px;
+  justify-self: start; min-height: var(--tap);
+  color: var(--brand); font-size: var(--text-sm); font-weight: 600;
+  text-decoration: underline; text-decoration-color: var(--brand-soft);
+  text-underline-offset: 4px;
+}
+.word-write .icon { width: 15px; height: 15px; }
+.word-write:hover { color: var(--brand-hover); text-decoration-color: var(--brand); }
+
+/* "Where you met it" and the note share one paper material. */
+.word-card .met {
+  max-width: none;
+  padding: var(--s-4);
+  border: 0; border-radius: var(--r-md);
+  background: var(--card-paper);
+}
+.word-card .met figcaption { color: var(--ink-3); }
+.word-card .met blockquote { font-size: var(--text-md); }
+.word-card-note .note {
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--card-paper);
+}
+.note-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-2); }
+.word-card-note .note-label { color: var(--ink); }
+.word-card-note .note-label .icon {
+  width: 16px; height: 16px; padding: 0; border-radius: 0;
+  background: none; color: var(--ink-3);
+}
+.note-ar {
+  font-family: var(--font-arabic); font-size: var(--text-xs); font-weight: 500;
+  color: var(--ink-3);
+}
+/* Writing on the page: one ruled line, not a grey field inside a card. */
+.word-card-note textarea {
+  min-height: 48px; max-height: 180px;
+  padding: 6px 0; border: 0; border-bottom: 1px solid var(--line-strong);
+  border-radius: 0; background: transparent; box-shadow: none;
+}
+.word-card-note textarea:hover { border-color: var(--ink-2); background: transparent; }
+.word-card-note textarea:focus {
+  border-color: var(--brand); background: transparent; box-shadow: none;
+}
+
+/* ── Edit, in the same frame as the card ────────────────────────── */
+.word-edit-wrap { display: grid; gap: var(--s-4); padding: var(--s-5); }
+.word-edit-head h2 { font-size: var(--text-xl); }
+.word-edit-head h2 span { color: var(--ink-2); font-weight: 600; }
+.word-edit-head .hint { margin-top: 2px; }
+
+/* ── Phone: a sheet from the thumb, one column ──────────────────── */
+@media (max-width: 599px) {
+  .word-card { width: 100%; max-width: none; margin: auto 0 0; }
+  .word-card-shell {
+    max-height: 92dvh;
+    border-bottom: 0;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation-name: card-up;
+  }
+  .word-card-head { min-height: 52px; padding: 4px 6px 4px var(--gutter); }
+  .word-card-hero {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "main" "ar" "foot";
+    row-gap: var(--s-3);
+    padding: var(--s-4) var(--gutter) var(--s-4);
+  }
+  .word-card-ar {
+    justify-self: stretch; max-width: none;
+    justify-items: end;
+    padding-top: var(--s-1);
+  }
+  .word-card-ar p { font-size: 1.45rem; }
+  .word-card-ar-empty { font-size: var(--text-sm); }
+  .word-card-title { font-size: clamp(1.95rem, 1.4rem + 3vw, 2.25rem); }
+  .word-card-sec { padding: var(--s-4) var(--gutter); }
+  .word-card .word-memory { padding: var(--s-3); }
+  .word-card .word-memory .ruler-mini li { width: 34px; min-height: 34px; height: 34px; }
+  .word-card .word-memory .ruler-mini::before { top: 16.5px; }
+  .word-card .met { padding: var(--s-3) var(--s-4); }
+  .word-card-note .note { padding: var(--s-3) var(--s-4); }
+  .word-edit-wrap { padding: var(--s-4) var(--gutter) var(--s-5); }
+}
+@media (max-width: 374px) {
+  .word-card-actions { gap: 12px; }
+  .word-card-act { gap: 5px; }
+}

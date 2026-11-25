@@ -351,11 +351,18 @@
     const forms = bases(id);
     const parts = id.split(" ");
     const verbParticle = parts.length === 2 && PARTICLE.test(parts[1]);
-    return TRAPS.filter((t) => t.keys.some((k) =>
+    // The AI can write the one mistake this particular meaning invites. It
+    // comes first: it was written for this card, not for every word like it.
+    const own = VS.cleanMistake(w.mistake);
+    const custom = own ? [{
+      keys: [id], kind: "custom", label: "Mistake to avoid", soft: false, bad: null,
+      wrong: own.wrong, right: own.right, why: own.why,
+    }] : [];
+    return custom.concat(TRAPS.filter((t) => t.keys.some((k) =>
       forms.has(k) ||
       (k.includes(" ") && (id === k || id.startsWith(k + " ") || bases(parts[0]).has(k.split(" ")[0]) && id.includes(" " + k.split(" ").slice(1).join(" ")))) ||
       (verbParticle && bases(parts[0]).has(k))
-    )).slice(0, 3);
+    ))).slice(0, 3);
   };
 
   /**

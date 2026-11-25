@@ -480,6 +480,16 @@ body:has(.activity) .update-bar { display: none; }       /* one bar at a time at
 .sheet-head h2 { font-size: var(--text-lg); }
 .sheet-head .icon-btn { margin-inline-start: auto; }
 .sheet-body { padding: var(--s-4) var(--s-5) var(--s-5); display: grid; gap: var(--s-5); }
+/* When a copy button is blocked: the text is already selected, so it reads
+   like something to take, not another field to fill in. */
+.copy-sheet-body { gap: var(--s-3); }
+.copy-text {
+  width: 100%; min-height: 160px; max-height: 40dvh;
+  padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--paper, var(--surface-2)); color: var(--ink);
+  font: 400 var(--text-sm)/1.5 var(--font-body); resize: vertical; overflow: auto;
+}
+.copy-text:focus { outline: 2px solid var(--brand); outline-offset: 2px; }
 @media (max-width: 599px) {
   .sheet-head { padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); }
   .sheet-body { padding: var(--s-3) var(--s-4) var(--s-5); gap: var(--s-4); }
@@ -647,16 +657,20 @@ kbd {
 }
 .flash-similar { justify-self: center; max-width: 100%; }
 
-/* A word inside an example: tap it to keep it in the wallet. It reads as
-   text, not a link; the hint under the sentence tells you it is tappable. */
+/* A word inside an example: tap it to keep it in the wallet. The faint
+   dotted underline is the standing invitation (touch has no hover); the
+   hint under the sentence says what a tap does. */
 .tap-line { display: inline; }
 .tap-word {
   display: inline; padding: 1px 0; border: 0; background: none; color: inherit;
   font: inherit; line-height: inherit; text-align: inherit; cursor: pointer;
-  text-decoration: underline 1px dotted transparent; text-underline-offset: 3px;
+  text-decoration: underline 1px dotted color-mix(in srgb, var(--ink-3) 46%, transparent);
+  text-underline-offset: 3px; text-decoration-skip-ink: auto;
   -webkit-tap-highlight-color: transparent;
 }
-.tap-word:hover { background: var(--surface-2); text-decoration-color: var(--line-strong); border-radius: 3px; }
+.tap-word:hover, .tap-word:focus-visible {
+  background: var(--brand-soft); text-decoration-color: var(--brand); border-radius: 3px;
+}
 .tap-word.is-kept { color: var(--brand); text-decoration-color: var(--brand-soft); }
 .tap-hint {
   display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0;

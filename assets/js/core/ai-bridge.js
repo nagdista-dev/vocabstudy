@@ -18,8 +18,9 @@
   const PORT = 47821;
   const BASE = "http://127.0.0.1:" + PORT;
   const MAX_ADD = 50;
-  const EDITABLE = ["arabic", "definition", "example", "type", "level", "ipa", "synonyms", "tags", "context", "source"];
-  const LISTS = ["synonyms", "tags"];
+  const EDITABLE = ["sense", "arabic", "definition", "example", "type", "level", "ipa",
+                    "synonyms", "antonyms", "goes", "memory", "tags", "context", "source"];
+  const LISTS = ["synonyms", "antonyms", "goes", "tags"];
 
   let source = null;
   let state = "off";
@@ -43,20 +44,25 @@
   function find(args) {
     const word = text(args.word, 80);
     if (!word) throw new Error("Give the word.");
-    const sense = text(args.sense, 60);
+    const sense = text(args.sense, 60).toLowerCase();
     const ar = text(args.arabic, 120);
-    const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense));
+    // Every meaning of the word, whatever its sense label. The Arabic is what
+    // separates them; a sense only helps pick one when the Arabic is omitted.
+    const matches = VS.words.filter((x) => VS.wordKey(x.word) === VS.wordKey(word));
+    if (!matches.length) throw new Error("“" + word + "” isn't in the library. Use add_words to add it.");
+    if (ar) {
+      const w = matches.find((x) => VS.arKey(x.arabic) === VS.arKey(ar));
+      if (!w) throw new Error("“" + word + "” has no meaning “" + ar + "” here. Give the exact arabic, or add it with add_words.");
+      return w;
+    }
+    const bySense = sense ? matches.filter((x) => String(x.sense || "").toLowerCase() === sense) : [];
     // Two meanings cannot be told apart without the Arabic: never guess, or
     // an update would land on the wrong meaning.
-    if (!ar && twins.length > 1) {
-      throw new Error("“" + word + "” has " + twins.length + " meanings here — give arabic to choose one.");
+    if (bySense.length === 1) return bySense[0];
+    if (matches.length > 1) {
+      throw new Error("“" + word + "” has " + matches.length + " meanings here — give arabic to choose one.");
     }
-    const w = ar ? twins.find((x) => VS.arKey(x.arabic) === VS.arKey(ar)) : twins[0];
-    if (!w) {
-      if (ar) throw new Error("“" + word + "” has no meaning “" + ar + "” here. Give the exact arabic, or add it with add_words.");
-      throw new Error("“" + word + "” isn't in the library. Use add_words to add it.");
-    }
-    return w;
+    return matches[0];
   }
 
   function brief(w) {
@@ -107,12 +113,16 @@
       return Object.assign(brief(w), {
         definition: w.definition || undefined, example: w.example || undefined, ipa: w.ipa || undefined,
         synonyms: w.synonyms && w.synonyms.length ? w.synonyms : undefined,
+        antonyms: w.antonyms && w.antonyms.length ? w.antonyms : undefined,
+        goes_with: w.goes && w.goes.length ? w.goes : undefined,
+        memory_hook: w.memory || undefined,
+        mistake_to_avoid: w.mistake || undefined,
         where_they_met_it: w.context ? { sentence: w.context, source: w.source || undefined } : undefined,
         their_sentences: w.mine && w.mine.length ? w.mine.map((m) => ({ text: m, may_have_a_mistake: VS.sentenceUnsure(w, m) || undefined })) : undefined,
         their_note: VS.store.note(w.id) || undefined,
         needs_a_check: w.check ? w.check.kind : undefined,
         recall: e.box ? { step: e.box + " of 6", next: e.due, right: e.right, wrong: e.wrong } : "not studied yet",
-        common_mistakes: VS.usageTraps(w).map((t) => ({ wrong: t.wrong, right: t.right })),
+        common_mistakes: VS.usageTraps(w).map((t) => ({ kind: t.label, wrong: t.wrong || undefined, right: t.right || undefined, why: t.why || undefined })),
       });
     },
 
@@ -127,19 +137,28 @@
         if (isArabic(word)) { skipped.push({ word, reason: "That's Arabic: give the English word." }); return; }
         const sense = text(it.sense, 60);
         const ar = text(it.arabic, 120);
-        // One English word, one Arabic meaning. A different meaning is a second word.
-        if (VS.findSameWord(word, sense, ar) || fresh.some((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense) && VS.arKey(x.arabic) === VS.arKey(ar))) {
+        // One English word, one Arabic meaning. A different meaning is a second
+        // word, and the sense label only names it.
+        if (VS.findSameWord(word, sense, ar) || fresh.some((x) => VS.wordKey(x.word) === VS.wordKey(word) && VS.arKey(x.arabic) === VS.arKey(ar))) {
           skipped.push({ word, reason: ar ? "already in the library with this meaning" : "already in the library" }); return;
         }
-        const twins = VS.words.filter((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense))
-          .concat(fresh.filter((x) => VS.wordKey(x.word, x.sense) === VS.wordKey(word, sense)));
-        if (twins.length && !VS.arKey(ar)) {
+        const sameHead = VS.words.filter((x) => VS.wordKey(x.word) === VS.wordKey(word))
+          .concat(fresh.filter((x) => VS.wordKey(x.word) === VS.wordKey(word)));
+        if (sameHead.length && !VS.arKey(ar)) {
           skipped.push({ word, reason: "the word is already here with another meaning — give its arabic to keep this one" }); return;
         }
         const w = { word, tags: list(it.tags) };
-        if (sense) w.sense = sense;
-        EDITABLE.forEach((k) => { if (!LISTS.includes(k) && it[k]) w[k] = text(it[k], k === "context" ? 300 : 400); });
+        EDITABLE.forEach((k) => {
+          if (LISTS.includes(k) || !it[k]) return;
+          w[k] = text(it[k], k === "context" || k === "memory" ? 300 : 400);
+        });
         if (it.synonyms) w.synonyms = list(it.synonyms).slice(0, 6);
+        if (it.antonyms) w.antonyms = list(it.antonyms).slice(0, 4);
+        if (it.goes) w.goes = list(it.goes).slice(0, 6);
+        const mistake = VS.cleanMistake(it.mistake || {
+          wrong: it.wrong || it.mistakeWrong, right: it.right || it.mistakeRight, why: it.why || it.mistakeWhy,
+        });
+        if (mistake) w.mistake = mistake;
         if (w.arabic && !isArabic(w.arabic)) delete w.arabic;          // a translation that isn't Arabic is noise
         // The app's own dictionaries fill whatever the assistant left out.
         const missing = !w.arabic || !w.definition || !w.example || !w.ipa || !w.type;
@@ -166,8 +185,14 @@
       const changes = {};
       EDITABLE.forEach((k) => {
         if (!(k in c)) return;
-        changes[k] = LISTS.includes(k) ? list(c[k]).slice(0, k === "synonyms" ? 6 : 12) : text(c[k], k === "context" ? 300 : 400);
+        changes[k] = LISTS.includes(k)
+          ? list(c[k]).slice(0, k === "tags" ? 12 : 6)
+          : text(c[k], k === "context" || k === "memory" ? 300 : 400);
       });
+      if ("mistake" in c) {
+        const mistake = VS.cleanMistake(c.mistake);
+        changes.mistake = mistake;                    // null clears it
+      }
       if ("arabic" in changes && !isArabic(changes.arabic)) throw new Error("The Arabic meaning has to be in Arabic.");
       if ("example" in changes && changes.example.split(/\s+/).length > 20) throw new Error("Keep the example short: 20 words or fewer.");
       const note = "note" in c ? text(c.note, 600) : null;

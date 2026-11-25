@@ -45,14 +45,28 @@ const log = (...a) => process.stderr.write("[vocabstudy-mcp] " + a.join(" ") + "
    progress changes: an assistant can help build the library, but the
    learner's memory (the recall schedule) is theirs. */
 const WORD_FIELDS = {
-  arabic: { type: "string", description: "One Arabic meaning, short and Egyptian-friendly. To keep another meaning of the same English word, add it as a second item with its own arabic." },
+  sense: { type: "string", description: "A short label for THIS meaning in 2–4 English words, e.g. 'music' for play = يعزف, or 'games and sport' for play = يلعب. Never just a part of speech. It names the meaning; the Arabic is what keeps two meanings apart." },
+  arabic: { type: "string", description: "One Arabic meaning, short and Egyptian-friendly. To keep another meaning of the same English word, add it as a second item with its own arabic and sense." },
   definition: { type: "string", description: "One simple English definition (learner-dictionary style)." },
-  example: { type: "string", description: "One natural example sentence, 14 words or fewer, that uses the word." },
+  example: { type: "string", description: "One natural example sentence, 14 words or fewer, that uses the word in THIS meaning." },
   type: { type: "string", description: "Part of speech: Noun, Verb, Adjective, Adverb, Phrasal verb, Phrase…" },
   level: { type: "string", description: "CEFR level if known: A1, A2, B1, B2, C1 or C2." },
   ipa: { type: "string", description: "Pronunciation in IPA between slashes, e.g. /ˈbɒrəʊ/." },
-  synonyms: { type: "array", items: { type: "string" }, description: "Up to 6 synonyms." },
-  tags: { type: "array", items: { type: "string" }, description: "Tags such as IELTS, work." },
+  synonyms: { type: "array", items: { type: "string" }, description: "Up to 6 words with the same meaning." },
+  antonyms: { type: "array", items: { type: "string" }, description: "Up to 4 opposites of THIS meaning." },
+  goes: { type: "array", items: { type: "string" }, description: "Up to 6 natural word partners for THIS meaning, e.g. 'heavy rain', 'play the piano'." },
+  memory: { type: "string", description: "One short memory hook for this meaning. Arabic or a mix of Arabic and English is welcome; 12 words or fewer." },
+  mistake: {
+    type: "object",
+    description: "One mistake Arab learners often make with THIS meaning, and its fix. Leave it out when there is nothing specific to say.",
+    properties: {
+      wrong: { type: "string", description: "What a learner may say or write (the wrong sentence)." },
+      right: { type: "string", description: "What a native speaker says." },
+      why: { type: "string", description: "One short line explaining the rule; Arabic is welcome." },
+    },
+    additionalProperties: false,
+  },
+  tags: { type: "array", items: { type: "string" }, description: "1–3 tags that fit THIS word and THIS meaning, e.g. work, travel, emotions." },
   context: { type: "string", description: "The sentence where the learner met the word (their own memory cue)." },
   source: { type: "string", description: "Where they met it: a series, an article, an email…" },
 };
@@ -89,7 +103,7 @@ const TOOLS = [
   },
   {
     name: "add_words",
-    description: "Add new words to the learner's library (up to 50 at once). Give at least the English word; anything you leave out is filled in by the app's own dictionaries. One English word can be kept twice only when its Arabic meaning differs: give arabic for each meaning. The same word with the same Arabic is skipped. The learner sees what was added and can undo it.",
+    description: "Add new words to the learner's library (up to 50 at once). Give at least the English word; anything you leave out is filled in by the app's own dictionaries. Every common meaning should be its own item: play = يلعب is one item and play = يعزف is another, each with its own sense, arabic, example, tags, memory and mistake. One English word can be kept twice only when its Arabic meaning differs. The same word with the same Arabic is skipped. The learner sees what was added and can undo it.",
     inputSchema: {
       type: "object",
       properties: {
@@ -97,8 +111,7 @@ const TOOLS = [
           type: "array", minItems: 1, maxItems: 50,
           items: {
             type: "object",
-            properties: Object.assign({ word: { type: "string", description: "The English word or phrase, base form (borrow, not borrowed)." },
-              sense: { type: "string", description: "Only to tell two meanings apart, e.g. 'river' for bank." } }, WORD_FIELDS),
+            properties: Object.assign({ word: { type: "string", description: "The English word or phrase, base form (borrow, not borrowed)." } }, WORD_FIELDS),
             required: ["word"], additionalProperties: false,
           },
         },
@@ -108,7 +121,7 @@ const TOOLS = [
   },
   {
     name: "update_word",
-    description: "Correct or improve one word that is already in the library (meaning, definition, example, type, tags…). The headword itself can't be renamed here. The learner sees the change and can undo it.",
+    description: "Correct or improve one meaning that is already in the library (sense, meaning, definition, example, type, tags, opposites, word partners, memory, mistake…). Give arabic to choose the right meaning when the word is kept more than once. The headword itself can't be renamed here. The learner sees the change and can undo it.",
     inputSchema: {
       type: "object",
       properties: {
@@ -137,7 +150,11 @@ const INSTRUCTIONS =
   "VocabStudy is a vocabulary app for Arabic-speaking adults learning English. Its data lives only in the learner's " +
   "browser; these tools reach it through the open VocabStudy tab on this computer. Use get_overview first. " +
   "When adding words, give the base form, a short Arabic meaning (Egyptian Arabic is welcome), one simple " +
-  "definition and one short natural example. Never invent where the learner met a word. If a tool says the app " +
+  "definition, one short natural example, the type, level and IPA. Make each card complete: a sense label, " +
+  "similar words, opposites, natural word partners, one memory hook, and one mistake worth avoiding when " +
+  "there is a real one. Give every common meaning its own item (play = يلعب and play = يعزف are two words), " +
+  "each with its own Arabic, example, tags and mistake; never merge two meanings into one card. Never invent " +
+  "where the learner met a word. If a tool says the app " +
   "isn't connected, tell the learner to open VocabStudy in Chrome or Edge and turn on Settings → App & data → AI assistant.";
 
 /* ── The bridge to the browser tab ──────────────────────────────────── */

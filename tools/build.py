@@ -38,6 +38,7 @@ STYLES = [
     "assets/css/views/wallet.css",
     "assets/css/views/share.css",
     "assets/css/views/reset.css",
+    "assets/css/word-card.css",     # the word, opened over the list (a native dialog)
     "assets/css/motion.css",
     "assets/css/system.css",        # the floors: 44px targets, visible focus, one stacking order (v10)
     "assets/css/glass.css",         # the tenth accent: Liquid Glass material

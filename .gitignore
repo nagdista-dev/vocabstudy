@@ -1,6 +1,7 @@
 # Local tooling output — regenerated on demand
 tools/.screenshots/
 tools/qa/
+.playwright-cli/
 __pycache__/
 *.pyc
 

@@ -40,10 +40,10 @@
     rows.forEach((r) => {
       r.issues = r.issues.filter((i) => !["dup", "repeat", "another", "needar"].includes(i.kind));
       if (!r.word) return;
-      const base = VS.wordKey(r.word, r.sense);
+      const head = VS.wordKey(r.word);
       const ar = VS.arKey(r.arabic);
-      const inLib = VS.words.filter((w) => VS.wordKey(w.word, w.sense) === base);
-      const before = seen.get(base) || [];
+      const inLib = VS.words.filter((w) => VS.wordKey(w.word) === head);
+      const before = seen.get(head) || [];
       // A likely typo (core/spelling.js, from the common-words list, nothing sent): a warning, never a block.
       r.issues = r.issues.filter((i) => !i.spell);
       const fix = !r.definition && VS.spelling.local(r.word);
@@ -59,16 +59,21 @@
         r.issues.push({ kind: "another", text: "another meaning — kept as a second word" });
       }
       before.push({ arabic: r.arabic });
-      seen.set(base, before);
+      seen.set(head, before);
     });
     return rows;
   }
   const savable = (rows) => rows.filter((r) => !r.issues.some((i) => ["error", "dup", "repeat", "needar"].includes(i.kind)));
   const clean = (r) => {
     const w = {};
-    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "context", "source"].forEach((k) => { if (r[k]) w[k] = r[k]; });
+    ["word", "sense", "type", "level", "ipa", "definition", "example", "arabic", "context", "source", "memory"]
+      .forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
     w.tags = VS.parseTags(r.tags);
     if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
+    if (r.antonyms) w.antonyms = VS.parseTags(r.antonyms).slice(0, 4);
+    if (r.goes) w.goes = VS.parseTags(r.goes).slice(0, 6);
+    const mistake = VS.mistakeOf(r);
+    if (mistake) w.mistake = mistake;
     return w;
   };
 
@@ -129,8 +134,7 @@
     const t = String(word || "").trim();
     if (!t) { VS.toast("Type a word first."); return ""; }
     if (VS.isArabicTyping(t)) { VS.toast("That's Arabic — switch your keyboard to English."); return ""; }
-    const base = VS.wordKey(t, sense);
-    const twins = VS.words.filter((w) => VS.wordKey(w.word, w.sense) === base);
+    const twins = VS.words.filter((w) => VS.wordKey(w.word) === VS.wordKey(t));
     if (twins.length) {
       const ar = VS.arKey(arabic);
       if (!ar) { VS.toast(`“${twins[0].word}” is already in your library. Add the Arabic meaning of this one to keep another meaning.`); return ""; }
@@ -239,20 +243,50 @@
           <li class="ai-row is-${info.kind} ${on ? "" : "is-off"}" data-ai-item="${i}">
             <label class="ai-row-head">
               <input type="checkbox" data-ai-keep="${i}" ${on ? VS.raw("checked") : ""} ${blocked ? VS.raw("disabled") : ""}>
+              <span class="ai-row-n" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
               <span class="ai-row-title"><b>${VS.cap(r.word)}</b>
-                <span class="ai-row-meta">${[r.type, r.level].filter(Boolean).join(" · ")}</span></span>
+                ${r.sense ? html`<i class="ai-row-sense">${r.sense}</i>` : ""}
+                <span class="ai-row-meta">${[r.type, r.level, r.ipa].filter(Boolean).join(" · ")}</span></span>
               <span class="ai-row-status is-${info.kind}" data-ai-status>${icon(AI_STATUS_ICON[info.kind] || "info", "icon-sm")}${info.text}</span>
             </label>
             ${r.context ? html`<p class="ai-row-context">${icon("book", "icon-sm")}<span>${r.context}</span></p>` : ""}
             <div class="ai-row-fields">
               <label class="ai-field"><span>Arabic</span>
                 <input dir="rtl" lang="ar" data-ai-row="${i}" data-ai-k="arabic" value="${r.arabic || ""}" placeholder="المعنى بالعربية" aria-label="Arabic meaning of ${r.word}"></label>
-              <label class="ai-field"><span>Tags</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="tags" value="${r.tags || ""}" placeholder="work, travel" list="tagList" autocomplete="off" aria-label="Tags for ${r.word}"></label>
+              <label class="ai-field"><span>Sense</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="sense" value="${r.sense || ""}" placeholder="music" aria-label="Sense label for ${r.word}"></label>
               <label class="ai-field is-wide"><span>Definition</span>
                 <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="definition" placeholder="What it means, in simple English" aria-label="Definition of ${r.word}">${r.definition || ""}</textarea></label>
               <label class="ai-field is-wide"><span>Example</span>
                 <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="example" placeholder="A sentence that uses it" aria-label="Example for ${r.word}">${r.example || ""}</textarea></label>
+              <label class="ai-field"><span>Type</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="type" value="${r.type || ""}" placeholder="Verb" aria-label="Type of ${r.word}"></label>
+              <label class="ai-field"><span>Level</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="level" value="${r.level || ""}" placeholder="B1" aria-label="CEFR level of ${r.word}"></label>
+              <label class="ai-field"><span>IPA</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="ipa" value="${r.ipa || ""}" placeholder="/pleɪ/" aria-label="Pronunciation of ${r.word}"></label>
+              <label class="ai-field"><span>Tags</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="tags" value="${r.tags || ""}" placeholder="work, travel" list="tagList" autocomplete="off" aria-label="Tags for ${r.word}"></label>
+              <p class="ai-row-divide is-wide">More of the card</p>
+              <label class="ai-field"><span>Similar</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="synonyms" value="${r.synonyms || ""}" placeholder="perform, compete" aria-label="Similar words to ${r.word}"></label>
+              <label class="ai-field"><span>Opposite</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="antonyms" value="${r.antonyms || ""}" placeholder="stop, finish" aria-label="Opposites of ${r.word}"></label>
+              <label class="ai-field is-wide"><span>Goes with</span>
+                <input dir="auto" data-ai-row="${i}" data-ai-k="goes" value="${r.goes || ""}" placeholder="play the piano, play football" aria-label="Word partners of ${r.word}"></label>
+              <label class="ai-field is-wide"><span>Memory hook</span>
+                <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="memory" placeholder="A way to remember it — Arabic is fine" aria-label="Memory hook for ${r.word}">${r.memory || ""}</textarea></label>
+              <fieldset class="ai-mistake is-wide">
+                <legend>Mistake to avoid <span class="hint">— leave it blank if none</span></legend>
+                <div class="ai-mistake-grid">
+                  <label class="ai-field"><span>Wrong</span>
+                    <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="mistakeWrong" placeholder="What a learner may say" aria-label="A mistake with ${r.word}">${r.mistakeWrong || ""}</textarea></label>
+                  <label class="ai-field"><span>Right</span>
+                    <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="mistakeRight" placeholder="The correct sentence" aria-label="The fix for that mistake">${r.mistakeRight || ""}</textarea></label>
+                  <label class="ai-field is-wide"><span>Why</span>
+                    <input dir="auto" data-ai-row="${i}" data-ai-k="mistakeWhy" value="${r.mistakeWhy || ""}" placeholder="One short line — the rule" aria-label="Why that is the rule"></label>
+                </div>
+              </fieldset>
             </div>
           </li>`;
         })}
@@ -334,7 +368,7 @@
           placeholder="resilient, deadline, take off">${st.ai.words}</textarea></label>`;
   }
   const AI_ONE = {
-    words: ["Your words", "One word, or many — one per line or separated by commas."],
+    words: ["Your words", "One word, or many — one per line or separated by commas. Every common meaning comes back as its own card."],
     topic: ["Your topic", "The AI picks the most useful words about it, at your level."],
     arabic: ["Arabic words", "The AI finds the natural English for each one."],
   };
@@ -352,7 +386,7 @@
 
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">2</span>
-          <div class="ai-step-copy"><b>Ask the AI</b><span>Open a chat with the prompt already typed — or copy it for Gemini.</span></div>
+          <div class="ai-step-copy"><b>Ask the AI</b><span>Open a chat with the prompt already typed — one complete card per meaning.</span></div>
         </div>
         ${VS.aiAsk({ openAction: "ai-open", copyAction: "add-ai-copy", disabled: !ready, title })}
 
@@ -894,13 +928,7 @@
       async "add-ai-copy"(el) {
         if (!aiReady()) { VS.toast(!VS.profileSet() ? "Choose your level and Arabic first." : st.ai.mode === "words" ? "Type your words first." : "Fill in step 1 first."); return; }
         if (st.ai.mode === "words" && aiWords().some((w) => VS.isArabicTyping(w))) { VS.toast("Type the English words — the AI adds the Arabic."); return; }
-        const text = aiPromptNow();
-        try { await navigator.clipboard.writeText(text); VS.aiCopied(el); }
-        catch (e) {
-          const box = VS.$("[data-ai-add]");
-          if (box) { box.value = text; box.select(); }
-          VS.toast("Copy the selected text, then replace it with the AI's answer.");
-        }
+        await VS.copyWithFeedback(aiPromptNow(), el, "Your prompt");
       },
       /* A new chat with the prompt already typed (both read ?q=). The prompt is
          copied too, so a long one — or Gemini — still works with one paste. */
@@ -926,8 +954,13 @@
         const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
         const words = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).map((r) => {
           const w = { word: r.word, tags: [...new Set(VS.parseTags(r.tags).concat(globalTags))] };
-          ["arabic", "definition", "example", "type", "level", "ipa", "context", "source"].forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
+          ["arabic", "sense", "definition", "example", "type", "level", "ipa", "context", "source", "memory"]
+            .forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
           if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
+          if (r.antonyms) w.antonyms = VS.parseTags(r.antonyms).slice(0, 4);
+          if (r.goes) w.goes = VS.parseTags(r.goes).slice(0, 6);
+          const mistake = VS.mistakeOf(r);
+          if (mistake) w.mistake = mistake;
           return w;
         });
         if (!words.length) return;

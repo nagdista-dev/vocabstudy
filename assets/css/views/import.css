@@ -236,8 +236,16 @@
 .ai-row.is-another { border-inline-start: 3px solid var(--brand); }
 .ai-row-head { display: flex; align-items: center; gap: var(--s-2); min-height: 32px; flex-wrap: wrap; cursor: pointer; }
 .ai-row-head input { flex: none; width: 18px; height: 18px; accent-color: var(--brand); }
-.ai-row-title { display: flex; align-items: baseline; gap: var(--s-2); min-width: 0; flex: 1; }
+/* The number is a margin mark, not content: it keeps the eye on one card
+   while the answer may hold four. */
+.ai-row-n {
+  flex: none; min-width: 22px; font-family: var(--font-ipa);
+  font-size: var(--text-2xs); font-variant-numeric: tabular-nums;
+  color: var(--ink-3); letter-spacing: .04em;
+}
+.ai-row-title { display: flex; align-items: baseline; gap: 4px var(--s-2); min-width: 0; flex: 1; flex-wrap: wrap; }
 .ai-row-title b { font-size: var(--text-md); color: var(--ink); }
+.ai-row-sense { font-size: var(--text-xs); font-style: italic; color: var(--ink-2); }
 .ai-row-meta { font-size: var(--text-xs); color: var(--ink-3); }
 .ai-row-status {
   display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
@@ -264,6 +272,26 @@
 }
 .ai-row-fields input[lang="ar"] { font-family: var(--font-arabic); font-size: calc(var(--text-sm) * var(--arabic-scale)); }
 .ai-row-fields input:focus, .ai-row-fields textarea:focus { background: var(--surface); }
+/* The second half of the card (relations, memory, mistake) starts on a new
+   line, under a quiet heading — the first four fields are the meaning. */
+.ai-row-divide {
+  grid-column: 1 / -1;
+  margin: var(--s-2) 0 0; padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+  font-size: var(--text-2xs); font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.ai-mistake {
+  grid-column: 1 / -1;
+  margin: 0; padding: var(--s-3); min-width: 0;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--card-paper, var(--surface-2));
+}
+.ai-mistake legend {
+  padding: 0 6px; font-size: var(--text-xs); font-weight: 700; color: var(--ink-2);
+}
+.ai-mistake legend .hint { font-weight: 400; }
+.ai-mistake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2) var(--s-3); }
 .ai-add-foot { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3) var(--s-4); margin-top: var(--s-3); }
 .ai-tags { flex: 1 1 220px; }
 
@@ -284,7 +312,8 @@
   /* One field per line on a phone: side by side, the tags field cut its
      own value in half ("personali…"). */
   .ai-row-fields { grid-template-columns: minmax(0, 1fr); }
-  .ai-row-status { margin-inline-start: 26px; }
+  .ai-mistake-grid { grid-template-columns: minmax(0, 1fr); }
+  .ai-row-status { margin-inline-start: 48px; }
 }
 
 /* Eight ways in: the tab row wraps on a computer and scrolls sideways on a phone

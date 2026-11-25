@@ -596,7 +596,7 @@
 /* Wide lists: English at the start, Arabic at the end beside the arrow — like a
    dictionary line, instead of both crowding the left with a gap in the middle. */
 @media (min-width: 600px) {
-  .word-row:not([open]) .word-row-ar { justify-self: end; text-align: right; }
+  .word-row .word-row-ar { justify-self: end; text-align: right; }
 }
 .today-tomorrow p { font-size: var(--text-sm); }   /* one quiet line, not a second headline */
 /* Share and Print side by side in the Words header. */

@@ -15,55 +15,66 @@
   }
 
   /* Edit / delete your own words (global actions, so they work in every list). */
-  const EDIT_FIELDS = [["word", "Word"], ["sense", "Sense"], ["arabic", "Arabic"], ["type", "Type"], ["level", "Level"],
-                       ["ipa", "IPA"], ["tags", "Tags"], ["synonyms", "Similar words"], ["definition", "Definition"], ["example", "Example"],
+  const EDIT_FIELDS = [["word", "Word"], ["sense", "Sense (to tell two meanings apart)"], ["arabic", "Arabic"],
+                       ["definition", "Definition"], ["example", "Example"],
+                       ["type", "Type"], ["level", "Level"], ["ipa", "IPA"],
+                       ["tags", "Tags"], ["synonyms", "Similar words"], ["antonyms", "Opposite words"],
+                       ["goes", "Goes with (word partners)"], ["memory", "Memory hook"],
                        ["context", "Where you met it (the sentence)"], ["source", "Source (a series, a book, work…)"]];
-  const LONG_FIELDS = ["definition", "example", "context"];
-  const LIST_FIELDS = ["tags", "synonyms"];       // edited as "a, b, c"
+  const LONG_FIELDS = ["definition", "example", "context", "memory"];
+  const LIST_FIELDS = ["tags", "synonyms", "antonyms", "goes"];       // edited as "a, b, c"
+  const MISTAKE_FIELDS = [["mistakeWrong", "Wrong", "What a learner may say or write"],
+                          ["mistakeRight", "Right", "What a native speaker says"],
+                          ["mistakeWhy", "Why", "One short line — the rule, in Arabic if you like"]];
   VS.actions = VS.actions || {};
-  /* The open word's small buttons: one section open at a time; the same button closes it. */
-  VS.actions["word-sec"] = (el) => {
-    const entry = el.closest(".word-entry");
-    if (!entry) return;
-    const wasOpen = el.getAttribute("aria-expanded") === "true";
-    entry.querySelectorAll(".word-sec[aria-expanded]").forEach((b) => b.setAttribute("aria-expanded", "false"));
-    entry.querySelectorAll(".word-panel").forEach((p) => { p.hidden = true; });
-    if (wasOpen) return;
-    el.setAttribute("aria-expanded", "true");
-    const panel = entry.querySelector('.word-panel[data-panel="' + el.dataset.sec + '"]');
-    if (panel) {
-      panel.hidden = false;
-      const field = el.dataset.sec === "note" && panel.querySelector("textarea");
-      if (field && !field.value) field.focus();
-    }
-  };
+  VS.actions["word-open"] = (el) => VS.openWordCard(el.dataset.id, { opener: el });
+  VS.actions["word-close"] = () => VS.closeWordCard();
   VS.actions["word-edit"] = (el) => {
     const w = VS.byId[el.dataset.id];
-    const body = el.closest(".word-row-body");
+    const body = el.closest(".word-card-body");
     if (!w || !body) return;
     body.innerHTML = String(html`
-      <form class="word-edit" data-edit-id="${w.id}">
-        ${VS.aiFill({ action: "ai-copy", id: w.id, paste: "data-ai-answer", done: "Save changes", wide: true })}
-        ${EDIT_FIELDS.map(([k, label]) => html`
-          <label class="form-field ${LONG_FIELDS.includes(k) ? "is-wide" : ""}"><span>${label}</span>
-            ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
-              : k === "level" ? html`<select name="level"><option value="">—</option>${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
-              : k === "tags" ? html`<input dir="auto" name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
-              : k === "synonyms" ? html`<input dir="auto" name="synonyms" value="${w.synonyms.join(", ")}" placeholder="delay, put off">`
-              : LONG_FIELDS.includes(k) ? html`<textarea name="${k}" rows="2" dir="auto">${w[k] || ""}</textarea>`
-              : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
-          </label>`)}
-        ${VS.ui.tagList()}
-        ${VS.autofill.enabled() ? html`<div class="sense-pick is-wide">
-          <button class="btn btn-tonal" type="button" data-action="word-senses" data-id="${w.id}">${icon("book", "icon-sm")} Other meanings</button>
-          <span class="hint">Not the meaning you met? Tap the right one.</span>
-          <div class="sense-list" aria-live="polite"></div>
-        </div>` : ""}
-        <div class="row is-wide">
-          <button class="btn btn-primary" type="button" data-action="word-save" data-id="${w.id}">Save changes</button>
-          <button class="btn btn-quiet" type="button" data-action="word-cancel" data-id="${w.id}">Cancel</button>
+      <div class="word-edit-wrap">
+        <div class="word-edit-head">
+          <h2 id="wordCardTitle" tabindex="-1">Edit <span>“${VS.cap(w.word)}”</span></h2>
+          <p class="hint">Nothing changes until you press Save.</p>
         </div>
-      </form>`);
+        <form class="word-edit" data-edit-id="${w.id}">
+          ${VS.aiFill({ action: "ai-copy", id: w.id, paste: "data-ai-answer", done: "Save changes", wide: true })}
+          ${EDIT_FIELDS.map(([k, label]) => html`
+            <label class="form-field ${LONG_FIELDS.includes(k) ? "is-wide" : ""}"><span>${label}</span>
+              ${k === "type" ? html`<select name="type">${VS.importer.TYPES.map((t) => html`<option ${t === w.type ? VS.raw("selected") : ""}>${t}</option>`)}</select>`
+                : k === "level" ? html`<select name="level"><option value="">—</option>${VS.importer.LEVELS.map((l) => html`<option ${l === w.level ? VS.raw("selected") : ""}>${l}</option>`)}</select>`
+                : k === "tags" ? html`<input dir="auto" name="tags" value="${w.tags.join(", ")}" placeholder="IELTS, work" list="tagList">`
+                : k === "synonyms" ? html`<input dir="auto" name="synonyms" value="${w.synonyms.join(", ")}" placeholder="delay, put off">`
+                : k === "antonyms" ? html`<input dir="auto" name="antonyms" value="${w.antonyms.join(", ")}" placeholder="hurry, rush">`
+                : k === "goes" ? html`<input dir="auto" name="goes" value="${w.goes.join(", ")}" placeholder="heavy rain, light rain">`
+                : LONG_FIELDS.includes(k) ? html`<textarea name="${k}" rows="2" dir="auto" ${k === "memory" ? VS.raw('placeholder="A way to remember it — Arabic is fine"') : ""}>${w[k] || ""}</textarea>`
+                : html`<input name="${k}" value="${w[k] || ""}" ${k === "arabic" ? VS.raw('lang="ar" dir="rtl"') : ""}>`}
+            </label>`)}
+          <fieldset class="word-edit-mistake is-wide">
+            <legend>Mistake to avoid <span class="hint">— optional; the AI often writes one</span></legend>
+            <div class="word-edit-mistake-grid">
+              ${MISTAKE_FIELDS.map(([k, label, hint], i) => html`
+                <label class="form-field ${i === 2 ? "is-wide" : ""}"><span>${label}</span>
+                  <input name="${k}" dir="auto" value="${(w.mistake && w.mistake[k === "mistakeWrong" ? "wrong" : k === "mistakeRight" ? "right" : "why"]) || ""}" placeholder="${hint}"></label>`)}
+            </div>
+          </fieldset>
+          ${VS.ui.tagList()}
+          ${VS.autofill.enabled() ? html`<div class="sense-pick is-wide">
+            <button class="btn btn-tonal" type="button" data-action="word-senses" data-id="${w.id}">${icon("book", "icon-sm")} Other meanings</button>
+            <span class="hint">Not the meaning you met? Tap the right one.</span>
+            <div class="sense-list" aria-live="polite"></div>
+          </div>` : ""}
+          <div class="row is-wide">
+            <button class="btn btn-primary" type="button" data-action="word-save" data-id="${w.id}">Save changes</button>
+            <button class="btn btn-quiet" type="button" data-action="word-cancel" data-id="${w.id}">Cancel</button>
+          </div>
+        </form>
+      </div>`);
+    // The Edit button just vanished: keep the keyboard at the form's heading, not on <body>.
+    const head = body.querySelector(".word-edit-head h2");
+    if (head) head.focus({ preventScroll: true });
   };
   /* ── Fill it in with AI (no key, no account) ──────────────────────
      The learner copies a prompt into any AI chat and pastes the answer
@@ -182,44 +193,50 @@
   VS.actions["profile-done"] = closeProfile;
   VS.actions["close-profile"] = () => { if (VS.profileSet()) closeProfile(); };
 
-  function aiPrompt(w) {
-    const lines = [
-      meLine() + " Help me with the English word “" + w.word + "”" + (w.sense ? " (" + w.sense + ")" : "") + ".",
-      w.context ? "I met it in this sentence: “" + w.context + "” — use THAT meaning." : "",
-      w.arabic ? "My current Arabic meaning is: " + w.arabic + " (fix it if it's wrong)." : "",
-      "",
-      "Reply with ONE markdown code block (```markdown … ```) so I can copy it in one tap. Inside it, exactly these lines; nothing outside the block:",
-      "word: <the base form>",
-      VS.aiArabicLine(),
-      "definition: <one simple English definition, learner-dictionary style>",
-      "example: <one natural example sentence, 14 words or fewer, that uses the word>",
-      "type: <Noun, Verb, Adjective, Adverb, Phrase, Phrasal Verb or Idiom>",
-      "level: <A1, A2, B1, B2, C1 or C2>",
-      "ipa: </IPA/>",
-      "synonyms: <up to 4, comma-separated>",
-      "tags: <1–3 short tags that fit THIS word and THIS meaning, comma-separated — a topic or situation, e.g. work, travel, emotions>",
-    ];
-    return lines.filter((l, i) => l || i === 3).join("\n");
-  }
-  VS.aiPrompt = aiPrompt;
-  /** One prompt for several new words: one block per word, a blank line between. */
-  /* Every multi-word prompt asks for the same blocks, in one copyable markdown block. */
-  const aiBlocks = (withContext) => [
-    "",
-    "Put ALL the blocks inside ONE markdown code block (```markdown … ```) so I can copy it in one tap — nothing outside it.",
-    "Each block has exactly these lines, with a blank line between blocks:",
+  /* Every AI answer is a stack of complete word cards — one per meaning.
+     The same lines serve one word and many, so a learner who learns one
+     prompt has learned them all. */
+  const CARD_LINES = [
     "word: <the English base form>",
+    "sense: <2–4 English words naming THIS meaning, e.g. games and sport, music — never just the part of speech>",
     VS.aiArabicLine(),
     "definition: <one simple English definition, learner-dictionary style>",
-    "example: <one natural example sentence, 14 words or fewer, that uses the word>",
-    ...(withContext ? ["context: <the exact sentence from my text where the word appears>"] : []),
+    "example: <one natural example sentence, 14 words or fewer, that uses the word in THIS meaning>",
     "type: <Noun, Verb, Adjective, Adverb, Phrase, Phrasal Verb or Idiom>",
     "level: <A1, A2, B1, B2, C1 or C2>",
     "ipa: </IPA/>",
+    "synonyms: <up to 4 words with the same meaning, comma-separated, or —>",
+    "antonyms: <up to 3 opposites, comma-separated, or —>",
+    "goes with: <up to 3 natural word partners for THIS meaning (play the piano), comma-separated, or —>",
+    "memory: <a short memory hook in Arabic, 12 words or fewer, that ties this meaning to the word, or —>",
+    "# one mistake Arab learners often make with THIS meaning:",
+    "wrong: <the wrong sentence, or —>",
+    "right: <the correct sentence, or —>",
+    "why: <one short line in Arabic explaining the rule, or —>",
     "tags: <1–3 short tags that fit THIS word and THIS meaning, comma-separated — a topic or situation, e.g. work, travel, emotions>",
-    "",
-    "If a word has two common meanings, give it two blocks — same word, each with its own arabic and tags.",
   ];
+  const answerShape = [
+    "",
+    "Put ALL the blocks inside ONE markdown code block (```markdown … ```) so I can copy it in one tap — nothing outside it.",
+    "Each block has exactly these lines, with a blank line between blocks:",
+    ...CARD_LINES,
+  ];
+
+  function aiPrompt(w) {
+    const fixed = !!(w.context || w.arabic || w.sense);
+    const head = [
+      meLine() + " Help me with the English word “" + w.word + "”" + (w.sense ? " (" + w.sense + ")" : "") + ".",
+      w.context ? "I met it in this sentence: “" + w.context + "” — use THAT meaning." : "",
+      w.arabic ? "My current Arabic meaning is: " + w.arabic + " — keep this meaning; fix the Arabic if it is wrong." : "",
+      w.sense ? "My label for this meaning is: " + w.sense + "." : "",
+    ].filter(Boolean).join("\n");
+    return [head, "",
+      fixed
+        ? "Give exactly ONE block — this one meaning only. Do not add other meanings."
+        : "Give each common meaning of “" + w.word + "” its own block — up to 4. Example: play = يلعب (games and sport) is one block; play = يعزف (music) is another. Skip rare meanings. If it has one common meaning, one block only.",
+      ...answerShape].join("\n");
+  }
+  VS.aiPrompt = aiPrompt;
 
   /** Several words I already know I want — with the sentences they were
       met in and the Arabic meanings the learner already knows. */
@@ -230,26 +247,29 @@
       if (!c && !ar) return "";
       return "- " + word + (c ? ": “" + c + "”" : "") + (ar ? " — the meaning I know: " + ar : "");
     }).filter(Boolean);
-    return [meLine() + " For EACH of these English words, give one block:", words.join(", "),
-      ...(met.length ? ["", "I met some of them in these sentences, and I know some in Arabic — use THAT meaning for each:", ...met] : []),
-      ...aiBlocks(false)].join("\n");
+    return [meLine() + " For EACH of these English words, give a complete word card:", words.join(", "),
+      ...(met.length ? ["", "I met some of them in these sentences, and I know some in Arabic — use THAT meaning for those words:", ...met] : []),
+      "",
+      "One block per word. If a word has two very common, clearly different meanings (like play = يلعب / يعزف), give it two blocks — no more than two per word, each with its own sense and arabic. When I give a sentence or an Arabic meaning, use THAT meaning only.",
+      ...answerShape].join("\n");
   };
   /** The most useful words about a topic, at a level. */
   VS.aiPromptTopic = (topic, n) => [
     meLine() + " Choose the " + n + " most useful English words and phrases about “" + topic + "” for my level.",
     /^A/.test(VS.myLevel())
-      ? "Pick simple, everyday words people really use in that situation. One block per word:"
-      : "Pick words people really use in that situation; skip very basic words I surely know. One block per word:",
-    ...aiBlocks(false)].join("\n");
+      ? "Pick simple, everyday words people really use in that situation. One block per word, with the meaning that fits this topic:"
+      : "Pick words people really use in that situation; skip very basic words I surely know. One block per word, with the meaning that fits this topic:",
+    ...answerShape].join("\n");
   /** Arabic I know → the natural English for it. */
   VS.aiPromptArabic = (arabic) => [
-    meLine() + " For EACH Arabic word or phrase below, give the most natural English word or phrase with that meaning, as one block.",
-    "Keep my Arabic in the “arabic” line — one meaning, as I wrote it.",
+    meLine() + " For EACH Arabic word or phrase below, give the most natural English word or phrase with that meaning.",
+    "One block per Arabic item. Keep my Arabic in the “arabic” line as I wrote it; the “sense” line names the English meaning.",
     arabic.join("\n"),
-    ...aiBlocks(false)].join("\n");
+    ...answerShape].join("\n");
   /**
    * The AI's answer for several words → [{ word, arabic, … }].
-   * Reads a JSON array, or "key: value" blocks (a new "word:" line starts a new block).
+   * Reads a JSON array (or { meanings: [] }), or "key: value" blocks
+   * (a new "word:" line starts a new block).
    */
   VS.parseAiWords = function (text) {
     const t = String(text || "").replace(/```[a-z]*\n?/gi, "").trim();
@@ -259,6 +279,14 @@
       try {
         const arr = JSON.parse(t.slice(a, b + 1));
         if (Array.isArray(arr)) return arr.map((o) => VS.parseAiWord(JSON.stringify(o))).filter((o) => o.word);
+      } catch (e) { /* not JSON: read the lines */ }
+    }
+    const oa = t.indexOf("{"), ob = t.lastIndexOf("}");
+    if (oa >= 0 && ob > oa) {
+      try {
+        const o = JSON.parse(t.slice(oa, ob + 1));
+        const arr = Array.isArray(o.meanings) ? o.meanings : Array.isArray(o.words) ? o.words : null;
+        if (arr) return arr.map((x) => VS.parseAiWord(JSON.stringify(x))).filter((x) => x.word);
       } catch (e) { /* not JSON: read the lines */ }
     }
     const blocks = [];
@@ -273,22 +301,43 @@
   };
   const AI_KEYS = {
     word: "word", headword: "word", arabic: "arabic", "arabic meaning": "arabic", meaning: "arabic", "المعنى": "arabic", "عربي": "arabic",
+    sense: "sense", "sense label": "sense", "meaning label": "sense",
     definition: "definition", "english definition": "definition", example: "example", "example sentence": "example",
     type: "type", "part of speech": "type", pos: "type", level: "level", cefr: "level", "cefr level": "level",
     ipa: "ipa", pronunciation: "ipa", synonyms: "synonyms", "similar words": "synonyms", similar: "synonyms",
+    antonyms: "antonyms", antonym: "antonyms", opposites: "antonyms", "opposite words": "antonyms", opposite: "antonyms",
+    "goes with": "goes", collocations: "goes", collocation: "goes", "word partners": "goes", partners: "goes",
+    memory: "memory", "memory hook": "memory", "memory trick": "memory", mnemonic: "memory", note: "memory",
+    mistake: "mistake", "mistake to avoid": "mistake", "common mistake": "mistake", error: "mistake",
+    wrong: "mistakeWrong", "wrong sentence": "mistakeWrong", right: "mistakeRight", "right sentence": "mistakeRight", correct: "mistakeRight",
+    why: "mistakeWhy", reason: "mistakeWhy", rule: "mistakeWhy", explanation: "mistakeWhy",
     tags: "tags", tag: "tags", "topic tags": "tags", topics: "tags", "الوسوم": "tags", "وسوم": "tags",
     context: "context", sentence: "context", "where i met it": "context",
   };
+  const AI_NONE = /^(?:—|–|-|n\/?a|none|null|nil|nothing|لا يوجد|لا|غير متاح|<.*>)$/i;
+
   /** The AI's answer → { field: value } (only fields that look right). */
   VS.parseAiWord = function (text) {
     let t = String(text || "").replace(/```[a-z]*\n?/gi, "").trim();
     const raw = {};
-    try {
-      const j = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1));
-      Object.keys(j).forEach((k) => { if (AI_KEYS[k.toLowerCase()]) raw[AI_KEYS[k.toLowerCase()]] = Array.isArray(j[k]) ? j[k].join(", ") : String(j[k]); });
-    } catch (e) {
+    let json = null;
+    try { json = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1)); } catch (e) { /* lines below */ }
+    if (json && typeof json === "object" && !Array.isArray(json)) {
+      Object.keys(json).forEach((k) => {
+        const key = AI_KEYS[k.toLowerCase()];
+        if (!key) return;
+        const v = json[k];
+        if (key === "mistake") {
+          if (v && typeof v === "object") {
+            if (v.wrong) raw.mistakeWrong = v.wrong;
+            if (v.right) raw.mistakeRight = v.right;
+            if (v.why) raw.mistakeWhy = v.why;
+          } else if (v) raw.mistake = v;
+        } else raw[key] = Array.isArray(v) ? v.join(", ") : String(v == null ? "" : v);
+      });
+    } else {
       t.split(/\r?\n/).forEach((line) => {
-        const m = /^\s*[-*•]?\s*\**\s*([A-Za-z\u0600-\u06FF ]{2,20}?)\s*\**\s*[:：]\s*(.+)$/.exec(line);
+        const m = /^\s*(?:[-*•]|\u274C|\u2705)?\s*\**\s*([A-Za-z\u0600-\u06FF ]{2,24}?)\s*\**\s*[:：]\s*(.+)$/.exec(line);
         const key = m && AI_KEYS[m[1].trim().toLowerCase()];
         if (key && !raw[key]) raw[key] = m[2].trim();
       });
@@ -297,17 +346,26 @@
     const clean = (v) => String(v).replace(/\*\*/g, "").trim().replace(/^["“'«]+|["”'»]+$/g, "").trim();
     Object.keys(raw).forEach((k) => {
       let v = clean(raw[k]);
-      if (!v || /^<.*>$/.test(v)) return;                                 // the template itself, pasted back
+      if (!v || AI_NONE.test(v)) return;                                  // "—" and the template itself are not values
       if (k === "arabic" && !/[\u0600-\u06FF]/.test(v)) return;
       if (k === "level") { v = v.toUpperCase().match(/[ABC][12]/); if (!v) return; v = v[0]; }
       if (k === "type") { const hit = VS.importer.TYPES.find((x) => x.toLowerCase() === v.toLowerCase()); if (!hit) return; v = hit; }
       if (k === "ipa") v = "/" + v.replace(/^\/+|\/+$/g, "") + "/";
       if (k === "example" && v.split(/\s+/).length > 22) return;
       if (k === "context") v = v.slice(0, 300);
+      if (k === "sense") v = v.replace(/^[([{]+|[)\]}]+$/g, "").slice(0, 60);
       if (k === "synonyms") v = VS.parseTags(v).slice(0, 6).join(", ");
+      if (k === "antonyms") v = VS.parseTags(v).slice(0, 4).join(", ");
+      if (k === "goes") v = VS.parseTags(v).slice(0, 6).join(", ");
       if (k === "tags") v = VS.parseTags(v).slice(0, 3).join(", ");
+      if (k === "memory") v = v.slice(0, 300);
       out[k] = v.slice(0, 400);
     });
+    if (out.mistake && !out.mistakeWrong && !out.mistakeRight && !out.mistakeWhy) {
+      const m = VS.cleanMistake(out.mistake);
+      if (m) { out.mistakeWrong = m.wrong; out.mistakeRight = m.right; out.mistakeWhy = m.why; }
+    }
+    delete out.mistake;
     return out;
   };
   /**
@@ -316,13 +374,88 @@
    *   ② Paste the AI's answer → the fields fill in
    * A result line says what filled in; nothing is saved until the learner's own button.
    */
+  /**
+   * Copy text the reliable way: the Clipboard API when the browser allows it,
+   * the old selection trick when it doesn't, and an honest manual sheet when
+   * both are blocked. Nothing is ever written into the learner's answer box.
+   */
+  VS.copyText = async function (text) {
+    const value = String(text == null ? "" : text);
+    if (!value) return false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+    } catch (e) { /* permission denied, insecure context, or an old browser */ }
+    try {
+      const box = document.createElement("textarea");
+      box.value = value;
+      box.setAttribute("readonly", "");
+      box.style.cssText = "position:fixed;top:0;left:-9999px;width:1px;height:1px;opacity:0";
+      document.body.appendChild(box);
+      box.focus();
+      box.select();
+      box.setSelectionRange(0, value.length);
+      const ok = document.execCommand("copy");
+      box.remove();
+      return !!ok;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  /** The calm last resort: show the prompt, already selected, and let the learner copy it. */
+  VS.copySheet = function (text, title) {
+    let dlg = document.getElementById("copySheet");
+    if (!dlg) {
+      dlg = document.createElement("dialog");
+      dlg.id = "copySheet";
+      dlg.className = "sheet copy-sheet";
+      dlg.setAttribute("aria-labelledby", "copyTitle");
+      dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+      document.body.appendChild(dlg);
+    }
+    dlg.innerHTML = String(html`
+      <div class="sheet-head"><h2 id="copyTitle">${title || "Copy the prompt"}</h2>
+        <button class="icon-btn" type="button" data-action="copy-close" aria-label="Close">${icon("x")}</button></div>
+      <div class="sheet-body copy-sheet-body">
+        <p class="hint">Your browser didn't let the button copy it. The text is selected already — press <kbd>Ctrl</kbd>+<kbd>C</kbd> (or <kbd>⌘</kbd>+<kbd>C</kbd> on a Mac), or long-press it and choose Copy.</p>
+        <textarea class="copy-text" readonly rows="8" dir="auto" aria-label="The text to copy"></textarea>
+        <div class="row">
+          <button class="btn btn-tonal" type="button" data-action="copy-retry">${icon("copy", "icon-sm")} Try again</button>
+          <button class="btn btn-quiet" type="button" data-action="copy-close">Close</button>
+        </div>
+      </div>`);
+    const box = dlg.querySelector(".copy-text");
+    box.value = String(text == null ? "" : text);
+    if (!dlg.open) dlg.showModal();
+    requestAnimationFrame(() => {
+      box.focus({ preventScroll: true });
+      box.select();
+      box.setSelectionRange(0, box.value.length);
+    });
+  };
+
+  /** One decision for every copy button: copy, say so, or show the manual sheet. */
+  VS.copyWithFeedback = async function (text, btn, title) {
+    const ok = await VS.copyText(text);
+    if (ok) { VS.aiCopied(btn); return true; }
+    VS.copySheet(text, title);
+    return false;
+  };
+
   /** Opens ChatGPT or Claude in a new tab with the prompt already typed (and copies it as well). */
   VS.aiOpen = (to, text) => {
     const base = to === "claude" ? "https://claude.ai/new" : "https://chatgpt.com/";
     const fits = text.length < 6000;
     window.open(fits ? base + "?q=" + encodeURIComponent(text) : base, "_blank", "noopener");
-    if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
-    VS.toast(fits ? "Opened with your prompt — send it, then copy the answer back here." : "The prompt is long: it's copied — paste it in the chat.");
+    VS.copyText(text).then((ok) => {
+      if (!ok) { VS.copySheet(text, "Your prompt"); return; }
+      VS.toast(fits
+        ? "Opened with your prompt — send it, then copy the answer back here."
+        : "The prompt is long: it's copied — paste it in the chat.");
+    });
   };
   /**
    * The three ways to ask an AI — one row everywhere (Add words with AI and
@@ -448,13 +581,29 @@
     const w = VS.byId[el.dataset.id];
     if (!w) return;
     if (!VS.profileSet()) { VS.openProfile(true); return; }
-    const text = aiPrompt(w);
-    try { await navigator.clipboard.writeText(text); VS.aiCopied(el); }
-    catch (e) {
-      const box = el.closest(".ai-fill").querySelector("[data-ai-answer]");
-      box.value = text; box.select();
-      VS.toast("Copy the selected text, then replace it with the AI's answer.");
+    await VS.copyWithFeedback(aiPrompt(w), el, "Your prompt");
+  };
+  VS.actions["copy-close"] = () => {
+    const dlg = document.getElementById("copySheet");
+    if (dlg && dlg.open) dlg.close();
+  };
+  VS.actions["copy-retry"] = async (el) => {
+    const dlg = el.closest("dialog");
+    const box = dlg && dlg.querySelector(".copy-text");
+    if (!box) return;
+    if (await VS.copyText(box.value)) {
+      dlg.close();
+      VS.toast("Copied. Paste it in the chat.");
+    } else {
+      VS.toast("Still blocked — the text is selected; press Ctrl+C (⌘C on a Mac).");
+      box.focus();
+      box.select();
+      box.setSelectionRange(0, box.value.length);
     }
+  };
+  const FIELD_NAMES = {
+    synonyms: "similar words", antonyms: "opposites", goes: "word partners", memory: "memory hook",
+    sense: "sense", ipa: "IPA", mistakeWrong: "the mistake", mistakeRight: "the fix", mistakeWhy: "the reason",
   };
   document.addEventListener("input", (e) => {
     if (!e.target.matches || !e.target.matches("[data-ai-answer]")) return;
@@ -467,9 +616,18 @@
       if (k === "word" && f.value.trim().toLowerCase() === found[k].toLowerCase()) return;
       f.value = found[k];
       f.classList.add("is-filled");
-      filled.push(k === "synonyms" ? "similar words" : k);
+      filled.push(FIELD_NAMES[k] || k);
     });
-    VS.aiFillStatus(e.target.closest(".ai-fill"), filled, !!e.target.value.trim());
+    const panel = e.target.closest(".ai-fill");
+    VS.aiFillStatus(panel, filled, !!e.target.value.trim());
+    // In Edit, a complete answer closes the panel: the learner sees the
+    // filled fields and Save in one look, instead of a closed drawer over them.
+    if (form && filled.length && panel && panel.tagName === "DETAILS") {
+      panel.open = false;
+      VS.toast(`${VS.plural(filled.length, "field")} filled in — check them, then Save.`);
+      const first = form.querySelector(".is-filled");
+      if (first) requestAnimationFrame(() => first.focus({ preventScroll: true }));
+    }
   });
 
   VS.actions["word-save"] = (el) => {
@@ -477,6 +635,11 @@
     const changes = {};
     EDIT_FIELDS.forEach(([k]) => { changes[k] = form.elements[k].value.trim(); });
     LIST_FIELDS.forEach((k) => { changes[k] = VS.parseTags(changes[k]); });
+    changes.mistake = VS.cleanMistake({
+      wrong: form.elements.mistakeWrong.value,
+      right: form.elements.mistakeRight.value,
+      why: form.elements.mistakeWhy.value,
+    });
     if (!changes.word || !changes.arabic) { VS.toast("The word and its Arabic meaning are needed."); return; }
     const result = VS.store.editUserWord(el.dataset.id, changes);
     if (result.error === "duplicate") { VS.toast("“" + result.word.word + "” with that Arabic meaning is already in your library."); return; }
@@ -484,8 +647,12 @@
     if (result.error) { VS.toast("That word is no longer in your library."); return; }
     location.reload();                 // rebuild every list with the new version
   };
-  // Cancel goes back to the word page, open where it was — not to a closed list.
-  VS.actions["word-cancel"] = (el) => { const id = el.dataset.id; if (id) refreshWord(id); else VS.app.render(); };
+  // Cancel goes back to the word card, with the keyboard on Edit where it was.
+  VS.actions["word-cancel"] = (el) => {
+    const id = el.dataset.id;
+    if (id) refreshWord(id, '[data-action="word-edit"]');
+    else VS.app.render();
+  };
   VS.actions["sentence-fix"] = (el) => {
     const id = el.dataset.id, i = Number(el.dataset.index);
     const w = VS.byId[id];
@@ -578,7 +745,7 @@
   };
   // "Not the meaning you met?" in a word's details: open Edit with the meanings listed.
   VS.actions["word-meanings"] = (el) => {
-    const body = el.closest(".word-row-body");
+    const body = el.closest(".word-card-body");
     VS.actions["word-edit"](el);
     const btn = body && body.querySelector('[data-action="word-senses"]');
     if (btn) { VS.actions["word-senses"](btn); btn.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
@@ -683,31 +850,130 @@
     refreshWord(el.dataset.id, ".word-definition, .flash-def");
     VS.toast("Meaning confirmed.");
   };
-  /** Redraw one word where it is: its open row in a list, or the whole activity. */
-  function refreshWord(id, focusSel) {
-    const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
+  /* ── The word card: a word's whole page, over the list ───────────
+     A native <dialog> gives the card its own focus trap, Esc handling,
+     a backdrop, and the return of focus to the row that opened it. The
+     list behind never moves, so the learner keeps their place. */
+  let cardId = null;              // the word shown now
+  let cardOpener = null;          // the row button focus goes back to
+  const cardEl = () => document.getElementById("wordCard");
+
+  function focusView() {
+    const target = VS.$("#view h1") || VS.$("#view");
+    if (!target) return;
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+  }
+
+  function ensureWordCard() {
+    let dlg = cardEl();
+    if (dlg) return dlg;
+    dlg = document.createElement("dialog");
+    dlg.id = "wordCard";
+    dlg.className = "word-card";
+    dlg.tabIndex = -1;
+    dlg.setAttribute("aria-labelledby", "wordCardTitle");
+    dlg.addEventListener("click", (e) => { if (e.target === dlg) VS.closeWordCard(); });
+    // A modal dialog traps Tab in Chromium, but Shift+Tab from the first
+    // control can still land on the page behind it. Close that loop here.
+    dlg.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const items = [...dlg.querySelectorAll('a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+        .filter((el) => el.getClientRects().length);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === dlg || !dlg.contains(active))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && (active === last || !dlg.contains(active))) {
+        e.preventDefault(); first.focus();
+      }
+    });
+    dlg.addEventListener("close", () => {
+      document.documentElement.classList.remove("word-card-open");
+      closePop();
+      const opener = cardOpener;
+      cardId = null;
+      cardOpener = null;
+      dlg.innerHTML = "";
+      // Back to the row that asked for the card; if it is gone (deleted),
+      // the page heading is the next calm place for the keyboard.
+      if (opener && opener.isConnected) opener.focus({ preventScroll: true });
+      else focusView();
+    });
+    // A tag, Share or any other link leaves the card: close it before the
+    // new screen is drawn, so the dialog never floats over a different page.
+    window.addEventListener("hashchange", () => { if (dlg.open) dlg.close(); });
+    document.body.appendChild(dlg);
+    return dlg;
+  }
+
+  /** Open one word in the card. `opts.opener` is the row button, for focus. */
+  VS.openWordCard = (id, opts) => {
     const w = VS.byId[id];
-    let scope = document;
-    if (row && w) {
-      row.outerHTML = String(VS.ui.wordRow(w));
-      const again = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
-      if (again) { again.open = true; VS.ui.fillRow(again); scope = again; }
-    } else {
-      VS.app.render();
-    }
-    // Keep the keyboard and screen reader where the learner was, not lost on <body>.
-    const target = (focusSel && scope.querySelector(focusSel)) || (scope !== document && scope.querySelector("summary"));
-    if (target) {
-      if (!target.hasAttribute("tabindex") && !/^(A|BUTTON|SUMMARY|INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) target.setAttribute("tabindex", "-1");
-      target.focus({ preventScroll: true });
-    }
+    if (!w) return;
+    const dlg = ensureWordCard();
+    const rowBtn = VS.$(`.word-row-open[data-id="${CSS.escape(id)}"]`);
+    closePop();
+    cardId = id;
+    cardOpener = (opts && opts.opener) || rowBtn ||
+      (document.activeElement && document.activeElement.closest && document.activeElement.closest(".word-row-open")) || null;
+    dlg.innerHTML = String(VS.ui.wordCard(w));
+    document.documentElement.classList.add("word-card-open");
+    if (!dlg.open) dlg.showModal();
+    const body = dlg.querySelector(".word-card-body");
+    if (body) body.scrollTop = 0;
+    dlg.focus({ preventScroll: true });
+  };
+
+  VS.closeWordCard = () => {
+    const dlg = cardEl();
+    if (dlg && dlg.open) dlg.close();
+  };
+
+  /* The focused control's twin after a redraw (same action, same word). */
+  const CARD_FOCUS_KEYS = ["action", "id", "index", "fix"];
+  function cardFocusKey(dlg) {
+    const el = document.activeElement;
+    if (!el || !dlg.contains(el)) return null;
+    if (el.id) return "#" + CSS.escape(el.id);
+    const parts = CARD_FOCUS_KEYS.filter((k) => el.dataset[k] !== undefined)
+      .map((k) => `[data-${k}="${CSS.escape(el.dataset[k])}"]`);
+    return parts.length ? el.tagName.toLowerCase() + parts.join("") : null;
+  }
+
+  /** Redraw the open card in place, keeping its scroll and the learner's focus. */
+  function refreshWordCard(id, focusSel) {
+    const dlg = cardEl();
+    if (!dlg || !dlg.open || cardId !== id) return false;
+    const w = VS.byId[id];
+    if (!w) { dlg.close(); return true; }
+    const body = dlg.querySelector(".word-card-body");
+    const top = body ? body.scrollTop : 0;
+    const key = cardFocusKey(dlg);
+    closePop();
+    dlg.innerHTML = String(VS.ui.wordCard(w));
+    const next = dlg.querySelector(".word-card-body");
+    if (next) next.scrollTop = top;
+    const target = (focusSel && dlg.querySelector(focusSel)) || (key && dlg.querySelector(key)) ||
+      dlg.querySelector(".word-card-close") || next || dlg;
+    if (!target.hasAttribute("tabindex") && !/^(A|BUTTON|INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+    return true;
+  }
+
+  /** Redraw one word: its row in a list, its open card, or the whole activity. */
+  function refreshWord(id, focusSel) {
+    const w = VS.byId[id];
+    if (!w) { if (cardId === id) VS.closeWordCard(); return; }
+    const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
+    if (row) row.outerHTML = String(VS.ui.wordRow(w));
+    if (cardId === id) refreshWordCard(id, focusSel);
+    else if (!row) VS.app.render();
   }
 
   /* A flagged word (VS.ui.checkLine): fix the spelling, or say it's right. */
-  const reopen = (id) => {
-    const row = VS.$(`.word-row[data-id="${CSS.escape(id)}"]`);
-    if (row) { row.open = true; VS.ui.fillRow(row); }
-  };
+  const reopen = (id) => VS.openWordCard(id);
   VS.actions["word-respell"] = (el) => {
     const id = VS.store.respellUserWord(el.dataset.id, el.dataset.fix);
     if (!id) { VS.toast(`“${el.dataset.fix}” is already in your library.`); return; }
@@ -827,6 +1093,9 @@
     const known = VS.findWord(word);
     const id = VS.wordKey(word);
     const kept = VS.store.wallet().some((e) => e.id === id);
+    // Inside the word card, the pop-up must live in the dialog too: the
+    // dialog is in the browser's top layer, and body children stay behind it.
+    const host = el.closest("dialog[open]") || document.body;
     pop = document.createElement("div");
     pop.className = "word-pop";
     pop.setAttribute("role", "dialog");
@@ -864,7 +1133,9 @@
       placePop();
     });
     pop.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { e.stopPropagation(); closePop(true); return; }
+      // Inside the word card, Esc must close this small card only — not the
+      // card under it. preventDefault stops the dialog's own cancel.
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closePop(true); return; }
       // Focus stays inside the card while it is open, like any dialog.
       if (e.key !== "Tab") return;
       const f = [...pop.querySelectorAll("button, a[href]")].filter((n) => !n.disabled);
@@ -884,8 +1155,8 @@
     spot.textContent = el.textContent;
     const cs = getComputedStyle(el);
     ["fontFamily", "fontSize", "fontWeight", "fontStyle", "letterSpacing"].forEach((k) => { spot.style[k] = cs[k]; });
-    document.body.append(scrim, spot);
-    document.body.appendChild(pop);
+    host.append(scrim, spot);
+    host.appendChild(pop);
     popFor = el;
     el.setAttribute("aria-expanded", "true");
     fillMeaning(word);
@@ -922,11 +1193,14 @@
       confirmLabel: "Delete",
     });
     if (!yes) return;
-    // No reload: the list redraws, and Undo puts the word back where it was (V1.1).
+    // No reload: the card closes, the list redraws, and Undo puts the word
+    // back where it was — with its card open again (V1.1).
     const snap = VS.store.snapshot([w.id]);
+    VS.closeWordCard();
     VS.store.deleteUserWords([w.id]);
     VS.app.render();
-    VS.toast(`“${w.word}” deleted, with its progress and notes.`, { label: "Undo", run: () => { VS.store.restore(snap); VS.app.render(); refreshWord(w.id); } });
+    focusView();
+    VS.toast(`“${w.word}” deleted, with its progress and notes.`, { label: "Undo", run: () => { VS.store.restore(snap); VS.app.render(); VS.openWordCard(w.id); } });
   };
   /* "Reset to new" on one word: its schedule starts again; Undo gives it back. ("Start over" is
      only the whole app's, #/reset.) */
@@ -1192,9 +1466,9 @@
           ${traps.map((t) => html`
             <div class="usage-trap">
               <p class="usage-kind">${t.label}</p>
-              <p class="usage-wrong">${icon("x", "icon-sm")}<span>${t.wrong}</span></p>
-              <p class="usage-right">${icon("check", "icon-sm")}<span>${t.right}</span></p>
-              <p class="usage-why">${VS.ui.mixed(t.why)}</p>
+              ${t.wrong ? html`<p class="usage-wrong">${icon("x", "icon-sm")}<span>${t.wrong}</span></p>` : ""}
+              ${t.right ? html`<p class="usage-right">${icon("check", "icon-sm")}<span>${t.right}</span></p>` : ""}
+              ${t.why ? html`<p class="usage-why">${VS.ui.mixed(t.why)}</p>` : ""}
             </div>`)}
         </div>`;
     },
@@ -1210,12 +1484,13 @@
         </figure>`;
     },
 
-    /** Sentences the learner wrote with the word (Use it). */
-    mine(w, removable) {
+    /** Sentences the learner wrote with the word (Use it). `withHead` off
+        when the section already says "Your sentences". */
+    mine(w, removable, withHead) {
       if (!w.mine || !w.mine.length) return "";
       return html`
         <div class="mine">
-          <p class="mine-head">Your sentences</p>
+          ${withHead === false ? "" : html`<p class="mine-head">Your sentences</p>`}
           <ul>${w.mine.map((m, i) => {
             const hit = VS.findIn(w, m, true);
             const unsure = VS.sentenceUnsure(w, m);
@@ -1253,6 +1528,10 @@
     similar: (w, cls) => (w.synonyms && w.synonyms.length
       ? html`<div class="rel ${cls || ""}"><span class="rel-label">Similar</span><span class="rel-chips">${w.synonyms.map((g) => html`<span class="rel-chip">${g}</span>`)}</span></div>` : ""),
 
+    /** Opposites: the other end of the same idea, a second hook in memory. */
+    opposites: (w, cls) => (w.antonyms && w.antonyms.length
+      ? html`<div class="rel ${cls || ""}"><span class="rel-label">Opposite</span><span class="rel-chips">${w.antonyms.map((g) => html`<span class="rel-chip">${g}</span>`)}</span></div>` : ""),
+
     /** One expandable row in a word list (day page and review page). */
     /** A small progress ring (SVG). `pct` 0–100; `label` sits in the middle. */
     ring(pct, label, size) {
@@ -1272,8 +1551,11 @@
       const note = VS.store.note(w.id);
       return html`
         <label class="note">
-          <span class="note-label">${icon("bulb", "icon-sm")} My note</span>
-          <textarea data-note="${w.id}" rows="2" maxlength="500" dir="auto"
+          <span class="note-head">
+            <span class="note-label">${icon("bulb", "icon-sm")} My note</span>
+            <span class="note-ar" lang="ar" dir="rtl">ملاحظتك</span>
+          </span>
+          <textarea data-note="${w.id}" rows="2" maxlength="500" dir="auto" aria-label="My note"
             placeholder="A memory trick: anything that helps you remember it">${note}</textarea>
         </label>`;
     },
@@ -1314,13 +1596,13 @@
         </div>`;
     },
 
-    /** One expandable row in a word list. */
+    /** One row in a word list: a button that opens the whole word card. */
     wordRow(w) {
       const s = VS.store.status(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
       return html`
-        <details class="word-row ${VS.justAdded.has(w.id) ? "just-added" : ""}" data-status="${s}" data-id="${w.id}">
-          <summary>
+        <div class="word-row ${VS.justAdded.has(w.id) ? "just-added" : ""}" data-status="${s}" data-id="${w.id}">
+          <button class="word-row-open" type="button" data-action="word-open" data-id="${w.id}" aria-haspopup="dialog">
             <span class="word-row-word">
               <i class="word-row-dot" aria-hidden="true"></i>
               <b title="${w.word}">${VS.ui.headword(w)}</b>
@@ -1335,106 +1617,140 @@
               ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
             </span>
             ${icon("chevron-right", "icon-sm word-row-chev")}
-          </summary>
-          <div class="word-row-body" data-lazy="1"></div>
-        </details>`;
+          </button>
+        </div>`;
     },
 
     /**
-     * A word's page — built when its row opens (VS.ui.fillRow), not with the list:
-     * 23 closed words used to carry 2,505 elements; 1,000 would freeze a phone.
+     * The word card: every detail of one word, in one reading column. It is
+     * built only when opened, so a list of 1,000 rows stays light; the card
+     * itself is the dialog VS.openWordCard puts in the top layer.
      */
-    wordBody(w) {
+    wordCard(w) {
       const s = VS.store.status(w.id);
       const e = VS.store.word(w.id);
       const tips = VS.soundTraps(w);
       const traps = VS.usageTraps(w);
-      const note = VS.store.note(w.id);
       const mine = w.mine || [];
-      const related = (w.goes && w.goes.length) || (w.synonyms && w.synonyms.length);
-      // The open word, short on purpose (v10 final): the essentials are always in
-      // view — sound, meaning, one example, where it stands — and everything else
-      // waits behind one row of small buttons, one section open at a time.
-      const sec = (key, label, n, ico) => html`<button class="word-sec" type="button" data-action="word-sec" data-sec="${key}" aria-expanded="false">
-          ${icon(ico, "icon-sm")}<span>${label}</span>${n ? html`<b>${n}</b>` : ""}</button>`;
+      const band = VS.frequency.band(w);
+      const related = (w.goes && w.goes.length) || (w.synonyms && w.synonyms.length) || (w.antonyms && w.antonyms.length);
+      const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
+      // Every chapter is named twice: the English word the app teaches in,
+      // and the Arabic gloss that says the same thing in the learner's head.
+      const sec = (key, title, ar, body) => html`
+        <section class="word-card-sec" data-sec="${key}">
+          <h3 class="word-card-sec-title"><span class="word-card-sec-en">${title}</span><span class="word-card-sec-ar" lang="ar" dir="rtl">${ar}</span></h3>
+          ${body}
+        </section>`;
+      const example = w.example
+        ? html`
+          <figure class="word-example">
+            <blockquote>“${VS.ui.exampleTap(w)}”</blockquote>
+          </figure>
+          <div class="word-ex-tools">
+            <button class="word-hear" type="button" data-action="speak" data-say="${w.example}" aria-label="Hear the sentence">${icon("volume", "icon-sm")}<span>Hear it</span></button>
+            ${VS.ui.moreExamples(w)}
+          </div>`
+        : html`<p class="hint word-no-ex">No example yet.
+            <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add an example</button></p>`;
       return html`
-          <div class="word-row-body">
+        <div class="word-card-shell">
+          <header class="word-card-head">
+            <span class="word-card-state" data-s="${s}"><i class="word-card-dot" aria-hidden="true"></i>${state}</span>
+            <button class="icon-btn word-card-close" type="button" data-action="word-close" aria-label="Close “${w.word}”" title="Close">${icon("x")}</button>
+          </header>
+          <div class="word-card-body">
             <div class="word-entry">
-              <div class="word-bar">
-                <div class="word-sound-main">
-                  ${VS.ui.speakButton(w.word)}
-                  ${w.ipa ? html`<span class="word-sound-ipa">${VS.ui.ipa(w)}</span>` : ""}
+              <div class="word-card-hero">
+                <div class="word-card-hero-main">
+                  <div class="word-card-title-row">
+                    <h2 class="word-card-title" id="wordCardTitle">${VS.ui.headword(w)}</h2>
+                    ${VS.ui.speakButton(w.word, `Hear “${w.word}”`)}
+                  </div>
+                  ${w.ipa ? html`<div class="word-card-sound">${VS.ui.ipa(w)}</div>` : ""}
+                  ${(w.type || w.level || band) ? html`
+                    <div class="word-card-meta">
+                      ${w.type ? html`<span class="word-card-type">${w.type}</span>` : ""}
+                      ${w.level ? html`<span class="word-card-level ${VS.levelGroup(w.level)}" title="CEFR level">${w.level}</span>` : ""}
+                      ${VS.ui.freq(w)}
+                    </div>` : ""}
                 </div>
-                <div class="word-tools" role="group" aria-label="Manage “${w.word}”">
-                  <button class="word-tool word-tool-edit" type="button" data-action="word-edit" data-id="${w.id}" title="Edit “${w.word}”">
-                    ${icon("pen", "icon-sm")}<span>Edit</span></button>
-                  <a class="word-tool word-tool-share" href="#/share?ids=${encodeURIComponent(w.id)}" aria-label="Share “${w.word}” with a friend" title="Share with a friend">
-                    ${icon("share", "icon-sm")}</a>
-                  <button class="word-tool word-tool-delete" type="button" data-action="word-delete" data-id="${w.id}"
-                    aria-label="Delete “${w.word}”" title="Delete “${w.word}”">${icon("trash", "icon-sm")}</button>
+                <div class="word-card-ar">
+                  <span class="word-card-ar-label">In Arabic</span>
+                  ${w.arabic
+                    ? html`<p lang="ar" dir="rtl">${w.arabic}</p>`
+                    : html`<p class="word-card-ar-empty">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No Arabic meaning yet."}</p>`}
+                </div>
+                <div class="word-card-hero-foot">
+                  ${w.tags.length ? html`<div class="word-tags word-card-tags">${VS.ui.tags(w)}</div>` : ""}
+                  ${VS.ui.checkLine(w)}
+                  <div class="word-card-actions">
+                    <button class="word-card-act word-card-edit" type="button" data-action="word-edit" data-id="${w.id}">${icon("pen", "icon-sm")} Edit</button>
+                    <a class="word-card-act word-card-share" href="#/share?ids=${encodeURIComponent(w.id)}">${icon("share", "icon-sm")} Share</a>
+                    <button class="word-card-act word-card-delete" type="button" data-action="word-delete" data-id="${w.id}"
+                      aria-label="Delete “${w.word}”" title="Delete “${w.word}”">${icon("trash", "icon-sm")} Delete</button>
+                  </div>
                 </div>
               </div>
 
-              ${VS.ui.checkLine(w)}
-              ${VS.ui.context(w)}
-
-              <div class="word-lead">
+              ${sec("meaning", "Meaning", "المعنى", html`
                 ${w.definition
                   ? html`<p class="word-definition">${VS.ui.defTap(w)}</p>`
                   : html`<p class="hint">No definition yet.
                       <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
                 ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}" aria-expanded="false">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
-              </div>
-              <div class="meanings" aria-live="polite"></div>
+                <div class="meanings" aria-live="polite"></div>
+                ${example}`)}
 
-              <div class="word-example-block">
-                ${w.example ? html`
-                  <figure class="word-example">
-                    <blockquote>“${VS.ui.exampleTap(w)}”</blockquote>
-                    <button class="icon-btn word-hear" type="button" data-action="speak" data-say="${w.example}" aria-label="Hear the sentence">${icon("volume", "icon-sm")}</button>
-                  </figure>
-                  <p class="tap-hint">${icon("translate", "icon-sm")}<span>Tap any word to see its Arabic or keep it.</span></p>` : html`<p class="hint word-no-ex">No example yet.
-                    <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add an example</button></p>`}
-                <div class="word-ex-tools">${VS.ui.moreExamples(w)}</div>
-              </div>
+              ${w.context ? sec("context", "In context", "في السياق", VS.ui.context(w)) : ""}
 
-              <div class="word-memory">
-                ${s === "new"
-                  ? html`<p class="word-memory-line"><span>Not studied yet</span><span class="word-memory-sep" aria-hidden="true">·</span><span>added ${VS.ui.dateText(w.added)}</span></p>`
-                  : html`<p class="word-memory-line"><span>Next recall</span> <b>${whenText(e.due)}</b></p>
-                    <span class="word-memory-right" title="${e.right} right · ${e.wrong} wrong">${VS.ui.ruler(e.box, true)}<span class="word-memory-score">${e.right} right · ${e.wrong} wrong</span>
-                      <button class="word-reset" type="button" data-action="forget" data-id="${w.id}" aria-label="Reset “${w.word}” to new" title="Reset to new — start this word's schedule again">${icon("review", "icon-sm")}</button></span>`}
-              </div>
-
-              <div class="word-secs" role="group" aria-label="More about this word">
-                ${traps.length ? sec("mistakes", "Mistakes", traps.length, "target") : ""}
-                ${mine.length ? sec("mine", "Sentences", mine.length, "pen")
-                  : html`<a class="word-sec" href="#/word/write?id=${encodeURIComponent(w.id)}" title="Write a sentence with this word">${icon("pen", "icon-sm")}<span>Use it</span></a>`}
-                ${related ? sec("related", "Goes with", 0, "match") : ""}
-                ${tips.length ? sec("sound", "Sounds", tips.length, "volume") : ""}
-                ${sec("note", "Note", note ? "✓" : 0, "bulb")}
-              </div>
-              ${traps.length ? html`<div class="word-panel" data-panel="mistakes" hidden>${VS.ui.usage(w)}</div>` : ""}
-              ${mine.length ? html`<div class="word-panel" data-panel="mine" hidden>
-                  ${VS.ui.mine(w, true)}
-                  <a class="btn btn-tonal word-write" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")} Write another sentence</a>
+              ${sec("memory", "Memory", "الذاكرة", html`
+                ${w.memory ? html`<div class="word-memory-hook">
+                  ${icon("bulb", "icon-sm")}
+                  <div><span>A way to remember</span><p dir="auto">${VS.ui.mixed(w.memory)}</p></div>
                 </div>` : ""}
-              ${related ? html`<div class="word-panel word-related" data-panel="related" hidden>${VS.ui.goes(w)}${VS.ui.similar(w)}</div>` : ""}
-              ${tips.length ? html`<div class="word-panel" data-panel="sound" hidden>${VS.ui.soundTraps(w)}</div>` : ""}
-              <div class="word-panel" data-panel="note" hidden>
-                ${VS.ui.noteBox(w)}
-                ${w.tags.length ? html`<div class="word-tags">${VS.ui.tags(w)}</div>` : ""}
-              </div>
-            </div>
-          </div>`;
-    },
+                <div class="word-memory">
+                  <div class="word-memory-head">
+                    <span class="word-memory-label">${s === "new" ? "First recall" : "Next recall"}</span>
+                    <b>${s === "new" ? "not yet" : whenText(e.due)}</b>
+                  </div>
+                  ${VS.ui.ruler(e.box)}
+                  ${s === "new" ? html`<p class="word-memory-note">One right answer starts this word's 1 · 3 · 7 · 14 · 30 · 60 path.</p>` : ""}
+                  <div class="word-memory-foot">
+                    <span class="word-memory-score">${s === "new" ? `added ${VS.ui.dateText(w.added)}` : `${e.right} right · ${e.wrong} wrong`}</span>
+                    ${s === "new" ? "" : html`<button class="word-reset" type="button" data-action="forget" data-id="${w.id}" aria-label="Reset “${w.word}” to new" title="Reset to new — start this word's schedule again">${icon("review", "icon-sm")}</button>`}
+                  </div>
+                </div>`)}
 
-    /** Fill an open row's page if it is still empty. Safe to call twice. */
-    fillRow(row) {
-      const body = row && row.querySelector(":scope > .word-row-body[data-lazy]");
-      const w = row && VS.byId[row.dataset.id];
-      if (!body || !w) return;
-      body.outerHTML = String(VS.ui.wordBody(w));
+              ${sec("mine", "Your sentences", "جُملك", html`
+                ${mine.length ? VS.ui.mine(w, true, false) : html`<p class="hint">No sentences yet — write one and it can come back in Recall.</p>`}
+                <a class="word-write" href="#/word/write?id=${encodeURIComponent(w.id)}">${icon("pen", "icon-sm")} ${mine.length ? "Write another sentence" : "Write a sentence"}</a>`)}
+
+              ${(traps.length || tips.length || related) ? html`
+                <section class="word-card-sec" data-sec="extra">
+                  <h3 class="word-card-sec-title"><span class="word-card-sec-en">Good to know</span><span class="word-card-sec-ar" lang="ar" dir="rtl">للمعرفة</span></h3>
+                  <div class="word-card-grid">
+                    ${traps.length ? html`<div class="word-card-block">
+                      <h4 class="word-card-subtitle">Mistakes to avoid</h4>
+                      ${VS.ui.usage(w)}
+                    </div>` : ""}
+                    ${tips.length ? html`<div class="word-card-block">
+                      <h4 class="word-card-subtitle">Sounds</h4>
+                      ${VS.ui.soundTraps(w)}
+                    </div>` : ""}
+                    ${related ? html`<div class="word-card-block">
+                      <h4 class="word-card-subtitle">Related words</h4>
+                      ${VS.ui.goes(w)}${VS.ui.similar(w)}${VS.ui.opposites(w)}
+                    </div>` : ""}
+                  </div>
+                </section>` : ""}
+
+              <section class="word-card-sec word-card-note" data-sec="note">
+                ${VS.ui.noteBox(w)}
+              </section>
+            </div>
+          </div>
+        </div>`;
     },
 
     /**

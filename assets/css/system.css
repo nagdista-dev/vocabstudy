@@ -44,7 +44,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 /* ── Less motion means no entrance at all ───────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .view-enter, .enter, .flash, .summary, .toast, .sheet { animation: none !important; transition: none !important; }
+  .view-enter, .enter, .flash, .summary, .toast, .sheet, .word-card-shell { animation: none !important; transition: none !important; }
+  .word-card[open]::backdrop { animation: none !important; }
 }
 
 /* ── One stacking order ─────────────────────────────────────────── */
@@ -61,7 +62,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   .mark { forced-color-adjust: none; background: Mark; color: MarkText; }
   .ruler-mini li.is-past, .ruler-mini li.is-now { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
   .ruler-mini li.is-past { opacity: .6; }
-  .word-row-dot { forced-color-adjust: none; background: CanvasText !important; }
+  .word-row-dot, .word-card-dot { forced-color-adjust: none; background: CanvasText !important; }
   .pen-wrong, .usage-wrong > span, .spell-typed { text-decoration-color: CanvasText; }
 }
 
