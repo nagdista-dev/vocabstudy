@@ -9,78 +9,105 @@
    same page-like shape as a full Meet card. */
 .flash {
   --card-pad: clamp(18px, 3.4vw, 32px);
-  position: relative; display: grid; width: 100%; max-width: 660px; justify-self: center;
-  min-height: clamp(400px, 58dvh, 560px);
+  position: relative; display: grid; width: 100%; max-width: 620px; justify-self: center;
+  min-height: clamp(380px, 54dvh, 520px);
   perspective: 1400px; cursor: pointer; border-radius: var(--r-lg);
 }
+/* The card is a page from the same notebook as the word page: cream paper,
+   a dark hairline, an index line at the top and a dotted fold at the foot.
+   The content is set from the left so it reads like an entry, not a poster. */
 .flash-face {
+  --card-paper: color-mix(in srgb, var(--mark-soft) 38%, var(--surface));
   grid-area: 1 / 1; min-width: 0;
   display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
-  padding: 0; text-align: center;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
-  box-shadow: var(--shadow-2); overflow: hidden;
+  padding: 0; text-align: start;
+  background: var(--card-paper); border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+  box-shadow: 0 26px 64px -44px rgb(var(--shadow-rgb) / .55), 0 6px 18px -14px rgb(var(--shadow-rgb) / .25);
+  overflow: hidden;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   transition: transform 520ms var(--ease);
 }
+:root[data-theme="night"] .flash-face { --card-paper: var(--surface-2); }
 .flash-back { transform: rotateY(180deg); }
 .flash.is-flipped .flash-front { transform: rotateY(-180deg); }
 .flash.is-flipped .flash-back { transform: rotateY(0); }
 
-/* The two quiet bands. Centred on a recall card, left on the Meet page. */
+/* The two quiet bands: an index line, then a folded foot. */
 .flash-top {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: var(--s-2); min-width: 0;
-  padding: 12px var(--card-pad);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--s-1) var(--s-3); min-width: 0;
+  padding: 13px var(--card-pad);
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface-2) 52%, var(--surface));
 }
-.flash-badges { gap: var(--s-2); justify-content: center; }
+.flash-side {
+  font-size: var(--text-2xs); font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
+}
+/* Arabic keeps its joined script: no letter-spacing, its own face. */
+.flash-side .is-ar { font-family: var(--font-arabic); letter-spacing: 0; font-size: .96em; }
+/* Type, level and frequency as one typographic run, not three chips. */
+.flash-badges { flex-wrap: wrap; justify-content: flex-end; gap: 0; }
+.flash-badges > * + *::before { content: "·"; margin-inline: 8px; color: var(--line-strong); font-weight: 400; }
+.flash-badges .badge {
+  height: auto; padding: 0; border-radius: 0; background: none;
+  font-size: var(--text-xs); font-weight: 600; color: var(--ink-2);
+}
+.flash-badges .badge.lvl-a { color: var(--lvl-a); }
+.flash-badges .badge.lvl-b { color: var(--lvl-b); }
+.flash-badges .badge.lvl-c { color: var(--lvl-c); }
 .flash-foot {
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: flex-start;
   padding: 11px var(--card-pad);
-  border-top: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface-2) 52%, var(--surface));
+  border-top: 1px dashed var(--line-strong);
 }
 .flash-main {
-  display: grid; align-content: safe center; justify-items: center;
+  display: grid; align-content: safe center; justify-items: start;
   gap: clamp(12px, 2vw, 18px); min-width: 0;
   padding: clamp(22px, 4.4vw, 40px) var(--card-pad);
+  text-align: start;
 }
-.flash-answer { display: grid; justify-items: center; gap: var(--s-2); min-width: 0; max-width: 100%; }
-.flash-meaning { display: grid; justify-items: center; gap: var(--s-2); min-width: 0; max-width: 46ch; }
+.flash-answer { display: grid; justify-items: start; gap: var(--s-2); min-width: 0; max-width: 100%; }
+.flash-meaning { display: grid; justify-items: start; gap: var(--s-2); min-width: 0; max-width: 46ch; }
 
 .flash-word {
   font-family: var(--font-word); font-weight: 700; letter-spacing: .005em;
-  font-size: clamp(2.2rem, 1.5rem + 3.2vw, 3.5rem); line-height: 1.12;
+  font-size: clamp(2.2rem, 1.5rem + 3.2vw, 3.3rem); line-height: 1.12;
   overflow-wrap: anywhere;
 }
 .flash-sense { color: var(--ink-3); font-size: var(--text-lg); margin-top: calc(var(--s-2) * -1); }
+/* Pronunciation is a reading line under the word, not a pill. */
 .flash-sound {
   display: inline-flex; align-items: center; gap: var(--s-2);
-  min-height: calc(var(--tap) + 2px); padding: 2px 14px 2px 2px;
-  border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface-2);
+  min-height: var(--tap);
 }
 .flash-sound .ipa { font-size: 1.15rem; color: var(--ink-2); }
 .flash-sound.is-bare { min-height: 0; padding: 0; border: 0; background: none; }
 .flash-tip {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  margin: 0; color: var(--ink-3); font-size: var(--text-sm); line-height: 1.45; text-align: center;
+  display: flex; align-items: center; justify-content: flex-start; gap: 6px;
+  margin: 0; color: var(--ink-3); font-size: var(--text-sm); line-height: 1.45; text-align: start;
 }
 .flash-tip .icon { flex: none; }
 .flash-ar {
-  font-size: clamp(2rem, 1.5rem + 1.9vw, 2.6rem); font-weight: 600; line-height: 1.45;
+  justify-self: start; max-width: 100%; text-align: start;
+  font-size: clamp(2rem, 1.5rem + 1.9vw, 2.55rem); font-weight: 600; line-height: 1.45;
   margin: 0; overflow-wrap: anywhere;
 }
 .flash-def {
-  margin: 0; font-size: var(--text-lg); line-height: 1.55; color: var(--ink);
-  max-width: 44ch; overflow-wrap: anywhere;
+  margin: 0; font-size: var(--text-lg); line-height: 1.55; color: var(--ink-2);
+  max-width: 46ch; overflow-wrap: anywhere; text-wrap: pretty;
 }
+/* The example is a pull quote from a dictionary: serif italic, a highlighter
+   rule in the margin — never a grey panel. */
 .flash-example {
   display: flex; align-items: center; gap: var(--s-3); text-align: start;
-  width: 100%; max-width: 52ch; padding: var(--s-3) var(--s-4);
-  background: var(--surface-2); border-radius: var(--r-md); color: var(--ink-2);
+  width: 100%; max-width: 52ch; padding: 0 0 0 var(--s-3);
+  border-inline-start: 2px solid var(--mark);
+  background: none; border-radius: 0; color: var(--ink-2);
 }
-.flash-example p { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.flash-example p {
+  flex: 1; min-width: 0; overflow-wrap: anywhere;
+  font-family: var(--font-ipa); font-style: italic; font-size: 1.06rem; line-height: 1.6; color: var(--ink);
+}
 .flash-related { width: 100%; max-width: 52ch; }
 .flash .met { max-width: 50ch; }
 
@@ -102,7 +129,6 @@
 .flash-teach .flash-sound { align-self: start; }
 .flash-teach .rel, .flash-teach .rel-chips { justify-content: flex-start; }
 .flash-teach .flash-foot { justify-content: flex-start; }
-.flash-teach .meaning-ask { width: 100%; max-width: 54ch; }
 .flash-teach .flash-example { max-width: 54ch; }
 
 /* ── Recall ────────────────────────────────────────────────────── */
@@ -238,22 +264,52 @@
 .tile.is-on .tile-en { color: var(--brand); }
 .tile.is-done .tile-en, .tile.is-wrong .tile-en { color: inherit; }
 
-/* ── Results ───────────────────────────────────────────────────── */
-.summary { display: grid; gap: var(--s-4); text-align: center; justify-items: center; padding-top: var(--s-5); }
-.summary h1 { font-size: var(--text-3xl); }
-.summary-stats { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--s-3); margin-block: var(--s-3); }
-.summary-stat {
-  display: grid; min-width: 120px; padding: var(--s-4); border-radius: var(--r-lg);
-  background: var(--surface); border: 1px solid var(--line);
+/* ── Results ───────────────────────────────────────────────────────
+   A page at the end of a round, not a dashboard: one editorial column,
+   left-aligned, a highlighter title, and the score kept as a ruled tally
+   on the page rather than three floating boxes. */
+.summary {
+  display: grid; gap: var(--s-5); text-align: start; justify-items: start;
+  width: 100%; max-width: 720px; margin-inline: auto; padding-top: var(--s-6);
 }
-.summary-stat b { font-family: var(--font-display); font-size: var(--text-2xl); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.summary-stat span { color: var(--ink-3); font-size: var(--text-sm); }
+.summary-head { display: grid; gap: var(--s-2); justify-items: start; }
+.summary-kicker {
+  margin: 0; color: var(--ink-3); font-size: var(--text-2xs); font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase;
+}
+.summary h1 { font-size: var(--text-3xl); line-height: 1.08; letter-spacing: -.02em; max-width: 18ch; }
+.summary-title .mark { padding-inline: .04em; }
+.summary-lead { margin: 0; max-width: 54ch; color: var(--ink-2); font-size: var(--text-lg); line-height: 1.5; }
+.summary-tally {
+  display: flex; flex-wrap: wrap; align-items: stretch;
+  width: 100%; margin-block: var(--s-1);
+  border-block: 1px solid var(--line-strong);
+}
+.summary-stat {
+  display: grid; align-content: end; gap: 1px;
+  flex: 1 1 0; min-width: 0; padding: var(--s-3) var(--s-4) var(--s-3) 0;
+  text-align: start;
+}
+.summary-stat + .summary-stat { padding-inline-start: var(--s-4); border-inline-start: 1px solid var(--line); }
+.summary-stat b {
+  font-family: var(--font-display); font-size: clamp(1.45rem, 1.1rem + 1vw, 1.9rem);
+  line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.summary-stat span {
+  order: -1; color: var(--ink-3); font-size: var(--text-2xs); font-weight: 600;
+}
 .summary-stat.is-good b { color: var(--good); }
 .summary-stat.is-bad b { color: var(--bad); }
-.summary-stat.is-mark b { color: var(--on-mark); background: var(--mark); border-radius: 6px; padding: 0 .2em; justify-self: center; }
-.summary-sub { font-size: var(--text-lg); margin-top: var(--s-4); justify-self: start; }
+/* "Still learning" keeps the highlighter, as a swipe behind the number. */
+.summary-stat.is-mark b {
+  color: var(--ink);
+  background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);
+  padding-inline: .06em; margin-inline: -.06em;
+}
+.summary-sub { font-size: var(--text-lg); margin-top: var(--s-1); justify-self: start; }
 .summary .word-list { width: 100%; text-align: start; }
-.summary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-3); margin-top: var(--s-3); }
+.summary-actions { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: var(--s-3); width: 100%; }
+.summary-actions .btn { flex: 0 1 auto; }
 
 /* ── Phones ────────────────────────────────────────────────────── */
 @media (max-width: 599px) {
@@ -273,13 +329,13 @@
   .match-grid { gap: var(--s-2); }
   .match-col { gap: var(--s-2); }
   .tile { min-height: 58px; padding: var(--s-2) var(--s-3); font-size: .95rem; }
-  .summary { padding-top: var(--s-4); gap: var(--s-3); }
+  .summary { padding-top: var(--s-4); gap: var(--s-4); }
   .summary h1 { font-size: var(--text-2xl); }
-  .summary-stats { gap: 8px; margin-block: var(--s-1); justify-self: stretch; width: 100%; }
-  .summary-stat { min-width: 0; flex: 1; padding: 12px 4px; }
+  .summary-lead { font-size: var(--text-md); }
+  .summary-stat { padding: 12px var(--s-2) 12px 0; }
+  .summary-stat + .summary-stat { padding-inline-start: var(--s-2); }
   .summary-stat b { font-size: 1.35rem; }
-  .summary-stat span { font-size: var(--text-2xs); }
-  .summary-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .summary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .summary-actions > .btn:first-child { grid-column: 1 / -1; }
   .summary-actions > .btn:last-child:nth-child(2),
   .summary-actions > .btn:last-child:nth-child(4) { grid-column: 1 / -1; }
@@ -362,11 +418,13 @@
 
 /* Results: the words that moved forward and when each comes back (views/shared.js summary). */
 /* The teacher's one line at the end (V4.3): handwritten-margin quiet, not a banner. */
-.summary-teacher { margin: 0; padding-inline-start: var(--s-3); border-inline-start: 3px solid var(--mark); color: var(--ink); font-size: var(--text-md); text-align: start; justify-self: center; }
+.summary-teacher { margin: 0; max-width: 54ch; padding-inline-start: var(--s-3); border-inline-start: 3px solid var(--mark); color: var(--ink); font-size: var(--text-md); text-align: start; justify-self: start; }
+/* A ruled list on the page, like a column in a notebook — not a stack of cards. */
 .summary-moved { justify-self: stretch; text-align: start; }
-.summary-moved ul { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: grid; gap: var(--s-2); }
+.summary-moved ul { list-style: none; margin: var(--s-2) 0 0; padding: 0; border-block: 1px solid var(--line); }
 .summary-moved li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3);
-  padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); }
+  padding: 10px 0; }
+.summary-moved li + li { border-top: 1px solid var(--line); }
 .summary-moved li .mark { font-weight: 700; font-size: var(--text-md); }
 .summary-moved li span { color: var(--ink-2); font-size: var(--text-sm); }
 .q-no-listen { justify-self: center; margin-top: var(--s-2); min-height: var(--tap); }
@@ -399,22 +457,32 @@
 .recall-def-q { font-size: var(--text-lg); font-weight: 600; color: var(--ink); line-height: 1.45; }
 
 /* ── The card's body (cards.js extra) ────────────────────────────
-   The headword and its sound stay centred — the one thing to look at.
-   Everything under them lives in ONE column, one width, one left edge,
-   set apart by a hairline: where you met it (or the example), then
-   "Goes with" and "Similar" as rows with a fixed label column, so the
-   chips of both rows start on the same line as the panel above them.
-   (The pieces used to keep their own widths and alignments: a 50ch
-   left-aligned panel over 52ch centred chip rows — nothing lined up.) */
+   Everything under the headword lives in ONE column, one width, one
+   left edge, set apart by a hairline: where you met it (or the example),
+   then "Goes with" and "Similar" as rows with a fixed label column, so
+   the chips of both rows start on the same line as the panel above. */
 .flash-extra {
-  display: grid; gap: var(--s-3); width: 100%; max-width: 32rem; justify-self: center;
+  display: grid; gap: var(--s-3); width: 100%; max-width: 46ch; justify-self: stretch;
   margin-top: var(--s-1); padding-top: var(--s-4); border-top: 1px solid var(--line);
   text-align: start;
 }
 .flash-extra .met, .flash-extra .flash-example, .flash-extra .flash-related { width: 100%; max-width: none; justify-self: stretch; }
+/* Where you met it is a sentence from your own reading: same margin quote as
+   the example, never a second coloured panel on the paper. */
+.flash-extra .met {
+  max-width: none; padding: 0 0 0 var(--s-3); border-radius: 0; background: none;
+  border-inline-start: 2px solid var(--mark);
+}
+.flash-extra .met figcaption { color: var(--ink-3); }
+.flash-extra .met blockquote {
+  font-family: var(--font-ipa); font-style: italic; font-size: 1.06rem; line-height: 1.6;
+}
 .flash-extra .rel { display: grid; grid-template-columns: 5.75rem minmax(0, 1fr); align-items: baseline; gap: 0 var(--s-3); justify-content: stretch; }
 .flash-extra .rel-label { padding-top: 4px; line-height: 1.4; }
-.flash-extra .rel-chips { justify-content: flex-start; }
+.flash-extra .rel-chips { justify-content: flex-start; gap: 0; }
+/* Word partners and similar words read as one dictionary line, not pills. */
+.flash-extra .rel-chip { padding: 0; border: 0; background: none; }
+.flash-extra .rel-chip + .rel-chip::before { content: "·"; margin-inline: 7px; color: var(--line-strong); font-weight: 400; }
 .flash-teach .flash-extra { justify-self: stretch; max-width: 54ch; }
 @media (max-width: 420px) {
   .flash-extra .rel { grid-template-columns: minmax(0, 1fr); gap: 6px; }

@@ -266,24 +266,6 @@
     return arabicList((translation && shares(translation, top.join(" - ")) ? [translation] : []).concat(top), 2);
   }
 
-  /**
-   * Does the learner need to pick the meaning? Only when the word clearly
-   * has meanings that a learner would translate differently, or when the
-   * Arabic of the first meaning couldn't be confirmed:
-   *   • the first meaning's Arabic is only Google's usual guess, and the word
-   *     has many meanings ("bank": the dictionary starts with a river bank)
-   *   • a phrasal verb with meanings that share no Arabic ("take off": نزع / إقلاع)
-   *   • parts of speech that share no Arabic ("fine": رفيع / غرامة) — not "challenge" (تحدي / تحدى)
-   */
-  function ambiguous(senses, entriesFor, word) {
-    const s0 = senses[0];
-    if (!s0 || !s0.arabic || senses.length < 2) return false;
-    if (s0.unsure && senses.filter((m) => m.pos === s0.pos).length >= 3) return true;
-    const top = senses.slice(1, 5).filter((m) => m.arabic && !shares(m.arabic, s0.arabic));
-    if (phrasalShape(word) && top.length) return true;
-    return top.some((m) => m.pos !== s0.pos && entriesFor && (entriesFor[m.pos] || []).length);
-  }
-
   /** Several Arabic meanings, written the app's way: «في الواقع - فعلاً - حقاً». */
   function arabicList(list, max) {
     const out = [], seen = new Set();
@@ -357,7 +339,7 @@
     // takes Google's own most common Arabic for its part of speech.
     if (senses[0] && !senses[0].arabic) {
       senses[0].arabic = mainArabic(one, entriesFor[senses[0].pos]);
-      if (senses[0].arabic) senses[0].unsure = true;        // likely, not confirmed: see ambiguous()
+      if (senses[0].arabic) senses[0].unsure = true;        // likely, not confirmed
     }
     // "postponed" → base "postpone": a learner should learn the verb, not one of its forms.
     const d0 = (data.dict || [])[0];
@@ -527,12 +509,11 @@
     try { await translateTerms(senses); } catch (e) { /* offline or blocked: those meanings stay without Arabic */ }
     // Checked meanings first; then the meaning the learner's own sentence points to.
     const checked = overrideSenses(word);
-    let fromContext = false, unsettled = false;
+    let fromContext = false;
     if (checked) {
       const i = senseFor(checked, context, word);
       if (i > 0) checked.unshift(checked.splice(i, 1)[0]);
       fromContext = i >= 0;
-      unsettled = checked.length > 1 && i < 0;           // several everyday meanings, nothing to choose by
       senses = checked.concat(senses);
     } else if (context) {
       const i = senseFor(senses, context, word);
@@ -587,9 +568,6 @@
       // "Keep it as typed" is remembered with the word, so it is never asked again.
       fields.check = VS.spelling.kept(word) ? { kind: "ok" } : { kind: "spelling", fix };
     }
-    // Meanings a learner would translate differently: ask which one they met —
-    // unless a checked meaning or the learner's own sentence already settled it.
-    else if (checked ? unsettled : !fromContext && ambiguous(senses, gv.entriesFor, word)) fields.check = { kind: "meaning" };
     // "gave up" is learned as "give up" (its base); "realise" keeps the learner's British spelling.
     const alias = aliasOf(word);
     const phraseBase = alias && /\s/.test(word) && /\s/.test(alias) ? alias : "";

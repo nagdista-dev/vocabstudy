@@ -37,7 +37,7 @@ Everything serves long, focused sessions:
 | accent sets | teal `#0a6f6a`, sky `#0e6688`, violet `#6a3fc4`, plum `#8a2f6b`, rose `#b8325f`, cocoa `#7a4a2b`, amber `#8a5600`, graphite `#3d4452` | optional action colours; each brings its own hover and soft tint |
 | `--brand` (glass) | `#26384a` · hover `#17283a` · soft `#eef4f8` | the tenth accent; swaps the action surfaces for the Liquid Glass material (`glass.css`) |
 | `--mark` | `#ffe066` | the highlighter: **memory only** — the word being learned and the count that is due |
-| `--note` / `-soft` / `-line` / `-ink` | `#3b5b8c` / `#eef2f8` / `#c8d3e6` / `#22344f` | the app asking or warning: "Which meaning?", spelling checks, flags, status lines, milestones |
+| `--note` / `-soft` / `-line` / `-ink` | `#3b5b8c` / `#eef2f8` / `#c8d3e6` / `#22344f` | the app asking or warning: spelling checks, flags, status lines, milestones |
 | `--good` / `--bad` | `#0f744f` / `#b3302f` | right / wrong (≥ 5:1 on their soft fills) |
 | `--lvl-a/b/c` | teal / blue / violet | CEFR level badges |
 | `--photo-frame` / `-line` / `--photo-ink` / `--photo-ink-2` | `#ffffff` / `#e1e5ec` / `#141b2d` / `#465066` | a photograph's paper frame and caption; fixed in both themes, like a real print |
@@ -577,14 +577,31 @@ nav keeps its words and drops its icons, so the lockup always has room.
   typed) and Gmail (nagdista@gmail.com, a subject typed). Nothing is sent
   until the learner sends it.
 
-## The study card's body (v13)
+## The study card (v14)
 
-The headword and its sound stay centred on a check card; everything under
-them is ONE column (32rem, one left edge) under a hairline: where you met it
-(or the example), then "Goes with" and "Similar" as label | chips rows with a
-fixed 5.75rem label column (stacked under 420px). On Meet, the head is a
-bilingual-dictionary row — the English word and sound left, the Arabic on the
-right edge — with the definition under both (stacked under 480px).
+The card is a page from the same notebook as the word card: cream paper, a
+dark hairline, an index line at the top and a dashed fold at the foot. The
+index line says which side you are on (`Front · العربية`, `Back · English`,
+`Meet · أول لقاء`) and then type, level and frequency as one typographic run
+— never three chips. Everything under the headword is ONE left-aligned
+column under a hairline: where you met it (or the example) as a serif italic
+margin quote with a highlighter rule, then "Goes with" and "Similar" as
+label | words rows with a fixed 5.75rem label column (stacked under 420px).
+The example is a pull quote, not a grey panel; word partners are separated
+by middots, not pills. On Meet, the head is a bilingual-dictionary row — the
+English word and sound left, the Arabic on the right edge — with the
+definition under both (stacked under 480px).
+
+## The end of a round (results)
+
+A page, not a dashboard: one left-aligned editorial column, a quiet
+`Round finished` kicker, the title in a highlighter, then the score as a
+ruled tally across the page (label above value, hairline between columns)
+instead of three floating stat boxes. The teacher's line is a margin note;
+"Moving forward" is a ruled list on the page, not a stack of cards. Actions
+sit left, primary first. "Words to look at again" uses the same tray as the
+word list. On phones the tally keeps three columns and the actions become a
+full-width primary over two secondary buttons.
 
 ## Share with (`#/share`, `#/shared`)
 

@@ -18,11 +18,16 @@
   
   let s = null;   // session: { scope, queue, index, flipped, known, learning, again }
 
-  /* Every face on the study card shares three bands: a quiet meta row, the
-     reading body, and one line at the foot that says what to do next. The
-     bands are what make the card a page instead of floating pieces. */
-  function meta(w) {
-    return html`<div class="row flash-badges">${VS.ui.levelBadge(w)}${w.type ? html`<span class="badge">${w.type}</span>` : ""}${VS.ui.freq(w)}</div>`;
+  /* Every face on the study card shares three bands: a quiet index line (which
+     side, then the facts in one typographic run), the reading body, and one
+     line at the foot that says what to do next. The bands are what make the
+     card a page instead of floating pieces. */
+  function meta(w, side, sub) {
+    const ar = sub && /[\u0600-\u06FF]/.test(sub);
+    return html`<div class="flash-top">
+      <span class="flash-side">${side}${sub ? html` · <span class="${ar ? "is-ar" : ""}">${sub}</span>` : ""}</span>
+      <div class="row flash-badges">${VS.ui.levelBadge(w)}${w.type ? html`<span class="badge">${w.type}</span>` : ""}${VS.ui.freq(w)}</div>
+    </div>`;
   }
 
   /** The speaker and the IPA as one pill, so pronunciation reads as a unit. */
@@ -32,8 +37,8 @@
 
   /** Everything under the headword, in ONE column of one width with one left
       edge: where you met it (or the example), then "Goes with" and "Similar"
-      as label | chips rows. The headword above stays centred; this column is
-      the entry's body, set apart by a hairline. */
+      as label | words rows. This column is the entry's body, set apart by a
+      hairline. */
   function extra(w) {
     const parts = [
       VS.ui.context(w, "flash-met"),
@@ -55,15 +60,15 @@
   function arabicFront(w) {
     return html`
       <div class="flash-face flash-front" aria-hidden="${s.flipped}">
-        <div class="flash-top">${meta(w)}</div>
+        ${meta(w, "Front", "العربية")}
         <div class="flash-main">
-          <p class="flash-ar" lang="ar">${w.arabic}</p>
+          <p class="flash-ar" lang="ar" dir="rtl">${w.arabic}</p>
           ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
         </div>
         ${foot("flip", "Say it in English, then tap to check")}
       </div>
       <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
-        <div class="flash-top">${meta(w)}</div>
+        ${meta(w, "Back", "English")}
         <div class="flash-main">
           <div class="flash-answer">
             <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
@@ -81,7 +86,7 @@
     return html`
       <div class="flash flash-teach">
         <div class="flash-face flash-open">
-          <div class="flash-top">${meta(w)}</div>
+          ${meta(w, "Meet", "أول لقاء")}
           <div class="flash-main">
             <div class="flash-headrow">
               <div class="flash-answer">
@@ -92,15 +97,6 @@
               ${w.arabic ? html`<p class="flash-ar" lang="ar" dir="rtl">${w.arabic}</p>` : ""}
             </div>
             ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
-            ${!w.trusted && !w.confirmed && w.arabic && VS.autofill.enabled() ? html`
-              <div class="meaning-ask">
-                <p class="meaning-ask-q">${w.context ? "Is this the meaning you met?" : "Is this the meaning you need?"}</p>
-                <div class="row meaning-ask-actions">
-                  <button class="btn btn-tonal" type="button" data-action="meaning-yes" data-id="${w.id}">${icon("check", "icon-sm")} Yes</button>
-                  <button class="btn btn-quiet" type="button" data-action="meaning-list" data-id="${w.id}">Another meaning</button>
-                </div>
-                <div class="meanings" aria-live="polite"></div>
-              </div>` : ""}
             ${extra(w)}
           </div>
           ${w.example
@@ -120,7 +116,7 @@
       <div class="flash ${s.flipped ? "is-flipped" : ""}" data-action="flip" role="button" tabindex="0"
            aria-label="${s.flipped ? "Card back" : "Card front. Press space to see the meaning"}">
         <div class="flash-face flash-front" aria-hidden="${s.flipped}">
-          <div class="flash-top">${meta(w)}</div>
+          ${meta(w, "Front", "English")}
           <div class="flash-main">
             <p class="flash-word"><span class="mark">${VS.cap(w.word)}</span></p>
             ${w.sense ? html`<p class="flash-sense">${w.sense}</p>` : ""}
@@ -129,7 +125,7 @@
           ${foot("flip", "Tap to see the meaning")}
         </div>
         <div class="flash-face flash-back" aria-hidden="${!s.flipped}">
-          <div class="flash-top">${meta(w)}</div>
+          ${meta(w, "Back", "المعنى")}
           <div class="flash-main">
             <div class="flash-meaning">
               ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}

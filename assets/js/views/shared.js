@@ -63,7 +63,6 @@
           ${VS.ui.tagList()}
           ${VS.autofill.enabled() ? html`<div class="sense-pick is-wide">
             <button class="btn btn-tonal" type="button" data-action="word-senses" data-id="${w.id}">${icon("book", "icon-sm")} Other meanings</button>
-            <span class="hint">Not the meaning you met? Tap the right one.</span>
             <div class="sense-list" aria-live="polite"></div>
           </div>` : ""}
           <div class="row is-wide">
@@ -743,13 +742,6 @@
           </button></li>`)}</ol>`
       : html`<p class="hint">${navigator.onLine ? "No other meanings found." : "You're offline — try again when you're online."}</p>`);
   };
-  // "Not the meaning you met?" in a word's details: open Edit with the meanings listed.
-  VS.actions["word-meanings"] = (el) => {
-    const body = el.closest(".word-card-body");
-    VS.actions["word-edit"](el);
-    const btn = body && body.querySelector('[data-action="word-senses"]');
-    if (btn) { VS.actions["word-senses"](btn); btn.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
-  };
   VS.actions["word-sense-pick"] = async (el) => {
     const m = senses[Number(el.dataset.index)];
     const form = el.closest("form");
@@ -773,15 +765,14 @@
     VS.actions["word-save"](form.querySelector('[data-action="word-save"]'));
   };
   /* ── The meanings of a word, inline (V0.5 / V2.4) ────────────────
-     "Other meanings", "Show the others" and "Another meaning" on the Meet card
-     all open the same short list right where the learner is — never the
-     13-field Edit form. The meaning shown now is marked "This one"; any other
-     is one tap: "Use this meaning" (VS.store.applySense). "Yes" confirms. */
+     "Other meanings" on the word page opens a short list right where the
+     learner is — never the 13-field Edit form. The meaning shown now is
+     marked "This one"; any other is one tap: "Use this meaning"
+     (VS.store.applySense). */
   const meaningLists = {};
   const meaningBox = (el) => {
-    const host = el.closest(".meaning-ask, .word-entry, .word-check");
-    const scope = host && host.closest(".word-entry, .meaning-ask") || host;
-    return scope && scope.querySelector(".meanings");
+    const host = el.closest(".word-entry");
+    return host && host.querySelector(".meanings");
   };
   const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
   VS.actions["meaning-list"] = async (el) => {
@@ -844,11 +835,6 @@
     VS.store.applySense(id, m);
     refreshWord(id, ".word-definition");
     VS.toast("Meaning changed.", { label: "Undo", run: () => { VS.store.restore(snap); refreshWord(id); } });
-  };
-  VS.actions["meaning-yes"] = (el) => {
-    VS.store.confirmMeaning(el.dataset.id);
-    refreshWord(el.dataset.id, ".word-definition, .flash-def");
-    VS.toast("Meaning confirmed.");
   };
   /* ── The word card: a word's whole page, over the list ───────────
      A native <dialog> gives the card its own focus trap, Esc handling,
@@ -1563,23 +1549,20 @@
     /** Tags as small chips that open the library filtered by that tag. */
     tags: (w) => w.tags.map((t) => html`<a class="tag" href="#/words?tag=${encodeURIComponent(t)}">#${t}</a>`),
 
-    /** The small tag on a word row that needs a look: "Check spelling" / "2+ meanings". */
+    /** The small tag on a word row whose spelling looks wrong. */
     checkFlag(w) {
-      const k = w.check && w.check.kind;
-      if (k === "spelling") return html`<span class="word-row-flag">Check spelling</span>`;
-      if (k === "meaning") return html`<span class="word-row-flag">Which meaning?</span>`;
-      return "";
+      return w.check && w.check.kind === "spelling" ? html`<span class="word-row-flag">Check spelling</span>` : "";
     },
 
     /**
-     * The line at the top of a flagged word (core/autofill.js sets the flag):
-     * a probable typo with its fix, or a word whose meanings differ in Arabic.
-     * Everything the app teaches is built on this word, so it asks first.
+     * The line at the top of a word whose spelling looks wrong (core/autofill.js
+     * sets the flag): a probable typo with its fix. Everything the app teaches
+     * is built on this word, so it asks first.
      */
     checkLine(w) {
       const c = w.check;
-      if (!c || (c.kind !== "spelling" && c.kind !== "meaning")) return "";
-      if (c.kind === "spelling") return html`
+      if (!c || c.kind !== "spelling") return "";
+      return html`
         <div class="word-check" role="note">
           ${c.fix
             ? html`<span>${icon("bulb", "icon-sm")} No dictionary knows “${w.word}”. Did you mean <b>${c.fix}</b>?</span>
@@ -1587,12 +1570,6 @@
             : html`<span>${icon("bulb", "icon-sm")} No dictionary knows “${w.word}”. Check the spelling before you learn it.</span>
                    <button class="btn btn-tonal" type="button" data-action="word-edit" data-id="${w.id}">Edit</button>`}
           <button class="btn btn-quiet" type="button" data-action="word-check-ok" data-id="${w.id}">It's right</button>
-        </div>`;
-      return html`
-        <div class="word-check" role="note">
-          <span>${icon("book", "icon-sm")} “${w.word}” has more than one meaning. Is this the one you met?</span>
-          <button class="btn btn-tonal" type="button" data-action="meaning-list" data-id="${w.id}">Show the others</button>
-          <button class="btn btn-quiet" type="button" data-action="meaning-yes" data-id="${w.id}">Yes, this one</button>
         </div>`;
     },
 
@@ -1850,10 +1827,13 @@
                 <span>${reached === 1 ? "You remembered it after a week or more — it's yours now."
                   : reached.toLocaleString("en-GB") + " words you remembered after a week or more — they're yours now."}</span></p>
             </div>` : ""}
-          <h1>${title}</h1>
-          <p class="muted">${message}</p>
+          <header class="summary-head">
+            <p class="summary-kicker">Round finished</p>
+            <h1 class="summary-title"><span class="mark">${title}</span></h1>
+            <p class="summary-lead">${message}</p>
+          </header>
           ${teacher ? html`<p class="summary-teacher">${teacher}</p>` : ""}
-          <div class="summary-stats">
+          <div class="summary-tally">
             ${stats.map((s) => html`<div class="summary-stat ${s.tone ? "is-" + s.tone : ""}"><b>${s.value}</b><span>${s.label}</span></div>`)}
           </div>
           ${moved && moved.length ? html`

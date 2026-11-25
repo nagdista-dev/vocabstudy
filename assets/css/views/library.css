@@ -149,6 +149,16 @@
   border-radius: var(--r-lg);
   overflow: hidden;
 }
+/* A list of words is a tray of slips, not one long table: a thin inner
+   margin lets each row take its own soft rectangle on hover, while the
+   hairline between rows keeps the column scannable. */
+.word-list:has(> .word-row) {
+  padding: 5px;
+  box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / .03), 0 18px 40px -38px rgb(var(--shadow-rgb) / .4);
+}
+.word-list:has(> .word-row) > .word-row { border-top: 0; background: transparent; }
+.word-list:has(> .word-row) > .word-row + .word-row { box-shadow: inset 0 1px 0 var(--line); }
+.word-list:has(> .word-row) .word-row-open { border-radius: 12px; }
 .word-list > .btn {
   border: 0; border-top: 1px solid var(--line); border-radius: 0;
   min-height: 50px; background: var(--surface);
@@ -160,14 +170,16 @@
 .word-row-open {
   display: grid; grid-template-columns: fit-content(42%) minmax(0, 1fr) 20px;
   grid-template-areas: "word ar chev" "meta meta chev";
-  align-items: center; column-gap: var(--s-4); row-gap: 0;
-  width: 100%; min-height: 58px; padding: 9px var(--s-4);
+  align-items: center; column-gap: var(--s-4); row-gap: 3px;
+  width: 100%; min-height: 62px; padding: 10px var(--s-4);
   font: inherit; color: inherit; text-align: start; cursor: pointer;
   transition: background var(--fast);
 }
-.word-row-open:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; border-radius: 0; }
+.word-row-open:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; border-radius: 12px; }
 @media (hover: hover) {
-  .word-row-open:hover { background: var(--surface-hover); }
+  /* A slip lifted off the tray: visible enough to read as a rectangle, never
+     a second card competing with the words. */
+  .word-row-open:hover { background: color-mix(in srgb, var(--surface-2) 62%, var(--surface)); }
   .word-row-open:hover .word-row-chev { transform: translateX(2px); }
 }
 .word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
@@ -175,6 +187,9 @@
   min-width: 0; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* The sense in brackets names the meaning; it must never compete with the
+   word itself. Same weight as a margin note, a step quieter than the meta. */
+.word-row-word .sense { color: var(--ink-3); font-weight: 400; font-size: .86em; }
 /* A row is a single scannable line, like a spine on a shelf: long Arabic
    is clipped with an ellipsis and comes back in full in the word card.
    Opening the card is the learner asking to read it. */
@@ -452,6 +467,4 @@
 
 /* ── Rows stay still ───────────────────────────────────────────────
    A word now opens in its own dialog, so the list never moves, dims or
-   reflows. The first and last rows keep the card's rounded corners. */
-.word-list > .word-row:first-child { border-top-left-radius: calc(var(--r-lg) - 1px); border-top-right-radius: calc(var(--r-lg) - 1px); }
-.word-list > .word-row:last-child { border-bottom-left-radius: calc(var(--r-lg) - 1px); border-bottom-right-radius: calc(var(--r-lg) - 1px); }
+   reflows. The tray's rounded corners come from the list itself. */

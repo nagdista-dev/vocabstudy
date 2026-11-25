@@ -36,7 +36,7 @@
   /* Highlighter — the signature: marks the word being learned, rewards */
   --mark:      #ffe066;
   --mark-soft: #fff5c7;
-  /* Notes and questions ("Did you mean…?", "Which meaning?", a service that isn't answering):
+  /* Notes and questions ("Did you mean…?", a service that isn't answering):
      a calm slate, so yellow keeps ONE meaning — the word you're learning (v10, V3.7). */
   --note:      #3b5b8c;   /* icon / accent line */
   --note-soft: #eef2f8;   /* background */

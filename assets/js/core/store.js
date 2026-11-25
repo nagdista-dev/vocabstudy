@@ -63,6 +63,10 @@
       // that made them tap. Old or damaged saves fall back to an empty wallet.
       if (!Array.isArray(st.wallet)) st.wallet = [];
       st.wallet = st.wallet.filter((e) => e && e.word).slice(-300);
+      // The old "this word has more than one meaning" question is gone. Drop
+      // its stored flag so an old save never resurrects it; a spelling flag stays.
+      if (!Array.isArray(st.library)) st.library = [];
+      st.library.forEach((w) => { if (w && w.check && w.check.kind === "meaning") delete w.check; });
       const g = st.settings.dailyGoal;
       if (g && ![20, 50, 100, 200].includes(g)) st.settings.dailyGoal = g < 75 ? 50 : g < 150 ? 100 : g <= 150 ? 100 : 200;
       return st;
@@ -630,10 +634,10 @@
         raw.synonyms = fields.synonyms.slice(); w.synonyms = fields.synonyms.slice(); filled.add("synonyms");
       }
       if (filled.size) raw.filled = [...filled];
-      // "Check the spelling" / "Which meaning did you meet?" (core/autofill.js).
+      // "Check the spelling" (core/autofill.js).
       if (fields.check) { raw.check = Object.assign({}, fields.check); w.check = raw.check; }
-      // A meaning checked by hand (assets/data/overrides.js) needs no "Is this the meaning?" question —
-      // but only when its Arabic is the one shown: Arabic the learner typed keeps no "trusted" badge.
+      // A meaning checked by hand (assets/data/overrides.js) is trusted only
+      // when its Arabic is the one shown: Arabic the learner typed keeps no badge.
       if (fields.trusted && raw.arabic === fields.arabic) raw.trusted = w.trusted = true;
       if (fields.fromContext) raw.fromContext = w.fromContext = true;     // the meaning came from "Where you met it"
       // "wednesday" → "Wednesday": only the capital changes, so the id stays.
@@ -651,8 +655,8 @@
     },
 
     /**
-     * The learner has looked at a flagged word ("Keep it", or picked a
-     * meaning): the "check" line goes away.
+     * The learner has looked at a misspelled word ("Keep it"): the
+     * "Check spelling" line goes away.
      */
     clearCheck(id) {
       const raw = rawOf(id);
@@ -704,16 +708,6 @@
       if (fromContext) { raw.fromContext = true; if (w) w.fromContext = true; }
       save();
       return true;
-    },
-
-    /** The learner says the meaning shown is the one they met ("Yes" on the Meet card). */
-    confirmMeaning(id) {
-      const raw = rawOf(id);
-      const w = VS.byId[id];
-      if (!raw) return;
-      raw.confirmed = true; if (w) w.confirmed = true;
-      delete raw.check; if (w) delete w.check;
-      save();
     },
 
     /**
