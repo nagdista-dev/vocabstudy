@@ -128,7 +128,7 @@
           ${meta(w, "Back", "المعنى")}
           <div class="flash-main">
             <div class="flash-meaning">
-              ${w.arabic ? html`<p class="flash-ar" lang="ar">${w.arabic}</p>` : ""}
+              ${w.arabic ? html`<p class="flash-ar" lang="ar" dir="rtl">${w.arabic}</p>` : ""}
               ${w.definition ? html`<p class="flash-def">${VS.ui.defTap(w, { tab: false })}</p>` : ""}
             </div>
             ${extra(w)}

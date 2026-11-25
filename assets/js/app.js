@@ -271,6 +271,8 @@
     // The wallet's door, always in the bar (next to Settings): reachable from any
     // screen, even before anything is saved; the count says what is waiting.
     devNote();
+    const shareBtn = VS.$("#shareAppBtn");
+    if (shareBtn) shareBtn.innerHTML = String(icon("share"));
     const walletBtn = VS.$("#walletBtn");
     if (walletBtn) {
       const kept = VS.store.wallet().length;
@@ -583,6 +585,7 @@
   const GLOBAL = (VS.actions = VS.actions || {});
   Object.assign(GLOBAL, {
     speak(el) { VS.speech.say(el.dataset.say, el); },
+    "share-app"() { VS.openAppShare(); },
     reload() { location.reload(); },
     // The new version also loads by itself next time the app opens.
     "update-later"() { const bar = document.querySelector(".update-bar"); if (bar) bar.remove(); devNote(); },

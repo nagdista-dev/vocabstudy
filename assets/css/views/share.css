@@ -146,3 +146,84 @@
 .share-send h2 span { color: var(--ink-3); font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; }
 .share-status.is-idle { color: var(--ink-3); }
 @media (min-width: 1024px) { .share-grid.is-receive { grid-template-columns: minmax(0, 1fr) 340px; } }
+
+/* ── Share the app itself ──────────────────────────────────────────
+   Two doors to the same sheet: the app-bar button (always in reach) and
+   the invitation slip on Today. The sheet is the learner's own Arabic,
+   then one row of channels — no account, no tracking, nothing about them
+   in the link. */
+.share-app-btn { color: var(--brand); }
+.share-app-btn:hover { background: var(--brand-soft); color: var(--brand); }
+
+/* The invitation: a tear-off slip on the desk, not a billboard. The dashed
+   edge is the only decoration; the words do the asking. */
+.today-share {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: var(--s-3);
+  margin-top: var(--s-3); padding: var(--s-3) var(--s-4);
+  border: 1px dashed var(--line-strong); border-radius: var(--r-md);
+  background: var(--card-paper, var(--surface));
+}
+.today-share-ico {
+  display: grid; place-items: center; width: 36px; height: 36px; flex: none;
+  border-radius: 50%; background: var(--brand-soft); color: var(--brand);
+}
+.today-share-copy { display: grid; gap: 2px; min-width: 0; }
+.today-share-copy b { font-size: var(--text-sm); color: var(--ink); }
+.today-share-copy span { color: var(--ink-2); font-size: var(--text-xs); line-height: 1.45; }
+.today-share-btn { flex: none; min-height: var(--tap); white-space: nowrap; }
+@media (max-width: 599px) {
+  .today-share { grid-template-columns: auto minmax(0, 1fr); }
+  .today-share-btn { grid-column: 1 / -1; width: 100%; }
+}
+
+.app-share-body { display: grid; gap: var(--s-3); min-width: 0; padding: var(--s-4) var(--s-5) var(--s-5); }
+.app-share-body > .hint { margin: 0; }
+/* The message, in the learner's Arabic: a note on the desk, read right to
+   left, with the link allowed to sit as Latin at the end. */
+.app-share-preview {
+  margin: 0; padding: var(--s-3) var(--s-4); min-width: 0; max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--note) 30%, var(--line));
+  border-radius: var(--r-md);
+  background: var(--note-soft); color: var(--note-ink);
+  font-family: var(--font-arabic); font-size: calc(var(--text-md) * var(--arabic-scale));
+  line-height: 1.85; text-align: start;
+  overflow-wrap: anywhere;
+}
+/* The link is Latin in an Arabic note: its own LTR run, kept whole, so the
+   ending slash never jumps to the front. */
+.app-share-url {
+  display: block; unicode-bidi: isolate; white-space: nowrap; direction: ltr;
+  font-family: var(--font-body); font-size: .86em; letter-spacing: -.01em;
+}
+@media (max-width: 359px) { .app-share-preview { padding-inline: var(--s-3); } }
+.app-share-native { width: 100%; gap: var(--s-2); }
+.app-share-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.app-share-channel {
+  flex: 0 1 72px; min-width: 0; min-height: 72px;
+  display: grid; justify-items: center; align-content: center; gap: 6px;
+  padding: 8px 4px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); text-decoration: none;
+  transition: background var(--fast), border-color var(--fast), transform var(--fast) var(--ease);
+}
+.app-share-channel:hover, .app-share-channel:focus-visible {
+  background: var(--surface-2); border-color: var(--line-strong); transform: translateY(-1px);
+}
+.app-share-channel .icon { width: 22px; height: 22px; }
+.app-share-channel span { max-width: 100%; font-size: var(--text-2xs); font-weight: 600; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Each mark keeps its own colour; the tile stays paper. */
+.app-share-channel.is-whatsapp .icon { color: #128c4a; }
+.app-share-channel.is-telegram .icon { color: #1f8fc4; }
+.app-share-channel.is-x .icon { color: #111; }
+.app-share-channel.is-facebook .icon { color: #1877f2; }
+.app-share-channel.is-linkedin .icon { color: #0a66c2; }
+.app-share-channel.is-email .icon { color: var(--ink-2); }
+.app-share-channel.is-sms .icon { color: var(--brand); }
+:root[data-theme="night"] .app-share-channel.is-x .icon { color: var(--ink); }
+.app-share-copy-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); }
+.app-share-copy-row .btn { gap: 6px; min-height: var(--tap); }
+.app-share-free { margin: 0; text-align: center; font-size: var(--text-2xs); }
+@media (max-width: 374px) {
+  .app-share-body { padding-inline: var(--s-4); }
+  .app-share-copy-row { grid-template-columns: minmax(0, 1fr); }
+}

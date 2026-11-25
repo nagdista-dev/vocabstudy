@@ -74,7 +74,7 @@
           ${VS.ui.activityHead({ back: s.scope.back, title: "Speak", sub: s.scope.title, index: s.index, total: s.words.length, combo: s.combo })}
           <div class="activity-stage stage-center">
           <section class="speak card">
-            <p class="speak-ar" lang="ar">${w.arabic}</p>
+            <p class="speak-ar" lang="ar" dir="rtl">${w.arabic}</p>
             <p class="speak-word"><span class="mark">${w.word}</span></p>
             <div class="row speak-sound">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}
               <button class="btn btn-quiet" type="button" data-action="slow">${icon("clock", "icon-sm")} Slower</button></div>

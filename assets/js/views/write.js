@@ -135,7 +135,7 @@
             <div class="write-word">
               <p class="write-headword"><span class="mark">${VS.cap(w.word)}</span></p>
               <div class="row">${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
-              ${w.arabic ? html`<p class="write-ar" lang="ar">${w.arabic}</p>` : ""}
+              ${w.arabic ? html`<p class="write-ar" lang="ar" dir="rtl">${w.arabic}</p>` : ""}
               ${w.definition ? html`<p class="write-def">${w.definition}</p>` : ""}
             </div>
             ${VS.ui.usage(w, 2, "write-usage")}

@@ -106,14 +106,14 @@
       const meaning = has("definition") || has("example") || has("notes");
       return html`
         <table class="p-table p-sheet">
-          <thead><tr><th>#</th><th>Word</th>${meaning ? html`<th>Meaning</th>` : ""}${has("arabic") ? html`<th class="p-ar-h" lang="ar">بالعربي</th>` : ""}</tr></thead>
+          <thead><tr><th>#</th><th>Word</th>${meaning ? html`<th>Meaning</th>` : ""}${has("arabic") ? html`<th class="p-ar-h" lang="ar" dir="rtl">بالعربي</th>` : ""}</tr></thead>
           <tbody>
             ${words.map((w, i) => html`
               <tr>
                 <td class="p-n">${i + 1}</td>
                 <td class="p-word">${word(w)}${has("ipa") ? html`<span class="p-ipa ipa">${VS.ipaText(w)}</span>` : ""}<span class="p-meta">${w.type}${w.level ? " · " + w.level : ""}</span></td>
                 ${meaning ? html`<td class="p-def">${has("definition") ? w.definition : ""}${has("example") && w.example ? html`<i>${VS.ui.quote(w)}</i>` : ""}${note(w)}</td>` : ""}
-                ${has("arabic") ? html`<td class="p-ar" lang="ar">${w.arabic}</td>` : ""}
+                ${has("arabic") ? html`<td class="p-ar" lang="ar" dir="rtl">${w.arabic}</td>` : ""}
               </tr>`)}
           </tbody>
         </table>`;
@@ -124,7 +124,7 @@
         <ol class="p-compact">
           ${words.map((w) => html`
             <li>${word(w)}${has("ipa") ? html` <span class="ipa">${VS.ipaText(w)}</span>` : ""}
-              ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}
+              ${has("arabic") ? html`<span class="p-ar" lang="ar" dir="rtl">${w.arabic}</span>` : ""}
               ${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}</li>`)}
         </ol>`;
     },
@@ -137,7 +137,7 @@
           <thead><tr><th>#</th><th>${en ? "Word" : "Meaning"}</th><th>Your answer</th><th class="p-fold"></th><th>${en ? "Meaning" : "Word"}</th><th>✓</th></tr></thead>
           <tbody>
             ${words.map((w, i) => {
-              const ar = html`<span class="p-ar" lang="ar">${w.arabic}</span>`;
+              const ar = html`<span class="p-ar" lang="ar" dir="rtl">${w.arabic}</span>`;
               return html`
                 <tr>
                   <td class="p-n">${i + 1}</td>
@@ -160,7 +160,7 @@
         <p class="p-howto">Write the right word in each gap. Change its form if the sentence needs it (past tense, plural…).</p>
         <div class="p-bank"><b>Word bank</b>${VS.shuffle(items).map((x) => html`<span>${x.w.word}</span>`)}</div>
         <ol class="p-gaps">
-          ${items.map((x) => html`<li>${x.hit.before.trimEnd()}<span class="p-blank${tight(x.hit.after) ? " is-tight" : ""}"></span>${x.hit.after.trimStart()}${has("arabic") ? html` <span class="p-ar p-hint-ar" lang="ar">(${x.w.arabic})</span>` : ""}</li>`)}
+          ${items.map((x) => html`<li>${x.hit.before.trimEnd()}<span class="p-blank${tight(x.hit.after) ? " is-tight" : ""}"></span>${x.hit.after.trimStart()}${has("arabic") ? html` <span class="p-ar p-hint-ar" lang="ar" dir="rtl">(${x.w.arabic})</span>` : ""}</li>`)}
         </ol>
         ${skipped ? html`<p class="p-meta no-print">${VS.plural(skipped, "word")} left out: the example doesn't contain the word.</p>` : ""}
         ${answerKey("Answers", items.map((x) => x.hit.answer))}`;
@@ -177,7 +177,7 @@
         return html`
           <div class="p-match">
             <ol start="${gi * MATCH_GROUP + 1}">${g.map((w) => html`<li><span class="p-box"></span>${word(w)}</li>`)}</ol>
-            <ol type="a">${right.map((w) => html`<li><span class="p-ar" lang="ar">${w.arabic}</span>${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}</li>`)}</ol>
+            <ol type="a">${right.map((w) => html`<li><span class="p-ar" lang="ar" dir="rtl">${w.arabic}</span>${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}</li>`)}</ol>
           </div>`;
       });
       return html`
@@ -193,7 +193,7 @@
           ${words.map((w) => html`
             <li>
               <div class="p-write-head">${word(w)}${has("ipa") ? html` <span class="ipa">${VS.ipaText(w)}</span>` : ""}
-                ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}</div>
+                ${has("arabic") ? html`<span class="p-ar" lang="ar" dir="rtl">${w.arabic}</span>` : ""}</div>
               ${has("definition") ? html`<span class="p-meta">${w.definition}</span>` : ""}
               ${has("example") && w.example ? html`<span class="p-meta"><i>e.g. “${w.example}”</i></span>` : ""}
               <span class="p-rule"></span><span class="p-rule"></span>
@@ -229,7 +229,7 @@
           <div class="p-cards p-backs">
             ${mirrored(page).map((w) => w
               ? html`<div class="p-card p-back">
-                  ${has("arabic") ? html`<span class="p-ar" lang="ar">${w.arabic}</span>` : ""}
+                  ${has("arabic") ? html`<span class="p-ar" lang="ar" dir="rtl">${w.arabic}</span>` : ""}
                   ${has("definition") ? html`<span class="p-def">${w.definition}</span>` : ""}
                   ${has("example") && w.example ? html`<i>${VS.ui.quote(w)}</i>` : ""}
                   ${note(w)}

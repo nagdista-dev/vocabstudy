@@ -846,7 +846,7 @@ kbd {
 .usage-right .icon { color: var(--good); }
 .usage-why { font-size: var(--text-sm); color: var(--ink-2); margin-top: 2px; }
 /* Arabic quoted inside an English line: isolated, in the Arabic face, on a soft chip instead of «» */
-.ar-chip { white-space: normal; font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); padding: 0 .3em; border-radius: 4px; background: var(--note-soft); color: var(--ink); }
+.ar-chip { white-space: normal; unicode-bidi: isolate; font-family: var(--font-arabic); font-size: calc(1em * var(--arabic-scale)); padding: 0 .3em; border-radius: 4px; background: var(--note-soft); color: var(--ink-2); }
 
 /* ── Where you met it: personal memory, so it wears the highlighter's soft yellow ── */
 .met { display: grid; gap: var(--s-1); margin: 0; padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--mark-soft); text-align: start; width: 100%; max-width: 56ch; overflow-wrap: anywhere; }

@@ -25,7 +25,7 @@
     return html`
       <button class="tile ${done ? "is-done" : ""} ${fresh ? "just-matched" : ""} ${on ? "is-on" : ""}" type="button" data-action="pick" data-side="${side}" data-id="${w.id}"
               ${done ? "disabled" : ""} aria-pressed="${on}">
-        ${side === "ar" ? html`<span lang="ar">${w.arabic}</span>` : html`<span class="tile-en">${VS.ui.headword(w)}</span>`}
+        ${side === "ar" ? html`<span lang="ar" dir="rtl">${w.arabic}</span>` : html`<span class="tile-en">${VS.ui.headword(w)}</span>`}
       </button>`;
   }
 

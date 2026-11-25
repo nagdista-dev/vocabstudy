@@ -377,12 +377,12 @@ with 22-letter words and long Arabic meanings:
 - Textareas never resize by hand; they grow with the text.
 - Choices never hide off-screen: the status filter scrolls with an edge fade,
   and its sheet drops to one column when a select needs the width.
-- Word rows keep status (dot + word), type, level and frequency on the collapsed line; tags
-  wait in the expanded margin. A closed row is one scannable line: a long
-  headword or Arabic meaning clips with an ellipsis, so every row keeps the
-  same height. Opening the row is the learner asking to read it — the full
-  word and meaning then wrap on phones, with the meta line underneath. The
-  same rule holds for "Just added" rows on Add; `is-long` stacking is gone.
+- Word rows are three fixed lines: the headword with its muted `(sense)` and
+  the Arabic at the far end on the first, a one-line ellipsised example on the
+  second, status · type · level · frequency on the third. A visible 44px delete
+  sits at the end, a sibling of the row button. The headword never gives way to
+  its sense — the sense clips first — so rows keep the same height at 320 and
+  at 1280. The same rule holds for "Just added" rows on Add.
 - Week strips shorten "Today" to "Now" at ≤360px so seven labels never collide;
   charts use the same 2xs labels.
 
@@ -401,8 +401,9 @@ close button and the backdrop close it; focus returns to the row that asked.
 - **Hero.** The headword in the spelling face (`--font-word`), letter by
   letter, with one highlighter swipe under it; the speaker sits beside it. The
   IPA follows, then type · level · frequency as one quiet line without chips.
-  The Arabic meaning is a right-aligned margin note under "In Arabic" — the
-  two languages are separated by whitespace, not a rule.
+  Under it, the `In Arabic · مثلاً` line starts on the left: a quiet label, a
+  hairline dot, then the Arabic at `--ink-2` in its own face. The two languages
+  are separated by whitespace, not a rule.
 - **Tags and actions.** Tags are plain `#hashtags` with a dotted underline;
   `Edit`, `Share` and `Delete` are three equal text actions (icon + word,
   44px) with no fills. Delete turns red only on hover/focus.
@@ -428,9 +429,10 @@ close button and the backdrop close it; focus returns to the row that asked.
 - **Good to know.** Mistakes, sounds and related words. A mistake written for
   this meaning comes first under `Mistake to avoid`; a trap may show only the
   rule when that is all the AI knew. Related words are read, not pressed:
-  `Goes with`, `Similar` and `Opposite` are plain words separated by a middle
-  dot. The block becomes two columns at a 620px container; on a phone it stays
-  one.
+  `Goes with`, `Similar` and `Opposite` are three fixed-label rows with a
+  hairline between them, their words separated by middots. The dot follows its
+  word, so a wrapped line never starts with one. The block becomes two columns
+  at a 620px container; on a phone it stays one.
 - **Words inside the text.** Every English word in a definition, example or
   context is dotted-underlined at rest; a tap opens the small word card inside
   the dialog — Arabic senses, speaker, and `Keep in wallet` — without leaving
@@ -467,15 +469,25 @@ meaning. Several typed words get one block each (two only for a very common
 second meaning); a topic gets one per word; Arabic gets one per item. Every
 block carries the same lines: `word`, `sense`, `arabic`, `definition`,
 `example`, `type`, `level`, `ipa`, `synonyms`, `antonyms`, `goes with`,
-`memory`, a `wrong` / `right` / `why` mistake, and `tags`. A dash (`—`) means
-"nothing honest to say", never an empty field to fill with invention.
+`memory`, and a `wrong` / `right` / `why` mistake. `sense` is required — two to
+four English words naming this meaning, never just a part of speech — and the
+parser derives one from the definition when an answer still leaves it out, so
+the muted label beside a headword is never blank. The AI is never asked for
+tags and the parser ignores any it volunteers; tags belong to the learner
+alone. A dash (`—`) means "nothing honest to say", never an empty field to fill
+with invention.
 
 **Checking the answer.** The answer lands as a numbered card per meaning, with
-the sense label beside the headword and type · level · IPA underneath. The
-first fields are the meaning itself — Arabic, sense, definition, example,
-type, level, IPA, tags — and `More of the card` starts the second half:
-similar, opposite, word partners, memory hook, and a boxed `Mistake to avoid`
-with Wrong / Right / Why. Each card has one checkbox; its status chip says
+the sense label beside the headword and type · level · IPA underneath. A sticky
+toolbar above the cards carries the learner's `Tags for this batch` and the
+ready count; the cards themselves start closed as `<details>`, so ten words are
+ten quiet lines instead of a wall of fields. Opening one shows the meaning
+first — Arabic, sense, definition, example — then type, level, IPA, and
+`More of the card`: similar, opposite, word partners, memory hook, and a boxed
+`Mistake to avoid` with Wrong / Right / Why. `Add N words` waits in a bar fixed
+above the phone tab bar, so it never scrolls with the cards; on a wide screen
+the toolbar carries the same action. Each card has one checkbox outside its
+`<details>`, so ticking it never opens the card; its status chip says
 **Ready**, **Another meaning**, **Needs Arabic**, **In your library** or
 **Repeated**. A word already kept with another Arabic meaning says **Another
 meaning** and keeps its fields; a duplicate of the same headword and the same
@@ -500,10 +512,13 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   Auto-fill on and online only), and the day. The id is the word, so it cannot
   be kept twice. At most 300.
 - **Three ways in.** The pocket's capture line — one field and `Save`, English
-  or Arabic; Arabic finds the English word first and keeps the typed Arabic as
-  its meaning. "Add where you met it" opens an optional sentence under it; Undo
-  in the toast. Or, reading, tap a word in an example or a meaning → the word
-  card → `Keep in wallet`. Or a friend shares a list (`#/shared`).
+  or Arabic. Arabic is saved exactly as typed, with no lookup and no English
+  first: the slip is Arabic until the learner chooses it, and `Make with AI` or
+  `Add now` carries it to Add → From Arabic, where the English is filled in
+  next. English is looked up only when Auto-fill is on. "Add where you met it"
+  opens an optional sentence under it; Undo in the toast. Or, reading, tap a
+  word in an example or a meaning → the word card → `Keep in wallet`. Or a
+  friend shares a list (`#/shared`).
 - **The page (v14): a pocket of slips.** Two columns from 900px — a 340px
   sticky pocket and the slips it holds — and one column on tablets and phones,
   pocket first. The pocket is a card with two stacked slip edges peeking above
@@ -631,6 +646,49 @@ no account; progress, notes and your own sentences are never sent.
   one action per line; the Arabic sits under the word.
 - **Ways in** — Share beside Print & PDF on Words, "Share these words" in
   Manage, a share tool beside Edit and Delete on a word's page.
+
+## Share VocabStudy itself (v15)
+
+A separate, faster flow from sending words: the whole app, in one message.
+
+- **Where.** A share mark sits in the app bar on every screen — beside Settings
+  on phones, in the desktop nav — and Today carries an invitation card: "Know
+  someone learning English?" with `Share the app`. Two taps from anywhere open
+  the sheet.
+- **What it says.** The message is built from the learner's chosen dialect
+  (Egyptian, Gulf, Levantine, Maghrebi, Iraqi, Yemeni, and a simple MSA
+  fallback) and stays simple enough for any Arabic reader: free, no account,
+  works offline, keeps the words you meet and brings them back on the right
+  days; then `https://vocabstudy.nagdista.com/`. It is not a translation of an
+  English pitch.
+- **How it sends.** The phone's native sheet first when the browser supports
+  it, then WhatsApp, Telegram, X, Facebook, LinkedIn, Email and SMS as plain
+  links, plus Copy message and Copy link. A preview of the exact message sits
+  above the channels; the URL is its own LTR run, so its trailing slash never
+  jumps to the front of the Arabic line.
+- **Nothing to measure.** No tracking pixel, no third-party script and no
+  learner data in the link — the URL is only the app.
+
+## Mixed direction and the AI hand-off (v15)
+
+Arabic and English share almost every screen, so direction is explicit instead
+of guessed. Every Arabic display carries `lang="ar" dir="rtl"`; every mixed
+line (context, example, memory hook, note, learner sentence, wallet sentence,
+AI context) carries `dir="auto"`; and `VS.ui.mixed()` wraps each detected run
+in an isolating `<bdi>`, including Arabic punctuation and digits. `.ar-chip`
+is `unicode-bidi: isolate`. The result is that an Arabic phrase inside an
+English sentence keeps its order at 320px and in Night.
+
+The AI open is synchronous on purpose: the clipboard write starts while the
+tap still has focus, the chat opens in the same turn with the prompt in the
+URL, and the "Your prompt" sheet is kept only for the case that actually needs
+it — a prompt too long for the URL whose copy also failed. A prompt already in
+the chat never hides behind a dialog.
+
+The quiet-Arabic rule holds across the new work: Arabic is `--ink-2` on the
+word page and `--ink-3` in list rows, never bolder than the English it
+supports; a sense is always lower-case, muted and in parentheses beside its
+headword.
 
 ## A tapped word (the word card)
 
@@ -770,6 +828,10 @@ animates layout: only opacity and transform move (the highlighter's
 | Streak of right answers | combo pill pulses |
 | Results | arrive with their screen; a perfect round gets highlighter confetti |
 | Sheets, menus, opened rows | sheet lifts from the bottom edge, a menu scales from its trigger, a row body fades down |
+| Practise / Manage opens | the page and the app bar dim behind one scrim; the menu is the only paper in the light |
+| An AI answer arrives | its closed rows cascade 24ms apart; opening one fades its fields down |
+| A word is deleted | the row fades out for 170ms before the list closes the gap |
+| The share sheet | the same bottom-edge arrival as every other sheet |
 | Charts and the progress ring | bars rise and the ring draws once from its base |
 | Presses | options and tiles sink 1.5% while held, nav icons 6%; the hero arrow leans on hover |
 | Speak | the mic pulses only while it is listening — the app's one loop |

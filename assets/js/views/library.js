@@ -414,6 +414,7 @@
             <div class="home-grid">
               <div class="home-main">
                 ${VS.today.strip()}
+                ${VS.today.shareCard()}
                 ${weekReady()}
                 ${addBox(true)}
                 ${backupNudge()}

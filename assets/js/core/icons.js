@@ -38,6 +38,13 @@
     link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
     chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>',
+    /* Brand marks for sharing the app: filled shapes, each in its own colour
+       in the share sheet. They are plain links; no script is loaded from them. */
+    whatsapp: '<path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.6Z"/><path d="M9.2 8.3c.2-.5.4-.5.7-.5h.5c.2 0 .4 0 .6.5l.7 1.7c.1.2 0 .4-.1.6l-.5.6c-.1.2-.2.3 0 .6.5.8 1.1 1.4 2 1.9.2.1.4.1.5 0l.6-.7c.2-.2.3-.2.5-.1l1.7.8c.2.1.4.2.4.4 0 .3-.1 1-.4 1.3-.3.4-.9.8-1.6.8-.6 0-1.5-.2-2.7-.8-1.5-.8-2.5-2-2.9-2.9-.3-.7-.4-1.3-.3-1.8 0-.5.3-.9.5-1.1Z" fill="currentColor" stroke="none"/>',
+    telegram: '<path d="m21 3-9.5 18-2.3-7.2L2 11.5Z"/><path d="m21 3-11.8 10.8"/>',
+    xbrand: '<path d="M4 3h4.5l11.5 18h-4.5Z"/><path d="M20 3 4 21"/>',
+    facebook: '<path d="M14.5 21v-7h2.5l.5-3h-3V9.2c0-.9.3-1.5 1.6-1.5H18V5.1c-.3 0-1.2-.1-2.3-.1-2.3 0-3.7 1.4-3.7 3.9V11H9v3h3v7"/>',
+    linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 10v7M7 7v.01M11 17v-4a2.5 2.5 0 0 1 5 0v4M11 10v7"/>',
     mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/>',
     tool: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
     trash: '<path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"/>',

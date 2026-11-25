@@ -95,6 +95,21 @@
 .word-traps[open] .traps,
 .add-more[open] .word-form { animation: open-in var(--base) var(--ease) both; }
 
+/* A deleted row leaves before the list closes the gap: one short fade,
+   so the eye follows the word out instead of seeing it vanish. */
+@keyframes row-out { to { opacity: 0; transform: translateX(-10px); } }
+.word-row.is-removing { animation: row-out 170ms var(--ease) forwards; pointer-events: none; }
+
+/* The AI review: the answer arrives as a short cascade of closed rows, and
+   opening one reveals its fields without moving the page. */
+@keyframes ai-row-in { from { opacity: 0; transform: translateY(6px); } }
+.ai-row { animation: ai-row-in var(--base) var(--ease) both; animation-delay: calc(var(--i, 0) * 24ms); }
+@keyframes ai-fields-in { from { opacity: 0; transform: translateY(-4px); } }
+.ai-row-details[open] .ai-row-body { animation: ai-fields-in var(--fast) var(--ease) both; }
+/* The Add bar rises once and then stays: it is a promise, not decoration. */
+@keyframes ai-bar-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+.ai-add-bar { animation: ai-bar-in var(--base) var(--ease) both; }
+
 /* 4. Study cards leave in the direction of your answer. */
 @keyframes fly-right { to { transform: translateX(42%) rotate(6deg); opacity: 0; } }
 @keyframes fly-left  { to { transform: translateX(-42%) rotate(-6deg); opacity: 0; } }

@@ -2,12 +2,13 @@
    ------------------------------------------------------------------
    A learner's pocket of slips, not a second library. Words arrive three
    ways: typed into the pocket ("save it for later" — English or Arabic,
-   Arabic finding the English word), kept from a word card while reading
+   Arabic kept exactly as written), kept from a word card while reading
    with the sentence that made them tap, or sent by a friend. Nothing here
    is studied or scheduled until the learner chooses one of two doors on a
-   slip: Make with AI (Add → With AI, the sentence and the Arabic carried
-   into the prompt) or Add now (the library, or the Add form when Auto-fill
-   is off). The word leaves when it is added.
+   slip: Make with AI (Add → With AI for English, Add → From Arabic for an
+   Arabic slip, the sentence and the Arabic carried into the prompt) or Add
+   now (the library, or the Add form when Auto-fill is off). The word leaves
+   when it is added.
 
    The page has its own shape — a pocket on the desk and the slips it holds —
    but it is built from the app's parts and tokens. Colour only where it
@@ -44,25 +45,20 @@
 
   /**
    * Keep a word — the one door used by the wallet's pocket and Today's
-   * compact add box. Arabic is a way in: the English word is picked first
-   * and the typed Arabic travels with the slip as its meaning. English gets
-   * its Arabic looked up quietly afterwards (Auto-fill on, online only).
+   * compact add box. Arabic is not a lookup: it is a slip in its own right,
+   * saved exactly as the learner wrote it. The English comes later, through
+   * Make with AI or Add now, both of which open Add → From Arabic. English
+   * gets its Arabic looked up quietly afterwards (Auto-fill on, online only).
    * Returns { ok, entry, word, reason }; every message is shown here so both
    * boxes speak the same way.
    */
   VS.walletCapture = async function (fields) {
     const f = fields || {};
     const input = f.input || null;
-    const anchor = f.anchor || input;
     let word = String(f.word || "").trim().replace(/\s+/g, " ");
     if (!word) { if (input) input.focus(); return { ok: false, reason: "empty" }; }
     const typedArabic = VS.isArabicTyping(word) ? word : "";
-    if (typedArabic) {
-      word = await VS.spelling.chooseEnglish(typedArabic, anchor);
-      if (!word) return { ok: false, reason: "arabic" };
-      if (input) input.value = word;
-    }
-    const r = VS.store.walletAdd(word, f.sentence || "", f.source || "", f.kind || "", typedArabic);
+    const r = VS.store.walletAdd(word, f.sentence || "", f.source || "", typedArabic ? "ar" : (f.kind || ""), typedArabic);
     if (r.inLibrary) {
       VS.toast(`“${VS.cap(word)}” is already one of your words.`);
       return { ok: false, reason: "library", word };
@@ -99,15 +95,18 @@
   function slip(e, i) {
     const lead = e.kind === "shared" ? "Shared by" : e.kind === "meaning" ? "From the meaning of" : "From the example for";
     const from = e.source ? html`${lead} <b>${e.kind === "shared" ? e.source : VS.cap(e.source)}</b><span class="wallet-sep" aria-hidden="true">·</span>` : "";
+    const isArabic = VS.isArabicTyping(e.word);
     return html`
-      <li class="wallet-slip" data-id="${e.id}">
+      <li class="wallet-slip ${isArabic ? "is-arabic" : ""}" data-id="${e.id}">
         <div class="wallet-slip-head">
           <span class="wallet-slip-n" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
-          <h2 class="wallet-word">${VS.cap(e.word)}</h2>
-          ${VS.ui.speakButton(e.word, `Hear “${e.word}”`)}
+          <h2 class="wallet-word ${isArabic ? "is-arabic" : ""}" ${isArabic ? VS.raw('lang="ar" dir="rtl"') : ""}>${VS.cap(e.word)}</h2>
+          ${isArabic ? "" : VS.ui.speakButton(e.word, `Hear “${e.word}”`)}
         </div>
-        ${e.arabic ? html`<p class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</p>` : ""}
-        ${e.sentence ? html`<blockquote class="wallet-sentence">“${sentence(e)}”</blockquote>` : ""}
+        ${isArabic
+          ? html`<p class="wallet-next">${icon("arrow-right", "icon-sm")}<span>English comes next — Make with AI or Add now.</span></p>`
+          : e.arabic ? html`<p class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</p>` : ""}
+        ${e.sentence ? html`<blockquote class="wallet-sentence" dir="auto">“${sentence(e)}”</blockquote>` : ""}
         <p class="wallet-meta">${from}<span>Saved ${VS.ui.dateText(e.added)}</span></p>
         <div class="wallet-actions">
           <button class="btn btn-tonal wallet-ai" type="button" data-action="wallet-ai" data-id="${e.id}"
@@ -189,7 +188,7 @@
                     ? html`<label class="field wallet-keep-sentence"><span class="sr-only">Where you met it (optional)</span>
                         <textarea name="sentence" rows="2" dir="auto" maxlength="300" placeholder="Where you met it — the sentence you read or heard (optional)"></textarea></label>`
                     : html`<button class="link-btn wallet-keep-more" type="button" data-action="wallet-keep-more">${icon("plus", "icon-sm")}<span>Add where you met it</span></button>`}
-                  <p class="wallet-keep-hint">English or Arabic — Arabic finds the English word.</p>
+                  <p class="wallet-keep-hint">English or Arabic — Arabic is saved exactly as you write it.</p>
                 </form>
                 ${n > 1 ? html`
                   <div class="wallet-pocket-foot">
@@ -274,13 +273,28 @@
       "wallet-ai"(el) {
         const e = VS.store.wallet().find((x) => x.id === el.dataset.id);
         if (!e) return;
+        // An Arabic slip goes straight to "From Arabic": that prompt asks the
+        // AI for the natural English, which is exactly what the slip needs.
+        if (VS.isArabicTyping(e.word)) {
+          VS.walletDraft = { ar: e.word, items: [e] };
+          location.hash = "#/add?tab=ai-ar";
+          return;
+        }
         VS.walletDraft = { ai: true, items: [e] };
         location.hash = "#/add?tab=ai";
       },
       "wallet-ai-all"() {
         const items = waiting().slice(0, 30);
         if (!items.length) return;
-        VS.walletDraft = { ai: true, items };
+        const arabic = items.filter((e) => VS.isArabicTyping(e.word));
+        const english = items.filter((e) => !VS.isArabicTyping(e.word));
+        if (!english.length) {
+          VS.walletDraft = { ar: arabic.map((e) => e.word).join("\n"), items: arabic };
+          location.hash = "#/add?tab=ai-ar";
+          return;
+        }
+        if (arabic.length) VS.toast("English slips go to With AI. The Arabic ones wait here for From Arabic.");
+        VS.walletDraft = { ai: true, items: english };
         location.hash = "#/add?tab=ai";
       },
       /* Add now: the word joins the library immediately, its sentence as
@@ -291,6 +305,13 @@
       "wallet-add"(el) {
         const e = VS.store.wallet().find((x) => x.id === el.dataset.id);
         if (!e) return;
+        // The library needs an English headword. An Arabic slip opens the
+        // same "From Arabic" route as Make with AI, ready to ask.
+        if (VS.isArabicTyping(e.word)) {
+          VS.walletDraft = { ar: e.word, items: [e] };
+          location.hash = "#/add?tab=ai-ar";
+          return;
+        }
         const source = e.source ? (e.kind === "meaning" ? "From the meaning of " : "From the example for ") + VS.cap(e.source) : "";
         const fields = { word: e.word, context: e.sentence, source, arabic: e.arabic || "" };
         if (!VS.autofill.enabled()) {

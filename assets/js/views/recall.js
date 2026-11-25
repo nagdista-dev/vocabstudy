@@ -103,7 +103,7 @@
             ? html`<p class="q-label">Which English word means… <span class="recall-len">${letterCount(w)}</span></p>
                  <p class="recall-def recall-def-q">${w.definition}</p>`
             : html`<p class="q-label">Which English word means… <span class="recall-len">${letterCount(w)}</span></p>
-                 <p class="recall-ar" lang="ar">${w.arabic}</p>`}
+                 <p class="recall-ar" lang="ar" dir="rtl">${w.arabic}</p>`}
         ${w.sense ? html`<p class="hint">Sense: ${w.sense}</p>` : ""}
         ${hintMarkup(w)}
 

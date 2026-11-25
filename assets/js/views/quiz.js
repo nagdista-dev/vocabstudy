@@ -58,7 +58,7 @@
     const w = q.w;
     switch (q.type) {
       case "arabic":
-        return html`<p class="q-label">Which English word means…</p><p class="q-ar" lang="ar">${w.arabic}</p>`;
+        return html`<p class="q-label">Which English word means…</p><p class="q-ar" lang="ar" dir="rtl">${w.arabic}</p>`;
       case "english":
         return html`<p class="q-label">What does this word mean in Arabic?</p>
           <div class="row q-word-row"><p class="q-word">${VS.ui.headword(w)}</p>${VS.ui.speakButton(w.word)}</div>`;
@@ -103,7 +103,7 @@
       <div class="feedback ${ok ? "is-right" : "is-wrong"}" role="status">
         <p class="feedback-title">${ok ? "Correct" : "Not quite"}</p>
         <div class="row"><b class="feedback-word">${VS.ui.headword(w)}</b>${VS.ui.speakButton(w.word)}${VS.ui.ipa(w)}</div>
-        <p lang="ar" class="feedback-ar">${w.arabic}</p>
+        <p lang="ar" dir="rtl" class="feedback-ar">${w.arabic}</p>
         <p class="hint">${w.definition}</p>
         ${w.example ? html`<p class="feedback-example">${VS.ui.quote(w)}</p>` : ""}
         ${ok ? "" : picked(VS.byId[s.picked])}

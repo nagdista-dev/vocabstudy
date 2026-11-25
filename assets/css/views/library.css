@@ -95,6 +95,16 @@
 .lib-actions .btn { min-height: var(--tap); padding: 0 12px; }
 .lib-actions .lib-more-btn { padding: 0 10px; }
 .lib-more { position: relative; }
+/* A menu is a small focused moment: everything behind it dims, the menu
+   stays the only paper in the light. The dimmer is the details' own
+   ::before, so it exists only while the menu does. */
+.lib-more[open]::before {
+  content: ""; position: fixed; inset: 0;
+  z-index: calc(var(--z-bar) + 1);
+  background: rgb(10 14 25 / .28);
+  animation: fade-in var(--fast) var(--ease) both;
+}
+.lib-more[open] .lib-more-menu { z-index: calc(var(--z-bar) + 2); }
 .lib-more > summary { list-style: none; }
 .lib-more > summary::-webkit-details-marker { display: none; }
 .lib-more > summary .icon { transition: transform var(--fast); }
@@ -165,13 +175,19 @@
 }
 .word-list > .btn:hover { background: var(--surface-2); }
 
-.word-row { background: var(--surface); border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.word-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  background: var(--surface); border: 0; border-top: 1px solid var(--line); border-radius: 0;
+}
 .word-row:first-child { border-top: 0; }
+/* Three fixed lines — word, one clipped example, meta — so every row is the
+   same height whether the example is long, short or missing. */
 .word-row-open {
-  display: grid; grid-template-columns: fit-content(42%) minmax(0, 1fr) 20px;
-  grid-template-areas: "word ar chev" "meta meta chev";
-  align-items: center; column-gap: var(--s-4); row-gap: 3px;
-  width: 100%; min-height: 62px; padding: 10px var(--s-4);
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr);
+  grid-template-areas: "word ar" "ex ex" "meta meta";
+  align-items: center; column-gap: var(--s-3); row-gap: 2px;
+  width: 100%; min-height: 86px; padding: 9px 4px 9px var(--s-4);
   font: inherit; color: inherit; text-align: start; cursor: pointer;
   transition: background var(--fast);
 }
@@ -180,25 +196,44 @@
   /* A slip lifted off the tray: visible enough to read as a rectangle, never
      a second card competing with the words. */
   .word-row-open:hover { background: color-mix(in srgb, var(--surface-2) 62%, var(--surface)); }
-  .word-row-open:hover .word-row-chev { transform: translateX(2px); }
 }
-.word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+/* The English headword never gives way to its sense: the sense is the
+   margin note, so it is the one that clips when the line runs out. */
 .word-row-word b {
-  min-width: 0; font-weight: 600;
+  flex: 0 0 auto; max-width: 100%; min-width: 0; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 /* The sense in brackets names the meaning; it must never compete with the
    word itself. Same weight as a margin note, a step quieter than the meta. */
-.word-row-word .sense { color: var(--ink-3); font-weight: 400; font-size: .86em; }
-/* A row is a single scannable line, like a spine on a shelf: long Arabic
-   is clipped with an ellipsis and comes back in full in the word card.
-   Opening the card is the learner asking to read it. */
+.word-row-word .sense {
+  flex: 0 1 auto; min-width: 0;
+  color: var(--ink-3); font-weight: 400; font-size: .86em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Arabic is the hand that helps: quieter than the English, at the far end,
+   clipped with an ellipsis and read in full in the word card. */
 .word-row-ar {
-  grid-area: ar; min-width: 0; text-align: left;
-  color: var(--ink-2); font-size: 1.02rem;
+  grid-area: ar; min-width: 0; text-align: right;
+  color: var(--ink-3); font-size: 1.02rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .word-row-ar.hint { font-size: var(--text-sm); }
+/* One example line under the word. It never wraps; the full sentence is in
+   the card, and the title attribute shows it on hover. */
+.word-row-ex {
+  grid-area: ex; min-width: 0;
+  color: var(--ink-2); font-size: var(--text-sm); font-style: italic; line-height: 1.45;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.word-row-ex.is-empty { min-height: 1.45em; }
+/* Delete is visible without hovering: a row can be removed from the list. */
+.word-row-del {
+  justify-self: center; width: 40px; height: 40px; min-width: 40px;
+  color: var(--ink-3);
+}
+.word-row-del:hover, .word-row-del:focus-visible { color: var(--bad); background: var(--bad-soft); }
+@media (pointer: coarse) { .word-row-del { width: 44px; height: 44px; min-width: 44px; } }
 /* One status treatment at every width: a dot by the word and the word
    "New / Learning / Mastered" leading the meta line (V3.8). */
 .word-row-dot {
@@ -220,7 +255,6 @@
 .word-row-state[data-s="learning"] { color: var(--on-mark-soft); }
 .word-row-state[data-s="mastered"] { color: var(--good); }
 .word-row-sep { margin-inline: 3px; color: var(--line-strong); }
-.word-row-chev { grid-area: chev; color: var(--ink-3); transition: transform var(--fast); }
 
 /* ── The word's reading column ──────────────────────────────────
    The card itself lives in views/word-card.css. These pieces are the
@@ -306,38 +340,14 @@
 @media (max-width: 599px) { .word-edit-mistake-grid { grid-template-columns: 1fr; } }
 
 @media (max-width: 1023px) {
-  .word-row-open {
-    grid-template-columns: minmax(0, 1fr) auto 16px;
-    grid-template-areas: "word ar chev" "meta meta chev";
-    min-height: 58px; padding: 8px 14px; column-gap: 10px;
-  }
+  .word-row-open { padding-inline-start: 14px; column-gap: 10px; }
   .word-row-word { gap: 7px; }
   .word-row-word b { font-size: 1rem; line-height: 1.35; }
-  .word-row-ar { max-width: 44vw; font-size: .98rem; line-height: 1.45; }
+  .word-row-ar { max-width: 38vw; font-size: .98rem; line-height: 1.45; }
   .word-row-ar.hint { font-size: var(--text-2xs); }
-  /* On a phone the meta line carries status, type, level and frequency.
-     Tags move to the expanded row: they made the collapsed line end in "#…",
-     and they are not what you scan a word list for. Frequency stays whole
-     ("Top 12,000"), so at Larger text it moves to a second line intact. */
-  .word-row-meta {
-    font-size: var(--text-2xs); line-height: 1.35;
-    white-space: normal; overflow: visible; text-overflow: clip;
-  }
+  .word-row-meta { font-size: var(--text-2xs); line-height: 1.35; }
   .word-row-freq { white-space: nowrap; }
-  .word-row-ar { text-align: end; }
   .word-row-note { display: none; }
-  .word-row-chev { align-self: center; }
-}
-@media (max-width: 374px) {
-  /* At 320 with Larger text even an ordinary word runs out of room beside its
-     meaning. Give the headword the whole line and put the Arabic underneath. */
-  .word-row-open {
-    grid-template-columns: minmax(0, 1fr) 16px;
-    grid-template-areas: "word chev" "ar chev" "meta chev";
-    align-items: start; row-gap: 1px; padding-block: 10px;
-  }
-  .word-row-ar { max-width: none; text-align: left; }
-  .word-row-chev { align-self: center; }
 }
 @media (max-width: 599px) {
   .lib-filter-label { display: none; }
@@ -370,9 +380,6 @@
 }
 @media (min-width: 600px) {
   .lib-filter-btn .lib-filter-label { display: inline; }
-}
-@media (min-width: 600px) {
-  .word-row-open { min-height: 58px; }
 }
 @media (max-width: 599px) {
   .word-edit { grid-template-columns: 1fr; }

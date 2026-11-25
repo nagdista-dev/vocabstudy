@@ -53,7 +53,7 @@
               <button class="speak-btn speak-xl" type="button" data-action="speak" data-say="${answer}" aria-label="Play the word">${icon("volume", "icon-lg")}</button>
               <button class="btn btn-quiet" type="button" data-action="slow">${icon("clock", "icon-sm")} Slower</button>
             </div>
-            <p class="spell-ar" lang="ar">${w.arabic}</p>
+            <p class="spell-ar" lang="ar" dir="rtl">${w.arabic}</p>
             <p class="hint spell-meta">${w.type} · ${answer.length} letters${answer.includes(" ") ? " · more than one word" : ""}</p>
             ${s.hints ? html`<p class="spell-hint">Starts with <b>${answer.slice(0, s.hints)}</b></p>` : ""}
 

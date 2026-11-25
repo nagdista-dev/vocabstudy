@@ -227,81 +227,96 @@
   const aiRowBlocked = (info) => info.kind !== "ok" && info.kind !== "another";
   const AI_STATUS_ICON = { ok: "check", another: "plus", needar: "translate", dup: "book", repeat: "copy", bad: "x" };
 
-  /** Step 4: one card per word from the AI's answer — edit, untick, then add them all. */
+  /** Step 4: one closed row per word from the AI's answer — open, edit,
+      untick, then add them all. Tags sit above the rows and are the
+      learner's alone; the Add button never leaves the screen. */
   function aiReview() {
     const rows = st.ai.rows;
     if (!rows.length) return html`<p class="hint ai-review-empty">The words appear here, ready to check, once you paste the answer.</p>`;
     const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
     const n = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).length;
     return html`
+      <div class="ai-review-bar">
+        <label class="form-field ai-tags"><span>Tags for this batch <span class="hint">— optional, set only by you</span></span>
+          <input dir="auto" data-ai-tags value="${st.ai.tags}" placeholder="IELTS, work" list="tagList" autocomplete="off"></label>
+        ${VS.ui.tagList()}
+        <button class="btn btn-primary ai-add-compact" type="button" data-action="ai-add" ${n ? "" : VS.raw("disabled")}
+          aria-label="Add the checked words">${icon("plus", "icon-sm")}<span data-add-label>Add ${n}</span></button>
+      </div>
       <ul class="ai-rows">
         ${rows.map((r, i) => {
           const info = infos[i];
           const blocked = aiRowBlocked(info);
           const on = r.keep && !blocked;
           return html`
-          <li class="ai-row is-${info.kind} ${on ? "" : "is-off"}" data-ai-item="${i}">
-            <label class="ai-row-head">
-              <input type="checkbox" data-ai-keep="${i}" ${on ? VS.raw("checked") : ""} ${blocked ? VS.raw("disabled") : ""}>
-              <span class="ai-row-n" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
-              <span class="ai-row-title"><b>${VS.cap(r.word)}</b>
-                ${r.sense ? html`<i class="ai-row-sense">${r.sense}</i>` : ""}
-                <span class="ai-row-meta">${[r.type, r.level, r.ipa].filter(Boolean).join(" · ")}</span></span>
-              <span class="ai-row-status is-${info.kind}" data-ai-status>${icon(AI_STATUS_ICON[info.kind] || "info", "icon-sm")}${info.text}</span>
-            </label>
-            ${r.context ? html`<p class="ai-row-context">${icon("book", "icon-sm")}<span>${r.context}</span></p>` : ""}
-            <div class="ai-row-fields">
-              <label class="ai-field"><span>Arabic</span>
-                <input dir="rtl" lang="ar" data-ai-row="${i}" data-ai-k="arabic" value="${r.arabic || ""}" placeholder="المعنى بالعربية" aria-label="Arabic meaning of ${r.word}"></label>
-              <label class="ai-field"><span>Sense</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="sense" value="${r.sense || ""}" placeholder="music" aria-label="Sense label for ${r.word}"></label>
-              <label class="ai-field is-wide"><span>Definition</span>
-                <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="definition" placeholder="What it means, in simple English" aria-label="Definition of ${r.word}">${r.definition || ""}</textarea></label>
-              <label class="ai-field is-wide"><span>Example</span>
-                <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="example" placeholder="A sentence that uses it" aria-label="Example for ${r.word}">${r.example || ""}</textarea></label>
-              <label class="ai-field"><span>Type</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="type" value="${r.type || ""}" placeholder="Verb" aria-label="Type of ${r.word}"></label>
-              <label class="ai-field"><span>Level</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="level" value="${r.level || ""}" placeholder="B1" aria-label="CEFR level of ${r.word}"></label>
-              <label class="ai-field"><span>IPA</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="ipa" value="${r.ipa || ""}" placeholder="/pleɪ/" aria-label="Pronunciation of ${r.word}"></label>
-              <label class="ai-field"><span>Tags</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="tags" value="${r.tags || ""}" placeholder="work, travel" list="tagList" autocomplete="off" aria-label="Tags for ${r.word}"></label>
-              <p class="ai-row-divide is-wide">More of the card</p>
-              <label class="ai-field"><span>Similar</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="synonyms" value="${r.synonyms || ""}" placeholder="perform, compete" aria-label="Similar words to ${r.word}"></label>
-              <label class="ai-field"><span>Opposite</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="antonyms" value="${r.antonyms || ""}" placeholder="stop, finish" aria-label="Opposites of ${r.word}"></label>
-              <label class="ai-field is-wide"><span>Goes with</span>
-                <input dir="auto" data-ai-row="${i}" data-ai-k="goes" value="${r.goes || ""}" placeholder="play the piano, play football" aria-label="Word partners of ${r.word}"></label>
-              <label class="ai-field is-wide"><span>Memory hook</span>
-                <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="memory" placeholder="A way to remember it — Arabic is fine" aria-label="Memory hook for ${r.word}">${r.memory || ""}</textarea></label>
-              <fieldset class="ai-mistake is-wide">
-                <legend>Mistake to avoid <span class="hint">— leave it blank if none</span></legend>
-                <div class="ai-mistake-grid">
-                  <label class="ai-field"><span>Wrong</span>
-                    <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="mistakeWrong" placeholder="What a learner may say" aria-label="A mistake with ${r.word}">${r.mistakeWrong || ""}</textarea></label>
-                  <label class="ai-field"><span>Right</span>
-                    <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="mistakeRight" placeholder="The correct sentence" aria-label="The fix for that mistake">${r.mistakeRight || ""}</textarea></label>
-                  <label class="ai-field is-wide"><span>Why</span>
-                    <input dir="auto" data-ai-row="${i}" data-ai-k="mistakeWhy" value="${r.mistakeWhy || ""}" placeholder="One short line — the rule" aria-label="Why that is the rule"></label>
+          <li class="ai-row is-${info.kind} ${on ? "" : "is-off"}" data-ai-item="${i}" style="--i:${i}">
+            <div class="ai-row-head">
+              <label class="ai-row-check" title="Keep “${r.word}”">
+                <input type="checkbox" data-ai-keep="${i}" ${on ? VS.raw("checked") : ""} ${blocked ? VS.raw("disabled") : ""}>
+                <span class="sr-only">Keep “${r.word}”</span>
+              </label>
+              <details class="ai-row-details">
+                <summary class="ai-row-summary">
+                  <span class="ai-row-n" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
+                  <span class="ai-row-title"><b>${VS.cap(r.word)}</b>
+                    ${r.sense ? html`<i class="ai-row-sense">${r.sense}</i>` : ""}
+                    <span class="ai-row-meta">${[r.type, r.level, r.ipa].filter(Boolean).join(" · ")}</span></span>
+                  <span class="ai-row-status is-${info.kind}" data-ai-status>${icon(AI_STATUS_ICON[info.kind] || "info", "icon-sm")}${info.text}</span>
+                  <span class="ai-row-chev" aria-hidden="true">${icon("chevron-right", "icon-sm")}</span>
+                </summary>
+                <div class="ai-row-body">
+                  ${r.context ? html`<p class="ai-row-context">${icon("book", "icon-sm")}<span dir="auto">${r.context}</span></p>` : ""}
+                  <div class="ai-row-fields">
+                    <label class="ai-field"><span>Arabic</span>
+                      <input dir="rtl" lang="ar" data-ai-row="${i}" data-ai-k="arabic" value="${r.arabic || ""}" placeholder="المعنى بالعربية" aria-label="Arabic meaning of ${r.word}"></label>
+                    <label class="ai-field"><span>Sense</span>
+                      <input dir="auto" data-ai-row="${i}" data-ai-k="sense" value="${r.sense || ""}" placeholder="music" aria-label="Sense label for ${r.word}"></label>
+                    <label class="ai-field is-wide"><span>Definition</span>
+                      <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="definition" placeholder="What it means, in simple English" aria-label="Definition of ${r.word}">${r.definition || ""}</textarea></label>
+                    <label class="ai-field is-wide"><span>Example</span>
+                      <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="example" placeholder="A sentence that uses it" aria-label="Example for ${r.word}">${r.example || ""}</textarea></label>
+                    <label class="ai-field"><span>Type</span>
+                      <input dir="auto" data-ai-row="${i}" data-ai-k="type" value="${r.type || ""}" placeholder="Verb" aria-label="Type of ${r.word}"></label>
+                    <label class="ai-field"><span>Level</span>
+                      <input dir="auto" data-ai-row="${i}" data-ai-k="level" value="${r.level || ""}" placeholder="B1" aria-label="CEFR level of ${r.word}"></label>
+                    <label class="ai-field"><span>IPA</span>
+                      <input dir="auto" data-ai-row="${i}" data-ai-k="ipa" value="${r.ipa || ""}" placeholder="/pleɪ/" aria-label="Pronunciation of ${r.word}"></label>
+                    <p class="ai-row-divide is-wide">More of the card</p>
+                    <label class="ai-field"><span>Similar</span>
+                      <input dir="auto" data-ai-row="${i}" data-ai-k="synonyms" value="${r.synonyms || ""}" placeholder="perform, compete" aria-label="Similar words to ${r.word}"></label>
+                    <label class="ai-field"><span>Opposite</span>
+                      <input dir="auto" data-ai-row="${i}" data-ai-k="antonyms" value="${r.antonyms || ""}" placeholder="stop, finish" aria-label="Opposites of ${r.word}"></label>
+                    <label class="ai-field is-wide"><span>Goes with</span>
+                      <input dir="auto" data-ai-row="${i}" data-ai-k="goes" value="${r.goes || ""}" placeholder="play the piano, play football" aria-label="Word partners of ${r.word}"></label>
+                    <label class="ai-field is-wide"><span>Memory hook</span>
+                      <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="memory" placeholder="A way to remember it — Arabic is fine" aria-label="Memory hook for ${r.word}">${r.memory || ""}</textarea></label>
+                    <fieldset class="ai-mistake is-wide">
+                      <legend>Mistake to avoid <span class="hint">— leave it blank if none</span></legend>
+                      <div class="ai-mistake-grid">
+                        <label class="ai-field"><span>Wrong</span>
+                          <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="mistakeWrong" placeholder="What a learner may say" aria-label="A mistake with ${r.word}">${r.mistakeWrong || ""}</textarea></label>
+                        <label class="ai-field"><span>Right</span>
+                          <textarea rows="2" dir="auto" data-ai-row="${i}" data-ai-k="mistakeRight" placeholder="The correct sentence" aria-label="The fix for that mistake">${r.mistakeRight || ""}</textarea></label>
+                        <label class="ai-field is-wide"><span>Why</span>
+                          <input dir="auto" data-ai-row="${i}" data-ai-k="mistakeWhy" value="${r.mistakeWhy || ""}" placeholder="One short line — the rule" aria-label="Why that is the rule"></label>
+                      </div>
+                    </fieldset>
+                  </div>
                 </div>
-              </fieldset>
+              </details>
             </div>
           </li>`;
         })}
       </ul>
-      <div class="ai-add-foot">
-        <label class="form-field ai-tags"><span>Tags for all (optional)</span>
-          <input dir="auto" data-ai-tags value="${st.ai.tags}" placeholder="IELTS, work" list="tagList" autocomplete="off"></label>
-        ${VS.ui.tagList()}
-        <button class="btn btn-primary btn-lg ai-add-btn" type="button" data-action="ai-add" ${n ? "" : VS.raw("disabled")}>${icon("plus", "icon-sm")}
-          <span data-add-label>${n === 1 ? "Add 1 word" : "Add " + n + " words"}</span></button>
-        <span class="hint">Nothing is added until you press Add. A second meaning of a word you already have is fine — the Arabic keeps it apart.</span>
+      <div class="ai-add-bar">
+        <span class="ai-add-ready"><b data-add-count>${n}</b> ${n === 1 ? "word" : "words"} ready</span>
+        <button class="btn btn-primary btn-lg ai-add-btn" type="button" data-action="ai-add" ${n ? "" : VS.raw("disabled")}>
+          ${icon("plus", "icon-sm")}<span data-add-label>${n === 1 ? "Add 1 word" : "Add " + n + " words"}</span></button>
       </div>`;
   }
 
-  /** Redraw the cards' statuses, checkboxes and the Add button in place, so typing keeps focus. */
+  /** Redraw the rows' statuses, checkboxes and every Add button in place,
+      so typing keeps focus and an open row stays open. */
   function refreshAiReview() {
     const review = VS.$("#aiReview");
     if (!review || !st.ai.rows.length) return;
@@ -319,12 +334,15 @@
       if (chip) chip.innerHTML = String(html`${icon(AI_STATUS_ICON[info.kind] || "info", "icon-sm")}${info.text}`);
     });
     const n = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).length;
-    const btn = review.querySelector('[data-action="ai-add"]');
-    if (btn) {
+    const count = review.querySelector("[data-add-count]");
+    if (count) count.textContent = String(n);
+    VS.$$('[data-action="ai-add"]', review).forEach((btn) => {
       btn.disabled = !n;
       const label = btn.querySelector("[data-add-label]");
-      if (label) label.textContent = n === 1 ? "Add 1 word" : "Add " + n + " words";
-    }
+      if (label) label.textContent = btn.classList.contains("ai-add-compact")
+        ? "Add " + n
+        : (n === 1 ? "Add 1 word" : "Add " + n + " words");
+    });
   }
 
   /* ── The three AI tabs: With AI (your words) · By topic · From Arabic ──
@@ -392,17 +410,17 @@
 
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">3</span>
-          <div class="ai-step-copy"><b>Paste its answer</b><span>Copy the AI's reply and paste it here — tags included.</span></div>
+          <div class="ai-step-copy"><b>Paste its answer</b><span>Copy the AI's reply and paste it here — no tags needed.</span></div>
         </div>
         <div class="ai-fill">
           <textarea class="ai-fill-input" rows="4" dir="auto" data-ai-add aria-label="The AI's answer"
-            placeholder="word: …&#10;arabic: …&#10;definition: …&#10;tags: …">${st.ai.answer}</textarea>
+            placeholder="word: …&#10;arabic: …&#10;definition: …">${st.ai.answer}</textarea>
           <p class="ai-fill-status" aria-live="polite" hidden></p>
         </div>
 
         <div class="ai-step">
           <span class="ai-step-n" aria-hidden="true">4</span>
-          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything, add a tag per word, or untick one to skip it.</span></div>
+          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything, or untick one to skip it. Tags are yours alone — the batch field is above.</span></div>
         </div>
         <div class="ai-review" id="aiReview">${aiReview()}</div>
       </div>`;
@@ -630,11 +648,21 @@
     const d = VS.walletDraft;
     if (!d) return;
     VS.walletDraft = null;
+    if (d.ar) {
+      // An Arabic slip: "From Arabic" with the learner's own words already in
+      // the box. The AI answers with the natural English and a full card.
+      // Once that card is added, the slip has done its job and leaves.
+      st.tab = "ai-ar";
+      st.ai.ctx = {};
+      Object.assign(st.ai, { ar: d.ar, answer: "", rows: [], walletIds: (d.items || []).map((e) => e.id) });
+      return;
+    }
     if (d.ai) {
       // "Make with AI": the With AI tab, the words typed, each one's sentence
       // and Arabic kept for the prompt.
       st.tab = "ai";
       st.ai.ctx = {};
+      st.ai.walletIds = [];
       d.items.forEach((e) => { st.ai.ctx[e.word.toLowerCase()] = {
         id: e.id, context: e.sentence || "", arabic: e.arabic || "",
         source: e.source ? (e.kind === "meaning" ? "From the meaning of " : "From the example for ") + VS.cap(e.source) : "",
@@ -643,6 +671,7 @@
       return;
     }
     st.tab = "type";
+    st.ai.walletIds = [];
     st.form = { word: d.word, context: d.context, source: d.source, arabic: d.arabic || "" };
     st.openDetails = true;
   }
@@ -877,6 +906,7 @@
         rows = rows.filter((r) => r.word && !VS.isArabicTyping(r.word));
         st.ai.rows = rows.map((r) => {
           const row = Object.assign({ keep: true }, r);
+          if (!row.sense && row.definition) row.sense = VS.senseFrom(row.definition);
           const m = walletMatch(r.word);
           if (m) {
             row.walletId = m.id;
@@ -941,11 +971,11 @@
         const g = Number(el.dataset.value);
         if (g === groupOf(st.tab)) return;
         const tab = lastIn[g] || TAB_GROUPS[g][2][0][0];
-        Object.assign(st.ai, { answer: "", rows: [] });
+        Object.assign(st.ai, { answer: "", rows: [], walletIds: [] });
         st.tab = tab; lastIn[g] = tab; st.saved = ""; VS.app.render();
       },
       "import-tab"(el) {
-        if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [] });
+        if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [], walletIds: [] });
         st.tab = el.dataset.value; lastIn[groupOf(st.tab)] = st.tab; st.saved = ""; VS.app.render();
       },
       "ai-add"() {
@@ -953,7 +983,7 @@
         const rows = st.ai.rows;
         const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
         const words = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).map((r) => {
-          const w = { word: r.word, tags: [...new Set(VS.parseTags(r.tags).concat(globalTags))] };
+          const w = { word: r.word, tags: [...new Set(globalTags)] };
           ["arabic", "sense", "definition", "example", "type", "level", "ipa", "context", "source", "memory"]
             .forEach((k) => { if (r[k]) w[k] = String(r[k]).trim(); });
           if (r.synonyms) w.synonyms = VS.parseTags(r.synonyms).slice(0, 6);
@@ -968,11 +998,14 @@
         // A wallet word the AI turned into its base form ("postponed" → "postpone") leaves the wallet too.
         const addedKeys = new Set(r.added.map((w) => VS.wordKey(w.word)));
         st.ai.rows.forEach((row) => { if (row.walletId && addedKeys.has(VS.wordKey(row.word))) VS.store.walletRemove(row.walletId); });
+        // Arabic slips have no English headword to match yet: they leave by id
+        // once their cards are added.
+        if (r.added.length && (st.ai.walletIds || []).length) st.ai.walletIds.forEach((id) => VS.store.walletRemove(id));
         if (r.added.length) VS.sfx.play("pop");
         if (r.needsArabic.length) VS.toast(`“${r.needsArabic[0].word}” is already in your library — add this meaning's Arabic to keep a second word.`);
         else if (!r.added.length) { VS.toast("Those words and meanings are already in your library."); VS.app.render(); return; }
         // Added: every field is empty again, ready for the next words (tags kept on purpose).
-        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {} });
+        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {}, walletIds: [] });
         VS.app.render();
       },
 

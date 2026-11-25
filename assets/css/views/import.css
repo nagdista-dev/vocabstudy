@@ -224,9 +224,9 @@
 
 /* The words in the answer: a check card each, with a status that says what
    will happen — Ready, Another meaning, In your library, Needs Arabic. */
-.ai-rows { display: grid; gap: var(--s-3); margin: 0; padding: 0; list-style: none; }
+.ai-rows { display: grid; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
 .ai-row {
-  display: grid; gap: var(--s-3); padding: var(--s-3) var(--s-4);
+  display: block; padding: 0;
   border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
   transition: opacity var(--fast), border-color var(--fast), background var(--fast);
 }
@@ -234,8 +234,24 @@
 .ai-row.is-dup { opacity: .72; background: var(--surface-2); }
 .ai-row.is-needar { border-color: color-mix(in srgb, var(--note) 45%, var(--line)); }
 .ai-row.is-another { border-inline-start: 3px solid var(--brand); }
-.ai-row-head { display: flex; align-items: center; gap: var(--s-2); min-height: 32px; flex-wrap: wrap; cursor: pointer; }
-.ai-row-head input { flex: none; width: 18px; height: 18px; accent-color: var(--brand); }
+
+/* One row = a tick, then a closed card. The tick is a sibling of <details>,
+   so ticking a word never opens or closes its fields. */
+.ai-row-head { display: flex; align-items: flex-start; gap: var(--s-1); padding-inline-end: var(--s-2); }
+.ai-row-check {
+  flex: none; display: grid; place-items: center;
+  width: 44px; min-height: 52px; cursor: pointer;
+}
+.ai-row-check input { width: 18px; height: 18px; accent-color: var(--brand); }
+.ai-row-details { flex: 1; min-width: 0; }
+.ai-row-summary {
+  display: flex; align-items: flex-start; gap: var(--s-2); min-height: 52px;
+  padding: 10px 0; list-style: none; cursor: pointer; flex-wrap: wrap;
+}
+.ai-row-n { margin-top: 3px; }
+.ai-row-status { margin-top: 1px; }
+.ai-row-chev { margin-top: 6px; }
+.ai-row-summary::-webkit-details-marker { display: none; }
 /* The number is a margin mark, not content: it keeps the eye on one card
    while the answer may hold four. */
 .ai-row-n {
@@ -259,6 +275,9 @@
 .ai-row-status.is-dup, .ai-row-status.is-repeat { background: var(--surface-2); color: var(--ink-3); }
 .ai-row.is-dup .ai-row-title b { color: var(--ink-3); }
 .ai-row.is-dup .ai-row-fields { display: none; }   /* already in the library: just its name and the reason */
+.ai-row-chev { display: inline-grid; margin-inline-start: auto; color: var(--ink-3); transition: transform var(--fast); }
+.ai-row-details[open] .ai-row-chev { transform: rotate(90deg); }
+.ai-row-body { display: grid; gap: var(--s-3); padding: 0 0 var(--s-3); }
 .ai-row-context { display: flex; gap: 6px; align-items: flex-start; margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm);
   background: var(--mark-soft); color: var(--on-mark-soft); font-size: var(--text-xs); line-height: 1.5; }
 .ai-row-context .icon { flex: none; margin-top: 2px; width: 14px; height: 14px; }
@@ -292,8 +311,31 @@
 }
 .ai-mistake legend .hint { font-weight: 400; }
 .ai-mistake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2) var(--s-3); }
-.ai-add-foot { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3) var(--s-4); margin-top: var(--s-3); }
-.ai-tags { flex: 1 1 220px; }
+
+/* The tags the learner owns, then the Add button that never scrolls away. */
+.ai-review-bar {
+  display: flex; align-items: flex-end; gap: var(--s-2) var(--s-3);
+  margin-bottom: var(--s-3); flex-wrap: wrap;
+}
+.ai-review-bar .ai-tags { flex: 1 1 220px; }
+.ai-add-compact { flex: none; align-self: end; min-width: 88px; }
+@media (max-width: 599px) { .ai-add-compact { display: none; } }   /* the fixed bar is the Add on a phone */
+.ai-add-bar {
+  position: fixed; z-index: var(--z-float); left: 50%; transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  width: min(640px, calc(100vw - 24px));
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); box-shadow: var(--shadow-2);
+}
+.ai-add-ready { margin-inline-end: auto; font-size: var(--text-sm); color: var(--ink-2); }
+.ai-add-ready b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ai-add-bar .ai-add-btn { flex: none; }
+.ai-review:has(.ai-rows) { padding-bottom: 76px; }
+@media (max-width: 1023px) {
+  .ai-add-bar { bottom: calc(66px + env(safe-area-inset-bottom)); }
+  .ai-review:has(.ai-rows) { padding-bottom: 92px; }
+}
 
 /* Step 1 inputs (words, topic, count, Arabic). */
 .ai-in-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-2) var(--s-3); }
@@ -308,12 +350,13 @@
 @media (max-width: 599px) {
   .ai-add-words, .ai-add .ai-fill, .ai-add .ai-review, .ai-in-row, .ai-add .ai-ask { margin-inline-start: 0; }
   .ai-add-btn { width: 100%; }
-  .ai-row { padding: var(--s-3); }
+  .ai-add-bar .ai-add-btn { width: auto; }
+  .ai-row { padding: 0; }
   /* One field per line on a phone: side by side, the tags field cut its
      own value in half ("personali…"). */
   .ai-row-fields { grid-template-columns: minmax(0, 1fr); }
   .ai-mistake-grid { grid-template-columns: minmax(0, 1fr); }
-  .ai-row-status { margin-inline-start: 48px; }
+  .ai-row-status { margin-inline-start: 0; }
 }
 
 /* Eight ways in: the tab row wraps on a computer and scrolls sideways on a phone

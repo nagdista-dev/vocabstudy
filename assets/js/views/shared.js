@@ -197,7 +197,7 @@
      prompt has learned them all. */
   const CARD_LINES = [
     "word: <the English base form>",
-    "sense: <2–4 English words naming THIS meaning, e.g. games and sport, music — never just the part of speech>",
+    "sense: <2–4 English words naming THIS meaning — REQUIRED, never blank and never just the part of speech. E.g. games and sport, music>",
     VS.aiArabicLine(),
     "definition: <one simple English definition, learner-dictionary style>",
     "example: <one natural example sentence, 14 words or fewer, that uses the word in THIS meaning>",
@@ -212,7 +212,6 @@
     "wrong: <the wrong sentence, or —>",
     "right: <the correct sentence, or —>",
     "why: <one short line in Arabic explaining the rule, or —>",
-    "tags: <1–3 short tags that fit THIS word and THIS meaning, comma-separated — a topic or situation, e.g. work, travel, emotions>",
   ];
   const answerShape = [
     "",
@@ -310,11 +309,27 @@
     mistake: "mistake", "mistake to avoid": "mistake", "common mistake": "mistake", error: "mistake",
     wrong: "mistakeWrong", "wrong sentence": "mistakeWrong", right: "mistakeRight", "right sentence": "mistakeRight", correct: "mistakeRight",
     why: "mistakeWhy", reason: "mistakeWhy", rule: "mistakeWhy", explanation: "mistakeWhy",
-    tags: "tags", tag: "tags", "topic tags": "tags", topics: "tags", "الوسوم": "tags", "وسوم": "tags",
     context: "context", sentence: "context", "where i met it": "context",
   };
   const AI_NONE = /^(?:—|–|-|n\/?a|none|null|nil|nothing|لا يوجد|لا|غير متاح|<.*>)$/i;
 
+  /**
+   * A short sense label made from a definition, for answers that skip the
+   * sense line: the first clause, at most five words, without the article or
+   * the "to" that starts a learner definition.
+   */
+  VS.senseFrom = function (definition) {
+    const first = String(definition || "").split(/[.;:,—–(]/)[0].trim();
+    let words = first.split(/\s+/).filter(Boolean);
+    while (words.length && /^(?:to|a|an|the|be|being|someone|something)$/i.test(words[0])) words.shift();
+    // "leave someone or something behind" is a definition, not a sense:
+    // take the filler out, keep the four words that still say the meaning.
+    words = words.join(" ")
+      .replace(/\b(?:someone|something)\b(?:\s+or\s+(?:someone|something))?/gi, " ")
+      .split(/\s+/).filter(Boolean).slice(0, 4);
+    while (words.length > 1 && /^(?:so|that|which|who|it|with|from|of|in|on|at|for|about|by|than|without|into|through|during|before|after|over|under|between|around)$/i.test(words[words.length - 1])) words.pop();
+    return words.join(" ").replace(/[^\w' -]+$/g, "").toLowerCase();
+  };
   /** The AI's answer → { field: value } (only fields that look right). */
   VS.parseAiWord = function (text) {
     let t = String(text || "").replace(/```[a-z]*\n?/gi, "").trim();
@@ -356,7 +371,6 @@
       if (k === "synonyms") v = VS.parseTags(v).slice(0, 6).join(", ");
       if (k === "antonyms") v = VS.parseTags(v).slice(0, 4).join(", ");
       if (k === "goes") v = VS.parseTags(v).slice(0, 6).join(", ");
-      if (k === "tags") v = VS.parseTags(v).slice(0, 3).join(", ");
       if (k === "memory") v = v.slice(0, 300);
       out[k] = v.slice(0, 400);
     });
@@ -365,6 +379,9 @@
       if (m) { out.mistakeWrong = m.wrong; out.mistakeRight = m.right; out.mistakeWhy = m.why; }
     }
     delete out.mistake;
+    // The sense is the short label beside the headword. If an answer skipped
+    // it, take the first phrase of the definition: the card is never bare.
+    if (!out.sense && out.definition) out.sense = VS.senseFrom(out.definition);
     return out;
   };
   /**
@@ -444,17 +461,153 @@
     return false;
   };
 
-  /** Opens ChatGPT or Claude in a new tab with the prompt already typed (and copies it as well). */
+  /* ── Share the app itself ───────────────────────────────────────
+     A learner's own Arabic, not a translated slogan. Seven ways of saying
+     the same simple thing, so the message sounds like the person sending it;
+     every dialect in the app maps to one of them. The link is always the
+     public app; nothing about the learner travels with it. */
+  const APP_SHARE_URL = "https://vocabstudy.nagdista.com/";
+  const APP_SHARE_AR = {
+    msa: "إذا كنت تتعلم الإنجليزية، جرّب VocabStudy. تطبيق مجاني يحفظ الكلمات التي تصادفك، ويعيدها إليك في الأيام التي تحتاجها. بلا حساب، ويعمل بلا إنترنت. جرّبه من هنا:",
+    eg: "لو بتتعلم إنجليزي، جرّب VocabStudy. مجاني، من غير حساب، وبيشتغل من غير نت. بيحفظ الكلمات اللي بتقابلك، ويرجّعهالك في الأيام اللي بتنساها. جرّبه من هنا:",
+    gulf: "إذا تتعلم إنجليزي، جرّب VocabStudy. مجاني، بدون حساب، ويشتغل بدون إنترنت. يحفظ الكلمات اللي تقابلك، ويرجّعها لك في الأيام اللي تحتاجها. جرّبه من هنا:",
+    lev: "إذا عم تتعلم إنجليزي، جرّب VocabStudy. مجاني، بلا حساب، وبيشتغل بلا إنترنت. بيحفظ الكلمات اللي بتقابلك، وبيارجعلك ياها بالأيام اللي بتنساها. جرّبه من هنا:",
+    iq: "إذا تتعلم إنجليزي، جرّب VocabStudy. مجاني، بلا حساب، ويشتغل بلا إنترنت. يحفظ الكلمات اللي تصادفك، ويرجّعها لك بالأيام اللي تحتاجها. جرّبه من هنا:",
+    sd: "إذا بتتعلم إنجليزي، جرّب VocabStudy. مجاني، بدون حساب، وبيشتغل بدون إنترنت. بيحفظ الكلمات اللي بتقابلك، ويرجّعها ليك في الأيام اللي بتنساها. جرّبه من هنا:",
+    mag: "إذا راك تتعلم إنجليزي، جرّب VocabStudy. مجاني، بلا حساب، ويخدم بلا إنترنت. يحفظ الكلمات اللي تلاقيها، ويرجّعها لك في الأيام اللي تحتاجها. جرّبه من هنا:",
+  };
+  const APP_SHARE_REGION = {
+    eg: "eg",
+    sa: "gulf", ae: "gulf", kw: "gulf", qa: "gulf", bh: "gulf", om: "gulf", ye: "gulf",
+    iq: "iq",
+    sy: "lev", lb: "lev", jo: "lev", ps: "lev",
+    sd: "sd",
+    ly: "mag", tn: "mag", dz: "mag", ma: "mag",
+    mr: "msa", so: "msa", dj: "msa", km: "msa",   // these are taught in simple MSA
+  };
+  /** The message the learner sends: their dialect, one breath, the link. */
+  VS.appShare = function () {
+    const d = VS.myDialect();
+    const key = APP_SHARE_REGION[(d && d[0]) || "msa"] || "msa";
+    const body = APP_SHARE_AR[key];
+    return { body, text: body + " " + APP_SHARE_URL, url: APP_SHARE_URL, dialect: d };
+  };
+  /** A plain link for one channel; the URL is always the app, never the learner. */
+  VS.appShareLink = function (channel) {
+    const s = VS.appShare();
+    const enc = encodeURIComponent;
+    if (channel === "whatsapp") return "https://wa.me/?text=" + enc(s.text);
+    if (channel === "telegram") return "https://t.me/share/url?url=" + enc(s.url) + "&text=" + enc(s.body);
+    if (channel === "x") return "https://twitter.com/intent/tweet?text=" + enc(s.body) + "&url=" + enc(s.url);
+    if (channel === "facebook") return "https://www.facebook.com/sharer/sharer.php?u=" + enc(s.url) + "&quote=" + enc(s.body);
+    if (channel === "linkedin") return "https://www.linkedin.com/sharing/share-offsite/?url=" + enc(s.url);
+    if (channel === "email") return "mailto:?subject=" + enc("VocabStudy — تعلّم الإنجليزية كلمة كلمة") + "&body=" + enc(s.text);
+    if (channel === "sms") return "sms:?&body=" + enc(s.text);
+    return s.url;
+  };
+
+  /** The sheet: the message in the learner's Arabic, then every way to send it. */
+  VS.openAppShare = function () {
+    let dlg = document.getElementById("appShare");
+    if (!dlg) {
+      dlg = document.createElement("dialog");
+      dlg.id = "appShare";
+      dlg.className = "sheet app-share-sheet";
+      dlg.setAttribute("aria-labelledby", "appShareTitle");
+      dlg.addEventListener("click", (e) => {
+        if (e.target === dlg) dlg.close();
+        if (e.target.closest("[data-app-share]")) setTimeout(() => dlg.close(), 80);
+      });
+      document.body.appendChild(dlg);
+    }
+    const s = VS.appShare();
+    const channels = [
+      ["whatsapp", "WhatsApp", "whatsapp"],
+      ["telegram", "Telegram", "telegram"],
+      ["x", "X", "xbrand"],
+      ["facebook", "Facebook", "facebook"],
+      ["linkedin", "LinkedIn", "linkedin"],
+      ["email", "Email", "mail"],
+      ["sms", "SMS", "chat"],
+    ];
+    dlg.innerHTML = String(html`
+      <div class="sheet-head"><h2 id="appShareTitle">Share VocabStudy</h2>
+        <button class="icon-btn" type="button" data-action="app-share-close" aria-label="Close">${icon("x")}</button></div>
+      <div class="sheet-body app-share-body">
+        <p class="hint">Send it to a friend in your own Arabic — the message is written the way you speak.</p>
+        <blockquote class="app-share-preview" lang="ar" dir="rtl">${s.body}
+          <bdi class="app-share-url" dir="ltr">${s.url}</bdi></blockquote>
+        ${navigator.share ? html`<button class="btn btn-primary btn-lg app-share-native" type="button" data-action="app-share-native">
+          ${icon("share", "icon-sm")} Share with the apps on this phone</button>` : ""}
+        <div class="app-share-grid" role="group" aria-label="Send on another app">
+          ${channels.map(([ch, label, ico]) => html`<a class="app-share-channel is-${ch}" data-app-share href="${VS.appShareLink(ch)}"
+            ${ch === "email" || ch === "sms" ? "" : VS.raw('target="_blank" rel="noopener"')}>${icon(ico)}<span>${label}</span></a>`)}
+        </div>
+        <div class="app-share-copy-row">
+          <button class="btn btn-tonal" type="button" data-action="app-share-copy">${icon("copy", "icon-sm")} Copy the message</button>
+          <button class="btn btn-quiet" type="button" data-action="app-share-link">${icon("link", "icon-sm")} Copy the link</button>
+        </div>
+        <p class="hint app-share-free">Free, no account, and it works offline. The link is only the app — nothing about you.</p>
+      </div>`);
+    if (!dlg.open) dlg.showModal();
+  };
+  VS.actions["app-share-close"] = () => { const dlg = document.getElementById("appShare"); if (dlg) dlg.close(); };
+  VS.actions["app-share-native"] = async () => {
+    const s = VS.appShare();
+    try {
+      await navigator.share({ title: "VocabStudy", text: s.text, url: s.url });
+      VS.actions["app-share-close"]();
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      VS.copySheet(s.text, "Share VocabStudy");
+    }
+  };
+  VS.actions["app-share-copy"] = async () => {
+    const s = VS.appShare();
+    if (await VS.copyText(s.text)) VS.toast("Message copied — paste it in any app.");
+    else VS.copySheet(s.text, "Share VocabStudy");
+  };
+  VS.actions["app-share-link"] = async () => {
+    const s = VS.appShare();
+    if (await VS.copyText(s.url)) VS.toast("Link copied.");
+    else VS.copySheet(s.url, "The link");
+  };
+
+  /**
+   * Opens ChatGPT or Claude in a new tab with the prompt already typed.
+   * The clipboard write starts while the click still has focus, and the tab
+   * opens in the same turn (awaiting first would lose the tap and let a popup
+   * blocker eat it). The manual sheet is only for the one case that needs it:
+   * a prompt too long for the URL whose copy also failed. A prompt that is
+   * already in the chat never hides behind a "Your prompt" dialog.
+   */
   VS.aiOpen = (to, text) => {
     const base = to === "claude" ? "https://claude.ai/new" : "https://chatgpt.com/";
     const fits = text.length < 6000;
-    window.open(fits ? base + "?q=" + encodeURIComponent(text) : base, "_blank", "noopener");
-    VS.copyText(text).then((ok) => {
-      if (!ok) { VS.copySheet(text, "Your prompt"); return; }
-      VS.toast(fits
-        ? "Opened with your prompt — send it, then copy the answer back here."
-        : "The prompt is long: it's copied — paste it in the chat.");
-    });
+    const url = fits ? base + "?q=" + encodeURIComponent(text) : base;
+    let copying = null;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) copying = navigator.clipboard.writeText(text);
+    } catch (e) { /* an old browser: the URL still carries the prompt */ }
+    const win = window.open(url, "_blank");
+    if (win) win.opener = null;
+    const copied = (ok) => {
+      if (!win) {
+        if (ok) VS.toast("Your browser blocked the new tab — the prompt is copied. Open the chat and paste it.");
+        else VS.copySheet(text, "Your prompt");
+        return;
+      }
+      if (fits) return;                                  // the prompt is in the chat: nothing else to say
+      if (ok) VS.toast("The prompt is long, so it's copied too — paste it in the chat.");
+      else VS.copySheet(text, "Your prompt");
+    };
+    if (fits && win) {
+      if (copying) copying.catch(() => {});         // a blocked copy is harmless here
+      VS.toast("Opened with your prompt — send it, then paste the answer back here.");
+      return;
+    }
+    if (copying) copying.then(copied, () => copied(false));
+    else copied(false);
   };
   /**
    * The three ways to ask an AI — one row everywhere (Add words with AI and
@@ -1179,6 +1332,13 @@
       confirmLabel: "Delete",
     });
     if (!yes) return;
+    // A row in the list leaves first, so the gap closing is not a jump cut.
+    // The word card has no row, so deleting from the card goes straight on.
+    const row = el.closest(".word-row");
+    if (row && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      row.classList.add("is-removing");
+      await new Promise((done) => setTimeout(done, 170));
+    }
     // No reload: the card closes, the list redraws, and Undo puts the word
     // back where it was — with its card open again (V1.1).
     const snap = VS.store.snapshot([w.id]);
@@ -1340,9 +1500,17 @@
     speakButton: (text, label) =>
       html`<button class="speak-btn" type="button" data-action="speak" data-say="${text}" aria-label="${label || "Hear " + text}">${icon("volume", "icon-sm")}</button>`,
 
-    /** Headword + optional sense in brackets, e.g. Axe (tool) — the sense tells two meanings apart. */
-    headword: (w, cls) =>
-      html`<span class="${cls || ""}">${VS.cap(w.word)}</span>${w.sense ? html` <span class="sense">(${w.sense.toLowerCase()})</span>` : ""}`,
+    /** The short sense that tells two meanings apart. The AI writes one; for
+        older or hand-typed words, the first phrase of the definition stands in
+        so the headword is never bare. */
+    senseOf: (w) => String(w.sense || VS.senseFrom(w.definition || "") || "").trim(),
+
+    /** Headword + sense in brackets, e.g. Axe (tool) — the sense is muted so
+        the English word stays the thing being learned. */
+    headword(w, cls) {
+      const sense = VS.ui.senseOf(w);
+      return html`<span class="${cls || ""}">${VS.cap(w.word)}</span>${sense ? html` <span class="sense">(${sense.toLowerCase()})</span>` : ""}`;
+    },
 
     /** Pronunciation tips for Arabic speakers (core/sound-traps.js): P/B, V/F, silent letters… */
     soundTraps(w, cls) {
@@ -1413,8 +1581,13 @@
         so the line reads in the right order in both directions. */
     mixed(text) {
       const safe = VS.escape(text);
-      // «» around Arabic would flip in an English line; the isolated chip replaces them.
-      return VS.raw(safe.replace(/«?([\u0600-\u06FF][\u0600-\u06FF\u064B-\u065F\s،-]*[\u0600-\u06FF]|[\u0600-\u06FF])»?/g,
+      // Every Arabic run is isolated, so an English sentence never drags its
+      // punctuation to the wrong end. The class is the visual chip; the <bdi>
+      // is what actually keeps the two directions from touching.
+      const AR = "\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF";
+      const JOIN = AR + "\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\s،؛؟٪ـ-";
+      const run = new RegExp("«?([" + AR + "](?:[" + JOIN + "]*[" + AR + "])?)»?", "g");
+      return VS.raw(safe.replace(run,
         (_, ar) => '<bdi class="ar-chip" lang="ar" dir="rtl">' + ar + "</bdi>"));
     },
 
@@ -1466,7 +1639,7 @@
       return html`
         <figure class="met ${cls || ""}">
           <figcaption>${icon("book", "icon-sm")}<span>Where you met it${w.source ? html`, <span class="met-source">${w.source}</span>` : ""}</span></figcaption>
-          <blockquote>${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : w.context}</blockquote>
+          <blockquote dir="auto">${hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : w.context}</blockquote>
         </figure>`;
     },
 
@@ -1489,7 +1662,7 @@
             const body = unsure && at >= 0
               ? html`${m.slice(0, at)}<del class="pen-wrong">${bad}</del>${m.slice(at + bad.length)}`
               : hit ? html`${hit.before}<mark class="mark">${hit.answer}</mark>${hit.after}` : m;
-            return html`<li class="${unsure ? "is-unsure" : ""}"><span>${body}${unsure
+            return html`<li class="${unsure ? "is-unsure" : ""}" dir="auto"><span>${body}${unsure
                 ? html`<small class="mine-unsure">${fixed
                     ? html`One thing to fix: <b>${fixed}</b>`
                     : trap ? html`${VS.ui.mixed(trap.why)}` : "May have a mistake — not used in Recall"}</small>
@@ -1573,7 +1746,12 @@
         </div>`;
     },
 
-    /** One row in a word list: a button that opens the whole word card. */
+    /**
+     * One row in a word list: a button that opens the whole word card, and a
+     * delete button beside it (never inside it — a row is one action, delete is
+     * another). Three fixed lines keep every row the same height: word + muted
+     * sense, one clipped example, one meta line.
+     */
     wordRow(w) {
       const s = VS.store.status(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
@@ -1582,10 +1760,12 @@
           <button class="word-row-open" type="button" data-action="word-open" data-id="${w.id}" aria-haspopup="dialog">
             <span class="word-row-word">
               <i class="word-row-dot" aria-hidden="true"></i>
-              <b title="${w.word}">${VS.ui.headword(w)}</b>
+              <b title="${w.word}">${VS.cap(w.word)}</b>
+              ${VS.ui.senseOf(w) ? html`<span class="sense">(${VS.ui.senseOf(w).toLowerCase()})</span>` : ""}
             </span>
-            ${w.arabic ? html`<span class="word-row-ar" lang="ar" title="${w.arabic}">${w.arabic}</span>`
+            ${w.arabic ? html`<span class="word-row-ar" lang="ar" dir="rtl" title="${w.arabic}">${w.arabic}</span>`
               : html`<span class="word-row-ar hint">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No meaning yet"}</span>`}
+            ${w.example ? html`<span class="word-row-ex" dir="auto" title="${w.example}">${w.example}</span>` : html`<span class="word-row-ex is-empty" aria-hidden="true"></span>`}
             <span class="word-row-meta">
               <span class="word-row-state" data-s="${s}">${state}</span><span class="word-row-sep" aria-hidden="true">·</span>
               ${w.check && w.check.kind === "spelling" ? "" : html`<span>${w.type}${w.level ? " · " + w.level : ""}</span>`}
@@ -1593,8 +1773,9 @@
               ${VS.ui.checkFlag(w)}
               ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
             </span>
-            ${icon("chevron-right", "icon-sm word-row-chev")}
           </button>
+          <button class="icon-btn word-row-del" type="button" data-action="word-delete" data-id="${w.id}"
+            aria-label="Delete “${w.word}”" title="Delete “${w.word}”">${icon("trash", "icon-sm")}</button>
         </div>`;
     },
 
@@ -1622,7 +1803,7 @@
       const example = w.example
         ? html`
           <figure class="word-example">
-            <blockquote>“${VS.ui.exampleTap(w)}”</blockquote>
+            <blockquote dir="auto">“${VS.ui.exampleTap(w)}”</blockquote>
           </figure>
           <div class="word-ex-tools">
             <button class="word-hear" type="button" data-action="speak" data-say="${w.example}" aria-label="Hear the sentence">${icon("volume", "icon-sm")}<span>Hear it</span></button>
@@ -1654,6 +1835,7 @@
                 </div>
                 <div class="word-card-ar">
                   <span class="word-card-ar-label">In Arabic</span>
+                  <span class="word-card-ar-dot" aria-hidden="true">·</span>
                   ${w.arabic
                     ? html`<p lang="ar" dir="rtl">${w.arabic}</p>`
                     : html`<p class="word-card-ar-empty">${VS.autofill.pending(w.id) ? (navigator.onLine ? "Filling in…" : "Fills in when online") : "No Arabic meaning yet."}</p>`}
@@ -1672,7 +1854,7 @@
 
               ${sec("meaning", "Meaning", "المعنى", html`
                 ${w.definition
-                  ? html`<p class="word-definition">${VS.ui.defTap(w)}</p>`
+                  ? html`<p class="word-definition" dir="auto">${VS.ui.defTap(w)}</p>`
                   : html`<p class="hint">No definition yet.
                       <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
                 ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}" aria-expanded="false">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
