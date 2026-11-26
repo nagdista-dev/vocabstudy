@@ -316,7 +316,10 @@
             <p class="first-card-meta"><span class="ipa">/rɪˈzɪliənt/</span><span class="first-card-dot" aria-hidden="true">·</span>Adjective</p>
           </div>
           <div class="first-card-side">
-            <p class="first-card-ar" lang="ar" dir="rtl">صامد - مرن</p>
+            <div class="first-card-translation">
+              <p class="first-card-ar-label">Translation</p>
+              <p class="first-card-ar" lang="ar" dir="rtl">صامد - مرن</p>
+            </div>
             ${VS.speech.supported ? VS.ui.speakButton("resilient", "Hear resilient") : ""}
           </div>
         </div>

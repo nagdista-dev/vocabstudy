@@ -327,7 +327,7 @@
     words = words.join(" ")
       .replace(/\b(?:someone|something)\b(?:\s+or\s+(?:someone|something))?/gi, " ")
       .split(/\s+/).filter(Boolean).slice(0, 4);
-    while (words.length > 1 && /^(?:so|that|which|who|it|with|from|of|in|on|at|for|about|by|than|without|into|through|during|before|after|over|under|between|around)$/i.test(words[words.length - 1])) words.pop();
+    while (words.length > 1 && /^(?:so|that|which|who|it|to|with|from|of|in|on|at|for|about|by|than|without|into|through|during|before|after|over|under|between|around)$/i.test(words[words.length - 1])) words.pop();
     return words.join(" ").replace(/[^\w' -]+$/g, "").toLowerCase();
   };
   /** The AI's answer → { field: value } (only fields that look right). */

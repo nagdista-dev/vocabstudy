@@ -68,7 +68,11 @@
     const had = slip.querySelector(".wallet-ar");
     if (had) { had.textContent = ar; return; }
     const head = slip.querySelector(".wallet-slip-head");
-    if (head) head.insertAdjacentHTML("afterend", String(html`<p class="wallet-ar" lang="ar" dir="rtl">${ar}</p>`));
+    if (head) head.insertAdjacentHTML("afterend", String(html`
+      <div class="wallet-translation">
+        <p class="wallet-ar-label">Translation</p>
+        <p class="wallet-ar" lang="ar" dir="rtl">${ar}</p>
+      </div>`));
   }
 
   /**
@@ -123,7 +127,7 @@
       folder tag, and the two doors plus remove. */
   function slip(e, i) {
     const lead = e.kind === "shared" ? "Shared by" : e.kind === "meaning" ? "From the meaning of" : "From the example for";
-    const from = e.source ? html`${lead} <b>${e.kind === "shared" ? e.source : VS.cap(e.source)}</b><span class="wallet-sep" aria-hidden="true">·</span>` : "";
+    const from = e.source ? html`${lead} <b>${e.kind === "shared" ? e.source : VS.cap(e.source)}</b>` : "";
     const isArabic = VS.isArabicTyping(e.word);
     const inName = folderName(e.folder);
     return html`
@@ -135,13 +139,20 @@
         </div>
         ${isArabic
           ? html`<p class="wallet-next">${icon("arrow-right", "icon-sm")}<span>English comes next — Make with AI or Add now.</span></p>`
-          : e.arabic ? html`<p class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</p>` : ""}
+          : e.arabic ? html`
+            <div class="wallet-translation">
+              <p class="wallet-ar-label">Translation</p>
+              <p class="wallet-ar" lang="ar" dir="rtl">${e.arabic}</p>
+            </div>` : ""}
         ${e.sentence ? html`<blockquote class="wallet-sentence" dir="auto">“${sentence(e)}”</blockquote>` : ""}
-        <p class="wallet-meta">${from}<span>Saved ${VS.ui.dateText(e.added)}</span></p>
-        <div class="wallet-actions">
+        <div class="wallet-meta">
           <button class="wallet-folder-tag" type="button" data-action="wallet-move" data-id="${e.id}"
-            aria-label="Move “${e.word}” — in ${inName}. Change folder" title="Change folder">
+            aria-label="Move “${VS.cap(e.word)}” — in ${inName}. Change folder" title="Change folder">
             ${icon("folder", "icon-sm")}<span>${inName}</span></button>
+          <span class="wallet-sep" aria-hidden="true">·</span>
+          <span class="wallet-meta-text">${from}${from ? html`<span class="wallet-sep" aria-hidden="true">·</span>` : ""}<span>Saved ${VS.ui.dateText(e.added)}</span></span>
+        </div>
+        <div class="wallet-actions">
           <button class="btn btn-tonal wallet-ai" type="button" data-action="wallet-ai" data-id="${e.id}"
             title="Ask ChatGPT or Claude for its Arabic, definition and example — then check it and add it">
             ${icon("bolt", "icon-sm")}<span>Make with AI</span></button>
@@ -378,7 +389,7 @@
 
   function moveMarkup(e, counts) {
     return html`
-      <div class="sheet-head"><h2 id="walletMoveTitle">Move “${e.word}”</h2>
+      <div class="sheet-head"><h2 id="walletMoveTitle">Move “${VS.cap(e.word)}”</h2>
         <button class="icon-btn" type="button" data-action="wallet-move-close" aria-label="Close">${icon("x")}</button></div>
       <form data-form="wallet-move">
         <div class="sheet-body wallet-move-body">
@@ -540,7 +551,8 @@
                 <p class="wallet-none hint" hidden>${inAll ? "Nothing in your wallet" : html`Nothing in <b>${name}</b>`} matches “<b data-wallet-q-term></b>”.</p>
                 <footer class="wallet-end">
                   <p class="hint">Saved on this device, inside your backup.</p>
-                  <button class="danger-link" type="button" data-action="wallet-clear">${inAll ? "Clear wallet" : "Clear folder"}</button>
+                  <button class="btn btn-danger-quiet wallet-clear" type="button" data-action="wallet-clear">
+                    ${icon("trash", "icon-sm")}<span>${inAll ? "Clear wallet" : "Clear folder"}</span></button>
                 </footer>`
               : total === 0 ? html`
                 <div class="empty wallet-empty">
@@ -754,7 +766,7 @@
         const e = VS.store.wallet().find((x) => x.id === el.dataset.id);
         if (!e) return;
         const yes = await VS.confirm({
-          title: `Remove “${e.word}” from your wallet?`,
+          title: `Remove “${VS.cap(e.word)}” from your wallet?`,
           body: e.sentence ? "The sentence you kept with it goes too. You can undo it right after." : "You can undo it right after.",
           confirmLabel: "Remove",
         });
@@ -762,7 +774,7 @@
         const gone = VS.store.walletRemove(el.dataset.id);
         if (!gone) return;
         VS.app.render();
-        VS.toast(`“${gone.word}” removed from your wallet.`, {
+        VS.toast(`“${VS.cap(gone.word)}” removed from your wallet.`, {
           label: "Undo",
           run: () => { VS.store.walletRestore([gone]); VS.app.render(); },
         });

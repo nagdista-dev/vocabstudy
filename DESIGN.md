@@ -64,6 +64,14 @@ and install card float above the action bar, never over a primary button.
 The one exception is a number inside a badge (`--text-badge` = .75rem).
 Reading text is 15–17px; a definition longer than a line is left-aligned.
 
+**Shape (v20):** one rectangular family, three sizes — **6px** (`--r-sm`) for
+tags, counts, badges and chips; **8px** (`--r-md`) for controls: buttons,
+fields, segmented controls, speaker squares, tab highlights, the toast;
+**12px** (`--r-lg`) for surfaces: cards, sheets, dialogs, the wallet pocket.
+`--r-pill` is only for true circles — the microphone, accent swatches and
+rings. Nothing that carries text is a pill; the Add action is a 16px rounded
+square. The desk is paper and index cards, not bubbles.
+
 **Touch:** every control is ≥ 44×44 (`--tap`) on every screen, phone or
 desktop. Small inline links (#tags, rail links, crumbs) keep their look and
 get an invisible `::after` hit ring.
@@ -119,7 +127,7 @@ scoped under `:root[data-accent="glass"]`, so the other nine accents are
 untouched.
 
 - **What turns to glass:** the app bar, the phone tab bar and its current-tab
-  pill, today's plan and its practice chips, the primary actions
+  block, today's plan and its practice chips, the primary actions
   (`.btn-primary`, `.today-cta`, `.mic`), tonal buttons, speaker buttons and the
   swatch itself.
 - **What never does:** cards, text surfaces, the word being learned, the
@@ -204,7 +212,7 @@ chosen action accent (`--brand-soft`), so the hero belongs to the same ink as
 every button: the next action in a sentence, the count in a solid highlighter
 chip ("**9 words** to recall."), one primary CTA — solid brand with a white
 label, or under Glass a blue-tinted glass surface with an ink label — and the
-practice chips as white pills. Under Glass the card itself is clear glass
+practice chips as white cards. Under Glass the card itself is clear glass
 instead of a tint. Under it, a slim capture bar:
 type a word and a highlighter band draws under exactly what you typed (its
 width is measured in `views/library.js`) — you are marking the word to keep.
@@ -261,7 +269,7 @@ all the work. They are prints on the same desk, not stock decoration:
 | `wallet-page.webp` | empty wallet | an empty page waiting for the first kept word |
 | `library-aisle.webp` | about.html, full width | where the words come from |
 
-- **The frame is paper.** 8px white mat, one hairline, the app's 18px
+- **The frame is paper.** 8px white mat, one hairline, the app's 12px
   corner, a short shadow. It stays white in Night, because a print is a
   physical object on the desk; its caption uses the fixed `--photo-ink*`
   tokens so it never turns pale on white.
@@ -314,7 +322,7 @@ JS). It keeps the same desk without imitating an app screen:
   uses the bottom tab bar (Today, Words, Add, Recall, Wallet) so the thumb
   reaches every destination, with Add raised in the centre and Progress in
   More. The phone bar keeps the
-  brand, one community pill (icon only under 360px) and one More button;
+  brand, one community button (icon only under 360px) and one More button;
   Share and Settings moved into More, and the tagline waits for 1200px.
 - **Today and Words are two pages** (v10 final): Today (#/) is the plan, the
   add box (which saves to the wallet for later) and the newest five words with
@@ -343,13 +351,13 @@ shares three bands:
 | Foot | The one small action after reading: "Say it in English, then tap to check", "Tap to see the meaning", "Say it once in a sentence", or the wallet hint |
 
 - **Shape.** 660px max, the same edge as the activity header and the answer
-  bar; 18px radius, one border, one shadow, no nested card. At 375px it is one
+  bar; 12px radius, one border, one shadow, no nested card. At 375px it is one
   column and the fixed answer bar never covers the foot.
 - **Front, Arabic → English.** Arabic at display size, definition below it,
   then the foot asking for the English out loud before the flip.
 - **Front, English → meaning.** The marked word, its sense, and pronunciation
-  as one pill: speaker + IPA. With no IPA the speaker stands bare — an empty
-  pill would read as missing data. Foot: "Tap to see the meaning".
+  as one unit: square speaker + IPA. With no IPA the speaker stands bare — an
+  empty frame would read as missing data. Foot: "Tap to see the meaning".
 - **Back.** The answer (the English word when the front was Arabic; the Arabic
   meaning when the front was English), the memory sentence in its yellow
   band, the example, then "Goes with" / "Similar" as chips. Foot: "Say it once
@@ -539,21 +547,30 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   word in an example or a meaning → the word card → `Keep in wallet`. Or a
   friend shares a list (`#/shared`) and the learner chooses **Save for later**
   (Shared).
-- **The page (v14): a pocket of slips.** Two columns from 900px — a 340px
-  sticky pocket and the slips it holds — and one column on tablets and phones,
-  pocket first. The pocket is a card with two stacked slip edges peeking above
-  it (`wallet-pocket-edge`), so it reads as a place words go, not a toolbar. It
-  holds "Keep a word", the saved count, the capture line and, in its foot, the
-  bulk AI action as a tonal button — never the page's primary action. Slips are
-  loose cards, not the library's bound `.word-list`: a quiet numbered chip
-  (`01`), the word at 17px/700 with the speaker, its Arabic in ink-2, the
-  sentence in a soft quote with the word marked, one meta line (where it came
-  from · saved when), then the two doors and remove below a hairline. On a phone
-  the doors keep their words and drop their icons. A slip's folder tag opens
-  the move sheet; moving, removing and clearing offer Undo. `Clear wallet` (or
-  `Clear folder`) asks first and clears only what is on screen. Empty is
-  `.empty` with a quiet wallet tile. Tokens only, 13px text floor, 44px targets,
-  Light and Night.
+- **The page (v20): a pocket of filed cards.** Two columns from 900px — a
+  340px sticky pocket and the slips it holds — and one column on tablets and
+  phones, pocket first. The pocket is a card with two stacked slip edges
+  peeking above it (`wallet-pocket-edge`), so it reads as a place words go, not
+  a toolbar. It holds "Keep a word", the saved count, the capture line and, in
+  its foot, the bulk AI action as a tonal button — never the page's primary
+  action. Slips are loose index cards, not the library's bound `.word-list`:
+  a plain tabular index number (`01`) in the margin, the word at 17px/700 with
+  a square speaker, the Arabic behind a small **TRANSLATION** label, the
+  sentence set as a serif margin quote with the word marked, then one meta line
+  (folder tag as a quiet text button · where it came from · saved when).
+  There is no footer rule: Make with AI, Add now and a quiet remove sit on
+  spacing alone, and the slip is one continuous card. On a phone the
+  doors keep their words and drop their icons. The folder tag opens the move
+  sheet; moving, removing and clearing offer Undo. Empty is `.empty` with a
+  quiet wallet tile. Tokens only, 13px text floor, 44px targets, Light and
+  Night.
+- **Clear (v20).** A footer row under the slips, not a floating red link: a
+  quiet line on the start ("Saved on this device, inside your backup") and, on
+  the end, `Clear wallet` / `Clear folder` as a bordered `btn-danger-quiet`
+  with a trash icon. It is the page's one danger door, so it looks like a
+  button — tinted `--bad`, 8px radius, 44px on touch, a `--bad-soft` hover —
+  and never like an alarm. It asks in the app's own confirm sheet, names the
+  scope in the title and clears only what is on screen.
 - **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
   (app.js `NAV`). Phones and tablets: Wallet is the fifth bottom tab, at the
   end after Recall, and Progress moved into More; the wallet no longer has a
@@ -695,7 +712,7 @@ One URL, several handles, no network call: `VS.COMMUNITY_URL` in `app.js`,
 and the identical literal in the static About page (which has no app JS).
 It opens `https://chat.whatsapp.com/EHuPYovOMIvCGPRdAZ28kT` in a new tab.
 
-- **Top bar.** A labelled WhatsApp pill sits beside the brand on every browse
+- **Top bar.** A labelled WhatsApp door sits beside the brand on every browse
   screen. Under 360px it keeps the 44px target and drops the word, so the bar
   still fits at 320. It is a door, not a destination: paper, a brand-coloured
   mark, no green fill.
@@ -710,7 +727,7 @@ It opens `https://chat.whatsapp.com/EHuPYovOMIvCGPRdAZ28kT` in a new tab.
 The phone chrome is now one community door, one More button, and four
 destinations plus one action.
 
-- **Top bar.** Brand, community pill, More. Share and Settings left the phone
+- **Top bar.** Brand, community button, More. Share and Settings left the phone
   bar for More; the wallet icon is gone because Wallet is a tab. The tagline
   is hidden below 1200px. The bar keeps its right gutter at 320–430px.
 - **More** is a native `<dialog class="sheet more-sheet">` created lazily by
@@ -720,8 +737,8 @@ destinations plus one action.
   focus returns to More. It is a bottom sheet on phones and a centred 420px
   sheet from 600px.
 - **Bottom bar.** Five even `1fr` columns: Today, Words, the raised Add,
-  Recall, Wallet. Add is a 54px ink circle that rises 13px above the edge,
-  with a 4px surface ring. The plus is the whole label — the word under it
+  Recall, Wallet. Add is a 54px ink rounded square that rises 13px above the
+  edge, with a 4px surface ring. The plus is the whole label — the word under it
   was noise — so the link carries `aria-label="Add words"` and the four
   destinations keep their words. The order keeps the four destinations'
   relative order and puts the one action in the thumb's centre; desktop
@@ -729,8 +746,8 @@ destinations plus one action.
   Progress is not a fifth destination: it lives in More on phones and tablets
   and in the desktop bar. The bar is 69px with safe-area padding;
   `--tab-clear` (94px) gives browse pages, toasts and the break card room for
-  the raised circle.
-- **Motion.** A real tab switch settles the new current pill once (140ms,
+  the raised Add square.
+- **Motion.** A real tab switch settles the new current-tab block once (140ms,
   0.84 → 1); a due or wallet count that changed pops once. There is no
   sliding indicator between tabs. Re-renders that keep the same place do not
   replay either.
@@ -894,7 +911,7 @@ animates layout: only opacity and transform move (the highlighter's
 | A word is deleted | the row fades out for 170ms before the list closes the gap |
 | The share sheet | the same bottom-edge arrival as every other sheet |
 | Charts and the progress ring | bars rise and the ring draws once from its base |
-| A tab switch | the new current pill settles once (140ms, 0.84 → 1); a due or wallet count that changed pops once; no sliding indicator |
+| A tab switch | the new current-tab block settles once (140ms, 0.84 → 1); a due or wallet count that changed pops once; no sliding indicator |
 | Presses | options and tiles sink 1.5% while held, nav icons 6%, the raised Add 8%; the hero arrow leans on hover |
 | Speak | the mic pulses only while it is listening — the app's one loop |
 

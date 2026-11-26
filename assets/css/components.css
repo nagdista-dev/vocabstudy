@@ -121,7 +121,7 @@
 /* Every count in the bars is one badge: the highlighter yellow, dark bold
    figures — Recall's due words and the Wallet's saved words alike. */
 .bar-link .count {
-  min-width: 19px; height: 19px; padding: 0 6px; border-radius: var(--r-pill);
+  min-width: 19px; height: 19px; padding: 0 6px; border-radius: var(--r-sm);
   background: var(--mark); color: var(--on-mark); font: 700 var(--text-badge)/19px var(--font-body); text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -152,21 +152,21 @@
   .tab-link .icon { width: 22px; height: 22px; }
   .tab-link[aria-current="page"] { color: var(--brand); }
   .tab-link[aria-current="page"] .tab-ico { background: var(--brand-soft); }
-  .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 28px; border-radius: var(--r-pill); }
+  .tab-ico { position: relative; display: grid; place-items: center; width: 48px; height: 28px; border-radius: var(--r-md); }
   .tab-ico .count {
     position: absolute; z-index: var(--z-base);
-    top: -5px; inset-inline-end: -9px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
+    top: -5px; inset-inline-end: -9px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-sm);
     background: var(--mark); color: var(--on-mark); font-weight: 700; font-variant-numeric: tabular-nums;
     border: 2px solid var(--surface); font-size: var(--text-badge); line-height: 14px;
   }
   /* Add: the one raised control. The 4px ring is the bar's own surface, so
-     the circle reads as sitting in a cut in the paper, not floating on it.
-     The plus is the whole label; the link keeps an aria-label for screen
-     readers, and the four destinations keep their words. */
+     the tile reads as sitting in a cut in the paper, not floating on it.
+     A 16px rounded square keeps the app's rectangular identity; the plus is
+     the whole label, and the four destinations keep their words. */
   .tab-add { gap: 1px; color: var(--ink-3); }
   .tab-add .tab-label { visibility: hidden; }
   .tab-add .tab-ico {
-    width: 54px; height: 54px; margin-top: -25px; border-radius: 50%;
+    width: 54px; height: 54px; margin-top: -25px; border-radius: 16px;
     background: var(--brand); color: var(--on-brand);
     box-shadow: 0 0 0 4px var(--surface), 0 12px 22px -14px rgb(var(--shadow-rgb) / .65);
   }
@@ -193,11 +193,11 @@
 }
 .bar-actions { margin-inline-start: auto; display: flex; align-items: center; gap: var(--s-1); }
 
-/* The community door: a labelled pill on phones, icon-only under 360px.
+/* The community door: a labelled tile on phones, icon-only under 360px.
    It is a door, not a destination: paper, a WhatsApp mark and one word. */
 .bar-community {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  height: var(--tap); padding: 0 12px 0 10px; border-radius: var(--r-pill);
+  height: var(--tap); padding: 0 12px 0 10px; border-radius: var(--r-md);
   color: var(--ink-2); text-decoration: none; font-size: var(--text-2xs); font-weight: 700;
   white-space: nowrap; transition: background var(--fast), color var(--fast);
 }
@@ -274,12 +274,14 @@
 .icon-btn[aria-pressed="true"] { color: var(--brand); }
 .icon-btn .count {
   position: absolute; top: 4px; inset-inline-end: 2px;
-  min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-sm);
   background: var(--bad); color: var(--on-brand); font: 700 var(--text-badge)/18px var(--font-body); text-align: center;
 }
+/* Sound is a control, not a bead: a rounded square in the same scale as
+   every other button. The microphone stays the one circle in the app. */
 .speak-btn {
   display: inline-grid; place-items: center; flex: none;
-  width: var(--tap); height: var(--tap); border-radius: 50%;
+  width: var(--tap); height: var(--tap); border-radius: var(--r-md);
   background: var(--brand-soft); color: var(--brand);
   transition: transform var(--fast), background var(--fast);
 }
@@ -308,7 +310,7 @@
 .badge.is-learning { background: var(--mark-soft); color: var(--on-mark-soft); }
 
 .progress {
-  height: 8px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden;
+  height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden;
 }
 .progress > i {
   display: block; height: 100%; width: var(--value, 0%);
@@ -489,9 +491,9 @@
 .install-nudge-top { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 11px; }
 .install-nudge-ico {
   display: grid; place-items: center; width: 42px; height: 42px; flex: none;
-  border-radius: 11px; background: var(--brand-soft);
+  border-radius: var(--r-md); background: var(--brand-soft);
 }
-.install-nudge-ico .brand-mark { width: 42px; height: 42px; border-radius: 11px; }
+.install-nudge-ico .brand-mark { width: 42px; height: 42px; border-radius: var(--r-sm); }
 .install-nudge-copy { min-width: 0; }
 .install-nudge-kicker {
   font-size: var(--text-2xs); font-weight: 700; letter-spacing: .08em;
@@ -691,7 +693,7 @@ kbd {
 .update-bar {
   position: fixed; z-index: var(--z-float); left: 50%; top: calc(var(--bar-h) + var(--s-3)); transform: translateX(-50%);
   display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
-  background: var(--ink); color: var(--paper); border-radius: var(--r-pill); box-shadow: var(--shadow-2);
+  background: var(--ink); color: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-2);
   font-size: var(--text-sm); font-weight: 500; animation: view-in var(--slow) var(--ease);
   max-width: calc(100vw - 32px);
 }
@@ -772,7 +774,7 @@ kbd {
 .rel-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-width: 0; }
 .rel-chip {
   display: inline-flex; align-items: center; padding: 2px 9px;
-  border: 1px solid var(--line); border-radius: var(--r-pill);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
   background: var(--surface-2); color: var(--ink);
   font-size: var(--text-sm); line-height: 1.5; overflow-wrap: anywhere;
 }
@@ -858,7 +860,7 @@ kbd {
 
 .word-pop-meaning {
   display: grid; gap: 6px; min-height: 64px; align-content: center;
-  padding: var(--s-3) var(--s-3); border-radius: 10px;
+  padding: var(--s-3) var(--s-3); border-radius: var(--r-md);
   background: var(--note-soft); color: var(--note-ink);
 }
 .word-pop-ar {
@@ -885,7 +887,7 @@ kbd {
   display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 6px; margin: 0; min-width: 0;
 }
 .word-pop-term {
-  display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--r-pill);
+  display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--r-sm);
   background: var(--surface); border: 1px solid var(--note-line); color: var(--ink);
   font-family: var(--font-arabic); font-size: calc(var(--text-xs) * var(--arabic-scale)); line-height: 1.7;
   overflow-wrap: anywhere;
@@ -938,7 +940,7 @@ kbd {
 .word-check > span > .icon, .spell-check-q > .icon { flex: none; display: inline-block; vertical-align: -3px; margin-inline-end: var(--s-1); }
 .word-check b { color: var(--ink); }
 .word-check .btn { min-height: var(--tap); }
-.word-row-flag { color: var(--note-ink); background: var(--note-soft); border: 1px solid var(--note-line); border-radius: var(--r-pill); padding: 0 var(--s-2); font-weight: 600; }
+.word-row-flag { color: var(--note-ink); background: var(--note-soft); border: 1px solid var(--note-line); border-radius: var(--r-sm); padding: 0 var(--s-2); font-weight: 600; }
 
 /* A text-style button: a small secondary action inside running content */
 .link-btn { justify-self: start; padding: var(--s-2) 0; min-height: var(--tap); border: 0; background: none; font: inherit;
@@ -1009,7 +1011,7 @@ kbd {
 }
 .more-ex-text { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .more-ex-items .speak-btn {
-  flex: none; width: 36px; height: 36px; min-width: 36px; border-radius: 50%;
+  flex: none; width: 36px; height: 36px; min-width: 36px; border-radius: var(--r-sm);
   background: transparent; color: var(--ink-3);
 }
 .more-ex-items .speak-btn:hover { background: var(--brand-soft); color: var(--brand); }
@@ -1070,7 +1072,7 @@ kbd {
 .meaning-item + .meaning-item, .meaning-group + .meaning-item { border-top: 1px solid var(--line); }
 .meaning-item.is-current { background: var(--brand-soft); }
 .meaning-n {
-  display: grid; place-items: center; width: 26px; height: 26px; margin-top: 1px; border-radius: 50%;
+  display: grid; place-items: center; width: 26px; height: 26px; margin-top: 1px; border-radius: var(--r-sm);
   background: var(--surface-2); color: var(--ink-2);
   font-size: var(--text-xs); font-weight: 700; font-variant-numeric: tabular-nums;
 }
@@ -1078,7 +1080,7 @@ kbd {
 .meaning-body { display: grid; gap: 6px; min-width: 0; }
 .meaning-head { display: flex; align-items: center; gap: var(--s-2) var(--s-3); min-height: 26px; margin: 0; }
 .meaning-type {
-  flex: none; padding: 1px 9px; border-radius: var(--r-pill);
+  flex: none; padding: 1px 9px; border-radius: var(--r-sm);
   background: var(--surface-2); color: var(--ink-2);
   font-size: var(--text-xs); font-weight: 600; line-height: 1.6;
 }
@@ -1172,7 +1174,7 @@ kbd {
 .ai-fill-body { display: grid; gap: var(--s-3); padding: var(--s-1) var(--s-4) var(--s-4); border-top: 1px solid var(--line); padding-top: var(--s-4); }
 .ai-step { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
 .ai-step-n {
-  display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: var(--r-sm);
   background: var(--surface-2); color: var(--ink-2); font-size: var(--text-xs); font-weight: 700;
 }
 .ai-step-copy { display: grid; gap: 0; min-width: 0; flex: 1; }

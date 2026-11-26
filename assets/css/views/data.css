@@ -8,7 +8,7 @@
 .file-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-4); }
 .file-type {
   display: grid; place-items: center; width: 46px; height: 54px; flex: none;
-  border-radius: 6px 12px 12px 6px; background: var(--note-soft); color: var(--note-ink);
+  border-radius: 4px var(--r-lg) var(--r-lg) 4px; background: var(--note-soft); color: var(--note-ink);
   font-family: var(--font-display); font-size: var(--text-2xs); font-weight: 700; letter-spacing: .05em;
   border-inline-start: 4px solid var(--note);
 }
@@ -86,7 +86,7 @@
 }
 .transfer-pick:first-child { border-top: 0; }
 .transfer-pick .icon {
-  grid-area: ico; width: 44px; height: 44px; padding: 11px; border-radius: 50%;
+  grid-area: ico; width: 44px; height: 44px; padding: 11px; border-radius: var(--r-md);
   background: var(--brand-soft); color: var(--brand);
 }
 .transfer-pick b { grid-area: title; font-size: var(--text-md); }

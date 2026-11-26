@@ -99,10 +99,12 @@
   --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
   --gutter: clamp(16px, 5vw, 32px);   /* 16px at 320, ~20px at 390, 32px at desktop */
 
-  /* Shape */
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 18px;
+  /* Shape — one rectangular scale for a desk of paper and index cards.
+     6px tags, 8px controls, 12px surfaces. --r-pill is for true circles
+     only (the microphone, accent swatches, rings), never text shapes. */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
   --r-pill: 999px;
 
   /* Depth — two levels only */

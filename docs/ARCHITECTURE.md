@@ -216,6 +216,28 @@ folder's list and per-folder counts from one read. The folder sheet and move
 sheet are body-level native dialogs so a re-render behind them does not close
 them; the folder sheet stays open while `VS.confirm` deletes a folder.
 
+**The slip (v20).** `slip(e, i)` renders one `<article class="wallet-slip">`:
+a plain tabular index number (`wallet-slip-n`, no chip), a head with
+`VS.ui.headword` and a square speaker, `.wallet-translation` — a small
+uppercase **Translation** label above the Arabic — then the kept sentence as a
+serif margin quote (`wallet-sentence`) with the word marked, and one meta line
+where the folder is a quiet text button (`wallet-folder-tag`, opens the move
+sheet) followed by source and day. There is no footer hairline:
+`.wallet-actions` sits on spacing alone, with Make with AI, Add now and a quiet
+remove. Arabic can arrive after the slip is painted (auto-fill);
+`paintArabic()` replaces the text and, when the slip had none, inserts the
+whole `.wallet-translation` block, so the label never appears without its
+Arabic. The move sheet title and the remove confirm use `VS.cap(e.word)`,
+matching the headword on the slip.
+
+**Clear (v20).** `Clear wallet` / `Clear folder` is a `btn-danger-quiet` with
+a trash icon in `.wallet-end` below the list — not a text link inside the page
+head. The quiet line beside it says the wallet is saved on this device and in
+the backup; the button opens `VS.confirm` (whose title names the whole wallet
+or the folder) and the toast offers Undo through `walletRestore`. The folder
+sheet's rows are unruled: spacing, a 6px hover fill and an 8px radius carry the
+grouping, and the create form has no rule above it either.
+
 Today's compact add box (`data-capture="wallet"`) routes its submit to
 `VS.walletCapture` and names the current General folder; a pasted English
 sentence of five or more words still opens Add → From text, checked after

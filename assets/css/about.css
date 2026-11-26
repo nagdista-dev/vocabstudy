@@ -142,7 +142,7 @@ mark {
 /* The app, drawn in CSS so it never goes stale against a screenshot. */
 .app-mini {
   width: 100%; max-width: 340px; margin-inline: auto; overflow: hidden;
-  border: 1px solid var(--line); border-radius: 20px;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
   background: var(--surface); color: var(--ink);
   box-shadow: var(--shadow-2);
   font-family: var(--font-body); font-size: 12px; line-height: 1.35;
@@ -162,21 +162,21 @@ mark {
 }
 .mini-gear {
   width: 14px; height: 14px; margin-inline-start: auto; flex: none;
-  border: 2px solid var(--line-strong); border-radius: 50%;
+  border: 2px solid var(--line-strong); border-radius: 4px;
 }
 .mini-page { display: grid; gap: 8px; padding: 10px; background: var(--paper); }
 .mini-hero {
   display: grid; gap: 6px; padding: 10px;
   background: var(--brand-soft);
   border: 1px solid color-mix(in srgb, var(--brand) 14%, var(--line));
-  border-radius: 12px;
+  border-radius: var(--r-md);
 }
 .mini-top {
   display: flex; align-items: center; justify-content: space-between; gap: 6px;
   font-size: 9px; color: var(--ink-2); font-variant-numeric: tabular-nums;
 }
 .mini-streak {
-  padding: 2px 7px; border-radius: var(--r-pill);
+  padding: 2px 7px; border-radius: var(--r-sm);
   background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); font-weight: 700;
   white-space: nowrap;
 }
@@ -189,30 +189,30 @@ mark {
 .mini-line { font-size: 9.5px; line-height: 1.4; color: var(--ink-2); max-width: none; }
 .mini-cta {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 5px 6px 5px 9px; border-radius: 7px;
+  padding: 5px 6px 5px 9px; border-radius: var(--r-sm);
   background: var(--brand); color: var(--on-brand);
   font-size: 10px; font-weight: 700;
 }
 .mini-cta i {
   display: grid; place-items: center; width: 17px; height: 17px; flex: none;
-  border-radius: 50%; background: rgb(255 255 255 / .2);
+  border-radius: 4px; background: rgb(255 255 255 / .2);
   font-size: 9px; font-style: normal;
 }
 .mini-chips { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 1px; }
 .mini-chips span {
-  padding: 2px 7px; border-radius: var(--r-pill);
+  padding: 2px 7px; border-radius: var(--r-sm);
   background: var(--surface); border: 1px solid var(--line);
   color: var(--ink-2); font-size: 8.5px; font-weight: 600; white-space: nowrap;
 }
 .mini-add {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 9px; border: 1px solid var(--line); border-radius: var(--r-md);
   background: var(--surface); color: var(--ink-3); font-size: 9.5px;
 }
 .mini-add b { color: var(--brand); font-size: 14px; line-height: 1; }
 .mini-row {
   display: flex; align-items: center; gap: 7px;
-  padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 9px; border: 1px solid var(--line); border-radius: var(--r-md);
   background: var(--surface); font-size: 10.5px;
 }
 .mini-row b { font-weight: 600; }
@@ -248,7 +248,7 @@ h2 { font-size: clamp(1.55rem, 1.25rem + 1.3vw, 2.15rem); line-height: 1.45; }
 }
 .step-n {
   display: grid; place-items: center; width: 34px; height: 34px;
-  border-radius: 50%; background: var(--brand-soft); color: var(--brand);
+  border-radius: var(--r-sm); background: var(--brand-soft); color: var(--brand);
   font-family: var(--font-word); font-size: 1rem; font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -419,7 +419,7 @@ h2 { font-size: clamp(1.55rem, 1.25rem + 1.3vw, 2.15rem); line-height: 1.45; }
 }
 .install dt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 1.08rem; font-weight: 700; }
 .plat {
-  padding: 1px 8px; border-radius: var(--r-pill);
+  padding: 1px 8px; border-radius: var(--r-sm);
   background: var(--brand-soft); color: var(--brand);
   font-family: var(--font-word); font-size: .8125rem; line-height: 1.7;
   font-weight: 700; letter-spacing: .01em;
@@ -461,7 +461,7 @@ h2 { font-size: clamp(1.55rem, 1.25rem + 1.3vw, 2.15rem); line-height: 1.45; }
 }
 .community-mark {
   display: grid; place-items: center; width: 44px; height: 44px;
-  border-radius: 50%; background: var(--brand-soft); color: var(--brand);
+  border-radius: var(--r-md); background: var(--brand-soft); color: var(--brand);
 }
 .community-mark svg {
   width: 22px; height: 22px; fill: currentColor; stroke: none;
