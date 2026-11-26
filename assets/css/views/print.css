@@ -191,13 +191,13 @@
 }
 @media (max-width: 599px) {
   .print-controls h1 { font-size: var(--text-xl); }
-  /* Room for the fixed Download bar AND the tab bar under it, so the last layout card is never covered. */
-  .print-page { padding-top: var(--s-4); padding-bottom: calc(140px + env(safe-area-inset-bottom) + var(--s-4)); }
+  /* Room for the fixed Download bar AND the raised tab bar under it, so the last layout card is never covered. */
+  .print-page { padding-top: var(--s-4); padding-bottom: calc(var(--tab-clear) + 76px + env(safe-area-inset-bottom)); }
   /* Keep the action in reach while the learner scrolls the options. The
      paper preview can be long, but Download PDF never leaves the screen. */
   .print-go {
     position: fixed; z-index: var(--z-sticky); left: 0; right: 0;
-    bottom: calc(60px + env(safe-area-inset-bottom));
+    bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
     display: flex; align-items: center; gap: var(--s-2);
     padding: 8px var(--gutter) calc(8px + env(safe-area-inset-bottom) / 2);
     background: var(--surface); border-top: 1px solid var(--line);

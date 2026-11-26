@@ -131,23 +131,23 @@
 @media (max-width: 1023px) {
   .bar-nav { display: none; }
   .bar-actions > #shareAppBtn, .bar-actions > #settingsBtn { display: none; }
-  /* Four destinations, then one action: Add keeps the fifth slot but wears
-     a filled brand tile, so it reads as "do something", not "go somewhere". */
+  /* Five even stops: Today, Words, the one Add action, Recall, Wallet.
+     Add rises above the edge so the eye reads four places and one action. */
   .tab-bar {
     position: fixed; z-index: var(--z-bar); left: 0; right: 0; bottom: 0;
-    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(62px, auto);
-    padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
     background: var(--surface);
     border-top: 1px solid var(--line);
-    box-shadow: 0 -6px 18px -18px rgb(var(--shadow-rgb) / .35);
+    box-shadow: 0 -10px 24px -26px rgb(var(--shadow-rgb) / .45);
   }
   body[data-mode="activity"] .tab-bar { display: none; }
-  body[data-mode="browse"] main { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
+  body[data-mode="browse"] main { padding-bottom: calc(var(--tab-clear) + env(safe-area-inset-bottom)); }
   .tab-link {
     display: grid; justify-items: center; align-content: center; gap: 2px;
-    min-height: 58px; padding: 3px 2px; border-radius: var(--r-md);
+    min-height: 56px; padding: 3px 2px; border-radius: var(--r-md);
     color: var(--ink-3); text-decoration: none; font-size: var(--text-2xs); font-weight: 600;
-    letter-spacing: .005em; transition: color var(--fast);
+    line-height: 1.2; letter-spacing: .005em; transition: color var(--fast);
   }
   .tab-link .icon { width: 22px; height: 22px; }
   .tab-link[aria-current="page"] { color: var(--brand); }
@@ -159,19 +159,37 @@
     background: var(--mark); color: var(--on-mark); font-weight: 700; font-variant-numeric: tabular-nums;
     border: 2px solid var(--surface); font-size: var(--text-badge); line-height: 14px;
   }
-  .tab-add { color: var(--brand); font-weight: 700; }
+  /* Add: the one raised control. The 4px ring is the bar's own surface, so
+     the circle reads as sitting in a cut in the paper, not floating on it.
+     The plus is the whole label; the link keeps an aria-label for screen
+     readers, and the four destinations keep their words. */
+  .tab-add { gap: 1px; color: var(--ink-3); }
+  .tab-add .tab-label { visibility: hidden; }
   .tab-add .tab-ico {
-    width: 40px; height: 34px; border-radius: 11px;
+    width: 54px; height: 54px; margin-top: -25px; border-radius: 50%;
     background: var(--brand); color: var(--on-brand);
-    box-shadow: 0 8px 18px -14px rgb(var(--shadow-rgb) / .75);
+    box-shadow: 0 0 0 4px var(--surface), 0 12px 22px -14px rgb(var(--shadow-rgb) / .65);
   }
-  .tab-add .tab-ico .icon { width: 20px; height: 20px; color: var(--on-brand); }
+  .tab-add .tab-ico .icon { width: 24px; height: 24px; color: var(--on-brand); }
+  .tab-add[aria-current="page"] { color: var(--brand); }
   .tab-add[aria-current="page"] .tab-ico {
     background: var(--brand);
-    box-shadow: 0 0 0 3px var(--brand-soft), 0 8px 18px -14px rgb(var(--shadow-rgb) / .75);
+    box-shadow: 0 0 0 4px var(--surface), 0 0 0 7px var(--brand-soft), 0 12px 22px -14px rgb(var(--shadow-rgb) / .65);
   }
-  .toast { bottom: calc(82px + env(safe-area-inset-bottom)); }
-  .break-card { bottom: calc(82px + env(safe-area-inset-bottom)); }
+  /* A pointer gets a quiet pill on the four places; the action only lifts. */
+  @media (hover: hover) {
+    .tab-link:not(.tab-add):hover { color: var(--ink-2); }
+    .tab-link:not(.tab-add):hover .tab-ico { background: var(--surface-2); }
+    .tab-link[aria-current="page"]:not(.tab-add):hover { color: var(--brand); }
+    .tab-link[aria-current="page"]:not(.tab-add):hover .tab-ico { background: var(--brand-soft); }
+    .tab-add:hover { color: var(--ink-2); }
+    .tab-add:hover .tab-ico { transform: translateY(-1px); }
+  }
+  /* The circle, not the wide cell, is the focus target. */
+  .tab-add:focus-visible { outline: none; }
+  .tab-add:focus-visible .tab-ico { outline: 3px solid var(--brand); outline-offset: 3px; }
+  .toast { bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom)); }
+  .break-card { bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom)); }
 }
 .bar-actions { margin-inline-start: auto; display: flex; align-items: center; gap: var(--s-1); }
 
@@ -436,7 +454,7 @@
    "not now", and is hidden on anything wider than a phone. */
 .install-nudge {
   position: fixed; z-index: var(--z-float); inset-inline: 12px;
-  bottom: calc(70px + 12px + env(safe-area-inset-bottom));
+  bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
   width: min(440px, calc(100vw - 24px));
   margin-inline: auto;
   padding: 14px 16px 16px;
@@ -486,7 +504,7 @@ body:has(.activity) .update-bar { display: none; }       /* one bar at a time at
 .toast-action:hover { background: rgb(255 255 255 / .08); }
 /* Phones and tablets both have the fixed tab bar: a toast sits above it,
    never over the tabs. */
-@media (max-width: 1023px) { .toast { bottom: calc(82px + env(safe-area-inset-bottom)); } }
+@media (max-width: 1023px) { .toast { bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom)); } }
 
 .sheet {
   /* base.css zeroes every margin; a modal <dialog> needs margin:auto to centre. */
@@ -660,7 +678,7 @@ kbd {
 /* Phones: a card above the tab bar instead of a narrow pill over the title. */
 @media (max-width: 599px) {
   .update-bar {
-    top: auto; bottom: calc(64px + env(safe-area-inset-bottom) + var(--s-3));
+    top: auto; bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
     left: var(--gutter); right: var(--gutter); transform: none; max-width: none;
     border-radius: var(--r-lg); padding: var(--s-3) var(--s-4); line-height: 1.4;
   }
@@ -681,7 +699,8 @@ kbd {
 .break-card[hidden] { display: none; }
 .break-card p { color: var(--ink-2); font-size: var(--text-sm); }
 .break-card .row { margin-top: var(--s-2); }
-@media (max-width: 599px) { .break-card { right: 16px; bottom: calc(82px + env(safe-area-inset-bottom)); } }
+@media (max-width: 599px) { .break-card { right: 16px; bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom)); } }
+@media (min-width: 600px) and (max-width: 1023px) { .break-card { bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom)); } }
 
 /* Sound traps (core/sound-traps.js): what an Arabic speaker should listen for.
    Quiet ink, never a colour of its own — it's advice, not right/wrong. */
@@ -1324,28 +1343,28 @@ kbd {
 @media (max-width: 599px) {
   .dev-note {
     inset-inline: var(--gutter);
-    bottom: calc(82px + env(safe-area-inset-bottom));
+    bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
     width: auto;
   }
   /* The floating card may sit over the page, but the page can always
      scroll its last line above it: the inset equals the card's height. */
-  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(102px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--tab-clear) + var(--s-2) + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
 }
 /* Tablets: a small card in the corner, still above the tab bar. */
 @media (min-width: 600px) and (max-width: 1023px) {
   .dev-note {
     inset-inline-start: auto;
     inset-inline-end: var(--s-5);
-    bottom: calc(82px + env(safe-area-inset-bottom));
+    bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
     width: min(380px, calc(100vw - 32px));
   }
-  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(106px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--tab-clear) + var(--s-2) + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
 }
 /* While the note floats on a phone or tablet, a toast sits above it, so
    Undo and the note's feedback buttons are both readable. In an activity
    the note is gone, so the toast keeps the normal height. */
 @media (max-width: 1023px) {
-  body.has-dev-note[data-mode="browse"] .toast { bottom: calc(94px + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
+  body.has-dev-note[data-mode="browse"] .toast { bottom: calc(var(--tab-clear) + var(--s-2) + var(--s-3) + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
 }
 @media (min-width: 1024px) {
   body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--dev-note-h, 116px) + 48px); }

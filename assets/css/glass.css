@@ -125,6 +125,19 @@
     inset 0 0 0 1px rgb(255 255 255 / .55),
     0 2px 6px -5px rgb(20 27 45 / .50);
 }
+/* Add is an ink bead on the glass: the rim is the material's own white,
+   and the current state gets the cool edge instead of an invisible tint. */
+:root[data-accent="glass"]:not([data-theme="night"]) .tab-add .tab-ico {
+  box-shadow:
+    0 0 0 4px var(--lg-rim),
+    0 12px 22px -14px rgb(20 27 45 / .55);
+}
+:root[data-accent="glass"]:not([data-theme="night"]) .tab-add[aria-current="page"] .tab-ico {
+  box-shadow:
+    0 0 0 4px var(--lg-rim),
+    0 0 0 7px var(--lg-edge),
+    0 12px 22px -14px rgb(20 27 45 / .55);
+}
 
 /* ── Today's plan: a clear glass card, not a tinted block ──────── */
 :root[data-accent="glass"]:not([data-theme="night"]) .today-hero {

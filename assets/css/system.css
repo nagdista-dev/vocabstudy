@@ -64,6 +64,15 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   .ruler-mini li.is-past { opacity: .6; }
   .word-row-dot, .word-card-dot { forced-color-adjust: none; background: CanvasText !important; }
   .pen-wrong, .usage-wrong > span, .spell-typed { text-decoration-color: CanvasText; }
+  /* The raised Add is a control first: system colours, a visible edge, no
+     brand fill that the system would flatten into the bar. */
+  .tab-add .tab-ico {
+    forced-color-adjust: none; background: ButtonFace; color: ButtonText;
+    border: 1px solid ButtonText; box-shadow: none;
+  }
+  .tab-add .tab-ico .icon { color: ButtonText; }
+  .tab-add[aria-current="page"] .tab-ico { background: Highlight; color: HighlightText; }
+  .tab-add[aria-current="page"] .tab-ico .icon { color: HighlightText; }
 }
 
 /* No text box shows a resize handle (owner's call): boxes keep their size and

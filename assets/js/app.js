@@ -235,18 +235,25 @@
     { id: "wallet", label: "Wallet", icon: "wallet", href: () => "#/wallet", match: ["wallet"] },
     { id: "add", label: "Add", icon: "plus", href: () => "#/add", match: ["import"] },
   ];
+  // The phone bar has its own order: the one action sits in the centre,
+  // between the two library doors and the two study/collection doors.
+  // Desktop keeps NAV's labelled order, with Add last.
+  const TAB_ORDER = ["home", "words", "add", "recall", "wallet"];
   const ACTIVITIES = ["cards", "quiz", "spell", "match", "recall", "speak", "write"];
 
-  function navMarkup(due, cls) {
+  function navMarkup(due, kept, cls) {
     // Today is in both bars: on a desktop the logo was the only way home.
-    const kept = VS.store.wallet().length;
-    return NAV.filter((n) => !(n.barOnly && cls === "tab")).map((n) => {
+    const items = cls === "tab"
+      ? TAB_ORDER.map((id) => NAV.find((n) => n.id === id)).filter(Boolean)
+      : NAV;
+    return items.map((n) => {
       const on = n.match.includes(current.name) && !(n.id === "recall" && current.params.scope === "day") &&
         !(n.id === "home" && current.params.words) && !(n.id === "words" && !current.params.words);
       const count = n.id === "recall" && due ? html`<span class="count">${due > 99 ? "99+" : due}</span>`
         : n.id === "wallet" && kept ? html`<span class="count">${kept > 99 ? "99+" : kept}</span>` : "";
       return html`<a class="${cls}-link ${n.id === "add" ? cls + "-add" : ""}" data-id="${n.id}" href="${n.href()}" ${on ? VS.raw('aria-current="page"') : ""}
-        ${n.id === "recall" ? VS.raw(`aria-label="Recall — ${due ? due + " words due" : "nothing due"}"`) : ""}>
+        ${n.id === "recall" ? VS.raw(`aria-label="Recall — ${due ? due + " words due" : "nothing due"}"`) : ""}
+        ${cls === "tab" && n.id === "add" ? VS.raw('aria-label="Add words"') : ""}>
         <span class="${cls}-ico">${icon(n.icon)}${cls === "tab" ? count : ""}</span><span class="${cls}-label">${n.label}</span>${cls === "bar" ? count : ""}</a>`;
     });
   }
@@ -261,9 +268,11 @@
   }
 
   /* ── App bar ──────────────────────────────────────────────────── */
+  let lastTabId = null, lastTabSig = null, lastDue = null, lastKept = null;
   function renderBar() {
     const crumbs = current.view.crumbs ? current.view.crumbs(current.params) : [];
     const due = VS.store.totals().due;
+    const kept = VS.store.wallet().length;
     appBadge(due);
     const crumbsEl = VS.$("#crumbs");
     if (!crumbsEl) return;
@@ -273,8 +282,32 @@
     const resting = viewRoot.querySelector(".activity > .empty, .activity > .summary");
     document.body.dataset.mode = ACTIVITIES.includes(current.name) && !resting ? "activity" : "browse";
     const barNav = VS.$("#barNav"), tabBar = VS.$("#tabBar");
-    if (barNav) barNav.innerHTML = String(html`${navMarkup(due, "bar")}`);
-    if (tabBar) tabBar.innerHTML = String(html`${navMarkup(due, "tab")}`);
+    if (barNav) barNav.innerHTML = String(html`${navMarkup(due, kept, "bar")}`);
+    if (tabBar) {
+      // The bar changes only when the place or a count does. Anything else
+      // (typing, a setting, a re-render) leaves the links — and focus — alone.
+      const sig = [current.name, current.params.scope || "", current.params.words ? 1 : 0, due, kept].join("|");
+      if (sig !== lastTabSig) {
+        tabBar.innerHTML = String(html`${navMarkup(due, kept, "tab")}`);
+        // A tab switch is the one moment the bar moves. Re-renders that keep
+        // the same place stay still; a count that changed gets one pop.
+        const active = tabBar.querySelector('[aria-current="page"]');
+        const activeId = active ? active.dataset.id : null;
+        if (activeId && activeId !== lastTabId) active.classList.add("is-arriving");
+        lastTabId = activeId;
+        if (lastDue !== null && due !== lastDue) {
+          const badge = tabBar.querySelector('.tab-link[data-id="recall"] .count');
+          if (badge) badge.classList.add("is-fresh");
+        }
+        if (lastKept !== null && kept !== lastKept) {
+          const badge = tabBar.querySelector('.tab-link[data-id="wallet"] .count');
+          if (badge) badge.classList.add("is-fresh");
+        }
+        lastTabSig = sig;
+      }
+      lastDue = due;
+      lastKept = kept;
+    }
     devNote();
     const shareBtn = VS.$("#shareAppBtn");
     if (shareBtn) shareBtn.innerHTML = String(icon("share"));

@@ -176,6 +176,15 @@
   transition: transform var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 .tab-link:active .tab-ico, .bar-link:active .icon { transform: scale(.94); }
+.tab-add:active .tab-ico { transform: scale(.92); }
+
+/* 10b. The bar answers a real switch. The new current tab's pill settles
+   once; a count that changed pops. There is no sliding indicator between
+   tabs: a high-frequency control should acknowledge, not perform. */
+@keyframes tab-settle { from { transform: translateY(2px) scale(.84); } }
+@keyframes count-pop { from { opacity: .35; transform: scale(.7); } }
+.tab-link.is-arriving .tab-ico { animation: tab-settle var(--fast) var(--ease); }
+.tab-ico .count.is-fresh { animation: count-pop var(--fast) var(--ease); }
 
 /* 11. Paper never animates. */
 @media print {

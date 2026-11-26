@@ -119,7 +119,7 @@
 .share-dock { display: none; }
 @media (max-width: 1023px) {
   .share-dock {
-    position: fixed; z-index: var(--z-float); left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom));
+    position: fixed; z-index: var(--z-float); left: 0; right: 0; bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
     display: block; padding: var(--s-2) var(--gutter);
     background: linear-gradient(to top, var(--paper) 70%, transparent);
     transform: translateY(120%); opacity: 0; pointer-events: none;
@@ -127,7 +127,7 @@
   }
   .share-dock.is-on { transform: none; opacity: 1; pointer-events: auto; }
   .share-dock .btn { min-height: 48px; gap: var(--s-2); box-shadow: var(--shadow-2); }
-  .share-page { padding-bottom: calc(var(--s-8) + 64px); }
+  .share-page { padding-bottom: calc(var(--s-8) + var(--tab-clear) + env(safe-area-inset-bottom)); }
 }
 @media (max-width: 599px) {
   .share-row { padding-inline: var(--s-3); }

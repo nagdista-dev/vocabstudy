@@ -312,8 +312,9 @@ JS). It keeps the same desk without imitating an app screen:
 - 4px spacing grid (`--s-1` … `--s-8`).
 - App bar: 56px on phones, 64px from 600px; opaque paper with a 1px line
   (under Glass: blurred glass). Desktop navigation lives in the bar; ≤1023px
-  uses the bottom tab bar (Today, Words, Recall, Wallet, Add) so the thumb
-  reaches every destination, with Progress in More. The phone bar keeps the
+  uses the bottom tab bar (Today, Words, Add, Recall, Wallet) so the thumb
+  reaches every destination, with Add raised in the centre and Progress in
+  More. The phone bar keeps the
   brand, one community pill (icon only under 360px) and one More button;
   Share and Settings moved into More, and the tagline waits for 1200px.
 - **Today and Words are two pages** (v10 final): Today (#/) is the plan, the
@@ -537,9 +538,9 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   `danger-link`; empty is `.empty` with a quiet wallet tile. Tokens only, 13px
   text floor, 44px targets, Light and Night.
 - **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
-  (app.js `NAV`). Phones and tablets: Wallet is the fourth bottom tab, and
-  Progress moved into More; the wallet no longer has a top-bar icon. Its count
-  is the same yellow badge as Recall's.
+  (app.js `NAV`). Phones and tablets: Wallet is the fifth bottom tab, at the
+  end after Recall, and Progress moved into More; the wallet no longer has a
+  top-bar icon. Its count is the same yellow badge as Recall's.
 - **Counts in the bars.** Recall (due) and Wallet share one badge: the
   highlighter yellow with dark bold figures, a 2px paper ring where it sits on
   an icon.
@@ -703,11 +704,21 @@ destinations plus one action.
   its sheet or screen; the backdrop, the × and Escape also close it, and
   focus returns to More. It is a bottom sheet on phones and a centred 420px
   sheet from 600px.
-- **Bottom bar.** Four peer destinations — Today, Words, Recall, Wallet — in
-  `1fr` columns, then a 62px Add slot with a filled brand tile and a bold
-  label. Progress is not a fifth destination: it lives in More on phones and
-  tablets and in the desktop bar. The bar is 72px with safe-area padding;
-  browse pages, toasts and the break card offset to it.
+- **Bottom bar.** Five even `1fr` columns: Today, Words, the raised Add,
+  Recall, Wallet. Add is a 54px ink circle that rises 13px above the edge,
+  with a 4px surface ring. The plus is the whole label — the word under it
+  was noise — so the link carries `aria-label="Add words"` and the four
+  destinations keep their words. The order keeps the four destinations'
+  relative order and puts the one action in the thumb's centre; desktop
+  keeps its own labelled order (Today, Words, Recall, Progress, Wallet, Add).
+  Progress is not a fifth destination: it lives in More on phones and tablets
+  and in the desktop bar. The bar is 69px with safe-area padding;
+  `--tab-clear` (94px) gives browse pages, toasts and the break card room for
+  the raised circle.
+- **Motion.** A real tab switch settles the new current pill once (140ms,
+  0.84 → 1); a due or wallet count that changed pops once. There is no
+  sliding indicator between tabs. Re-renders that keep the same place do not
+  replay either.
 - **Focus.** More focuses the dialog itself, not a row, so opening it is
   quiet; the sheet suppresses its own focus outline because the sheet edge
   and scrim already show where focus went.
@@ -880,7 +891,8 @@ animates layout: only opacity and transform move (the highlighter's
 | A word is deleted | the row fades out for 170ms before the list closes the gap |
 | The share sheet | the same bottom-edge arrival as every other sheet |
 | Charts and the progress ring | bars rise and the ring draws once from its base |
-| Presses | options and tiles sink 1.5% while held, nav icons 6%; the hero arrow leans on hover |
+| A tab switch | the new current pill settles once (140ms, 0.84 → 1); a due or wallet count that changed pops once; no sliding indicator |
+| Presses | options and tiles sink 1.5% while held, nav icons 6%, the raised Add 8%; the hero arrow leans on hover |
 | Speak | the mic pulses only while it is listening — the app's one loop |
 
 The screen entrance (`.view-enter`) runs `view-in` with no fill mode. `both`

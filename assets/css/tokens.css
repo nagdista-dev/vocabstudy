@@ -121,6 +121,8 @@
   --content-max: 1120px;
   --activity-max: 720px;
   --bar-h: 64px;
+  --tab-h: 65px;        /* the phone tab bar: 56px links + 12px padding + 1px line */
+  --tab-clear: calc(var(--tab-h) + 29px);   /* page offset: the bar, the raised Add and 10px */
   --tap: 44px;             /* minimum touch target */
 
   /* One stacking order (assets/css/system.css). Before v10 there were 16 loose numbers. */

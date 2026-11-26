@@ -328,8 +328,8 @@
 .ai-add-bar .ai-add-btn { flex: none; }
 .ai-review:has(.ai-rows) { padding-bottom: 76px; }
 @media (max-width: 1023px) {
-  .ai-add-bar { bottom: calc(66px + env(safe-area-inset-bottom)); }
-  .ai-review:has(.ai-rows) { padding-bottom: 92px; }
+  .ai-add-bar { bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom)); }
+  .ai-review:has(.ai-rows) { padding-bottom: calc(var(--tab-clear) + 76px + env(safe-area-inset-bottom)); }
 }
 
 /* Step 1 inputs (words, topic, count, Arabic). */
