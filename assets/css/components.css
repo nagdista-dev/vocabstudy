@@ -412,7 +412,23 @@
   .activity-stage { flex: 0 0 auto; }
 }
 .action-bar > .btn { flex: 1; }
+/* Meet is a reading card with one next step: keep that step in view on a
+   tall desktop instead of leaving it below the fold. Short cards still show
+   it directly under the card; long ones pin it to the foot while scrolling. */
+@media (min-width: 600px) {
+  .action-bar.meet-bar {
+    position: sticky; z-index: var(--z-sticky); bottom: var(--s-3);
+    margin-top: var(--s-4); padding: var(--s-2);
+    background: color-mix(in srgb, var(--paper) 94%, transparent);
+    border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-2);
+    backdrop-filter: blur(8px);
+  }
+}
 @media (max-width: 599px) {
+  .meet-bar .btn-primary { flex-grow: 1.25; }
+  .meet-bar kbd { display: none; }
+
   .action-bar {
     position: fixed; z-index: var(--z-sticky); left: 0; right: 0; bottom: 0; margin: 0;
     padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
@@ -450,8 +466,9 @@
 
 /* ── Overlays ──────────────────────────────────────────────────── */
 /* Install invitation: a bottom card above the thumb bar, not a modal.
-   It appears once the learner has a word, sleeps for 30 days after
-   "not now", and is hidden on anything wider than a phone. */
+   It appears on every visit while the app is not installed; "Not now"
+   only puts it away until the next launch. Hidden on wide fine-pointer
+   screens, where the browser's own install affordance lives. */
 .install-nudge {
   position: fixed; z-index: var(--z-float); inset-inline: 12px;
   bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
@@ -467,12 +484,12 @@
 @keyframes nudge-in { from { opacity: 0; transform: translateY(10px); } }
 .install-nudge.is-off { animation: none; opacity: 0; transform: translateY(6px); transition: opacity var(--fast), transform var(--fast); }
 @media (min-width: 600px) and (pointer: fine) { .install-nudge { display: none; } }
-.install-nudge-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.install-nudge-top { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 11px; }
 .install-nudge-ico {
-  display: grid; place-items: center; width: 38px; height: 38px;
-  border-radius: 10px; background: var(--brand-soft); color: var(--brand);
+  display: grid; place-items: center; width: 42px; height: 42px; flex: none;
+  border-radius: 11px; background: var(--brand-soft);
 }
-.install-nudge-ico .icon { width: 19px; height: 19px; }
+.install-nudge-ico .brand-mark { width: 42px; height: 42px; border-radius: 11px; }
 .install-nudge-copy { min-width: 0; }
 .install-nudge-kicker {
   font-size: var(--text-2xs); font-weight: 700; letter-spacing: .08em;
@@ -480,8 +497,9 @@
 }
 .install-nudge-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-md); line-height: 1.25; }
 .install-nudge-text { margin-top: 8px; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
-.install-nudge-actions { display: flex; margin-top: 12px; }
+.install-nudge-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: 12px; }
 .install-nudge-actions .btn { flex: 1 1 auto; }
+.install-nudge-actions .btn-primary { flex-grow: 1.4; }
 @media (max-width: 599px) { .install-nudge { padding: 12px 14px 14px; } }
 
 .toast {
@@ -670,7 +688,7 @@ kbd {
 /* "A new version is ready" (app.js, after a deploy) */
 .update-bar {
   position: fixed; z-index: var(--z-float); left: 50%; top: calc(var(--bar-h) + var(--s-3)); transform: translateX(-50%);
-  display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);
+  display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
   background: var(--ink); color: var(--paper); border-radius: var(--r-pill); box-shadow: var(--shadow-2);
   font-size: var(--text-sm); font-weight: 500; animation: view-in var(--slow) var(--ease);
   max-width: calc(100vw - 32px);
@@ -685,9 +703,6 @@ kbd {
   .update-bar span { flex: 1; }
   .update-bar .btn { flex: none; white-space: nowrap; }
 }
-.update-bar .icon-btn { color: var(--paper); }
-.update-bar .icon-btn:hover { background: color-mix(in srgb, var(--paper) 14%, transparent); color: var(--paper); }
-
 /* Break reminder (core/study-time.js) — calm, never blocks the screen. */
 .break-card {
   position: fixed; z-index: var(--z-float); right: var(--s-5); bottom: var(--s-5);
@@ -973,16 +988,8 @@ kbd {
 .milestone-hit p { display: grid; gap: 2px; }
 .milestone-hit b { font-family: var(--font-display); font-size: var(--text-xl); }
 
-/* ── How common a word is (core/frequency.js): five rising bars, like signal strength ── */
-.freq { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); font-weight: 600; color: var(--ink-2); white-space: nowrap; }
-.freq-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
-.freq-bars i { width: 3px; border-radius: 1px; background: var(--line); }
-.freq-bars i:nth-child(1) { height: 4px; }
-.freq-bars i:nth-child(2) { height: 6px; }
-.freq-bars i:nth-child(3) { height: 8px; }
-.freq-bars i:nth-child(4) { height: 10px; }
-.freq-bars i:nth-child(5) { height: 12px; }
-.freq-bars i.is-on { background: var(--brand); }
+/* ── How common a word is (core/frequency.js): a quiet label ───────── */
+.freq { display: inline-flex; align-items: center; font-size: var(--text-xs); font-weight: 600; color: var(--ink-2); white-space: nowrap; }
 .freq[data-level="0"] .freq-label { color: var(--ink-3); }
 .freq-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
 .freq-row .hint { font-size: var(--text-sm); }
@@ -1298,80 +1305,8 @@ kbd {
   background: var(--brand-soft); color: var(--ink); font-size: var(--text-sm); }
 .remind-sum .icon { color: var(--brand); flex: none; }
 
-/* ── "Still being built" (app.js devNote) ───────────────────────────
-   A floating note, not a band in the page: it sits in the empty corner of
-   the desk (bottom-inline-end) and scrolls with nothing, so every screen
-   keeps its full height. The app speaking, so --note, not the highlighter.
-   Icon and sentence, then WhatsApp and Email; hide at the corner. It steps
-   aside during an activity and never prints. */
-.dev-note {
-  position: fixed; z-index: var(--z-float);
-  inset-inline-end: var(--s-5); bottom: var(--s-5);
-  width: min(380px, calc(100vw - 32px));
-  margin: 0;
-  animation: dev-note-in var(--base) var(--ease) both;
-}
-@keyframes dev-note-in { from { opacity: 0; transform: translateY(10px); } }
-.dev-note-inner {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start;
-  gap: var(--s-2) var(--s-3);
-  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
-  border: 1px solid var(--note-line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  color: var(--note-ink);
-  box-shadow: var(--shadow-2);
-}
-.dev-note-ico {
-  display: grid; place-items: center; width: 34px; height: 34px; margin-top: 1px;
-  border-radius: var(--r-md); background: var(--note-soft); color: var(--note);
-}
-.dev-note-ico .icon { width: 18px; height: 18px; }
-.dev-note-text { margin: 0; max-width: none; font-size: var(--text-sm); line-height: 1.45; }
-.dev-note-text b { color: var(--ink); font-weight: 700; }
-.dev-note-actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: var(--s-2); }
-.dev-note-actions .btn {
-  flex: 1 1 0; min-width: 0; min-height: var(--tap); justify-content: center;
-  padding-inline: 10px; font-size: var(--text-xs);
-}
 .btn-small { min-height: 38px; padding: 0 var(--s-3); gap: 6px; font-size: var(--text-sm); }
-.dev-note-actions .btn { background: var(--note-soft); border-color: var(--note-line); color: var(--note-ink); }
-.dev-note-actions .btn:hover { border-color: var(--note); background: var(--surface); color: var(--ink); }
-.dev-note-close { grid-column: 3; grid-row: 1; margin: -4px -4px 0 0; color: var(--note); }
-.dev-note-close:hover { background: var(--note-soft); color: var(--ink); }
-/* Phones: the note spans the thumb edge, above the tab bar. */
-@media (max-width: 599px) {
-  .dev-note {
-    inset-inline: var(--gutter);
-    bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
-    width: auto;
-  }
-  /* The floating card may sit over the page, but the page can always
-     scroll its last line above it: the inset equals the card's height. */
-  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--tab-clear) + var(--s-2) + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
-}
-/* Tablets: a small card in the corner, still above the tab bar. */
-@media (min-width: 600px) and (max-width: 1023px) {
-  .dev-note {
-    inset-inline-start: auto;
-    inset-inline-end: var(--s-5);
-    bottom: calc(var(--tab-clear) + var(--s-2) + env(safe-area-inset-bottom));
-    width: min(380px, calc(100vw - 32px));
-  }
-  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--tab-clear) + var(--s-2) + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
-}
-/* While the note floats on a phone or tablet, a toast sits above it, so
-   Undo and the note's feedback buttons are both readable. In an activity
-   the note is gone, so the toast keeps the normal height. */
-@media (max-width: 1023px) {
-  body.has-dev-note[data-mode="browse"] .toast { bottom: calc(var(--tab-clear) + var(--s-2) + var(--s-3) + var(--dev-note-h, 116px) + env(safe-area-inset-bottom)); }
-}
-@media (min-width: 1024px) {
-  body.has-dev-note[data-mode="browse"] main { padding-bottom: calc(var(--dev-note-h, 116px) + 48px); }
-}
 @media (pointer: coarse) { .btn-small { min-height: var(--tap); } }
-body[data-mode="activity"] .dev-note { display: none; }
-@media print { .dev-note { display: none; } }
 /* Settings: the same two buttons, for good. */
 .feedback-setting .row .btn { gap: var(--s-2); }
 

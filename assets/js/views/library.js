@@ -189,11 +189,11 @@
     const last = start !== VS.week.range().start;
     return html`
       <div class="recall-strip week-ready">
-        <a class="recall-strip-main" href="#/week?start=${start}">
-          ${icon("trophy")}
-          <span><b>${last ? "Last week's report" : "Your week is ready"}</b>
-            <span class="hint">Saturday to Friday: what you did, and one thing for next week.</span></span>
-          ${icon("arrow-right", "icon-sm")}
+        <a class="recall-strip-main week-ready-main" href="#/week?start=${start}">
+          <span class="week-ready-ico" aria-hidden="true">${icon("trophy")}</span>
+          <span class="week-ready-copy"><b>${last ? "Last week's report" : "Your week is ready"}</b>
+            <span class="hint">What you did, and one thing for next week.</span></span>
+          <span class="week-ready-cta"><span class="week-ready-cta-label">Open your week</span>${icon("arrow-right", "icon-sm")}</span>
         </a>
       </div>`;
   }

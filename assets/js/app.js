@@ -167,60 +167,6 @@
       <a class="btn ${cls || ""}" href="${VS.feedback.email}">${icon("mail", "icon-sm")}<span>Email</span></a>`,
   };
 
-  /* ── "Still being built": a floating note once there is a word ──────
-     It says the app is growing and asks for ideas and problems. Hiding it
-     is remembered (the setting holds the note's id, so a new note can come
-     back after a big change); Settings keeps the same two buttons forever.
-     It never covers the first run's one action, steps aside during an
-     activity, and never prints. */
-  const DEV_NOTE = "2026-11";
-  function devNote() {
-    const old = VS.$("#devNote");
-    const hidden = VS.store.settings().devNoteHidden === DEV_NOTE;
-    // The first run has one action: add a word. A floating card over the
-    // form would be the only thing in the app that interrupts it. The
-    // feedback buttons stay in Settings, and the note arrives with word one.
-    // While a new version waits, its bar owns the bottom corner; the note
-    // comes back if the learner chooses Later.
-    const updating = !!VS.$(".update-bar");
-    if (hidden || !VS.allWords().length || updating) {
-      if (old) old.remove();
-      if (VS._devNoteRO) { VS._devNoteRO.disconnect(); VS._devNoteRO = null; }
-      document.body.classList.remove("has-dev-note");
-      document.body.style.removeProperty("--dev-note-h");
-      return;
-    }
-    if (old) return;
-    const el = document.createElement("aside");
-    el.id = "devNote";
-    el.className = "dev-note";
-    el.setAttribute("aria-label", "About this version");
-    el.innerHTML = String(html`
-      <div class="dev-note-inner">
-        <span class="dev-note-ico" aria-hidden="true">${icon("tool")}</span>
-        <p class="dev-note-text"><b>Still being built.</b> Tell me what to add, change, or fix.</p>
-        <div class="dev-note-actions">${VS.feedback.buttons("btn-small")}</div>
-        <button class="icon-btn dev-note-close" type="button" data-action="dev-note-hide" aria-label="Hide this note" title="Hide this note">${icon("x", "icon-sm")}</button>
-      </div>`);
-    document.body.appendChild(el);
-    // The note floats above the page; the page keeps a matching bottom
-    // inset so its last lines can always be scrolled clear of it. The
-    // height is measured because 1.25× text makes the card taller.
-    document.body.classList.add("has-dev-note");
-    const measure = () => document.body.style.setProperty("--dev-note-h", el.offsetHeight + "px");
-    measure();
-    if (window.ResizeObserver) {
-      if (VS._devNoteRO) VS._devNoteRO.disconnect();
-      VS._devNoteRO = new ResizeObserver(measure);
-      VS._devNoteRO.observe(el);
-    }
-  }
-  (VS.actions = VS.actions || {})["dev-note-hide"] = () => {
-    VS.store.setSetting("devNoteHidden", DEV_NOTE);
-    devNote();
-    VS.toast("Hidden. You can always send feedback from Settings.");
-  };
-
   /* ── Navigation ──────────────────────────────────────────────────
      One list of destinations, drawn twice: labelled links in the top bar
      on wide screens, a bottom tab bar on phones and tablets (where the
@@ -308,7 +254,6 @@
       lastDue = due;
       lastKept = kept;
     }
-    devNote();
     const shareBtn = VS.$("#shareAppBtn");
     if (shareBtn) shareBtn.innerHTML = String(icon("share"));
     const moreBtn = VS.$("#moreBtn");
@@ -401,10 +346,8 @@
       bar.className = "update-bar";
       bar.setAttribute("role", "status");
       bar.innerHTML = String(html`<span>A new version is ready.</span>
-        <button class="btn btn-primary" type="button" data-action="reload">Update now</button>
-        <button class="icon-btn" type="button" data-action="update-later" aria-label="Later — update next time you open the app">${icon("x", "icon-sm")}</button>`);
+        <button class="btn btn-primary" type="button" data-action="reload">Update now</button>`);
       document.body.appendChild(bar);
-      devNote();                                  // one floating card at the bottom, not two
     });
   }
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
@@ -416,30 +359,21 @@
   });
 
   /* ── A quiet invitation to install ─────────────────────────────
-     Phones only, and only after the learner has finished a round and is
-     back on Today: the first-run lesson is never covered, and it never
-     appears within 2.5 s of a touch or scroll (it used to eat a tap). This is a card, not a
-     modal — it takes no focus and the app stays usable behind it.
-     "Not now" (or the ×) hides it for 30 days; Settings keeps the
-     permanent install entry for anyone who wants it sooner. */
+     Phones and tablets only. It is not a one-off: while the app is open in
+     a browser, every visit gets the card after the screen settles. "Not
+     now" hides it for this visit, and the next launch asks again — only
+     installing it (or opening it standalone) ends the invitation. It is a
+     card, not a modal: it takes no focus and the app stays usable behind
+     it, and it stays out of an activity or an open sheet. */
   let nudgeShown = false;       // at most one appearance per visit
   let nudgeTimer = 0;
   let installedNow = false;
-  const NUDGE_DAYS = 30;
   const phoneOnly = () => matchMedia("(max-width: 599px), ((pointer: coarse) and (max-width: 1023px))").matches;
-
-  function nudgeSnoozed() {
-    const last = VS.store.installNudgeDismissed();
-    if (!last) return false;
-    return Math.round((new Date(VS.todayKey()) - new Date(last)) / 864e5) < NUDGE_DAYS;
-  }
 
   function nudgeWanted() {
     const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-    // Only after a finished round, back on Today: the learner has seen what the
-    // app does, and isn't in the middle of adding or reading a word.
-    return !isStandalone() && !installedNow && phoneOnly() && !nudgeSnoozed() && VS.roundsDone > 0
-      && current && current.name === "library" && VS.allWords().length > 0 && !typing
+    return !isStandalone() && !installedNow && phoneOnly() && !typing
+      && document.body.dataset.mode !== "activity"
       && !document.querySelector("#settings[open], dialog[open], .update-bar, .toast.is-on");
   }
 
@@ -457,24 +391,24 @@
 
   function nudgeMarkup() {
     const native = !!installPrompt && !isIOS;
-    const title = isIOS ? "Add it to your Home Screen" : "Keep it one tap away";
+    const title = isIOS ? "Add it to your Home Screen" : native ? "Keep it on your home screen" : "Keep it one tap away";
     const text = native
-      ? "Open it full screen from your home screen. It still works offline."
+      ? "Your words open full screen and still work offline. Free, no account."
       : isIOS
-        ? "Tap Share, then Add to Home Screen. It opens full screen and works offline."
-        : "Use your browser menu → Install app / Add to Home screen. It opens full screen and works offline.";
+        ? "Tap Share, then Add to Home Screen. It opens full screen and still works offline."
+        : "Use your browser menu → Install app / Add to Home screen. It opens full screen and still works offline.";
     return html`
       <div class="install-nudge-top">
-        <span class="install-nudge-ico" aria-hidden="true">${icon(isIOS ? "share" : "download")}</span>
+        <span class="install-nudge-ico" aria-hidden="true">${VS.brandMark}</span>
         <div class="install-nudge-copy">
-          <p class="install-nudge-kicker">VocabStudy</p>
+          <p class="install-nudge-kicker">VocabStudy · free</p>
           <p class="install-nudge-title">${title}</p>
         </div>
-        <button class="icon-btn" type="button" data-action="install-later" aria-label="Not now">${icon("x", "icon-sm")}</button>
       </div>
       <p class="install-nudge-text">${text}</p>
       <div class="install-nudge-actions">
         <button class="btn btn-primary" type="button" data-action="${native ? "install-now" : "install-got-it"}">${native ? "Install app" : "Got it"}</button>
+        <button class="btn btn-quiet" type="button" data-action="install-later">Not now</button>
       </div>`;
   }
 
@@ -598,7 +532,7 @@
           <p class="hint">Updates, suggestions and app talk with other learners — one WhatsApp group.</p>
           <div class="row"><a class="btn" href="${VS.COMMUNITY_URL}" target="_blank" rel="noopener">${icon("whatsapp", "icon-sm")} Join the community</a></div></div>
         <div class="setting feedback-setting"><b>Ideas, problems, anything</b>
-          <p class="hint">The app is still being built. Something you'd add, change or remove — or something that isn't working? Send it on WhatsApp or by email; every message is read.</p>
+          <p class="hint">Something you'd add, change or remove — or something that isn't working? Send it on WhatsApp or by email; every message is read.</p>
           <div class="row">${VS.feedback.buttons()}</div></div>
 
         <h3 class="sheet-group">App &amp; data</h3>
@@ -621,8 +555,8 @@
           <div class="more-settings-body">
           <h3 class="sheet-group">Sound</h3>
         <div class="setting"><b>Pronunciation</b><div class="seg">${choice("sound", true, "On")}${choice("sound", false, "Off")}</div></div>
-        <div class="setting"><b>Recorded voice</b><div class="seg">${choice("recorded", true, "On")}${choice("recorded", false, "Off")}</div>
-          <span class="hint">A real person saying the word, from the dictionary, when you're online. Offline — or for sentences — your browser's voice speaks.</span></div>
+        <div class="setting"><b>Recorded voice</b><div class="seg">${choice("recorded", false, "Off")}${choice("recorded", true, "On")}</div>
+          <span class="hint">Off by default. When on, a real person says the word from the dictionary while you're online. Offline — or for sentences — your browser's voice speaks.</span></div>
         <div class="setting"><b>Say new words automatically</b><div class="seg">${choice("autoplay", true, "On")}${choice("autoplay", false, "Off")}</div></div>
         <div class="setting"><b>Speaking speed</b><div class="seg">${choice("rate", 0.7, "Slow")}${choice("rate", 0.9, "Normal")}${choice("rate", 1.1, "Fast")}</div></div>
         <div class="setting"><b>Sound effects</b><div class="seg">${choice("effects", true, "On")}${choice("effects", false, "Off")}</div></div>
@@ -691,8 +625,6 @@
     "more-share"() { closeMore(); VS.openAppShare(); },
     "more-settings"() { closeMore(); VS.actions["open-settings"](); },
     reload() { location.reload(); },
-    // The new version also loads by itself next time the app opens.
-    "update-later"() { const bar = document.querySelector(".update-bar"); if (bar) bar.remove(); devNote(); },
     "open-settings"() {
       const dlg = VS.$("#settings");
       dlg.innerHTML = String(settingsMarkup());
@@ -705,6 +637,7 @@
       const value = raw === "true" ? true : raw === "false" ? false : isNaN(raw) ? raw : Number(raw);
       VS.store.setSetting(el.dataset.name, value);
       if (el.dataset.name === "theme") VS.store.setSetting("themeChosen", true);    // their choice: never reset to light
+      if (el.dataset.name === "recorded") VS.store.setSetting("recordedChosen", true);   // keep an explicit On or Off
       applySettings();
       redrawSettings();
       if (el.dataset.name === "rate") VS.speech.say("This is how words will sound.");
@@ -715,7 +648,6 @@
       installPrompt.userChoice.then((choice) => {
         installPrompt = null;
         if (choice && choice.outcome === "accepted") installedNow = true;
-        else VS.store.dismissInstallNudge();      // tried and closed it: no follow-up card
         hideNudge();
         redrawSettings();
       }).catch(() => {
@@ -732,19 +664,16 @@
       prompt.userChoice.then((choice) => {
         installPrompt = null;
         if (choice && choice.outcome === "accepted") installedNow = true;
-        else VS.store.dismissInstallNudge();       // closing the system sheet is a "not now"
-        hideNudge();
+        hideNudge();                               // either way, this visit is done
       }).catch(() => {
         installPrompt = null;
         hideNudge();
       });
     },
     "install-got-it"() {
-      VS.store.dismissInstallNudge();
       hideNudge();
     },
     "install-later"() {
-      VS.store.dismissInstallNudge();
       hideNudge();
     },
     "reset-progress": async () => {
@@ -811,7 +740,10 @@
   /* ── Shared to the app ──────────────────────────────────────────
      Share → VocabStudy on a phone (manifest share_target), or the
      bookmarks-bar button on a computer, opens the app with ?share-text=…
-     The text waits in VS.capture for Add words (views/import.js). */
+     A word or a short phrase is already the learner's choice: it goes
+     straight into the Wallet, with a toast and no second question. A
+     sentence or a longer passage keeps the Add words route, where the
+     learner picks the words they mean (views/import.js). */
   function readShare() {
     const q = new URLSearchParams(location.search);
     if (!["share-text", "share-title", "share-url"].some((k) => q.has(k))) return;
@@ -819,7 +751,23 @@
     const url = q.get("share-url") || (String(q.get("share-text") || "").match(/https?:\/\/\S+/) || [])[0] || "";
     let source = strip(q.get("share-title"));
     if (!source && url) { try { source = new URL(url).hostname.replace(/^www\./, ""); } catch (e) { /* not a URL */ } }
-    VS.capture = { text: strip(q.get("share-text")).slice(0, 2000), context: strip(q.get("share-context")).slice(0, 800), source: source.slice(0, 80) };
+    const text = strip(q.get("share-text")).slice(0, 2000);
+    const context = strip(q.get("share-context")).slice(0, 800);
+    const short = text && text.split(/\s+/).filter(Boolean).length <= 4 && !/[.!?;:,]/.test(text);
+    if (short) {
+      const kept = VS.store.walletAdd(text, context, source, "shared");
+      if (kept.ok) {
+        VS.toast(kept.existed ? `“${text}” is already in your wallet.` : `“${text}” saved to your wallet.`);
+        history.replaceState(null, "", VS.cleanPath() + "#/wallet");
+        return;
+      }
+      if (kept.inLibrary) {
+        VS.toast(`“${text}” is already in your words.`);
+        history.replaceState(null, "", VS.cleanPath() + "#/words");
+        return;
+      }
+    }
+    VS.capture = { text, context, source: source.slice(0, 80) };
     history.replaceState(null, "", VS.cleanPath() + "#/add?from=share");
   }
 

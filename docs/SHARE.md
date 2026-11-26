@@ -72,6 +72,22 @@ words" that brings you to it.
   `#/pick/cards?tag=…`, and `Share them on` closes the loop.
 - First run: the friend sees the shared list before the level/dialect sheet.
 
+## Sharing a word *into* the app
+
+The manifest's `share_target` (`?share-text=…&share-title=…&share-url=…`) is
+the other direction: a word selected in a book, a browser or another app is
+sent to VocabStudy.
+
+- **One word or a short phrase** (≤4 words, no sentence punctuation) is
+  already a decision: `readShare()` puts it in the Wallet with
+  `walletAdd(..., "shared")`, shows a toast and opens `#/wallet`. No Add
+  screen, no second confirmation.
+- **A sentence or longer passage** keeps the Add → From text route, where the
+  learner taps the words they mean.
+- **Already known** is reported in a toast, never duplicated: a word in the
+  library is not added to the Wallet; one already in the Wallet is not added
+  twice.
+
 ## Entry points
 
 - Words page: `Share` beside `Print & PDF`, and `Share these words` in Manage.

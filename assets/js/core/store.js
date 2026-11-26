@@ -36,14 +36,13 @@
     library: [],                                   // your words, oldest first — the app ships with none
     lastBackup: "",                                // date of the last full backup download
     backupNudgeIgnored: "",                        // date the learner hid the weekly backup reminder
-    installNudgeDismissed: "",                     // date the learner said "not now" to installing the app
     wallet: [],                                    // words met in an example, kept for later: [{ id, word, sentence, source, added }]
     reminder: "",                                  // "9 PM": the daily calendar reminder the learner added (views/home.js)
     weekSeen: "",                                  // the Saturday of the last weekly report opened (core/week.js)
     milestone: 0,                                  // the highest mastered-words milestone celebrated
     best: {},                                      // "match" → best time in ms
     settings: { sound: true, rate: 0.9, textScale: 1, roundSize: 20, breakEvery: 50, dailyGoal: 50, effects: true,
-                accent: "blue", voice: "us", recorded: true, autoplay: true, cardFront: "ar", newPerDay: 10, autofill: true, grammarOnline: "ask", theme: "light", speak: false,
+                accent: "blue", voice: "us", recorded: false, recordedChosen: false, autoplay: true, cardFront: "ar", newPerDay: 10, autofill: true, grammarOnline: "ask", theme: "light", speak: false,
                 quizTypes: ["meaning", "arabic", "english", "gap", "listen"] },
   };
 
@@ -59,6 +58,12 @@
       // Light for everyone unless they chose Night or Auto themselves: an "auto" saved
       // as the old default (before anyone picked it) goes back to light.
       if (st.settings.theme === "auto" && !st.settings.themeChosen) st.settings.theme = "light";
+      // Recorded voice is opt-in now: an old save that still carries the old
+      // default goes off once, while a real On/Off choice is kept.
+      if (!st.settings.recordedChosen) st.settings.recorded = false;
+      // The install nudge no longer stores a snooze: it returns on every visit
+      // until the app is installed. Drop the flag old saves still carry.
+      delete st.installNudgeDismissed;
       // A wallet entry is a word the learner met and kept; it carries the sentence
       // that made them tap. Old or damaged saves fall back to an empty wallet.
       if (!Array.isArray(st.wallet)) st.wallet = [];
@@ -430,8 +435,6 @@
     lastBackup: () => state.lastBackup,
     markBackup() { state.lastBackup = VS.todayKey(); save(); },
     backupNudgeIgnored: () => state.backupNudgeIgnored,
-    installNudgeDismissed: () => state.installNudgeDismissed || "",
-    dismissInstallNudge() { state.installNudgeDismissed = VS.todayKey(); save(); },
     reminder: () => state.reminder || "",
     setReminder(at) { state.reminder = at; save(); },
     weekSeen: () => state.weekSeen || "",

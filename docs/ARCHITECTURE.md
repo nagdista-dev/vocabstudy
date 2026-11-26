@@ -85,7 +85,7 @@ Chrome/Edge the browser's own speech recognition powers Speak.
 | `#/words?filters` | the library with filters (same screen as `#/`) | filtered and sorted |
 | `#/wallet` | words kept from examples, waiting to be learned | wallet entries |
 | `#/add[?tab=text]` | add words: type, from text, paste a list, upload | — |
-| `index.html?share-text=…` | text shared to the app (Share target, bookmarklet) → `VS.capture` → Add words | — |
+| `index.html?share-text=…` | a word or short phrase shared to the app → Wallet; longer text → `VS.capture` → Add words | — |
 | `#/data` | backup, restore, export | — |
 | `#/stats` | progress charts, this week, next milestone | history |
 | `#/week[?start=YYYY-MM-DD]` | your week, Saturday to Friday | history |

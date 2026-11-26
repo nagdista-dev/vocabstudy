@@ -50,8 +50,9 @@
     if (key === lastRoute) return;
     lastRoute = key;
     opts.query = p.scope === "pick" ? p.query || "" : "";
-    // From "all", start with what's worth printing today: the words due, when there are any.
-    opts.source = { pick: "pick", recall: "due", tricky: "tricky", today: "today", new: "new" }[p.scope] || (VS.store.totals().due ? "due" : "all");
+    // Opening Print on its own starts with the whole library; a scope in the
+    // route (recall, tricky, today, new, pick) still wins.
+    opts.source = { pick: "pick", recall: "due", tricky: "tricky", today: "today", new: "new" }[p.scope] || "all";
     if (p.layout && LAYOUTS.some((l) => l[0] === p.layout)) opts.layout = p.layout;
   }
 

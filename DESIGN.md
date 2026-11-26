@@ -166,7 +166,7 @@ learner learns to read them:
 | Struck-through line, red ✗, then ink line, green ✓ | "Arab learners say this → say this" (a usage trap) | word details, card back, recall, quiz, Use it |
 | Soft yellow block with a bulb | *your* memory: where you met the word, a note from the teacher | word details, card back, your week |
 | ○●○○ | word stress — the big dot is the stressed syllable | next to every IPA with two or more syllables |
-| ▂▃▅▆█ five rising bars + "Top 3,000" | how common the word is — more bars, more useful | word list, word details, card front |
+| "Top 3,000" | how common the word is — a quiet label, no meter | word list, word details, card front |
 | Highlighter on a word in a paragraph | "I'm keeping this one" | From text |
 | Arabic on a small soft chip inside English | a quoted Arabic word, isolated so it reads right in both directions | trap explanations |
 
@@ -279,7 +279,8 @@ all the work. They are prints on the same desk, not stock decoration:
 The only Arabic-first surface, and a static one (`assets/css/about.css`, no app
 JS). It keeps the same desk without imitating an app screen:
 
-- Sticky paper header (brand + section nav + open-app CTA), then a two-column
+- Sticky paper header with the brand centred on its own row and the section
+  nav centred under it — no CTA competing with the logo. Then a two-column
   hero: the claim on one side, a CSS-drawn mini home screen on the other. The
   preview is decorative (`aria-hidden`, no focusables), so it can never drift
   from the real UI the way a screenshot would.
@@ -293,16 +294,14 @@ JS). It keeps the same desk without imitating an app screen:
 - Arabic headings use IBM Plex Sans Arabic; Bricolage has no Arabic glyphs.
   English UI labels are isolated LTR islands, and tap sequences use the Arabic
   word "ثم" instead of a bidi arrow.
-- Phones: one column, 16px gutters, header keeps only brand + CTA. Below
-  900px the section nav is hidden, so the CTA gets `margin-inline-start:
-  auto` and takes the far end (the left, in RTL), away from the logo; from
-  900px the nav holds the centre and the CTA already sits at the end. The
-  header never overflows at 320px.
+- Phones: one column, 16px gutters, header keeps the centred brand and the
+  three section links under it. The header never overflows at 320px.
 - Tablets get two step cards plus a wide third; desktop splits the hero,
   teacher, privacy and final. The privacy online list becomes two columns at
   ≥1024px.
-- Every section anchor clears the sticky header (`scroll-margin-top: 84px`).
-  No horizontal scroll at 320 or at 1.25× text; the ruler stays six ticks.
+- Every section anchor clears the taller sticky header
+  (`scroll-margin-top: 120px`). No horizontal scroll at 320 or at 1.25× text;
+  the ruler stays six ticks.
 
 ## Layout
 
@@ -356,8 +355,12 @@ shares three bands:
   band, the example, then "Goes with" / "Similar" as chips. Foot: "Say it once
   in a sentence".
 - **Meet.** The same bands, read left-aligned like a dictionary entry: word,
-  sound, meaning, example, related words, wallet hint. Nothing is hidden and
-  nothing is graded; it does not flip.
+  sound, meaning, a labelled **Example** block, then a separate **Related
+  words** group with "Goes with" and "Similar" on their own rows, and the
+  wallet hint. The Arabic meaning is capped smaller than the English headword
+  (about 1.65rem before the Arabic scale). Nothing is hidden, nothing is
+  graded, and the card does not flip. From 600px the one next step stays
+  visible in a sticky bar under the card.
 - **No notes on the card.** Pronunciation tips and usage traps were louder
   than the word; they stay on the word page (Sounds / Mistakes) and in Speak.
 - **Type.** Body measure under 52ch; definition 20px; Arabic set larger than
@@ -586,16 +589,13 @@ then Settings. No breadcrumbs in the bar (the highlighted link and the page
 title say where you are; phones never showed them). From 1024 to 1199px the
 nav keeps its words and drops its icons, so the lockup always has room.
 
-## Still being built, and feedback
+## Feedback
 
-- **The note** (`app.js devNote`): a `--note` band under the app bar on every
-  browse screen — "VocabStudy is still being built" + WhatsApp + Email + hide.
-  Hiding is remembered (`devNoteHidden` holds the note's id, so a new note can
-  return after a big change). It steps aside in activities and never prints.
-- **Feedback for good** (`VS.feedback`): Settings → *Help shape VocabStudy*
-  keeps the same two buttons forever — WhatsApp (+20 114 304 4699, a greeting
-  typed) and Gmail (nagdista@gmail.com, a subject typed). Nothing is sent
-  until the learner sends it.
+There is no floating development note: the app is finished enough to live
+without one. Feedback lives in Settings → *Help shape VocabStudy* as the same
+two buttons — WhatsApp (+20 114 304 4699, a greeting typed) and Gmail
+(nagdista@gmail.com, a subject typed). Nothing is sent until the learner
+sends it.
 
 ## The study card (v14)
 
@@ -783,20 +783,6 @@ sentence, Cancel first with the focus, and the action named in red
 the thumb edge like every other sheet; on wide screens it is a small centred
 page.
 
-## The floating note
-
-"VocabStudy is still being built" is the app speaking, so it wears `--note`,
-not the highlighter. It is a fixed card in the empty corner of the desk —
-bottom-inline-end on tablets and desktops, full width above the tab bar on
-phones — never a band that pushes the page down. The icon and sentence come first, then
-WhatsApp and Email; the × remembers the note's id in `devNoteHidden`, so a
-new note can return after a big change. It never appears on the first run
-(the form is the only action), steps aside during an activity
-(`body[data-mode="activity"]`), never prints, and sits on `--z-float`, below
-toasts and dialogs. While a new-version bar is on screen the note steps
-aside; choosing Later brings it back. Settings keeps the same two feedback
-buttons forever.
-
 ## The profile chip
 
 Who the AI writes for is a small bookplate, not a settings row: a soft
@@ -841,22 +827,21 @@ a menu.
 
 ## The install invitation
 
-A phone-only card above the tab bar, never a modal and never on the first-run
-screen:
+A phone-and-tablet card above the tab bar, never a modal:
 
-- **When.** At most once per visit, 3.5s after the library settles, and only
-  when the learner has a word of their own. It stays away while Settings or a
-  confirmation sheet is open, an update bar is waiting, a toast is showing or
-  a word row is expanded; opening any of those hides it.
+- **When.** Every visit, 3.5s after a browse screen settles, while the app is
+  open in a browser. It stays away during an activity, while Settings or a
+  confirmation sheet is open, while an update bar or toast is showing, and
+  while the learner is typing. Opening any of those hides it for that visit.
 - **What.** Chromium gets the real `beforeinstallprompt` and an `Install app`
   button. iOS (including iPadOS reporting a Mac) gets the Share → Add to Home
-  Screen steps with the share glyph; other browsers get the menu instruction.
-  Both fall back to a single `Got it` button.
-- **How it behaves.** It never takes focus. `Not now` (or the ×) snoozes it
-  for 30 days in `installNudgeDismissed`; accepting the system prompt sets
-  `installedNow`, and `appinstalled` removes the card. `standalone` hides it
-  for good. Settings keeps a permanent install entry, so dismissing is never
-  the end of the road.
+  Screen steps; other browsers get the menu instruction and a `Got it`
+  button. The card wears the brand mark, not a generic download glyph.
+- **How it behaves.** It never takes focus. `Not now` puts it away for this
+  visit only — there is no stored snooze, so the next launch asks again.
+  Accepting the system prompt sets `installedNow`; `appinstalled` and
+  `standalone` end the invitation for good. Settings keeps a permanent
+  install entry.
 - **Fit.** ≤700px, or a coarse pointer up to 1023px where the tab bar still
   exists. It is hidden on desktop and on fine-pointer windows wider than
   700px. At 320 the card is 296px wide; at 390 it is 366px; at 1.25× the text

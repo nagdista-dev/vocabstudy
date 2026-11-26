@@ -36,20 +36,29 @@
   }
 
   /** Everything under the headword, in ONE column of one width with one left
-      edge: where you met it (or the example), then "Goes with" and "Similar"
-      as label | words rows. This column is the entry's body, set apart by a
-      hairline. */
+      edge. Reading first — where you met it, or the example with its own
+      label — then a separate "Related words" group where "Goes with" and
+      "Similar" keep their own rows. The hairline keeps the two kinds apart. */
   function extra(w) {
-    const parts = [
+    const reading = [
       VS.ui.context(w, "flash-met"),
-      w.example && !w.context ? html`<div class="flash-example">
-        <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
-      </div>` : "",
+      w.example && !w.context ? html`<figure class="flash-example">
+        <figcaption>Example</figcaption>
+        <div class="flash-example-line">
+          <p>“${VS.ui.exampleTap(w)}”</p>${VS.ui.speakButton(w.example, "Hear the example")}
+        </div>
+      </figure>` : "",
+    ].filter((x) => String(x).trim());
+    const related = [
       VS.ui.goes(w, "flash-related"),
       VS.ui.similar(w, "flash-related"),
-    ];
-    if (!parts.some((x) => String(x).trim())) return "";
-    return html`<div class="flash-extra">${parts}</div>`;
+    ].filter((x) => String(x).trim());
+    if (!reading.length && !related.length) return "";
+    return html`<div class="flash-extra">
+      ${reading.length ? html`<div class="flash-reading">${reading}</div>` : ""}
+      ${related.length ? html`<section class="flash-related-group" aria-label="Related words">
+        <p class="flash-group-label">Related words</p>${related}</section>` : ""}
+    </div>`;
   }
 
   function foot(ico, text) {
@@ -217,7 +226,7 @@
           <div class="activity">
             ${VS.ui.activityHead({ back: s.scope.back, title: "Meet the words", sub: "Step 1 of 2 · read, listen, say it", index: s.metIndex, total: s.met.length })}
             <div class="activity-stage stage-center">${teachCard(w)}</div>
-            <div class="action-bar">
+            <div class="action-bar meet-bar">
               <button class="btn btn-lg btn-quiet" type="button" data-action="meet-knew">I already know it</button>
               <button class="btn btn-lg btn-primary" type="button" data-action="meet-next" id="meetNext">
                 ${s.metIndex + 1 < s.met.length ? "Next word" : "Now check yourself"} ${icon("arrow-right", "icon-sm")} <kbd>Enter</kbd></button>

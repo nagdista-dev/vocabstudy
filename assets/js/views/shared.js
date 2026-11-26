@@ -1615,13 +1615,12 @@
       return first && /[\u0600-\u06FF]/.test(first[0]) ? "rtl" : "ltr";
     },
 
-    /** How common the word is (core/frequency.js): five bars, like signal strength.
+    /** How common the word is (core/frequency.js): a quiet label, no meter.
         `line` adds the teacher's sentence about what that means. */
     freq(w, line) {
       const b = VS.frequency.band(w);
       if (!b) return "";
       const meter = html`<span class="freq" data-level="${b.level}" title="${b.line}">
-        <span class="freq-bars" aria-hidden="true">${[1, 2, 3, 4, 5].map((i) => html`<i class="${i <= b.level ? "is-on" : ""}"></i>`)}</span>
         <span class="freq-label">${b.label}</span></span>`;
       return line ? html`<p class="freq-row">${meter}<span class="hint">${b.line}</span></p>` : meter;
     },
