@@ -169,37 +169,60 @@ not rendered on any card face — the word page and Speak own them.
 
 ## The wallet (`core/store.js`, `views/wallet.js`)
 
-`state.wallet` is a list of `{ id, word, sentence, source, kind?, arabic?, added }`,
-newest last, capped at 300. `walletAdd(word, sentence, source, kind, arabic)`
-refuses a word already in the library and reports a duplicate; the Arabic may
-come from the learner (typed Arabic, or the gloss on a word card) or from the
-quiet lookup after an English word is typed. `walletRemove` returns the entry
-for Undo; `walletClear` returns everything removed. Adding a wallet word to the
-library removes it from the wallet (`views/import.js`). The wallet is content,
-so **Reset progress** keeps it and **Start over** deletes it; `exportJSON`
-includes it and `mergeJSON` unions by id, skipping words now in the library.
+`state.wallet` is a list of `{ id, word, sentence, source, kind?, arabic?,
+folder, added }`, newest last, capped at 300. `state.walletFolders` is
+`[{ id, name }]`, built-ins first (`general`, `shared`). `walletAdd(word,
+sentence, source, kind, arabic, folder)` refuses a word already in the library
+and reports a duplicate; the folder defaults to `shared` for a shared word and
+`general` otherwise; the Arabic may come from the learner (typed Arabic, or the
+gloss on a word card) or from the quiet lookup after an English word is typed.
+`walletRemove` returns the entry for Undo; `walletClear(folderId)` returns
+everything removed from the whole wallet or one folder. `walletSetFolder` moves
+one entry and returns `{ from }` for Undo. `walletFolderCreate`,
+`walletFolderRename` and `walletFolderDelete` return `{ ok, folder }` or
+`{ ok: false, error }`; deleting moves the folder's words to General.
+`normalizeWallet` migrates old saves (shared → Shared, everything else →
+General), adds missing built-ins, falls back from unknown ids, and enforces the
+name rules. Adding a wallet word to the library removes it from the wallet
+(`views/import.js`). The wallet is content, so **Reset progress** keeps it and
+its folders and **Start over** returns them to General + Shared; `exportJSON`
+includes both and `mergeJSON` joins folders by id then case-insensitive name,
+remaps incoming entries and unions words by id, skipping words now in the
+library.
 
-The wallet is reached from the bottom tab bar on phones and tablets (fourth
+The wallet is reached from the bottom tab bar on phones and tablets (fifth
 tab, with a count badge) and from the `NAV` link on desktop. Progress is not a
 tab: it lives in More on phones and tablets. `VS.walletCapture`
 is the one capture path shared by the wallet's pocket and Today's compact box:
 it resolves typed Arabic through `VS.spelling.chooseEnglish`, keeps the typed
 Arabic as the entry's meaning, refuses words already in the library or the
-wallet (with a toast), plays the pop, offers Undo, and looks up the Arabic of a
-typed English word afterwards (`VS.arabicWord`, Auto-fill on and online only).
-The wallet searches past six entries and offers two doors per word through
-`VS.walletDraft`: `{ ai: true, items }` opens Add → With AI with the words typed
-and their sentences and Arabic in `st.ai.ctx`, so `VS.aiPrompt` /
-`VS.aiPromptMany` carry them ("use THAT meaning") and each added row keeps its
-`context`, `source` and (when missing) its wallet `arabic`; `{ word, context,
-source, arabic }` opens the Add form. There is no sixth tab.
+wallet (with a toast that names the folder), plays the pop, offers Undo, and
+looks up the Arabic of a typed English word afterwards (`VS.arabicWord`,
+Auto-fill on and online only). The wallet searches past six entries and offers
+two doors per word through `VS.walletDraft`: `{ ai: true, items, tag }` opens
+Add → With AI with the words typed and their sentences and Arabic in
+`st.ai.ctx`, so `VS.aiPrompt` / `VS.aiPromptMany` carry them ("use THAT
+meaning") and each added row keeps its `context`, `source` and (when missing)
+its wallet `arabic`; a folder batch also sets the visible batch tag and offers
+a **Study** toast after adding. `{ word, context, source, arabic }` opens the
+Add form. There is no sixth tab.
+
+The page keeps the selected folder in the address (`#/wallet?folder=film`).
+`views/wallet.js` validates it on `start()` and again in `render()`; an unknown
+id falls back to All and the address is cleaned. Chips are links; the header,
+pocket destination, search, no-results line, bulk AI, empty state and Clear
+all read from `snapshot()`, which returns the whole wallet, the selected
+folder's list and per-folder counts from one read. The folder sheet and move
+sheet are body-level native dialogs so a re-render behind them does not close
+them; the folder sheet stays open while `VS.confirm` deletes a folder.
 
 Today's compact add box (`data-capture="wallet"`) routes its submit to
-`VS.walletCapture`; a pasted English sentence of five or more words still opens
-Add → From text, checked after Arabic. The first-run box
-(`data-capture="library"`) keeps creating the first library word, because its
-example card is the screen's promise. The wallet count in the note and the bar
-comes from the same `state.wallet`.
+`VS.walletCapture` and names the current General folder; a pasted English
+sentence of five or more words still opens Add → From text, checked after
+Arabic. The first-run box (`data-capture="library"`) keeps creating the first
+library word, because its example card is the screen's promise. The wallet
+count in the note and the bar comes from the same `state.wallet`; the tab badge
+stays global while the chips show each folder's count.
 
 ## Sharing words with a friend (core/share.js, views/share.js)
 

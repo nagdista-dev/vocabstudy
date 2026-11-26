@@ -306,11 +306,13 @@
   };
 
   let toastTimer;
+  let toastCap;            // the hard limit: a hovered or focused toast still goes away
   let undos = [];          // what "Undo" will take back, newest last (several changes in a row add up)
   /** Put the toast away completely: no invisible button left behind, nothing left to undo. */
   function hideToast() {
     const el = VS.$("#toast");
     clearTimeout(toastTimer);
+    clearTimeout(toastCap);
     undos = [];
     document.body.classList.remove("has-undo");
     if (!el) return;
@@ -325,9 +327,11 @@
   }
   /**
    * A short message at the bottom. With `action` ({ label, run }) it carries one
-   * "Undo" button and stays 10 seconds — paused while a finger or the keyboard
-   * is on it. A second change before then joins the first ("2 changes"): Undo
-   * takes back both, so nothing is lost silently. Ctrl/Cmd+Z works too.
+   * "Undo" button and stays 6 seconds — paused while a finger or the keyboard
+   * is on it, but never past 10 seconds, so a resting pointer cannot leave it
+   * on screen forever. A second change before then joins the first ("2
+   * changes"): Undo takes back both, so nothing is lost silently. Ctrl/Cmd+Z
+   * works too.
    */
   VS.toast = function (message, action) {
     const el = VS.$("#toast");
@@ -347,7 +351,9 @@
     }
     el.classList.add("is-on");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, action ? 10000 : 2200);
+    clearTimeout(toastCap);
+    toastTimer = setTimeout(hideToast, action ? 6000 : 2200);
+    if (action) toastCap = setTimeout(hideToast, 10000);
   };
   document.addEventListener("DOMContentLoaded", () => {
     const el = VS.$("#toast");

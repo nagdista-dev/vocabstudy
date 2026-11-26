@@ -67,9 +67,11 @@ words" that brings you to it.
   each word with its Arabic, definition and example — the same row anatomy as
   the library.
 - Options: a tag (the title, so the list stays together) and "Use their Arabic".
-- `Add N to my words` (primary) and `Save N for later` (to the wallet).
+- `Add N to my words` (primary) and `Save N for later` (to the wallet's
+  **Shared** folder).
 - After adding: the words are in the library; `Learn them now` opens
-  `#/pick/cards?tag=…`, and `Share them on` closes the loop.
+  `#/pick/cards?tag=…`, and `Share them on` closes the loop. After saving for
+  later, `Open Shared` opens `#/wallet?folder=shared`.
 - First run: the friend sees the shared list before the level/dialect sheet.
 
 ## Sharing a word *into* the app

@@ -272,6 +272,7 @@
      upload). Once there are words it becomes a compact utility. */
   function addBox(compact) {
     const kept = compact ? walletWaiting() : 0;
+    const walletDest = compact ? VS.store.walletFolderName("general") : "";
     return html`
       <form class="quick-add ${compact ? "is-compact" : "first-add"}" data-form="quick-add"
         data-capture="${compact ? "wallet" : "library"}" autocomplete="off">
@@ -290,7 +291,7 @@
             aria-label="${compact ? "Save this word in your wallet" : "Add this word"}">${icon("plus", "icon-sm")}<span class="add-label">${compact ? "Save" : "Add"}</span></button>
         </div>
         ${compact ? html`<p class="quick-wallet">
-          <span>English or Arabic · saves to your wallet</span>
+          <span>English or Arabic · saves to ${walletDest}</span>
           ${kept ? html`<a href="#/wallet">${VS.plural(kept, "word")} in your wallet ${icon("arrow-right", "icon-sm")}</a>` : ""}
         </p>` : html`<p class="first-form-how" id="firstHow">${VS.autofill.enabled()
           ? html`<span class="first-how-key">Press Add — or </span><span class="first-how-touch">Or </span><a href="#/add">paste a list or upload a file</a>.`

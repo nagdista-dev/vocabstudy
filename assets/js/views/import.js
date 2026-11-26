@@ -24,7 +24,7 @@
 
   const st = {
     tab: "ai",                    // ai | type | text | paste | files
-    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "", ctx: {} },   // ctx: words from the wallet → { id, context, arabic, source }   // With AI
+    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "", ctx: {}, fromFolder: "" },   // ctx: words from the wallet → { id, context, arabic, source }; fromFolder: a wallet-folder batch, for the Study toast   // With AI
     collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
@@ -653,6 +653,7 @@
       // Once that card is added, the slip has done its job and leaves.
       st.tab = "ai-ar";
       st.ai.ctx = {};
+      st.ai.fromFolder = "";
       Object.assign(st.ai, { ar: d.ar, answer: "", rows: [], walletIds: (d.items || []).map((e) => e.id) });
       return;
     }
@@ -662,6 +663,10 @@
       st.tab = "ai";
       st.ai.ctx = {};
       st.ai.walletIds = [];
+      // A batch from a wallet folder suggests the folder's name as its tag,
+      // so the words can be studied together. It is visible and editable.
+      st.ai.fromFolder = d.tag || "";
+      if (d.tag) st.ai.tags = d.tag;
       d.items.forEach((e) => { st.ai.ctx[e.word.toLowerCase()] = {
         id: e.id, context: e.sentence || "", arabic: e.arabic || "",
         source: e.source ? (e.kind === "meaning" ? "From the meaning of " : "From the example for ") + VS.cap(e.source) : "",
@@ -671,6 +676,7 @@
     }
     st.tab = "type";
     st.ai.walletIds = [];
+    st.ai.fromFolder = "";
     st.form = { word: d.word, context: d.context, source: d.source, arabic: d.arabic || "" };
     st.openDetails = true;
   }
@@ -974,11 +980,13 @@
         st.tab = tab; lastIn[g] = tab; st.saved = ""; VS.app.render();
       },
       "import-tab"(el) {
-        if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [], walletIds: [] });
+        if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [], walletIds: [], fromFolder: "" });
         st.tab = el.dataset.value; lastIn[groupOf(st.tab)] = st.tab; st.saved = ""; VS.app.render();
       },
       "ai-add"() {
         const globalTags = VS.parseTags(st.ai.tags);
+        const fromFolder = st.ai.fromFolder;
+        const batchTag = globalTags[0] || "";
         const rows = st.ai.rows;
         const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
         const words = rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).map((r) => {
@@ -1004,8 +1012,16 @@
         if (r.needsArabic.length) VS.toast(`“${r.needsArabic[0].word}” is already in your library — add this meaning's Arabic to keep a second word.`);
         else if (!r.added.length) { VS.toast("Those words and meanings are already in your library."); VS.app.render(); return; }
         // Added: every field is empty again, ready for the next words (tags kept on purpose).
-        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {}, walletIds: [] });
+        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {}, walletIds: [], fromFolder: "" });
         VS.app.render();
+        // A batch from a wallet folder can be studied at once. The tag is
+        // whatever is in the field (the folder's name, unless edited).
+        if (!r.needsArabic.length && r.added.length && fromFolder && batchTag) {
+          VS.toast(`Added ${VS.plural(r.added.length, "word")} with the tag #${batchTag}.`, {
+            label: "Study",
+            run: () => { location.hash = "#/pick/cards?tag=" + encodeURIComponent(batchTag); },
+          });
+        }
       },
 
       "collect-tok"(el) {

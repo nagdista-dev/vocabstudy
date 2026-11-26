@@ -25,6 +25,11 @@
   const KEY = "vocabstudy";
   const WAIT_DAYS = [0, 1, 3, 7, 14, 30, 60];
   const MASTERED_BOX = 4;
+  const MAX_FOLDERS = 50;
+  const BUILTIN_FOLDERS = Object.freeze([
+    { id: "general", name: "General" },
+    { id: "shared", name: "Shared" },
+  ]);
 
   const DEFAULTS = {
     words: {},                                     // id → [box, due, right, wrong] (packed, see below)
@@ -36,7 +41,8 @@
     library: [],                                   // your words, oldest first — the app ships with none
     lastBackup: "",                                // date of the last full backup download
     backupNudgeIgnored: "",                        // date the learner hid the weekly backup reminder
-    wallet: [],                                    // words met in an example, kept for later: [{ id, word, sentence, source, added }]
+    wallet: [],                                    // words met in an example, kept for later: [{ id, word, sentence, source, added, folder }]
+    walletFolders: BUILTIN_FOLDERS.map((f) => ({ ...f })),   // General and Shared are built in; the rest are the learner's
     reminder: "",                                  // "9 PM": the daily calendar reminder the learner added (views/home.js)
     weekSeen: "",                                  // the Saturday of the last weekly report opened (core/week.js)
     milestone: 0,                                  // the highest mastered-words milestone celebrated
@@ -47,6 +53,74 @@
   };
 
   const unpack = (p) => (Array.isArray(p) ? p : [p.box || 0, p.due || "", p.right || 0, p.wrong || 0]);
+
+  /* ── Wallet folders ──────────────────────────────────────────────
+     A folder is only a name and a stable id. General and Shared are built
+     in: quick saves land in General, words sent by a friend in Shared. The
+     learner can rename either, make more, and move slips between them. The
+     id never changes, so a link keeps working after a rename. */
+  const folderKey = (name) => String(name || "").toLocaleLowerCase();
+  const cleanFolderName = (name) => String(name || "").trim().replace(/\s+/g, " ").slice(0, 40);
+  const safeFolderId = (id) => (/^[A-Za-z0-9_-]{1,40}$/.test(String(id || "")) ? String(id) : "");
+
+  function newFolderId(folders) {
+    let id;
+    do { id = "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    while (folders.some((f) => f.id === id));
+    return id;
+  }
+
+  function uniqueFolderName(name, seen) {
+    let base = cleanFolderName(name) || "Folder";
+    if (folderKey(base) === "all") base = "Folder";
+    let candidate = base;
+    let i = 2;
+    while (seen.has(folderKey(candidate))) {
+      const suffix = ` ${i++}`;
+      candidate = (base.slice(0, Math.max(1, 40 - suffix.length)) + suffix).trim();
+    }
+    return candidate;
+  }
+
+  /** Make a saved wallet safe: built-ins first, then valid unique folders,
+      then every entry in a folder that exists (or its kind's default). */
+  function normalizeWallet(st) {
+    if (!Array.isArray(st.wallet)) st.wallet = [];
+    if (!Array.isArray(st.walletFolders)) st.walletFolders = [];
+    const folders = [];
+    const seenIds = new Set();
+    const seenNames = new Set();
+    const add = (id, name) => {
+      if (!id || !name || seenIds.has(id) || seenNames.has(folderKey(name))) return false;
+      folders.push({ id, name });
+      seenIds.add(id);
+      seenNames.add(folderKey(name));
+      return true;
+    };
+    BUILTIN_FOLDERS.forEach((builtin) => {
+      const saved = st.walletFolders.find((f) => f && f.id === builtin.id);
+      const raw = cleanFolderName(saved && saved.name);
+      const name = !raw || folderKey(raw) === "all"
+        ? uniqueFolderName(builtin.name, seenNames)
+        : uniqueFolderName(raw, seenNames);
+      add(builtin.id, name);
+    });
+    st.walletFolders.forEach((f) => {
+      if (!f || f.id === "general" || f.id === "shared") return;
+      const id = safeFolderId(f.id);
+      const raw = cleanFolderName(f.name);
+      if (!id || !raw || folderKey(raw) === "all" || folders.length >= MAX_FOLDERS) return;
+      add(id, uniqueFolderName(raw, seenNames));
+    });
+    st.walletFolders = folders;
+    const ids = new Set(folders.map((f) => f.id));
+    const fallback = (e) => (e && e.kind === "shared" ? "shared" : "general");
+    st.wallet = st.wallet.filter((e) => e && e.word).slice(-300).map((e) => {
+      const folder = ids.has(e.folder) ? e.folder : fallback(e);
+      return e.folder === folder ? e : Object.assign({}, e, { folder });
+    });
+    return st;
+  }
 
   function load() {
     try {
@@ -65,9 +139,9 @@
       // until the app is installed. Drop the flag old saves still carry.
       delete st.installNudgeDismissed;
       // A wallet entry is a word the learner met and kept; it carries the sentence
-      // that made them tap. Old or damaged saves fall back to an empty wallet.
-      if (!Array.isArray(st.wallet)) st.wallet = [];
-      st.wallet = st.wallet.filter((e) => e && e.word).slice(-300);
+      // that made them tap. Old saves have no folder: shared words go to Shared,
+      // everything else to General.
+      normalizeWallet(st);
       // The old "this word has more than one meaning" question is gone. Drop
       // its stored flag so an old save never resurrects it; a spelling flag stays.
       if (!Array.isArray(st.library)) st.library = [];
@@ -362,13 +436,78 @@
        the ruler. Adding it to the library is a separate, deliberate tap. */
     wallet: () => state.wallet || [],
 
+    /* Folders: built-ins first, then the learner's. */
+    walletFolders: () => state.walletFolders || [],
+    walletFolder(id) { return (state.walletFolders || []).find((f) => f.id === id) || null; },
+    walletFolderName(id) {
+      const f = (state.walletFolders || []).find((x) => x.id === id);
+      if (f) return f.name;
+      return id === "shared" ? "Shared" : "General";
+    },
+
+    /** Make a folder. Returns { ok, folder } or { ok: false, error }. */
+    walletFolderCreate(name) {
+      const clean = cleanFolderName(name);
+      if (!clean) return { ok: false, error: "empty" };
+      if (folderKey(clean) === "all") return { ok: false, error: "reserved" };
+      const folders = state.walletFolders || (state.walletFolders = []);
+      if (folders.some((f) => folderKey(f.name) === folderKey(clean))) return { ok: false, error: "duplicate" };
+      if (folders.length >= MAX_FOLDERS) return { ok: false, error: "limit" };
+      const folder = { id: newFolderId(folders), name: clean };
+      folders.push(folder);
+      save();
+      return { ok: true, folder };
+    },
+
+    /** Rename a folder — built-ins too. The id does not change. */
+    walletFolderRename(id, name) {
+      const folders = state.walletFolders || [];
+      const folder = folders.find((f) => f.id === id);
+      if (!folder) return { ok: false, error: "missing" };
+      const clean = cleanFolderName(name);
+      if (!clean) return { ok: false, error: "empty" };
+      if (folderKey(clean) === "all") return { ok: false, error: "reserved" };
+      if (folders.some((f) => f.id !== id && folderKey(f.name) === folderKey(clean))) {
+        return { ok: false, error: "duplicate" };
+      }
+      folder.name = clean;
+      save();
+      return { ok: true, folder };
+    },
+
+    /** Delete a learner's folder; its words move to General. Built-ins stay. */
+    walletFolderDelete(id) {
+      if (id === "general" || id === "shared") return { ok: false, error: "builtin" };
+      const folders = state.walletFolders || [];
+      const i = folders.findIndex((f) => f.id === id);
+      if (i < 0) return { ok: false, error: "missing" };
+      const [folder] = folders.splice(i, 1);
+      let moved = 0;
+      (state.wallet || []).forEach((e) => { if (e.folder === id) { e.folder = "general"; moved++; } });
+      save();
+      return { ok: true, folder, moved };
+    },
+
+    /** Move one wallet word; the toast behind it offers Undo. */
+    walletSetFolder(entryId, folderId) {
+      const e = (state.wallet || []).find((x) => x.id === entryId);
+      if (!e) return { ok: false, error: "missing" };
+      if (!(state.walletFolders || []).some((f) => f.id === folderId)) return { ok: false, error: "folder" };
+      if (e.folder === folderId) return { ok: true, entry: e, unchanged: true };
+      const from = e.folder;
+      e.folder = folderId;
+      save();
+      return { ok: true, entry: e, from };
+    },
+
     /**
-     * Keep one word from a sentence. Returns:
+     * Keep one word from a sentence. `folder` is optional: a shared word
+     * defaults to Shared, everything else to General. Returns:
      *   { ok: true, entry }            newly kept
      *   { ok: true, entry, existed }   already in the wallet
      *   { ok: false, inLibrary }       already one of the learner's words
      */
-    walletAdd(word, sentence, source, kind, arabic) {
+    walletAdd(word, sentence, source, kind, arabic, folder) {
       const text = String(word || "").trim().replace(/\s+/g, " ").slice(0, 80);
       const id = VS.wordKey(text);
       if (!text || !id) return { ok: false };
@@ -377,8 +516,10 @@
       const list = state.wallet || (state.wallet = []);
       const found = list.find((e) => e.id === id);
       if (found) return { ok: true, entry: found, existed: true };
+      const fallback = kind === "shared" ? "shared" : "general";
+      const folderId = folder && (state.walletFolders || []).some((f) => f.id === folder) ? folder : fallback;
       const entry = {
-        id, word: text,
+        id, word: text, folder: folderId,
         sentence: String(sentence || "").trim().slice(0, 300),
         source: String(source || "").slice(0, 80),
         added: VS.todayKey(),
@@ -409,24 +550,33 @@
       return gone;
     },
 
-    /** Put kept words back (the Undo behind Remove and Clear). */
+    /** Put kept words back (the Undo behind Remove, Clear and Move). */
     walletRestore(entries) {
       if (!Array.isArray(entries) || !entries.length) return;
       const list = state.wallet || (state.wallet = []);
       const seen = new Set(list.map((e) => e.id));
+      const ids = new Set((state.walletFolders || []).map((f) => f.id));
       entries.forEach((e) => {
         if (!e || !e.word || !e.id || seen.has(e.id)) return;
-        list.push(e);
+        const fallback = e.kind === "shared" ? "shared" : "general";
+        list.push(ids.has(e.folder) ? e : Object.assign({}, e, { folder: fallback }));
         seen.add(e.id);
       });
       save();
     },
 
-    /** Empty the wallet; returns what was removed, for Undo. */
-    walletClear() {
-      const gone = (state.wallet || []).slice();
+    /** Empty the wallet, or one folder; returns what was removed, for Undo. */
+    walletClear(folderId) {
+      const all = state.wallet || [];
+      if (!folderId) {
+        if (!all.length) return [];
+        state.wallet = [];
+        save();
+        return all;
+      }
+      const gone = all.filter((e) => e.folder === folderId);
       if (!gone.length) return [];
-      state.wallet = [];
+      state.wallet = all.filter((e) => e.folder !== folderId);
       save();
       return gone;
     },
@@ -508,14 +658,43 @@
       Object.entries(data.done || {}).forEach(([k, d]) => { if (!state.done[k] || d > state.done[k]) state.done[k] = d; });
       Object.entries(data.best || {}).forEach(([k, ms]) => { if (!state.best[k] || ms < state.best[k]) state.best[k] = ms; });
       if (data.streak && data.streak.last > state.streak.last) state.streak = data.streak;
-      // Both devices' wallets, one entry per word; never a word that is now in the library.
+      // Folders first: the same id wins; a new id with the same name joins
+      // the local folder; anything else is added. Entries are remapped.
+      const folderMap = {};
+      const folderById = new Map((state.walletFolders || []).map((f) => [f.id, f]));
+      const folderByName = new Map((state.walletFolders || []).map((f) => [folderKey(f.name), f]));
+      (Array.isArray(data.walletFolders) ? data.walletFolders : []).forEach((f) => {
+        if (!f || !f.id) return;
+        const id = safeFolderId(f.id);
+        const name = cleanFolderName(f.name);
+        if (!id || !name || folderKey(name) === "all") return;
+        const local = folderById.get(id) || folderByName.get(folderKey(name));
+        if (local) { folderMap[id] = local.id; return; }
+        if (state.walletFolders.length >= MAX_FOLDERS) { folderMap[id] = "general"; return; }
+        const folder = {
+          id,
+          name: uniqueFolderName(name, new Set(state.walletFolders.map((x) => folderKey(x.name)))),
+        };
+        state.walletFolders.push(folder);
+        folderById.set(folder.id, folder);
+        folderByName.set(folderKey(folder.name), folder);
+        folderMap[id] = folder.id;
+      });
+      // Both devices' wallets, one entry per word; never a word that is now in
+      // the library. An unknown folder falls back by kind.
       const wallet = state.wallet || (state.wallet = []);
       const kept = new Set(wallet.map((e) => e.id));
+      const localFolderIds = new Set(state.walletFolders.map((f) => f.id));
       (Array.isArray(data.wallet) ? data.wallet : []).forEach((e) => {
         if (!e || !e.word || !e.id || kept.has(e.id) || VS.findWord(e.word)) return;
-        wallet.push(e);
+        const fallback = e.kind === "shared" ? "shared" : "general";
+        const mapped = folderMap[e.folder];
+        const folder = mapped && localFolderIds.has(mapped) ? mapped
+          : localFolderIds.has(e.folder) ? e.folder : fallback;
+        wallet.push(e.folder === folder ? e : Object.assign({}, e, { folder }));
         kept.add(e.id);
       });
+      normalizeWallet(state);
       save();
       return true;
     },
@@ -532,6 +711,7 @@
         settings: Object.assign({}, DEFAULTS.settings, data.settings),
       });
       delete state.app; delete state.version; delete state.exported;
+      normalizeWallet(state);
       save();
       return true;
     },
@@ -849,8 +1029,14 @@
 
     resetProgress() {
       // Words you added are content, not progress: they survive a reset.
-      // The wallet is content too — words kept, not answers given.
-      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), { settings: state.settings, library: state.library, wallet: state.wallet });
+      // The wallet and its folders are content too — words kept and organized,
+      // not answers given.
+      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), {
+        settings: state.settings,
+        library: state.library,
+        wallet: state.wallet,
+        walletFolders: state.walletFolders,
+      });
       lastUndo = null;
       save();
     },

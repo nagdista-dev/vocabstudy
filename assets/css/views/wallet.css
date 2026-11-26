@@ -20,6 +20,58 @@
 .wallet-head .hint b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
 .wallet-grid { display: grid; gap: var(--s-4); align-items: start; min-width: 0; }
 
+/* ── The folder row ───────────────────────────────────────────────
+   One scrollable line on a phone (the thumb swipes it), a wrapped set of
+   chips on a wider screen. Chips are links: the folder lives in the
+   address, so a refresh or a shared link opens the same folder. */
+.wallet-folders {
+  display: flex; align-items: center; gap: 6px;
+  overflow-x: auto; scrollbar-width: none; padding: 1px;
+  margin-inline: calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
+  scroll-snap-type: x proximity; scroll-padding-inline: var(--gutter);
+}
+.wallet-folders::-webkit-scrollbar { display: none; }
+/* A half-visible chip at the edge says "scroll me"; the fade clears at the
+   end, where "New folder" sits. Desktop wraps, so it never needs the fade. */
+.wallet-folders.is-overflow {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+          mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+.wallet-folders.is-overflow.is-end { -webkit-mask-image: none; mask-image: none; }
+.wallet-folder-chip { scroll-snap-align: start; }
+.wallet-folder-chip .wallet-folder-name { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; }
+/* The count is a small pill, so it reads as a number, not a footnote. */
+.wallet-folder-chip .chip-n {
+  display: inline-grid; place-items: center;
+  min-width: 19px; height: 19px; padding: 0 5px;
+  border-radius: var(--r-pill); background: var(--surface-2);
+  color: var(--ink-3); font-size: var(--text-badge); line-height: 1;
+}
+.wallet-folder-chip[aria-current="page"] {
+  background: var(--brand-soft); border-color: var(--brand); color: var(--brand); font-weight: 700;
+}
+.wallet-folder-chip[aria-current="page"] .chip-n {
+  background: var(--brand); color: var(--on-brand); opacity: 1;
+}
+.wallet-folder-new { border-style: dashed; color: var(--brand); }
+.wallet-folder-new:hover { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); }
+@media (min-width: 720px) {
+  .wallet-folders {
+    flex-wrap: wrap; overflow: visible;
+    margin-inline: 0; padding-inline: 0;
+    scroll-snap-type: none;
+  }
+}
+
+/* Where the next save lands: the pocket says it before you type. */
+.wallet-dest {
+  display: flex; align-items: center; gap: 6px; margin: 0;
+  color: var(--ink-3); font-size: var(--text-xs); line-height: 1.45;
+}
+.wallet-dest .icon { flex: none; width: 14px; height: 14px; }
+.wallet-dest b { color: var(--ink); font-weight: 700; }
+
 /* ── The pocket ───────────────────────────────────────────────────
    Two stacked card edges say "there are slips in here" without a label.
    They sit behind the pocket's own surface and only their top shows. */
@@ -122,7 +174,7 @@
 }
 .wallet-word {
   margin: 0; min-width: 0; overflow-wrap: anywhere;
-  font-family: var(--font-body); font-size: var(--text-md); font-weight: 700; line-height: 1.3; letter-spacing: 0;
+  font-family: var(--font-body); font-size: var(--text-lg); font-weight: 700; line-height: 1.25; letter-spacing: -.01em;
   color: var(--ink);
 }
 .wallet-slip-head .speak-btn { width: 36px; height: 36px; min-width: 36px; margin-inline-start: auto; }
@@ -154,9 +206,27 @@
 }
 .wallet-actions .btn { min-height: 40px; gap: var(--s-2); font-size: var(--text-sm); white-space: nowrap; }
 .wallet-actions .btn .icon { width: 15px; height: 15px; }
+/* The slip's folder, and the door to move it. A quiet pill, not a third
+   action: the two doors keep the accent. */
+.wallet-folder-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  max-width: 11rem; min-height: 40px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--ink-2);
+  font: inherit; font-size: var(--text-xs); font-weight: 600;
+  white-space: nowrap; cursor: pointer;
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
+}
+.wallet-folder-tag .icon { flex: none; width: 14px; height: 14px; color: var(--ink-3); }
+.wallet-folder-tag span { overflow: hidden; text-overflow: ellipsis; }
+.wallet-folder-tag:hover { border-color: var(--line-strong); color: var(--ink); }
+.wallet-folder-tag:hover .icon { color: var(--ink-2); }
 .wallet-remove { margin-inline-start: auto; color: var(--ink-3); }
 .wallet-remove:hover, .wallet-remove:focus-visible { color: var(--bad); background: var(--bad-soft); }
-@media (pointer: coarse) { .wallet-actions .btn { min-height: var(--tap); } }
+@media (pointer: coarse) {
+  .wallet-actions .btn { min-height: var(--tap); }
+  .wallet-folder-tag { min-height: var(--tap); }
+}
 
 /* Just saved: the slip arrives on the accent's soft fill, then settles. */
 .wallet-slip.is-new { animation: wallet-new 1.2s var(--ease) both; }
@@ -170,12 +240,77 @@
 .wallet-empty { padding-top: var(--s-4); }
 .wallet-empty h2 { margin-bottom: var(--s-2); }
 .wallet-empty p { max-width: 52ch; margin-inline: auto; }
+/* An empty folder keeps the app's mark, not the photograph: the wallet is
+   not empty, this shelf is. */
+.wallet-empty-mark {
+  display: inline-grid; place-items: center;
+  width: 48px; height: 48px; margin-bottom: var(--s-2);
+  border-radius: var(--r-pill); background: var(--surface-2); color: var(--ink-3);
+}
+.wallet-folder-empty { padding-top: var(--s-5); }
 
-/* The end: where it lives, and Clear wallet (it asks first). */
+/* The end: where it lives, and Clear (it asks first). */
 .wallet-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s-4); }
 .wallet-end .hint { margin: 0; font-size: var(--text-xs); }
 .wallet-end .danger-link { border: 0; background: none; cursor: pointer; font: inherit; font-size: var(--text-sm); font-weight: 600; color: var(--bad); min-height: var(--tap); }
 .wallet-end .danger-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── The folder sheet ─────────────────────────────────────────────
+   Create, rename and delete in one place. It lives in the body, not in
+   #view, so renaming can repaint the chips behind it without closing it. */
+.wallet-sheet { width: min(480px, calc(100vw - 32px)); }
+.wallet-folder-sheet { gap: var(--s-4); }
+.wallet-folder-create {
+  display: grid; gap: var(--s-2);
+  padding-bottom: var(--s-4); border-bottom: 1px solid var(--line);
+}
+.wallet-folder-create .btn { justify-self: start; }
+.wallet-form-error { margin: 0; color: var(--bad); font-size: var(--text-xs); line-height: 1.45; }
+.wallet-folder-list-wrap { display: grid; gap: var(--s-2); }
+.wallet-folder-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.wallet-folder-row {
+  display: flex; align-items: center; gap: var(--s-2);
+  min-height: 48px; padding: 0 var(--s-1);
+  border-bottom: 1px solid var(--line);
+}
+.wallet-folder-row:last-child { border-bottom: 0; }
+.wallet-folder-ico { display: inline-flex; flex: none; color: var(--ink-3); }
+.wallet-folder-row .wallet-folder-name {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--ink); font-size: var(--text-sm); font-weight: 600;
+}
+.wallet-folder-badge {
+  flex: none; padding: 2px 7px; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--ink-3);
+  font-size: var(--text-badge); font-weight: 600;
+}
+.wallet-folder-n { flex: none; min-width: 2ch; text-align: end; color: var(--ink-3); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+.wallet-folder-row .icon-btn { flex: none; }
+.wallet-folder-del:hover, .wallet-folder-del:focus-visible { color: var(--bad); background: var(--bad-soft); }
+.wallet-folder-row.is-renaming { display: block; padding: var(--s-3) 0; }
+.wallet-folder-rename { display: grid; gap: var(--s-2); }
+.wallet-folder-row-actions { gap: var(--s-2); }
+
+/* ── The move sheet ──────────────────────────────────────────────
+   One radio per folder, the current one checked and focused. The word
+   moves when the sheet is submitted, and Undo puts it back. */
+.wallet-move-body { gap: 0; padding-bottom: var(--s-3); }
+.wallet-move-list { display: grid; gap: 2px; margin: 0; padding: 0; border: 0; }
+.wallet-move-row {
+  display: flex; align-items: center; gap: var(--s-3);
+  min-height: 48px; padding: 0 var(--s-2); border-radius: var(--r-md);
+  cursor: pointer;
+}
+.wallet-move-row:hover { background: var(--surface-2); }
+.wallet-move-row:has(input:checked) { background: var(--brand-soft); }
+.wallet-move-row input { flex: none; width: 18px; height: 18px; accent-color: var(--brand); }
+.wallet-move-name {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--ink); font-size: var(--text-sm);
+}
+.wallet-move-n { flex: none; color: var(--ink-3); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+@media (pointer: coarse) { .wallet-move-row { min-height: var(--tap); } }
+@media (max-width: 599px) { .wallet-sheet { width: 100%; } }
 
 /* ── Wider screens: the pocket stays in reach, the slips have the desk ── */
 @media (min-width: 900px) {
@@ -191,9 +326,20 @@
   .wallet-keep-btn { min-height: 46px; }
 }
 @media (max-width: 719px) {
-  .wallet-actions .btn { padding-inline: var(--s-3); }
+  /* The card's footer becomes two tidy rows: the folder and its remove on
+     one line, the two doors side by side below. The trash never sits alone. */
+  .wallet-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "tag remove" "ai add";
+    gap: var(--s-2);
+  }
+  .wallet-actions .wallet-folder-tag { grid-area: tag; justify-self: start; }
+  .wallet-actions .wallet-remove { grid-area: remove; justify-self: end; margin-inline-start: 0; }
+  .wallet-actions .wallet-ai { grid-area: ai; }
+  .wallet-actions .wallet-add { grid-area: add; }
+  .wallet-actions .btn { justify-content: center; padding-inline: var(--s-3); }
   .wallet-actions .btn .icon { display: none; }
-  .wallet-actions .wallet-ai { flex: 1 1 auto; justify-content: center; }
   .wallet-search { flex: 1 1 auto; }
 }
 @media (max-width: 374px) {

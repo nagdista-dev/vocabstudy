@@ -60,7 +60,7 @@
     if (parts[0] === "reset") return { view: "reset" };
     if (parts[0] === "transfer") return { view: "transfer" };
     if (parts[0] === "stats") return { view: "stats" };
-    if (parts[0] === "wallet") return { view: "wallet" };
+    if (parts[0] === "wallet") return { view: "wallet", query };
     if (parts[0] === "share") return { view: "share", query };          // Share with: send words (docs/SHARE.md)
     if (parts[0] === "shared") return { view: "shared", query };        // …and open words a friend sent
     if (parts[0] === "week") return { view: "week", query };
@@ -363,8 +363,9 @@
      a browser, every visit gets the card after the screen settles. "Not
      now" hides it for this visit, and the next launch asks again — only
      installing it (or opening it standalone) ends the invitation. It is a
-     card, not a modal: it takes no focus and the app stays usable behind
-     it, and it stays out of an activity or an open sheet. */
+     modal dialog: the page behind it dims and waits, so the one decision on
+     screen is whether to install. It stays out of an activity or an open
+     sheet. */
   let nudgeShown = false;       // at most one appearance per visit
   let nudgeTimer = 0;
   let installedNow = false;
@@ -374,12 +375,14 @@
     const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
     return !isStandalone() && !installedNow && phoneOnly() && !typing
       && document.body.dataset.mode !== "activity"
-      && !document.querySelector("#settings[open], dialog[open], .update-bar, .toast.is-on");
+      && !document.querySelector("#settings[open], dialog[open]:not(#installNudge), .update-bar, .toast.is-on");
   }
 
   function removeNudge() {
     const el = VS.$("#installNudge");
-    if (el) el.remove();
+    if (!el) return;
+    if (el.open) el.close();
+    el.remove();
   }
 
   function hideNudge() {
@@ -402,10 +405,10 @@
         <span class="install-nudge-ico" aria-hidden="true">${VS.brandMark}</span>
         <div class="install-nudge-copy">
           <p class="install-nudge-kicker">VocabStudy · free</p>
-          <p class="install-nudge-title">${title}</p>
+          <p class="install-nudge-title" id="installNudgeTitle">${title}</p>
         </div>
       </div>
-      <p class="install-nudge-text">${text}</p>
+      <p class="install-nudge-text" id="installNudgeText">${text}</p>
       <div class="install-nudge-actions">
         <button class="btn btn-primary" type="button" data-action="${native ? "install-now" : "install-got-it"}">${native ? "Install app" : "Got it"}</button>
         <button class="btn btn-quiet" type="button" data-action="install-later">Not now</button>
@@ -421,16 +424,24 @@
     if (!nudgeWanted() || document.visibilityState === "hidden" || VS.$("#installNudge")) return;
     if (Date.now() - lastTouch < 2500) { nudgeTimer = setTimeout(() => { nudgeTimer = 0; showNudge(); }, 2500); return; }
     nudgeShown = true;
-    const el = document.createElement("aside");
+    const el = document.createElement("dialog");
     el.id = "installNudge";
     el.className = "install-nudge";
-    el.setAttribute("role", "region");
-    el.setAttribute("aria-label", "Install VocabStudy");
+    el.setAttribute("aria-labelledby", "installNudgeTitle");
+    el.setAttribute("aria-describedby", "installNudgeText");
     el.innerHTML = String(nudgeMarkup());
+    // A tap on the dimmed page puts the invitation away, like every native sheet.
+    el.addEventListener("click", (e) => {
+      const r = el.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) hideNudge();
+    });
+    el.addEventListener("cancel", (e) => { e.preventDefault(); hideNudge(); });
     document.body.appendChild(el);
+    el.showModal();
   }
 
   function syncInstallNudge() {
+    if (VS.$("#installNudge")) return;          // already on screen (or fading)
     clearTimeout(nudgeTimer);
     nudgeTimer = 0;
     if (!nudgeWanted()) { removeNudge(); return; }
@@ -757,8 +768,10 @@
     if (short) {
       const kept = VS.store.walletAdd(text, context, source, "shared");
       if (kept.ok) {
-        VS.toast(kept.existed ? `“${text}” is already in your wallet.` : `“${text}” saved to your wallet.`);
-        history.replaceState(null, "", VS.cleanPath() + "#/wallet");
+        const folder = (kept.entry && kept.entry.folder) || "shared";
+        const name = VS.store.walletFolderName(folder);
+        VS.toast(kept.existed ? `“${text}” is already in your wallet — in ${name}.` : `“${text}” saved to ${name}.`);
+        history.replaceState(null, "", VS.cleanPath() + "#/wallet?folder=" + encodeURIComponent(folder));
         return;
       }
       if (kept.inLibrary) {
@@ -780,9 +793,9 @@
     if (markup) el.innerHTML = String(markup);
     if (href) el.href = href;
   };
-  fill("brandLink", html`${VS.brandMark}<span class="brand-text"><span class="brand-name">VocabStudy</span><span class="brand-tag"><span class="brand-tag-a">For all Arabs</span><span class="brand-tag-b"><span class="mark">100% free</span></span></span></span>`, VS.homeHref);
+  fill("brandLink", html`${VS.brandMark}<span class="brand-text"><span class="brand-name">VocabStudy</span></span>`, VS.homeHref);
   const brandLink = VS.$("#brandLink");
-  if (brandLink) brandLink.setAttribute("aria-label", "VocabStudy, for all Arabs, 100% free — Today");
+  if (brandLink) brandLink.setAttribute("aria-label", "VocabStudy — Today");
   fill("communityBtn", html`${icon("whatsapp", "icon-sm")}<span class="bar-community-label">Community</span>`);
   fill("moreBtn", icon("more"));
   fill("settingsBtn", icon("gear"));

@@ -1232,7 +1232,7 @@
     const word = el.dataset.word;
     const known = VS.findWord(word);
     const id = VS.wordKey(word);
-    const kept = VS.store.wallet().some((e) => e.id === id);
+    const kept = VS.store.wallet().find((e) => e.id === id);
     // Inside the word card, the pop-up must live in the dialog too: the
     // dialog is in the browser's top layer, and body children stay behind it.
     const host = el.closest("dialog[open]") || document.body;
@@ -1250,7 +1250,7 @@
       <div class="word-pop-meaning" aria-live="polite"></div>
       <div class="word-pop-foot">
         ${known ? html`<p class="word-pop-state">${icon("check", "icon-sm")} Already one of your words</p>`
-          : kept ? html`<p class="word-pop-state">${icon("wallet", "icon-sm")} In your wallet · <a href="#/wallet">Open</a></p>`
+          : kept ? html`<p class="word-pop-state">${icon("wallet", "icon-sm")} In your wallet · <a href="#/wallet?folder=${encodeURIComponent(kept.folder)}">Open</a></p>`
           : html`<button class="btn btn-tonal word-pop-keep" type="button" data-pop="keep">${icon("wallet", "icon-sm")} Keep in wallet</button>`}
       </div>`);
     // The card's own buttons; "speak" still goes through the app's click handler.
@@ -1266,7 +1266,7 @@
       if (!r.ok) return;
       el.classList.add("is-kept");
       VS.app.bar();
-      b.outerHTML = String(html`<p class="word-pop-state is-new">${icon("check", "icon-sm")} Kept in your wallet · <a href="#/wallet">Open</a></p>`);
+      b.outerHTML = String(html`<p class="word-pop-state is-new">${icon("check", "icon-sm")} Kept in your wallet · <a href="#/wallet?folder=${encodeURIComponent(r.entry.folder)}">Open</a></p>`);
       if (!r.existed) VS.sfx.play("pop");
       const open = pop.querySelector(".word-pop-state a");
       if (open) open.focus({ preventScroll: true });     // the button is gone: focus stays in the card

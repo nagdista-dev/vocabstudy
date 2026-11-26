@@ -339,26 +339,30 @@
       </div>`;
     if (!r.list) return html`<div class="page share-page view-enter">${head("Opening the shared words…", "")}</div>`;
     const L = r.list;
-    if (r.done) return html`
+    if (r.done) {
+      const walletFolder = r.done.folder || "shared";
+      const walletName = VS.store.walletFolderName(walletFolder);
+      return html`
       <div class="page share-page view-enter">
         ${head(r.done.kind === "wallet" ? "Saved for later" : "Added to your words", "")}
         <div class="card share-done">
           <span class="share-done-ico" aria-hidden="true">${icon(r.done.kind === "wallet" ? "wallet" : "check")}</span>
           <h2>${r.done.kind === "wallet"
-            ? html`${VS.plural(r.done.n, "word")} in your wallet`
+            ? html`${VS.plural(r.done.n, "word")} in ${walletName}`
             : html`${VS.plural(r.done.n, "word")} added${r.done.tag ? html` with the tag <b>#${r.done.tag}</b>` : ""}`}</h2>
           <p>${r.done.kind === "wallet"
-            ? "They wait there, with no schedule, until you choose to learn them."
+            ? `They wait in ${walletName}, with no schedule, until you choose to learn them.`
             : VS.autofill.enabled() ? "Anything missing fills in by itself. You can edit any word later." : "You can edit any word later."}</p>
           <div class="row share-done-actions">
             ${r.done.kind === "wallet"
-              ? html`<a class="btn btn-primary btn-lg" href="#/wallet">Open your wallet</a>`
+              ? html`<a class="btn btn-primary btn-lg" href="#/wallet?folder=${encodeURIComponent(walletFolder)}">Open ${walletName}</a>`
               : html`<a class="btn btn-primary btn-lg" href="#/pick/cards${r.done.tag ? "?tag=" + encodeURIComponent(r.done.tag) : ""}">${icon("play", "icon-sm")} Learn them now</a>
                 <a class="btn" href="#/words${r.done.tag ? "?tag=" + encodeURIComponent(r.done.tag) : ""}">See them in Words</a>`}
             ${r.done.kind !== "wallet" && r.done.tag ? html`<a class="btn btn-quiet" href="#/share?tag=${encodeURIComponent(r.done.tag)}">${icon("share", "icon-sm")} Share them on</a>` : ""}
           </div>
         </div>
       </div>`;
+    }
     const have = L.words.filter(mine).length;
     const n = r.picked.size;
     return html`
@@ -396,7 +400,8 @@
             <section class="card share-card share-send">
               <button class="btn btn-primary btn-lg btn-block" type="button" data-action="shared-add" ${n ? "" : VS.raw("disabled")}>
                 ${icon("plus", "icon-sm")}<span data-shared-label="long">Add ${VS.plural(n, "word")} to my words</span></button>
-              <button class="btn btn-block" type="button" data-action="shared-later" ${n ? "" : VS.raw("disabled")}>
+              <button class="btn btn-block" type="button" data-action="shared-later" ${n ? "" : VS.raw("disabled")}
+                title="Keep them in the Shared folder of your wallet">
                 ${icon("wallet", "icon-sm")} Save for later</button>
               <p class="share-private">${icon("check", "icon-sm")}<span>Nothing is added until you choose. The words came inside the link — no server saw them.</span></p>
             </section>
@@ -554,7 +559,7 @@
           if (res.ok && !res.existed) n++;
         });
         VS.sfx.play("pop");
-        r.done = { kind: "wallet", n };
+        r.done = { kind: "wallet", n, folder: "shared" };
         VS.app.render();
         window.scrollTo({ top: 0 });
       },

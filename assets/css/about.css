@@ -501,29 +501,8 @@ h2 { font-size: clamp(1.55rem, 1.25rem + 1.3vw, 2.15rem); line-height: 1.45; }
 .foot a { color: var(--ink-2); }
 .nowrap { white-space: nowrap; }
 
-/* ── The lockup: VocabStudy · For all Arabs · 100% free ────────────────
-   Who it is for and what it costs, in the logo. Beside the wordmark, after a
-   hairline: "For all Arabs" in ink, then "100% free" wearing the app's own
-   highlighter (a half band by day; at night the app's full band with dark
-   text takes over). One line on wider screens; on a phone the two parts
-   stack as two short lines, so the bar never crowds its icons. */
-.brand-text { display: inline-flex; align-items: center; gap: 10px; line-height: 1; }
+/* ── The wordmark ─────────────────────────────────────────────────────
+   Just the name beside the mark: the header keeps its room for the
+   navigation. */
+.brand-text { display: inline-flex; align-items: center; line-height: 1; }
 .brand-name { line-height: 1.1; }
-.brand-tag {
-  display: inline-flex; align-items: center; gap: 6px; padding-inline-start: 10px;
-  border-inline-start: 1px solid var(--line-strong);
-  font-family: var(--font-body, inherit); font-weight: 700; font-size: .875rem; letter-spacing: .005em;
-  line-height: 1.5; color: var(--ink); white-space: nowrap;
-}
-.brand-tag-a { color: var(--ink-2); font-weight: 600; }
-.brand-tag-b::before { content: "·"; margin-inline-end: 6px; color: var(--ink-3); font-weight: 400; }
-.brand-tag .mark {
-  padding: 0 .3em; border-radius: 2px; color: inherit;
-  background: linear-gradient(transparent 55%, var(--mark) 55%, var(--mark) 92%, transparent 92%);
-}
-@media (max-width: 599px) {
-  .brand-text { gap: 8px; }
-  .brand-tag { display: inline-grid; justify-items: start; gap: 0; padding-inline-start: 8px; font-size: .8125rem; line-height: 1.3; }
-  .brand-tag-b::before { content: none; }
-}
-@media (max-width: 359px) { .brand-tag { display: none; } }     /* the smallest phones keep the bar uncrowded */

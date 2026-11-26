@@ -513,12 +513,23 @@ AI panel and puts focus on the first filled field so Save is in reach.
 Words saved for later — typed here, or kept while reading — not a second
 library. Nothing in it is studied or scheduled until the learner chooses.
 
-- **What is kept.** `{ id, word, sentence, source, kind?, arabic?, added }` —
-  the word, the sentence it was met in (optional when typed), where it came
-  from (`kind: "meaning"` when tapped in a definition), the Arabic the learner
-  typed or the word card showed (or the lookup after an English word was typed,
-  Auto-fill on and online only), and the day. The id is the word, so it cannot
-  be kept twice. At most 300.
+- **What is kept.** `{ id, word, sentence, source, kind?, arabic?, folder,
+  added }` — the word, the sentence it was met in (optional when typed), where
+  it came from (`kind: "meaning"` when tapped in a definition), the Arabic the
+  learner typed or the word card showed (or the lookup after an English word was
+  typed, Auto-fill on and online only), its folder, and the day. The id is the
+  word, so it cannot be kept twice. At most 300.
+- **Folders (v19).** `state.walletFolders` is `[{ id, name }]`, built-ins first:
+  `general` → **General** (quick saves), `shared` → **Shared** (a friend's
+  words). Both can be renamed, not deleted; a custom folder can be created,
+  renamed and deleted (its words move to General). Names are trimmed,
+  whitespace-collapsed, 40 characters, unique ignoring case; "All" is reserved
+  and the cap is 50. Every entry carries a folder id. Old saves migrate by
+  `kind === "shared"`; unknown ids fall back the same way. The chosen folder
+  lives in the address (`#/wallet?folder=film`), so a refresh or a link keeps
+  it. Chips are the filing tabs: **All**, every folder with its count, then
+  **New folder**. Header, pocket, search, bulk AI, empty states and **Clear**
+  all follow the selected folder; the tab badge stays the whole wallet.
 - **Three ways in.** The pocket's capture line — one field and `Save`, English
   or Arabic. Arabic is saved exactly as typed, with no lookup and no English
   first: the slip is Arabic until the learner chooses it, and `Make with AI` or
@@ -526,7 +537,8 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   next. English is looked up only when Auto-fill is on. "Add where you met it"
   opens an optional sentence under it; Undo in the toast. Or, reading, tap a
   word in an example or a meaning → the word card → `Keep in wallet`. Or a
-  friend shares a list (`#/shared`).
+  friend shares a list (`#/shared`) and the learner chooses **Save for later**
+  (Shared).
 - **The page (v14): a pocket of slips.** Two columns from 900px — a 340px
   sticky pocket and the slips it holds — and one column on tablets and phones,
   pocket first. The pocket is a card with two stacked slip edges peeking above
@@ -537,9 +549,11 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   (`01`), the word at 17px/700 with the speaker, its Arabic in ink-2, the
   sentence in a soft quote with the word marked, one meta line (where it came
   from · saved when), then the two doors and remove below a hairline. On a phone
-  the doors keep their words and drop their icons. `Clear wallet` is a
-  `danger-link`; empty is `.empty` with a quiet wallet tile. Tokens only, 13px
-  text floor, 44px targets, Light and Night.
+  the doors keep their words and drop their icons. A slip's folder tag opens
+  the move sheet; moving, removing and clearing offer Undo. `Clear wallet` (or
+  `Clear folder`) asks first and clears only what is on screen. Empty is
+  `.empty` with a quiet wallet tile. Tokens only, 13px text floor, 44px targets,
+  Light and Night.
 - **Always reachable.** Desktop: `Wallet` is a labelled link in the top nav
   (app.js `NAV`). Phones and tablets: Wallet is the fifth bottom tab, at the
   end after Recall, and Progress moved into More; the wallet no longer has a
@@ -560,34 +574,35 @@ library. Nothing in it is studied or scheduled until the learner chooses.
   Arabic kept, and Auto-fill completes the rest in the background — edit it any
   time; Undo in the toast. With Auto-fill off it opens the filled-in Add form
   instead (nothing leaves the device). When the word joins the library — even as
-  its base form — it leaves the wallet.
-- **On Today.** The compact box under the plan saves to the wallet, not the
-  library: placeholder `Save a word or phrase`, button `Save`, and one quiet
-  note under it — `English or Arabic · saves to your wallet`, plus
+  its base form — it leaves the wallet. **Make all with AI** works on the
+  selected folder (up to 30), suggests the folder name as the batch tag, and a
+  successful add offers **Study** for that tag.
+- **On Today.** The compact box under the plan saves to the wallet's **General**
+  folder, not the library: placeholder `Save a word or phrase`, button `Save`,
+  and one quiet note under it — `English or Arabic · saves to General`, plus
   `N in your wallet →` while the wallet has words. A pasted English sentence
   (5+ words) still opens Add → From text, and Arabic is checked before that
   route. The first-run box still creates the first library word: its example
   card is the promise that screen is making. The learner decides in the wallet
   when a kept word becomes a library word.
-- **Loss is reversible.** Remove and Keep show Undo; Clear wallet asks in the
-  app's own sheet and offers Undo. Reset progress keeps the wallet; Start over
-  deletes it. Backup includes it; merge unions by id.
+- **Loss is reversible.** Remove, move and Keep show Undo; Clear wallet (or
+  Clear folder) asks in the app's own sheet and offers Undo. Reset progress
+  keeps the wallet and its folders; Start over deletes the wallet and returns
+  to General + Shared. Backup includes the wallet and its folders; merge joins
+  folders by id then name, remaps entries and unions by word.
 
-## The lockup — "For all Arabs · 100% free"
+## The wordmark
 
-The wordmark says who the app is for and what it costs: `VocabStudy` ·
-**For all Arabs · 100% free**, beside it after a hairline, the body face at
-14px — "For all Arabs" in ink-2, "100% free" wearing the app's highlighter (a
-half band by day, the full band with dark text at night). One line on wider
-screens; on phones the two parts stack as two 13px lines; hidden under
-360px. Same lockup in the app bar and on the About page.
+`VocabStudy` beside the brand mark — nothing else. The bar keeps its room for
+the destinations; the name is the whole lockup in the app bar and on the About
+page.
 
 ## The app bar on desktop (≥1024px)
 
-Two groups: the lockup on the left; on the right the destinations, a hairline,
+Two groups: the wordmark on the left; on the right the destinations, a hairline,
 then Settings. No breadcrumbs in the bar (the highlighted link and the page
 title say where you are; phones never showed them). From 1024 to 1199px the
-nav keeps its words and drops its icons, so the lockup always has room.
+nav keeps its words and drops its icons, so the wordmark always has room.
 
 ## Feedback
 
@@ -827,7 +842,8 @@ a menu.
 
 ## The install invitation
 
-A phone-and-tablet card above the tab bar, never a modal:
+A phone-and-tablet modal sheet above the tab bar. It is the one decision on
+screen, so the page behind it dims and waits:
 
 - **When.** Every visit, 3.5s after a browse screen settles, while the app is
   open in a browser. It stays away during an activity, while Settings or a
@@ -836,15 +852,17 @@ A phone-and-tablet card above the tab bar, never a modal:
 - **What.** Chromium gets the real `beforeinstallprompt` and an `Install app`
   button. iOS (including iPadOS reporting a Mac) gets the Share → Add to Home
   Screen steps; other browsers get the menu instruction and a `Got it`
-  button. The card wears the brand mark, not a generic download glyph.
-- **How it behaves.** It never takes focus. `Not now` puts it away for this
-  visit only — there is no stored snooze, so the next launch asks again.
-  Accepting the system prompt sets `installedNow`; `appinstalled` and
+  button. The sheet wears the brand mark, not a generic download glyph.
+- **How it behaves.** It is a native `<dialog>` shown with `showModal()`: the
+  page behind is inert under a `::backdrop` dim, focus is inside the sheet, a
+  tap on the dimmed page or Escape puts it away, and `Not now` does the same
+  for this visit only — there is no stored snooze, so the next launch asks
+  again. Accepting the system prompt sets `installedNow`; `appinstalled` and
   `standalone` end the invitation for good. Settings keeps a permanent
   install entry.
 - **Fit.** ≤700px, or a coarse pointer up to 1023px where the tab bar still
   exists. It is hidden on desktop and on fine-pointer windows wider than
-  700px. At 320 the card is 296px wide; at 390 it is 366px; at 1.25× the text
+  700px. At 320 the sheet is 296px wide; at 390 it is 366px; at 1.25× the text
   wraps without clipping and the bottom gap to the tab bar stays 11px.
 
 ## Motion (`assets/css/motion.css`)
