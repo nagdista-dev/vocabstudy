@@ -1,6 +1,6 @@
 # Search Console, Bing and IndexNow — setup runbook
 
-**Status:** ready to run after the first deploy is approved.
+**Status:** deployed on 2026-11-28; Search Console and Bing verification pending.
 **Canonical domain:** https://vocabstudy.nagdista.com/
 **Sitemap:** https://vocabstudy.nagdista.com/sitemap.xml
 **IndexNow key:** `76c5101da7d1c6ad4a579e18a35016d9`
@@ -244,6 +244,8 @@ mentions and citations; do not chase a single answer.
 | Date | Change | By |
 |---|---|---|
 | 2026-11-28 | Runbook created; technical SEO and 8 pages built; IndexNow key added | Nagdista |
+| 2026-11-28 | Deployed commit `0187daa` to GitHub Pages; all 10 URLs verified `200` | Nagdista |
+| 2026-11-28 | IndexNow submission accepted: `api.indexnow.org` returned `202`, Bing returned `200` | Nagdista |
 
 Add a row whenever verification, sitemap submission, or a significant content
 change happens.
