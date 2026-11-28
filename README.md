@@ -7,8 +7,9 @@ on spaced days (1, 3, 7, 14, 30, 60 days later) until it stays. It ships with
 no words: your library is yours from the first one.
 
 **Open it: https://vocabstudy.nagdista.com/** — then
-*Install app* / *Add to Home Screen*. No account, no ads, no server: your
-words and progress stay on your device, and it works offline.
+*Install app* / *Add to Home Screen*. No account, no ads, and no server that
+stores your words: your words and progress stay on your device, and it works
+offline.
 
 ## How it works
 
@@ -35,13 +36,13 @@ words and progress stay on your device, and it works offline.
 
 ## Made for Arabic speakers
 
-- **The teacher's margin: 111 usage traps.** The mistakes Arab learners make
+- **The teacher's margin: 112 usage traps.** The mistakes Arab learners make
   with a word, and the fix: *depend ~~of~~ on*, *~~borrow~~ lend me*,
   *~~before~~ three years ago*, *I ~~did~~ made a mistake*, *an ~~advice~~*,
   *actually ≠ حالياً*. Written by hand, shipped with the app, no internet.
 - **Use it**: write a sentence about your own life with the word. The app
   marks it like a teacher — on your device: the word is there (any form),
-  it's a full sentence, it isn't copied, and none of the 111 traps is hiding
+  it's a full sentence, it isn't copied, and none of the 112 traps is hiding
   in it ("depends of — you wrote"). If you say yes (it asks once), LanguageTool also reads its
   grammar ("She don't", "I didn't went"). Your sentences come back in Recall.
 - **Goes with**: the words English puts with yours — *heavy* rain, *final*
@@ -132,10 +133,10 @@ Keyboard: `n` new word · `/` search · `Space` flip / reveal / speak · `1`–`
 
 ## Your data stays yours
 
-Everything lives in your browser (localStorage). The app has no server and
-loads nothing from anyone else — fonts, the PDF maker, the QR libraries and the
-word-frequency list ship with it. These use free online services (no account,
-no key), and each one is optional. Google's endpoint is not an official API:
+Everything lives in your browser (localStorage). The app has no server of its
+own and loads no code from anyone else — fonts, the PDF maker, the QR libraries
+and the word-frequency list ship with it. A few features use free online
+services (no account, no key), and each one is optional. Google's endpoint is not an official API:
 when it refuses (too many requests), the app pauses it for a few minutes, fills
 new words from the other dictionaries, says so in Settings, and finishes those
 words when Google answers again:
@@ -164,35 +165,71 @@ on a server. **Backup & export** saves everything to one file — choose the
 folder and name in the save dialog. Restore it on another device, or merge
 phone and laptop. Browsers without a save dialog download the file instead.
 
+## Search and AI discovery
+
+The app is one page. The site also has eight reading pages, in Arabic and
+English, for the questions people actually search:
+
+- what VocabStudy is, who it is for, and its limits;
+- a 2026 comparison of VocabStudy, Anki, Memrise, Quizlet, Duolingo and
+  LanGeek, with a disclosure that we make VocabStudy;
+- a practical guide to memorizing English words;
+- an honest VocabStudy vs Anki comparison.
+
+The Arabic pages live under `/ar/`, the English under `/en/`, each pair linked
+with `hreflang`. Every page has a canonical URL, Open Graph tags, JSON-LD
+(`WebSite`, `SoftwareApplication`, `Article`, `BreadcrumbList`, `FAQPage`,
+`ItemList`) and a visible last-updated date.
+
+For machines, the site publishes `robots.txt`, `sitemap.xml`, `llms.txt`,
+`llms-full.txt`, `facts.md` and `pricing.md`. AI crawlers are allowed on
+purpose. There is still no analytics script: the privacy promise applies to
+the reading pages too.
+
+The pages are generated from `content/<lang>/<slug>.html` by
+`tools/build_guides.py`; edit the fragments, not the generated HTML. The
+strategy, the Search Console/Bing runbook and the launch material are in
+[docs/SEO-STRATEGY.md](docs/SEO-STRATEGY.md), [docs/SEO-SETUP.md](docs/SEO-SETUP.md)
+and [marketing/](marketing/).
+
 ## Run it yourself
 
 No install needed: download the repo and open `index.html`. To change the
 code, rebuild after editing:
 
 ```bash
-python3 tools/build.py    # writes index.html and sw.js, then checks everything
+python3 tools/build.py    # app + reading pages + sitemap + llms-full, then both checks
 python3 tools/check.py    # missing files, unstyled classes, duplicated helpers, usage traps (with Node)
+python3 tools/seo_check.py  # metadata, canonical, hreflang, sitemap, JSON-LD, links, discovery files
+python3 tools/indexnow.py   # dry run; add --submit after a deploy to notify Bing/Yandex
 node tools/test_traps.js  # every usage trap catches its own mistake and leaves good English alone
 ```
 
 ```text
 index.html, sw.js         generated — don't edit (tools/build.py)
+ar/, en/                  generated reading pages — edit content/ instead
+sitemap.xml, llms-full.txt  generated by tools/build_guides.py
 assets/css/               tokens → base → components → screens → motion → glass
 assets/js/core/           library, progress (spaced repetition), filters, auto-fill, speech, importer
 assets/fonts, assets/vendor  self-hosted fonts, PDF maker and QR libraries (tools/vendor.py)
 assets/img/               the desk photographs, bundled as webp so they work offline
 assets/data/frequency.js  the 30,000 most used English words (tools/frequency.py, wordfreq, CC BY-SA 4.0)
 about.html                the Arabic introduction page (the app itself stays English)
+content/ar, content/en    the source fragments for the eight reading pages
 assets/js/views/          one file per screen
 assets/js/app.js          routing, navigation, settings, keyboard
-tools/                    build · check · build_icons · screenshots · templates
-docs/                     architecture, design, learning guide
+tools/                    build · check · seo_check · build_guides · indexnow · screenshots · templates
+docs/                     architecture, design, learning guide, SEO strategy and setup
+marketing/                launch kit and the monthly AI-visibility log
 ```
 
 | Read | to… |
 | --- | --- |
 | [about.html](about.html) | introduce the app to a friend — in Arabic |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | understand how the app boots, routes and schedules recall |
+| [docs/SEO-STRATEGY.md](docs/SEO-STRATEGY.md) | see the keyword map, page map, metrics and 90-day plan |
+| [docs/SEO-SETUP.md](docs/SEO-SETUP.md) | verify Search Console and Bing, submit the sitemap, run IndexNow |
+| [marketing/launch-kit.md](marketing/launch-kit.md) | launch copy for X, LinkedIn, Product Hunt, HN and communities |
 | [DESIGN.md](DESIGN.md) | change colours, fonts, spacing, motion or sounds safely |
 | [docs/LEARN.md](docs/LEARN.md) | learn web development from this codebase (Arabic) |
 | [mcp/README.md](mcp/README.md) | connect Claude, opencode or Cursor (local MCP) |

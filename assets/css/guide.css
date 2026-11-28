@@ -1,0 +1,536 @@
+/* guide.css — the reading pages (hubs, comparisons, guides).
+   Loaded after about.css: same desk, same paper, same highlighter.
+   Only what a long article needs is added here: a headline block, a table of
+   contents, prose rhythm, tables that scroll on a phone, callouts, comparison
+   cards and related links. No new colours, no new fonts. */
+
+/* ── Language ─────────────────────────────────────────────────────────────
+   Arabic pages inherit the Arabic face from about.css. English pages switch
+   the body to the reading face and the headings to the display face. Arabic
+   quoted inside an English page stays Arabic, isolated. */
+html[lang="en"] body {
+  font-family: var(--font-word);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+html[lang="en"] h1,
+html[lang="en"] h2,
+html[lang="en"] h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+html[lang="en"] .lead,
+html[lang="en"] .dek {
+  line-height: 1.7;
+}
+[lang="ar"]:not(html) {
+  font-family: var(--font-arabic);
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+
+/* ── The headline block ───────────────────────────────────────────────── */
+.article-head {
+  display: grid;
+  gap: 12px;
+  padding-block: clamp(26px, 4.5vw, 46px) clamp(10px, 2vw, 18px);
+}
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.breadcrumbs li + li::before {
+  content: "/";
+  color: var(--line-strong);
+  font-family: var(--font-word);
+}
+.breadcrumbs a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.breadcrumbs a:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+.kicker {
+  color: var(--brand);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+}
+.article-head h1 {
+  font-size: clamp(1.95rem, 1.4rem + 2.2vw, 3rem);
+  line-height: 1.35;
+  max-width: 20em;
+}
+html[lang="en"] .article-head h1 {
+  line-height: 1.15;
+  max-width: 22em;
+}
+.dek {
+  color: var(--ink-2);
+  font-size: clamp(1.05rem, 1rem + 0.35vw, 1.2rem);
+  line-height: 1.85;
+  max-width: 64ch;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.meta span + span::before {
+  content: "·";
+  color: var(--line-strong);
+}
+.meta a {
+  color: var(--ink-2);
+}
+
+/* ── The direct answer, before the detail ─────────────────────────────── */
+.answer {
+  display: grid;
+  gap: 8px;
+  margin-block: 6px 4px;
+  padding: clamp(18px, 2.6vw, 24px);
+  border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--line));
+  border-inline-start: 4px solid var(--brand);
+  border-radius: var(--r-lg);
+  background: var(--brand-soft);
+}
+.answer > b,
+.answer > strong {
+  font-size: 1.02rem;
+}
+.answer p {
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.85;
+  max-width: 72ch;
+}
+.answer a {
+  font-weight: 600;
+}
+
+/* ── Table of contents ────────────────────────────────────────────────── */
+.toc {
+  margin-block: 18px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.toc h2 {
+  margin-bottom: 8px;
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+.toc ol {
+  display: grid;
+  gap: 2px 26px;
+  padding-inline-start: 1.35em;
+  list-style: decimal;
+  color: var(--ink-3);
+}
+.toc li {
+  padding-block: 2px;
+}
+.toc a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  color: var(--ink-2);
+  font-size: 0.97rem;
+  line-height: 1.5;
+  text-decoration: none;
+}
+.toc a:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+@media (min-width: 760px) {
+  .toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Prose ────────────────────────────────────────────────────────────── */
+.prose {
+  display: grid;
+  gap: 16px;
+  padding-block: 10px;
+}
+.prose > p,
+.prose > ul,
+.prose > ol,
+.prose > blockquote,
+.prose > .callout,
+.prose > .verdict {
+  max-width: 72ch;
+}
+.prose h2 {
+  margin-top: 20px;
+  font-size: clamp(1.4rem, 1.2rem + 1vw, 1.9rem);
+  line-height: 1.45;
+  max-width: 30ch;
+}
+.prose h3 {
+  margin-top: 10px;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  max-width: 36ch;
+}
+.prose p,
+.prose li {
+  color: var(--ink-2);
+  font-size: 1.02rem;
+  line-height: 1.9;
+}
+html[lang="en"] .prose p,
+html[lang="en"] .prose li {
+  font-size: 1.03rem;
+  line-height: 1.78;
+}
+.prose strong,
+.prose b {
+  color: var(--ink);
+}
+.prose ul,
+.prose ol {
+  display: grid;
+  gap: 7px;
+  padding-inline-start: 1.45em;
+}
+.prose li::marker {
+  color: var(--brand);
+  font-weight: 700;
+}
+.prose a {
+  font-weight: 500;
+  text-underline-offset: 3px;
+}
+.prose blockquote {
+  padding: 4px 0 4px 18px;
+  border-inline-start: 3px solid var(--line-strong);
+  color: var(--ink-2);
+}
+.prose hr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin-block: 8px;
+}
+.prose code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: var(--font-word);
+  font-size: 0.92em;
+}
+
+/* ── Tables: scroll, never squeeze ────────────────────────────────────── */
+.table-wrap {
+  width: 100%;
+  margin-block: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrap:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+.table-wrap table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+.table-wrap table.table-simple {
+  min-width: 0;
+}
+.table-hint {
+  display: none;
+}
+@media (max-width: 760px) {
+  .table-hint {
+    display: block;
+    margin: 0 0 6px;
+    color: var(--ink-3);
+    font-size: 0.86rem;
+  }
+}
+.table-wrap caption {
+  padding: 12px 16px 0;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+  text-align: start;
+}
+.table-wrap th,
+.table-wrap td {
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  text-align: start;
+  vertical-align: top;
+}
+.table-wrap thead th {
+  border-top: 0;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.table-wrap tbody th {
+  color: var(--ink);
+  font-weight: 600;
+}
+.table-wrap tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+}
+.table-wrap .yes { color: var(--good); font-weight: 700; }
+.table-wrap .no { color: var(--bad); font-weight: 700; }
+.table-wrap .part { color: var(--ink-2); font-weight: 600; }
+
+/* ── Callouts ─────────────────────────────────────────────────────────── */
+.callout {
+  display: grid;
+  gap: 5px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.callout b {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.callout p,
+.callout li {
+  font-size: 0.98rem;
+  line-height: 1.8;
+}
+.callout-note {
+  border-color: var(--note-line);
+  background: var(--note-soft);
+}
+.callout-note b { color: var(--note-ink); }
+.callout-warn {
+  border-color: color-mix(in srgb, var(--bad) 28%, var(--line));
+  background: var(--bad-soft);
+}
+.callout-warn b { color: var(--bad); }
+.callout-good {
+  border-color: color-mix(in srgb, var(--good) 26%, var(--line));
+  background: var(--good-soft);
+}
+.callout-good b { color: var(--good); }
+
+/* ── Verdict and comparison cards ─────────────────────────────────────── */
+.verdict {
+  display: grid;
+  gap: 6px;
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--line));
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--brand-soft) 55%, var(--surface));
+}
+.verdict h2,
+.verdict h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.verdict p {
+  max-width: 70ch;
+}
+.compare-grid {
+  display: grid;
+  gap: 12px;
+  margin-block: 8px;
+}
+.app-card {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.app-card h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.15rem;
+}
+.app-card p,
+.app-card li {
+  font-size: 0.97rem;
+  line-height: 1.8;
+}
+.app-card ul {
+  display: grid;
+  gap: 4px;
+  padding-inline-start: 1.25em;
+}
+.app-card .best-for {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.94rem;
+}
+@media (min-width: 820px) {
+  .compare-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+}
+
+/* ── Hub cards and related links ──────────────────────────────────────── */
+.hub-grid,
+.related {
+  display: grid;
+  gap: 12px;
+  margin-block: 10px;
+}
+.hub-card,
+.related a {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color var(--fast), background var(--fast);
+}
+.hub-card:hover,
+.related a:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+}
+.hub-card h3,
+.related h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.5;
+}
+.hub-card p,
+.related p {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+.hub-card .more,
+.related .more {
+  margin-top: 2px;
+  color: var(--brand);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+@media (min-width: 760px) {
+  .hub-grid,
+  .related { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+}
+@media (min-width: 1000px) {
+  .hub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── Screenshots ──────────────────────────────────────────────────────── */
+.shot {
+  display: grid;
+  gap: 8px;
+  margin-block: 10px;
+}
+.shot img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+.shot figcaption {
+  color: var(--ink-3);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ── Small labels and the language switch ─────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: var(--r-sm);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-family: var(--font-word);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+.pill-quiet {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--brand);
+  font-family: var(--font-word);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.lang-switch:hover {
+  background: var(--brand-soft);
+  border-color: color-mix(in srgb, var(--brand) 20%, var(--line));
+}
+
+/* ── The closing card reuses .final from about.css ────────────────────── */
+.final .fine {
+  margin-top: 8px;
+}
+
+/* ── Footer links row ─────────────────────────────────────────────────── */
+.foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+.foot-links a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.foot-links a:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}

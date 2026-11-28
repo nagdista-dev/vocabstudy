@@ -20,3 +20,7 @@ vocabstudy-backup-*.json
 /index.html
 /data/words.js
 /sw.js
+/ar/
+/en/
+/sitemap.xml
+/llms-full.txt

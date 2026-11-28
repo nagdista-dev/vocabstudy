@@ -6,15 +6,84 @@
 <meta name="author" content="Nagdista">
 <meta name="description" content="{{DESCRIPTION}}">
 <meta name="theme-color" content="#f3f5f9">
-<meta property="og:title" content="VocabStudy">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+<link rel="canonical" href="https://vocabstudy.nagdista.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="VocabStudy">
+<meta property="og:title" content="{{TITLE}}">
 <meta property="og:description" content="{{DESCRIPTION}}">
 <meta property="og:image" content="https://vocabstudy.nagdista.com/assets/icons/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="VocabStudy — keep every English word you meet.">
 <meta property="og:url" content="https://vocabstudy.nagdista.com/">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ar_EG">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
+<meta name="twitter:image" content="https://vocabstudy.nagdista.com/assets/icons/og.png">
 <title>{{TITLE}}</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://vocabstudy.nagdista.com/#website",
+      "url": "https://vocabstudy.nagdista.com/",
+      "name": "VocabStudy",
+      "alternateName": "VocabStudy for Arabic speakers",
+      "inLanguage": ["en", "ar"],
+      "publisher": {"@id": "https://vocabstudy.nagdista.com/#organization"}
+    },
+    {
+      "@type": "Person",
+      "@id": "https://vocabstudy.nagdista.com/#person",
+      "name": "Nagdista",
+      "url": "https://nagdista.com/",
+      "sameAs": ["https://github.com/nagdista-dev"]
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://vocabstudy.nagdista.com/#organization",
+      "name": "VocabStudy",
+      "alternateName": "VocabStudy for Arabic speakers",
+      "url": "https://vocabstudy.nagdista.com/",
+      "founder": {"@id": "https://vocabstudy.nagdista.com/#person"},
+      "sameAs": ["https://github.com/nagdista-dev/vocabstudy"]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://vocabstudy.nagdista.com/#app",
+      "name": "VocabStudy",
+      "alternateName": "VocabStudy for Arabic speakers",
+      "applicationCategory": "EducationalApplication",
+      "applicationSubCategory": "English vocabulary learning",
+      "operatingSystem": "Any (web browser)",
+      "url": "https://vocabstudy.nagdista.com/",
+      "description": "A free, open-source English vocabulary app for Arabic speakers: add your own words, learn Arabic-speaker usage traps, and recall them on spaced days. No account, works offline.",
+      "inLanguage": "en",
+      "availableLanguage": ["ar", "en"],
+      "isAccessibleForFree": true,
+      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+      "license": "https://opensource.org/licenses/MIT",
+      "sameAs": ["https://github.com/nagdista-dev/vocabstudy"]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://vocabstudy.nagdista.com/#webpage",
+      "url": "https://vocabstudy.nagdista.com/",
+      "name": "VocabStudy — English vocabulary app for Arabic speakers",
+      "description": "Free app for Arabic speakers learning English: add your words, then recall them on spaced days so they stick.",
+      "inLanguage": "en",
+      "isPartOf": {"@id": "https://vocabstudy.nagdista.com/#website"},
+      "about": {"@id": "https://vocabstudy.nagdista.com/#app"},
+      "primaryImageOfPage": {"@type": "ImageObject", "url": "https://vocabstudy.nagdista.com/assets/icons/og.png"}
+    }
+  ]
+}
+</script>
 <link rel="icon" href="{{ROOT}}assets/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="{{ROOT}}manifest.webmanifest">
 <link rel="apple-touch-icon" href="{{ROOT}}assets/icons/apple-touch-icon.png">
@@ -48,7 +117,7 @@ try { var s = JSON.parse(localStorage.getItem("vocabstudy") || "{}").settings ||
   </div>
 </header>
 <main id="view" tabindex="-1">
-  <noscript><p class="page">VocabStudy needs JavaScript to run.</p></noscript>
+  <noscript><p class="page">VocabStudy needs JavaScript to run. You can <a href="{{ROOT}}ar/">read about it in Arabic</a> or <a href="{{ROOT}}en/">in English</a>.</p></noscript>
 </main>
 <nav class="tab-bar" id="tabBar" aria-label="Main"></nav>
 <dialog class="sheet" id="settings" aria-labelledby="settingsTitle"></dialog>

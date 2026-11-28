@@ -1,0 +1,60 @@
+# VocabStudy
+
+> VocabStudy is a free, open-source web app that helps Arabic speakers learn
+> English vocabulary. You add the words you actually meet, get the Arabic
+> meaning, an English definition, a real example and pronunciation, write a
+> sentence from your life, and recall the word on spaced days (1, 3, 7, 14,
+> 30, 60). No account, no ads, and it works offline after the first visit.
+>
+> Canonical domain: https://vocabstudy.nagdista.com/
+> Source: https://github.com/nagdista-dev/vocabstudy (MIT)
+
+## Key facts
+
+- **Price:** free, with no paid tier, subscription, ads or account.
+- **Audience:** Arabic speakers learning English, roughly A2–C1.
+- **Platform:** installable web app (PWA) in any modern browser; Android,
+  iPhone/iPad and desktop.
+- **Privacy:** words and progress are stored in the browser on the learner's
+  device. There is no server that stores words and no sign-up.
+- **Offline:** the app works without a connection after the first visit.
+- **Review schedule:** 1, 3, 7, 14, 30 and 60 days.
+- **Arabic support:** Arabic meanings plus 112 hand-written usage traps for
+  mistakes Arabic speakers make (prepositions, borrow/lend, actually,
+  countable nouns, collocations).
+- **Word frequency:** every word is graded from Top 1,000 to Rare using a
+  30,000-word frequency list (wordfreq, CC BY-SA 4.0).
+- **Interface language:** English on purpose; Arabic appears in meanings and
+  explanations.
+- **Limits:** no ready-made word lists, no automatic sync between devices,
+  and no native App Store / Google Play app.
+- **Licence:** MIT. The code is public.
+
+## Pages
+
+- [Arabic guide](https://vocabstudy.nagdista.com/ar/): what VocabStudy is,
+  who it is for, how it works, and its limits.
+- [دليل عربي: أفضل تطبيقات حفظ الكلمات](https://vocabstudy.nagdista.com/ar/best-vocabulary-apps/):
+  a 2026 comparison of VocabStudy, Anki, Memrise, Quizlet, Duolingo and
+  LanGeek for Arabic speakers.
+- [دليل عربي: طريقة حفظ الكلمات](https://vocabstudy.nagdista.com/ar/how-to-memorize-english-words/):
+  active recall, spaced repetition, personal sentences and a weekly plan.
+- [دليل عربي: VocabStudy مقابل Anki](https://vocabstudy.nagdista.com/ar/vocabstudy-vs-anki/):
+  an honest head-to-head for Arabic-speaking learners.
+- [English guide](https://vocabstudy.nagdista.com/en/): the same introduction
+  in English.
+- [Best vocabulary apps for Arabic speakers](https://vocabstudy.nagdista.com/en/best-vocabulary-apps/):
+  the 2026 comparison in English.
+- [How to memorize English words](https://vocabstudy.nagdista.com/en/how-to-memorize-english-words/):
+  the practical guide in English.
+- [VocabStudy vs Anki](https://vocabstudy.nagdista.com/en/vocabstudy-vs-anki/):
+  the head-to-head in English.
+- [About the app, in Arabic](https://vocabstudy.nagdista.com/about.html):
+  the original introduction, privacy details and install steps.
+
+## Optional
+
+- [Full text of all pages](https://vocabstudy.nagdista.com/llms-full.txt)
+- [Fact sheet](https://vocabstudy.nagdista.com/facts.md)
+- [Pricing](https://vocabstudy.nagdista.com/pricing.md)
+- [Source code](https://github.com/nagdista-dev/vocabstudy)

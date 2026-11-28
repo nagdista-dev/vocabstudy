@@ -110,9 +110,15 @@ def render(root: str, title: str, description: str, body_attrs: str) -> str:
     return page
 
 
-# Everything the published app needs — and nothing else (no tools, no docs).
-SITE_FILES = ["index.html", "about.html", "sw.js", "manifest.webmanifest", ".nojekyll", "CNAME"]   # CNAME: pins the GitHub Pages custom domain (vocabstudy.nagdista.com)
-SITE_DIRS = ["assets"]
+# Everything the published site needs — and nothing else (no tools, no docs).
+# CNAME pins the GitHub Pages custom domain (vocabstudy.nagdista.com).
+SITE_FILES = [
+    "index.html", "about.html", "sw.js", "manifest.webmanifest", ".nojekyll", "CNAME",
+    # Search and AI discovery
+    "robots.txt", "sitemap.xml", "llms.txt", "llms-full.txt", "facts.md", "pricing.md",
+    "76c5101da7d1c6ad4a579e18a35016d9.txt",   # IndexNow key
+]
+SITE_DIRS = ["assets", "ar", "en"]
 
 
 def collect_site() -> None:
@@ -153,14 +159,20 @@ def write_service_worker() -> None:
 
 def main() -> int:
     (ROOT / "index.html").write_text(
-        render("", "VocabStudy — vocabulary with spaced recall",
+        render("", "VocabStudy — English vocabulary app for Arabic speakers",
                "Free app for Arabic speakers learning English: add your words, then recall them on spaced days so they stick.", ""),
         encoding="utf-8")
     write_service_worker()
+    # The reading pages, sitemap and llms-full.txt live beside the app.
+    sys.path.insert(0, str(ROOT / "tools"))
+    import build_guides
+    build_guides.build()
     if "--site" in sys.argv:
         collect_site()
-    print("built index.html and sw.js")
-    return subprocess.run([sys.executable, str(ROOT / "tools" / "check.py")]).returncode
+    print("built index.html, sw.js and reading pages")
+    app = subprocess.run([sys.executable, str(ROOT / "tools" / "check.py")])
+    seo = subprocess.run([sys.executable, str(ROOT / "tools" / "seo_check.py")])
+    return app.returncode or seo.returncode
 
 
 if __name__ == "__main__":
