@@ -293,8 +293,20 @@ form as its other fields. A word can carry as many tags as the learner wants.
 
 ## Adding words with AI (`views/import.js`, `views/shared.js`)
 
-The "With AI" tab has one shared ask row: **ChatGPT**, **Claude** and **Copy
-prompt** (`VS.aiAsk`, the same component in the "Fill it in with AI" panel).
+The "With AI" tab is a four-step checklist. `st.ai.step` (1–4) is the only
+state; each `li.ai-flow-step` gets `is-done`, `is-current` or `is-next`, only
+the current panel is unhidden, and a done step folds to a one-line receipt with
+`Edit`. `showStep(n, { note, focus })` is the single mover: it updates the
+classes, `aria-current`, panels, receipts, the live region, and focus
+(`title`, `words`, `paste` or `review`). Copy or open calls
+`showStep(3, { focus: "paste" })`; a paste that parses at least one row calls
+`showStep(4, { focus: "review" })`; typing never moves. Step 4 focuses the tags
+field and scrolls the review bar to the start, so the rows are not under the
+fixed Add bar. Step 1 values live in `st.ai` (`words`, `topic`, `ar`, `count`,
+`mode`) and are cleared on tab and group switches.
+
+The ask row is shared: **ChatGPT**, **Claude** and **Copy prompt**
+(`VS.aiAsk`, the same component in the "Fill it in with AI" panel).
 ChatGPT and Claude open with the prompt already typed; Copy is for Gemini or
 any other chat. The prompt asks for one block per word — or two blocks for one
 English word with two common meanings, each with its own Arabic — carrying
@@ -304,13 +316,20 @@ or JSON, and keeps at most three tags per word. The learner can then edit each r
 tags — untick one, or add "Tags for all", which merges into every added word.
 The review marks each row **Ready**, **Another meaning**, **In your library**
 or **Needs Arabic** using the same Arabic-aware duplicate rule as the store; a
-blocked row cannot be added. Nothing is saved until **Add N words**.
+blocked row cannot be added. Nothing is saved until **Add N**.
 
 A closed row is one line: `views/shared.js` adds the full text as a `title`,
 and `views/library.css` clips the headword and the Arabic with an ellipsis.
 Opening the `<details>` switches both to normal wrapping, so the full meaning
 is readable on a phone; `views/import.js` applies the same single-line rule to
 "Just added" rows. There is no `is-long` branch — one rule at every width.
+
+**Add N** is the fixed bar on a phone and the inline toolbar action on a wide
+screen. After a successful save the view sets `location.hash = "#/words"` and
+`VS.celebrateAdded` marks the new rows, so the library is the next thing the
+learner sees. `app.js`'s `nudgeWanted()` reads `#aiFlow`'s `data-ai-step` and
+suppresses the install sheet while the wizard is past step 1; `showStep` also
+removes a sheet that is already open.
 
 ## Installable app (PWA)
 

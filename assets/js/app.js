@@ -373,7 +373,11 @@
 
   function nudgeWanted() {
     const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-    return !isStandalone() && !installedNow && phoneOnly() && !typing
+    // The guided AI add is a task in progress: a modal that steals focus
+    // between steps is the opposite of help. It can wait for a later visit.
+    const flow = document.querySelector("#aiFlow");
+    const aiBusy = !!flow && Number(flow.dataset.aiStep) > 1;
+    return !isStandalone() && !installedNow && phoneOnly() && !typing && !aiBusy
       && document.body.dataset.mode !== "activity"
       && !document.querySelector("#settings[open], dialog[open]:not(#installNudge), .update-bar, .toast.is-on");
   }

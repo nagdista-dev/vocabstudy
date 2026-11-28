@@ -470,7 +470,15 @@ close button and the backdrop close it; focus returns to the row that asked.
 ## Add words with AI (`#/add`, the With AI tab)
 
 Four numbered steps: your words → ask the AI → paste its answer → check and
-add. The ask row is the same component in both AI places (`VS.aiAsk`): three
+add. They are a checklist, not a form: only the current step is open; a finished
+step folds to a one-line receipt with `Edit`, and the steps ahead are titles
+only, dimmed. Copying the prompt or opening a chat moves straight to Paste; a
+paste that parses at least one word moves straight to Check. Typing never moves
+the page on its own, and each step that needs a decision keeps its own Next
+button. The new step's heading takes focus and the live region says
+`Step N of 4 — …`, so a screen reader hears the move.
+
+The ask row is the same component in both AI places (`VS.aiAsk`): three
 provider cards — ChatGPT with the OpenAI knot, Claude with its starburst, and
 `Copy prompt` for Gemini or any chat. Each mark sits in its own soft tile
 (mint for ChatGPT, terracotta for Claude; both lighten at night); at 480px the
@@ -494,27 +502,38 @@ alone. A dash (`—`) means "nothing honest to say", never an empty field to fil
 with invention.
 
 **Checking the answer.** The answer lands as a numbered card per meaning, with
-the sense label beside the headword and type · level · IPA underneath. A sticky
-toolbar above the cards carries the learner's `Tags for this batch` and the
-ready count; the cards themselves start closed as `<details>`, so ten words are
-ten quiet lines instead of a wall of fields. Opening one shows the meaning
-first — Arabic, sense, definition, example — then type, level, IPA, and
-`More of the card`: similar, opposite, word partners, memory hook, and a boxed
-`Mistake to avoid` with Wrong / Right / Why. `Add N words` waits in a bar fixed
-above the phone tab bar, so it never scrolls with the cards; on a wide screen
-the toolbar carries the same action. Each card has one checkbox outside its
-`<details>`, so ticking it never opens the card; its status chip says
-**Ready**, **Another meaning**, **Needs Arabic**, **In your library** or
-**Repeated**. A word already kept with another Arabic meaning says **Another
+the sense label beside the headword and type · level · IPA underneath. On a
+phone a long headword keeps its own line and the status chip wraps below it;
+the IPA is a single unit, so it moves to its own line rather than splitting
+mid-symbol. A sticky toolbar above the cards carries the learner's `Tags for
+this batch` and the ready count; the cards themselves start closed as
+`<details>`, so ten words are ten quiet lines instead of a wall of fields.
+Opening one shows the meaning first — Arabic, sense, definition, example — then
+type, level, IPA, and `More of the card`: similar, opposite, word partners,
+memory hook, and a boxed `Mistake to avoid` with Wrong / Right / Why. `Add N`
+waits in a bar fixed above the phone tab bar, so it never scrolls with the
+cards; on a wide screen the toolbar carries the same action. Each card has one
+checkbox outside its `<details>`, so ticking it never opens the card; its status
+chip says **Ready**, **Another meaning**, **Needs Arabic**, **In your library**
+or **Repeated**. A word already kept with another Arabic meaning says **Another
 meaning** and keeps its fields; a duplicate of the same headword and the same
 Arabic says **In your library** and folds them away. The sense label names a
 meaning, but the Arabic is what decides whether two cards are the same word.
+When a paste adds nothing, the line under the box says why: already in the
+library, or a second meaning still missing its Arabic.
 
 **Copy is never a dead end.** `Copy prompt` uses the Clipboard API, falls back
 to the old selection trick, and if the browser blocks both, opens a sheet with
 the prompt already selected plus `Try again`. It never writes the prompt into
 the learner's answer box. In Edit, a parsed answer fills the fields, closes the
 AI panel and puts focus on the first filled field so Save is in reach.
+
+**After Add.** A successful batch opens `#/words` at once, with the new words
+marked, so the learner sees what they just made instead of an empty form. The
+wizard returns to step 1 with empty fields for the next batch; the batch tags
+stay, because a study session usually keeps the same tag. The install
+invitation is removed as soon as the wizard leaves step 1 — a sheet that steals
+focus between steps is the opposite of help.
 
 ## The wallet (`#/wallet`)
 

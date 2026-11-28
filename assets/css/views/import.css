@@ -202,13 +202,62 @@
 
 .add-form .is-filled { border-color: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
 
-/* ── Add → With AI: four numbered steps — words, prompt, answer, cards ── */
+/* ── Add → With AI: a guided four-step checklist ─────────────────────
+   One open step at a time. A 1px rail in the number margin carries the
+   progress; a completed step folds to a one-line receipt with Edit.
+   The rail is drawn per step and reaches the next node, so a tall open
+   panel never pulls the line past the last step. */
 .ai-add { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); margin-top: var(--s-4); }
-.ai-add .ai-step { margin-top: var(--s-2); }
-.ai-add .ai-step:first-child { margin-top: 0; }
-.ai-add-words, .ai-add .ai-fill, .ai-add .ai-review, .ai-in-row, .ai-add .ai-ask {
-  margin-inline-start: calc(26px + var(--s-3));
+.ai-flow-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.ai-flow-step { position: relative; min-width: 0; padding-block: var(--s-2); }
+.ai-flow-step:first-child { padding-block-start: 0; }
+.ai-flow-step:last-child { padding-block-end: 0; }
+.ai-flow-step:not(:last-child)::before {
+  content: ""; position: absolute; z-index: 0;
+  inset-inline-start: 13px; top: 21px; bottom: -21px;
+  width: 1px; background: var(--line);
 }
+.ai-flow-head { display: flex; align-items: flex-start; gap: var(--s-3); min-width: 0; }
+.ai-flow-n {
+  position: relative; z-index: 1; display: grid; place-items: center; flex: none;
+  width: 26px; height: 26px; border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--ink-3);
+  box-shadow: 0 0 0 4px var(--surface);
+  font-size: var(--text-xs); font-weight: 700;
+}
+.ai-flow-n .icon { width: 14px; height: 14px; }
+.ai-flow-step.is-current .ai-flow-n { background: var(--brand); color: var(--on-brand); }
+.ai-flow-step.is-done .ai-flow-n { background: var(--brand-soft); color: var(--brand); }
+.ai-flow-headtext { display: grid; gap: 2px; flex: 1; min-width: 0; padding-block-start: 3px; }
+.ai-flow-title {
+  margin: 0; font-size: var(--text-sm); font-weight: 700; line-height: 1.35;
+  color: var(--ink); scroll-margin-top: calc(var(--bar-h) + var(--s-3));
+}
+.ai-flow-title:focus { outline: none; }   /* a heading is announced, not operated */
+.ai-flow-step.is-next .ai-flow-title { color: var(--ink-2); font-weight: 600; }
+.ai-flow-desc { margin: 0; font-size: var(--text-xs); line-height: 1.5; color: var(--ink-3); }
+.ai-flow-step.is-done .ai-flow-desc, .ai-flow-step.is-next .ai-flow-desc { display: none; }
+.ai-flow-receipt {
+  display: none; margin: 0; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--text-xs); color: var(--ink-3);
+}
+.ai-flow-step.is-done .ai-flow-receipt { display: block; }
+.ai-flow-edit {
+  display: none; flex: none; align-items: center; min-height: var(--tap);
+  margin-block: calc(var(--s-2) * -1); padding: 0 var(--s-2);
+  border: 0; border-radius: var(--r-sm); background: none;
+  font: inherit; font-size: var(--text-xs); font-weight: 700; color: var(--brand); cursor: pointer;
+}
+.ai-flow-step.is-done .ai-flow-edit { display: inline-flex; }
+.ai-flow-edit:hover { background: var(--brand-soft); }
+.ai-flow-panel { margin-inline-start: calc(26px + var(--s-3)); padding-block: var(--s-2) var(--s-3); min-width: 0; }
+.ai-flow-panel[hidden] { display: none; }
+.ai-flow-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin-top: var(--s-3); }
+.ai-flow-next { min-height: var(--tap); }
+.ai-flow-next .icon { margin-inline-start: 2px; }
+.ai-flow-alt { margin: var(--s-3) 0 0; font-size: var(--text-xs); color: var(--ink-3); }
+.ai-flow-alt .link-btn { min-height: 32px; padding: 0; font-size: inherit; font-weight: 700; color: var(--brand); }
 .ai-add-words textarea {
   width: 100%; min-height: 84px; padding: var(--s-3); resize: vertical;
   border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
@@ -240,12 +289,14 @@
 .ai-row-check input { width: 18px; height: 18px; accent-color: var(--brand); }
 .ai-row-details { flex: 1; min-width: 0; }
 .ai-row-summary {
+  position: relative;
   display: flex; align-items: flex-start; gap: var(--s-2); min-height: 52px;
-  padding: 10px 0; list-style: none; cursor: pointer; flex-wrap: wrap;
+  padding: 10px 0; padding-inline-end: calc(16px + var(--s-2));
+  list-style: none; cursor: pointer; flex-wrap: wrap;
 }
 .ai-row-n { margin-top: 3px; }
 .ai-row-status { margin-top: 1px; }
-.ai-row-chev { margin-top: 6px; }
+.ai-row-chev { position: absolute; inset-inline-end: 0; top: 16px; margin: 0; }
 .ai-row-summary::-webkit-details-marker { display: none; }
 /* The number is a margin mark, not content: it keeps the eye on one card
    while the answer may hold four. */
@@ -254,10 +305,11 @@
   font-size: var(--text-2xs); font-variant-numeric: tabular-nums;
   color: var(--ink-3); letter-spacing: .04em;
 }
-.ai-row-title { display: flex; align-items: baseline; gap: 4px var(--s-2); min-width: 0; flex: 1; flex-wrap: wrap; }
-.ai-row-title b { font-size: var(--text-md); color: var(--ink); }
+.ai-row-title { display: flex; align-items: baseline; gap: 4px var(--s-2); flex: 1 1 6ch; min-width: 0; flex-wrap: wrap; }
+.ai-row-title b { font-size: var(--text-md); color: var(--ink); overflow-wrap: anywhere; }
 .ai-row-sense { font-size: var(--text-xs); font-style: italic; color: var(--ink-2); }
-.ai-row-meta { font-size: var(--text-xs); color: var(--ink-3); }
+.ai-row-meta { font-size: var(--text-xs); color: var(--ink-3); min-width: 0; }
+.ai-row-ipa { display: inline-block; max-width: 100%; overflow-wrap: anywhere; font-family: var(--font-ipa); }
 .ai-row-status {
   display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
   border-radius: var(--r-sm); font-size: var(--text-2xs); font-weight: 700; white-space: nowrap;
@@ -311,6 +363,7 @@
 .ai-review-bar {
   display: flex; align-items: flex-end; gap: var(--s-2) var(--s-3);
   margin-bottom: var(--s-3); flex-wrap: wrap;
+  scroll-margin-top: calc(var(--bar-h) + var(--s-3));
 }
 .ai-review-bar .ai-tags { flex: 1 1 220px; }
 .ai-add-compact { flex: none; align-self: end; min-width: 88px; }
@@ -343,7 +396,11 @@
 .ai-in select { min-width: 84px; font-size: var(--text-sm); }
 
 @media (max-width: 599px) {
-  .ai-add-words, .ai-add .ai-fill, .ai-add .ai-review, .ai-in-row, .ai-add .ai-ask { margin-inline-start: 0; }
+  /* On a phone the numbered rows are the progress; the rail would eat the
+     26px the answer and the review cards need. */
+  .ai-flow-step:not(:last-child)::before { display: none; }
+  .ai-flow-panel { margin-inline-start: 0; }
+  .ai-flow-actions .btn { width: 100%; }
   .ai-add-btn { width: 100%; }
   .ai-add-bar .ai-add-btn { width: auto; }
   .ai-row { padding: 0; }

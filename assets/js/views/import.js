@@ -24,7 +24,7 @@
 
   const st = {
     tab: "ai",                    // ai | type | text | paste | files
-    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "", ctx: {}, fromFolder: "" },   // ctx: words from the wallet → { id, context, arabic, source }; fromFolder: a wallet-folder batch, for the Study toast   // With AI
+    ai: { mode: "words", words: "", topic: "", count: 10, ar: "", answer: "", rows: [], tags: "", ctx: {}, fromFolder: "", step: 1, via: "" },   // ctx: words from the wallet → { id, context, arabic, source }; fromFolder: a wallet-folder batch, for the Study toast; step: the open wizard step; via: how the prompt left (ChatGPT / Claude / copied)   // With AI
     collect: { text: "", source: "", picked: new Set(), done: "" },   // From text
     text: "", parsed: null, saved: "",
     files: [],                    // [{ name, rows }]
@@ -225,7 +225,26 @@
     return { kind: "ok", text: "Ready" };
   }
   const aiRowBlocked = (info) => info.kind !== "ok" && info.kind !== "another";
+  /** How many checked rows can really be added — duplicates and rows without
+      the Arabic that tells meanings apart don't count. */
+  function aiAddable() {
+    const rows = st.ai.rows;
+    const infos = rows.map((r, i) => aiRowInfo(r, rows, i));
+    return rows.filter((r, i) => r.keep && !aiRowBlocked(infos[i])).length;
+  }
+  /** What to announce on the way into step 4: ready words, or words to fix. */
+  function aiStepNote() {
+    const n = aiAddable();
+    return n ? VS.plural(n, "word") + " ready" : VS.plural(st.ai.rows.length, "word") + " to check";
+  }
   const AI_STATUS_ICON = { ok: "check", another: "plus", needar: "translate", dup: "book", repeat: "copy", bad: "x" };
+  /** Type · level · IPA, with the pronunciation kept as one unit so a long
+      transcription moves to its own line instead of splitting mid-symbol. */
+  function aiRowMeta(r) {
+    const head = [r.type, r.level].filter(Boolean).join(" · ");
+    if (!r.ipa) return head;
+    return html`${head}${head ? " · " : ""}<span class="ai-row-ipa">${r.ipa}</span>`;
+  }
 
   /** Step 4: one closed row per word from the AI's answer — open, edit,
       untick, then add them all. Tags sit above the rows and are the
@@ -260,7 +279,7 @@
                   <span class="ai-row-n" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
                   <span class="ai-row-title"><b>${VS.cap(r.word)}</b>
                     ${r.sense ? html`<i class="ai-row-sense">${r.sense}</i>` : ""}
-                    <span class="ai-row-meta">${[r.type, r.level, r.ipa].filter(Boolean).join(" · ")}</span></span>
+                    <span class="ai-row-meta">${aiRowMeta(r)}</span></span>
                   <span class="ai-row-status is-${info.kind}" data-ai-status>${icon(AI_STATUS_ICON[info.kind] || "info", "icon-sm")}${info.text}</span>
                   <span class="ai-row-chev" aria-hidden="true">${icon("chevron-right", "icon-sm")}</span>
                 </summary>
@@ -310,8 +329,8 @@
       </ul>
       <div class="ai-add-bar">
         <span class="ai-add-ready"><b data-add-count>${n}</b> ${n === 1 ? "word" : "words"} ready</span>
-        <button class="btn btn-primary btn-lg ai-add-btn" type="button" data-action="ai-add" ${n ? "" : VS.raw("disabled")}>
-          ${icon("plus", "icon-sm")}<span data-add-label>${n === 1 ? "Add 1 word" : "Add " + n + " words"}</span></button>
+        <button class="btn btn-primary btn-lg ai-add-btn" type="button" data-action="ai-add" aria-label="Add the checked words" ${n ? "" : VS.raw("disabled")}>
+          ${icon("plus", "icon-sm")}<span data-add-label>Add ${n}</span></button>
       </div>`;
   }
 
@@ -339,10 +358,10 @@
     VS.$$('[data-action="ai-add"]', review).forEach((btn) => {
       btn.disabled = !n;
       const label = btn.querySelector("[data-add-label]");
-      if (label) label.textContent = btn.classList.contains("ai-add-compact")
-        ? "Add " + n
-        : (n === 1 ? "Add 1 word" : "Add " + n + " words");
+      if (label) label.textContent = "Add " + n;
     });
+    const receipt = VS.$('[data-ai-receipt="3"]');
+    if (receipt) receipt.textContent = aiReceipt(3);
   }
 
   /* ── The three AI tabs: With AI (your words) · By topic · From Arabic ──
@@ -355,6 +374,21 @@
     const m = st.ai.mode;
     if (!VS.profileSet()) return false;        // level and Arabic come first: the AI writes for them
     return m === "topic" ? !!st.ai.topic.trim() : m === "arabic" ? aiArabic().length > 0 : aiWords().length > 0;
+  }
+  /** The one thing missing from step 1: say it and put the cursor there. */
+  function aiWhy() {
+    if (!VS.profileSet()) {
+      VS.toast("Choose your level and Arabic first.");
+      const chip = VS.$(".me-chip");
+      if (chip) chip.focus();
+      return;
+    }
+    const m = st.ai.mode;
+    VS.toast(m === "topic" ? "Type a topic first." : m === "arabic" ? "Type the Arabic words first." : "Type your words first.");
+    const field = m === "topic" ? VS.$('[data-ai-in="topic"]')
+      : m === "arabic" ? VS.$('[data-ai-in="ar"]')
+      : VS.$("[data-ai-words]");
+    if (field) field.focus();
   }
   function aiPromptNow() {
     const m = st.ai.mode;
@@ -390,39 +424,159 @@
     topic: ["Your topic", "The AI picks the most useful words about it, at your level."],
     arabic: ["Arabic words", "The AI finds the natural English for each one."],
   };
-  function aiTab() {
-    const ready = aiReady();
-    const title = ready ? "" : VS.profileSet() ? "Fill in step 1 first" : "Choose your level and Arabic first";
+  const AI_STEP_TITLES = ["", "", "Ask the AI", "Paste its answer", "Check, then add"];
+  const AI_STEP_DESCS = {
+    2: "Open a chat with the prompt already typed — one complete card per meaning.",
+    3: "Copy the AI's reply and paste it here — no tags needed.",
+    4: "Change anything, or untick one to skip it. Tags are yours alone — the batch field is above.",
+  };
+  const aiStepTitle = (n) => (n === 1 ? AI_ONE[st.ai.mode][0] : AI_STEP_TITLES[n]);
+  const aiStepDesc = (n) => (n === 1 ? AI_ONE[st.ai.mode][1] : AI_STEP_DESCS[n]);
+  const aiList = (list, sep, max) => {
+    const shown = list.slice(0, max).join(sep);
+    return shown + (list.length > max ? ` +${list.length - max}` : "");
+  };
+  /** A one-line receipt under a completed step: what was entered or done. */
+  function aiReceipt(n) {
+    if (n === 1) {
+      if (st.ai.mode === "topic") {
+        const t = st.ai.topic.trim();
+        return t ? `${t} · ${st.ai.count} words` : "No topic yet";
+      }
+      if (st.ai.mode === "arabic") {
+        const a = aiArabic();
+        return a.length ? aiList(a, "، ", 3) : "No Arabic yet";
+      }
+      const w = aiWords();
+      return w.length ? aiList(w, ", ", 3) : "No words yet";
+    }
+    if (n === 2) return st.ai.via || "Prompt ready";
+    if (n === 3) {
+      if (st.ai.rows.length) return VS.plural(st.ai.rows.length, "word") + " pasted";
+      return st.ai.answer.trim() ? "Answer pasted" : "No answer yet";
+    }
+    return "";
+  }
+  function aiStepHead(n, step) {
+    const done = n < step;
+    const id = "aiStepTitle" + n;
     return html`
-      <div class="ai-add">
-        ${VS.levelPick()}
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">1</span>
-          <div class="ai-step-copy"><b>${AI_ONE[st.ai.mode][0]}</b><span>${AI_ONE[st.ai.mode][1]}</span></div>
+      <div class="ai-flow-head">
+        <span class="ai-flow-n" aria-hidden="true">${done ? icon("check", "icon-sm") : n}</span>
+        <div class="ai-flow-headtext">
+          <h2 class="ai-flow-title" id="${id}" tabindex="-1">${aiStepTitle(n)}</h2>
+          <p class="ai-flow-desc">${aiStepDesc(n)}</p>
+          <p class="ai-flow-receipt" data-ai-receipt="${n}">${aiReceipt(n)}</p>
         </div>
-        ${aiStepOne()}
-
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">2</span>
-          <div class="ai-step-copy"><b>Ask the AI</b><span>Open a chat with the prompt already typed — one complete card per meaning.</span></div>
-        </div>
+        ${n < 4 ? html`<button class="ai-flow-edit" type="button" data-action="ai-step" data-step="${n}"
+          aria-label="Edit step ${n}: ${aiStepTitle(n)}">Edit</button>` : ""}
+      </div>`;
+  }
+  function aiStepBody(n, ready) {
+    if (n === 1) return html`
+      ${aiStepOne()}
+      <div class="ai-flow-actions">
+        <button class="btn btn-primary ai-flow-next" type="button" data-action="ai-next" data-next="2">
+          <span>Next: ask the AI</span>${icon("arrow-right", "icon-sm")}
+        </button>
+      </div>`;
+    if (n === 2) {
+      const title = ready ? "" : VS.profileSet() ? "Fill in step 1 first" : "Choose your level and Arabic first";
+      return html`
         ${VS.aiAsk({ openAction: "ai-open", copyAction: "add-ai-copy", disabled: !ready, title })}
-
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">3</span>
-          <div class="ai-step-copy"><b>Paste its answer</b><span>Copy the AI's reply and paste it here — no tags needed.</span></div>
-        </div>
-        <div class="ai-fill">
-          <textarea class="ai-fill-input" rows="4" dir="auto" data-ai-add aria-label="The AI's answer"
-            placeholder="word: …&#10;arabic: …&#10;definition: …">${st.ai.answer}</textarea>
-          <p class="ai-fill-status" aria-live="polite" hidden></p>
-        </div>
-
-        <div class="ai-step">
-          <span class="ai-step-n" aria-hidden="true">4</span>
-          <div class="ai-step-copy"><b>Check, then add</b><span>Change anything, or untick one to skip it. Tags are yours alone — the batch field is above.</span></div>
-        </div>
-        <div class="ai-review" id="aiReview">${aiReview()}</div>
+        <p class="ai-flow-alt">Already have the answer?
+          <button class="link-btn" type="button" data-action="ai-step" data-step="3" data-via="paste">Paste it</button></p>`;
+    }
+    if (n === 3) return html`
+      <div class="ai-fill">
+        <textarea class="ai-fill-input" rows="4" dir="auto" data-ai-add aria-label="The AI's answer"
+          placeholder="word: …&#10;arabic: …&#10;definition: …">${st.ai.answer}</textarea>
+        <p class="ai-fill-status" aria-live="polite" hidden></p>
+      </div>
+      <div class="ai-flow-actions">
+        <button class="btn btn-primary ai-flow-next" type="button" data-action="ai-next" data-next="4">
+          <span>Check the words</span>${icon("arrow-right", "icon-sm")}
+        </button>
+      </div>`;
+    return html`<div class="ai-review" id="aiReview">${aiReview()}</div>`;
+  }
+  /** Move the wizard to step n in place: no re-render, so every typed value
+      survives, the open panel is the only one in the tab order, and focus
+      lands on the new step's heading (or the paste box). */
+  function showStep(n, opts) {
+    opts = opts || {};
+    const root = VS.$("#aiFlow");
+    n = Math.min(4, Math.max(1, Number(n) || 1));
+    const prev = st.ai.step;
+    st.ai.step = n;
+    // The install invitation must not sit over a step the learner is working
+    // through; it can wait for a browse screen.
+    if (n > 1) {
+      const nudge = document.getElementById("installNudge");
+      if (nudge) { if (nudge.open) nudge.close(); nudge.remove(); }
+    }
+    if (!root) return;
+    root.dataset.aiStep = String(n);
+    VS.$$(".ai-flow-step", root).forEach((li) => {
+      const i = Number(li.dataset.aiStep);
+      const current = i === n;
+      li.classList.toggle("is-current", current);
+      li.classList.toggle("is-done", i < n);
+      li.classList.toggle("is-next", i > n);
+      if (current) li.setAttribute("aria-current", "step");
+      else li.removeAttribute("aria-current");
+      const panel = li.querySelector(".ai-flow-panel");
+      if (panel) panel.hidden = !current;
+      const receipt = li.querySelector("[data-ai-receipt]");
+      if (receipt && i < n) receipt.textContent = aiReceipt(i);
+    });
+    const live = VS.$("[data-ai-live]", root);
+    if (live && n !== prev) {
+      live.textContent = (opts.note ? opts.note + ". " : "") +
+        "Step " + n + " of 4 — " + aiStepTitle(n);
+    }
+    if (n !== prev) {
+      const target = opts.focus === "paste" ? VS.$("[data-ai-add]", root)
+        : opts.focus === "words" ? (VS.$("[data-ai-words]", root) || VS.$('[data-ai-in="topic"]', root) || VS.$('[data-ai-in="ar"]', root))
+        : opts.focus === "review" ? (VS.$("[data-ai-tags]", root) || VS.$("#aiStepTitle" + n, root))
+        : VS.$("#aiStepTitle" + n, root);
+      if (target) {
+        if (opts.focus === "review") {
+          // The tags field is visible in the viewport but under the fixed Add
+          // bar; bring the whole review bar to the top, not just the input.
+          target.focus({ preventScroll: true });
+          const bar = VS.$(".ai-review-bar", root);
+          if (bar) bar.scrollIntoView({ block: "start" });
+        } else if (opts.focus === "paste") {
+          // The box is the task now: center it rather than leaving its bottom
+          // under the tab bar (and the phone keyboard about to open).
+          target.focus({ preventScroll: true });
+          target.scrollIntoView({ block: "center" });
+        } else target.focus();
+      }
+    }
+  }
+  function aiTab() {
+    st.ai.step = Math.min(4, Math.max(1, Number(st.ai.step) || 1));
+    const step = st.ai.step;
+    const ready = aiReady();
+    return html`
+      <div class="ai-add" id="aiFlow" data-ai-step="${step}">
+        ${VS.levelPick()}
+        <p class="sr-only" data-ai-live aria-live="polite"></p>
+        <ol class="ai-flow-list" aria-label="Adding words with AI">
+          ${[1, 2, 3, 4].map((n) => {
+            const state = n < step ? "is-done" : n === step ? "is-current" : "is-next";
+            return html`
+            <li class="ai-flow-step ${state}"
+                data-ai-step="${n}" ${n === step ? VS.raw('aria-current="step"') : ""}>
+              ${aiStepHead(n, step)}
+              <div class="ai-flow-panel" id="aiStepPanel${n}" role="group" aria-labelledby="aiStepTitle${n}" ${n === step ? "" : VS.raw("hidden")}>
+                ${aiStepBody(n, ready)}
+              </div>
+            </li>`;
+          })}
+        </ol>
       </div>`;
   }
 
@@ -654,7 +808,7 @@
       st.tab = "ai-ar";
       st.ai.ctx = {};
       st.ai.fromFolder = "";
-      Object.assign(st.ai, { ar: d.ar, answer: "", rows: [], walletIds: (d.items || []).map((e) => e.id) });
+      Object.assign(st.ai, { ar: d.ar, answer: "", rows: [], walletIds: (d.items || []).map((e) => e.id), step: 1, via: "" });
       return;
     }
     if (d.ai) {
@@ -671,7 +825,7 @@
         id: e.id, context: e.sentence || "", arabic: e.arabic || "",
         source: e.source ? (e.kind === "meaning" ? "From the meaning of " : "From the example for ") + VS.cap(e.source) : "",
       }; });
-      Object.assign(st.ai, { words: d.items.map((e) => e.word).join("\n"), answer: "", rows: [] });
+      Object.assign(st.ai, { words: d.items.map((e) => e.word).join("\n"), answer: "", rows: [], step: 1, via: "" });
       return;
     }
     st.tab = "type";
@@ -932,12 +1086,32 @@
         if (status && st.ai.rows.length) {
           status.hidden = false;
           status.classList.toggle("is-ok", fine.length > 0);
+          const kinds = infos.map((i) => i.kind);
+          const missingAr = kinds.some((k) => k === "needar" || k === "bad");
+          const allThere = kinds.every((k) => k === "dup" || k === "repeat");
           status.innerHTML = fine.length
-            ? String(html`${icon("check", "icon-sm")}<span><b>${VS.plural(fine.length, "word")} ready</b>${skipped ? " — " + skipped + " skipped" : ""} — check them below.</span>`)
-            : String(html`${icon("info", "icon-sm")}<span>Nothing can be added yet — give each second meaning its own Arabic.</span>`);
+            ? String(html`${icon("check", "icon-sm")}<span><b>${VS.plural(fine.length, "word")} ready</b>${skipped ? " — " + skipped + " skipped" : ""} — check ${fine.length === 1 ? "it" : "them"} in the next step.</span>`)
+            : allThere
+              ? String(html`${icon("book", "icon-sm")}<span>Nothing new here — ${st.ai.rows.length === 1 ? "this word is" : "these words are"} already in your library.</span>`)
+              : missingAr
+                ? String(html`${icon("info", "icon-sm")}<span>Nothing can be added yet — give each second meaning its own Arabic.</span>`)
+                : String(html`${icon("info", "icon-sm")}<span>Nothing can be added yet — the reasons are on the next step.</span>`);
         }
       };
-      if (aiBox) aiBox.addEventListener("input", readAnswer);
+      if (aiBox) {
+        aiBox.addEventListener("input", readAnswer);
+        // A paste is one deliberate act: read it, and when it holds words,
+        // open the review without making the learner find the Next button.
+        // Typing never moves the page on its own.
+        aiBox.addEventListener("paste", () => {
+          setTimeout(() => {
+            readAnswer();
+            if (st.ai.rows.length && st.ai.step === 3) {
+              showStep(4, { note: aiStepNote(), focus: "review" });
+            }
+          }, 0);
+        });
+      }
       if (review) {
         review.addEventListener("input", (e) => {
           const i = e.target.dataset.aiRow;
@@ -961,26 +1135,46 @@
 
     actions: {
       async "add-ai-copy"(el) {
-        if (!aiReady()) { VS.toast(!VS.profileSet() ? "Choose your level and Arabic first." : st.ai.mode === "words" ? "Type your words first." : "Fill in step 1 first."); return; }
+        if (!aiReady()) { aiWhy(); return; }
         if (st.ai.mode === "words" && aiWords().some((w) => VS.isArabicTyping(w))) { VS.toast("Type the English words — the AI adds the Arabic."); return; }
-        await VS.copyWithFeedback(aiPromptNow(), el, "Your prompt");
+        st.ai.via = "Copy prompt";
+        const ok = await VS.copyWithFeedback(aiPromptNow(), el, "Your prompt");
+        if (ok) { st.ai.via = "Prompt copied"; showStep(3, { note: "Prompt copied", focus: "paste" }); }
       },
       /* A new chat with the prompt already typed (both read ?q=). The prompt is
          copied too, so a long one — or Gemini — still works with one paste. */
       "ai-open"(el) {
-        if (!aiReady()) { VS.toast(!VS.profileSet() ? "Choose your level and Arabic first." : "Fill in step 1 first."); return; }
+        if (!aiReady()) { aiWhy(); return; }
         if (st.ai.mode === "words" && aiWords().some((w) => VS.isArabicTyping(w))) { VS.toast("Arabic? Use “From Arabic”."); return; }
+        st.ai.via = el.dataset.to === "claude" ? "Claude" : "ChatGPT";
         VS.aiOpen(el.dataset.to, aiPromptNow());
+        showStep(3, { note: st.ai.via + " opened", focus: "paste" });
+      },
+      "ai-next"(el) {
+        const to = Number(el.dataset.next) || 1;
+        if (to === 2 && !aiReady()) { aiWhy(); return; }
+        if (to === 4 && !st.ai.rows.length) {
+          VS.toast("Paste the AI's answer first.");
+          const box = VS.$("[data-ai-add]");
+          if (box) box.focus();
+          return;
+        }
+        showStep(to, { note: to === 4 ? aiStepNote() : "", focus: to === 4 ? "review" : "title" });
+      },
+      "ai-step"(el) {
+        const n = Number(el.dataset.step) || 1;
+        if (el.dataset.via === "paste") st.ai.via = "Pasted directly";
+        showStep(n, { focus: n === 1 ? "words" : n === 3 ? "paste" : "title" });
       },
       "import-group"(el) {
         const g = Number(el.dataset.value);
         if (g === groupOf(st.tab)) return;
         const tab = lastIn[g] || TAB_GROUPS[g][2][0][0];
-        Object.assign(st.ai, { answer: "", rows: [], walletIds: [] });
+        Object.assign(st.ai, { answer: "", rows: [], walletIds: [], step: 1, via: "" });
         st.tab = tab; lastIn[g] = tab; st.saved = ""; VS.app.render();
       },
       "import-tab"(el) {
-        if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [], walletIds: [], fromFolder: "" });
+        if (el.dataset.value !== st.tab) Object.assign(st.ai, { answer: "", rows: [], walletIds: [], fromFolder: "", step: 1, via: "" });
         st.tab = el.dataset.value; lastIn[groupOf(st.tab)] = st.tab; st.saved = ""; VS.app.render();
       },
       "ai-add"() {
@@ -1012,8 +1206,9 @@
         if (r.needsArabic.length) VS.toast(`“${r.needsArabic[0].word}” is already in your library — add this meaning's Arabic to keep a second word.`);
         else if (!r.added.length) { VS.toast("Those words and meanings are already in your library."); VS.app.render(); return; }
         // Added: every field is empty again, ready for the next words (tags kept on purpose).
-        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {}, walletIds: [], fromFolder: "" });
-        VS.app.render();
+        Object.assign(st.ai, { words: "", topic: "", ar: "", answer: "", rows: [], ctx: {}, walletIds: [], fromFolder: "", step: 1, via: "" });
+        // The new words are the point: show them at once in the whole library.
+        location.hash = "#/words";
         // A batch from a wallet folder can be studied at once. The tag is
         // whatever is in the field (the folder's name, unless edited).
         if (!r.needsArabic.length && r.added.length && fromFolder && batchTag) {
