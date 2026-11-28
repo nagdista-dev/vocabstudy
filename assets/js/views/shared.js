@@ -1772,29 +1772,33 @@
     /**
      * One row in a word list: a button that opens the whole word card, and a
      * delete button beside it (never inside it — a row is one action, delete is
-     * another). Three fixed lines keep every row the same height: word + muted
-     * sense, one clipped example, one meta line.
+     * another). The row reads word, optional sense, one clipped example, one
+     * meta line. The sense gets its own line so a long one is readable instead
+     * of fighting the headword for the same width.
      */
     wordRow(w) {
       const s = VS.store.status(w.id);
       const state = s === "mastered" ? "Mastered" : s === "learning" ? "Learning" : "New";
       const waiting = VS.autofill.pending(w.id);
+      const sense = VS.ui.senseOf(w);
       return html`
         <div class="word-row ${VS.justAdded.has(w.id) ? "just-added" : ""}" data-status="${s}" data-id="${w.id}">
           <button class="word-row-open" type="button" data-action="word-open" data-id="${w.id}" aria-haspopup="dialog">
-            <span class="word-row-word">
-              <i class="word-row-dot" aria-hidden="true"></i>
-              <b title="${w.word}">${VS.cap(w.word)}</b>
-              ${VS.ui.senseOf(w) ? html`<span class="sense">(${VS.ui.senseOf(w).toLowerCase()})</span>` : ""}
-            </span>
-            ${w.example ? html`<span class="word-row-ex" dir="auto" title="${w.example}">${w.example}</span>` : html`<span class="word-row-ex is-empty" aria-hidden="true"></span>`}
-            <span class="word-row-meta">
-              ${waiting ? html`<span class="word-row-filling">${navigator.onLine ? "Filling in…" : "Fills in when online"}</span>`
-                : html`<span class="word-row-state" data-s="${s}">${state}</span>`}<span class="word-row-sep" aria-hidden="true">·</span>
-              ${w.check && w.check.kind === "spelling" ? "" : html`<span>${w.type}${w.level ? " · " + w.level : ""}</span>`}
-              ${w.check && w.check.kind === "spelling" ? "" : VS.frequency.band(w) ? html`<span class="word-row-freq">${VS.frequency.band(w).label}</span>` : ""}
-              ${VS.ui.checkFlag(w)}
-              ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
+            <i class="word-row-dot" aria-hidden="true"></i>
+            <span class="word-row-text">
+              <span class="word-row-head">
+                <b title="${w.word}">${VS.cap(w.word)}</b>
+                ${sense ? html`<span class="sr-only">, meaning </span><span class="sense" title="${sense}">${sense.toLowerCase()}</span>` : ""}
+              </span>
+              ${w.example ? html`<span class="word-row-ex" dir="auto" title="${w.example}">${w.example}</span>` : ""}
+              <span class="word-row-meta">
+                ${waiting ? html`<span class="word-row-filling">${navigator.onLine ? "Filling in…" : "Fills in when online"}</span>`
+                  : html`<span class="word-row-state" data-s="${s}">${state}</span>`}<span class="word-row-sep" aria-hidden="true">·</span>
+                ${w.check && w.check.kind === "spelling" ? "" : html`<span>${w.type}${w.level ? html` · <span class="word-row-level ${VS.levelGroup(w.level)}" title="CEFR level">${w.level}</span>` : ""}</span>`}
+                ${w.check && w.check.kind === "spelling" ? "" : VS.frequency.band(w) ? html`<span class="word-row-freq">${VS.frequency.band(w).label}</span>` : ""}
+                ${VS.ui.checkFlag(w)}
+                ${VS.store.note(w.id) ? html`<span class="word-row-note" title="You wrote a note on this word">${icon("bulb", "icon-sm")}</span>` : ""}
+              </span>
             </span>
           </button>
           <button class="icon-btn word-row-del" type="button" data-action="word-delete" data-id="${w.id}"
@@ -1810,6 +1814,7 @@
     wordCard(w) {
       const s = VS.store.status(w.id);
       const e = VS.store.word(w.id);
+      const sense = VS.ui.senseOf(w);
       const tips = VS.soundTraps(w);
       const traps = VS.usageTraps(w);
       const mine = w.mine || [];
@@ -1845,7 +1850,7 @@
               <div class="word-card-hero">
                 <div class="word-card-hero-main">
                   <div class="word-card-title-row">
-                    <h2 class="word-card-title" id="wordCardTitle">${VS.ui.headword(w)}</h2>
+                    <h2 class="word-card-title" id="wordCardTitle"><span>${VS.cap(w.word)}</span>${sense ? html`<span class="sense">${sense.toLowerCase()}</span>` : ""}</h2>
                     ${VS.ui.speakButton(w.word, `Hear “${w.word}”`)}
                   </div>
                   ${w.ipa ? html`<div class="word-card-sound">${VS.ui.ipa(w)}</div>` : ""}
@@ -1881,8 +1886,9 @@
                   : html`<p class="hint">No definition yet.
                       <button class="link-btn" type="button" data-action="word-edit" data-id="${w.id}">Add a definition</button></p>`}
                 ${VS.autofill.enabled() ? html`<button class="word-other" type="button" data-action="meaning-list" data-id="${w.id}" aria-expanded="false">${w.definition ? "Other meanings" : "Find a meaning"}</button>` : ""}
-                <div class="meanings" aria-live="polite"></div>
-                ${example}`)}
+                <div class="meanings" aria-live="polite"></div>`)}
+
+              ${sec("example", "Example", "المثال", example)}
 
               ${w.context ? sec("context", "In context", "في السياق", VS.ui.context(w)) : ""}
 

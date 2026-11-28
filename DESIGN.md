@@ -391,14 +391,18 @@ with 22-letter words and long Arabic meanings:
 - Textareas never resize by hand; they grow with the text.
 - Choices never hide off-screen: the status filter scrolls with an edge fade,
   and its sheet drops to one column when a select needs the width.
-- Word rows are three fixed lines: the headword with its muted `(sense)` on
-  the first, a one-line ellipsised example on the second, status · type ·
-  level · frequency on the third. A visible 44px delete sits at the end, a
-  sibling of the row button. The headword never gives way to its sense — the
-  sense clips first — so rows keep the same height at 320 and at 1280. The
-  Arabic is deliberately absent (v16): it is the reward for opening the word
-  card, not a label in the list. The same rule holds for "Just added" rows on
-  Add.
+- Word rows read in one stack, all on one left edge: the status dot hangs in
+  a 7px gutter; the headword, its short sense (lower-case, no brackets), a
+  one-line ellipsised example in the card's serif italic, then status · type ·
+  level · frequency. The sense gets the full row width and up to two lines
+  before it clips, so a longer gloss stays readable instead of fighting the
+  headword for space; the card holds the full text. A word with no example has
+  no empty line, so the row is simply shorter. Hover or keyboard focus tints
+  the whole slip and sweeps the card's highlighter under the headword; the CEFR
+  level keeps the card's colour. A visible 44px delete sits at the end, a
+  sibling of the row button. The Arabic is deliberately absent (v16): it is
+  the reward for opening the word card, not a label in the list. The same rule
+  holds for "Just added" rows on Add.
 - Week strips shorten "Today" to "Now" at ≤360px so seven labels never collide;
   charts use the same 2xs labels.
 
@@ -416,21 +420,24 @@ close button and the backdrop close it; focus returns to the row that asked.
   a single hairline divides chapters — no boxes, no stacked cards.
 - **Hero.** The headword in the spelling face (`--font-word`), letter by
   letter, with one highlighter swipe under it; the speaker sits beside it. The
-  IPA follows, then type · level · frequency as one quiet line without chips.
-  Under it, the `In Arabic · مثلاً` line starts on the left: a quiet label, a
-  hairline dot, then the Arabic at `--ink-2` in its own face. The two languages
-  are separated by whitespace, not a rule.
+  short sense follows as a quiet subtitle under the word — no brackets, one
+  line where it fits. The IPA follows, then type · level · frequency as one
+  quiet line without chips. Under it, the `In Arabic · مثلاً` line starts on
+  the left: a quiet label, a hairline dot, then the Arabic at `--ink-2` in its
+  own face. The two languages are separated by whitespace, not a rule.
 - **Tags and actions.** Tags are plain `#hashtags` with a dotted underline;
   `Edit`, `Share` and `Delete` are three equal text actions (icon + word,
   44px) with no fills. Delete turns red only on hover/focus.
-- **Bilingual chapter heads.** `Meaning · المعنى`, `In context · في السياق`,
-  `Memory · الذاكرة`, `Your sentences · جُملك`, `Good to know · للمعرفة`. The
-  English title uses the display face; the Arabic gloss is small and quiet.
-- **Meaning and the example.** The definition is the largest reading text.
-  `Other meanings` is a quiet brand link. The example is a serif italic pull
-  quote without a bar; one quiet row under it holds `Hear it` and
-  `More examples`. More examples open in the same chapter with a thin rule at
-  the start, each with its own speaker, and end with the Tatoeba credit.
+- **Bilingual chapter heads.** `Meaning · المعنى`, `Example · المثال`,
+  `In context · في السياق`, `Memory · الذاكرة`, `Your sentences · جُملك`,
+  `Good to know · للمعرفة`. The English title uses the display face; the
+  Arabic gloss is small and quiet.
+- **Meaning, then Example.** The definition is the largest reading text and
+  keeps a 52ch measure. `Other meanings` is a quiet brand link. The example is
+  its own labelled chapter, a serif italic pull quote without a bar; one quiet
+  row under it holds `Hear it` and `More examples`. More examples open in the
+  same chapter with a thin rule at the start, each with its own speaker, and
+  end with the Tatoeba credit.
 - **Paper for what the learner owns.** `In context`, `Memory` and `My note`
   share the same cream paper. The note is a ruled line, not a grey input inside
   a card, and saves when it loses focus. `Your sentences` lists their own lines
@@ -796,8 +803,9 @@ the chat never hides behind a dialog.
 
 The quiet-Arabic rule holds across the new work: Arabic is `--ink-2` on the
 word page and `--ink-3` in list rows, never bolder than the English it
-supports; a sense is always lower-case, muted and in parentheses beside its
-headword.
+supports; in the list and the card a sense is lower-case and muted, stacked
+under its headword without brackets — a second line in the row, a subtitle in
+the card.
 
 ## A tapped word (the word card)
 

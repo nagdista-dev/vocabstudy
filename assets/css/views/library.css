@@ -179,51 +179,74 @@
   display: grid; grid-template-columns: minmax(0, 1fr) 44px;
   align-items: center;
   background: var(--surface); border: 0; border-top: 1px solid var(--line); border-radius: 0;
+  transition: background var(--fast);
 }
 .word-row:first-child { border-top: 0; }
-/* Three fixed lines — word, one clipped example, meta — so every row is the
-   same height whether the example is long, short or missing. The Arabic is
+/* Three stacked lines — word and its sense, one clipped example, meta — with
+   the status dot hanging in its own gutter. Every line starts on the same
+   left edge, so the eye reads one column instead of three indents. A missing
+   example simply leaves no line; rows are allowed to be shorter. The Arabic is
    not one of them: the list stays English, and the card is where the
    translation appears. */
 .word-row-open {
-  display: grid; grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "word" "ex" "meta";
-  align-items: center; row-gap: 2px;
-  width: 100%; min-height: 86px; padding: 9px 4px 9px var(--s-4);
+  display: grid; grid-template-columns: 7px minmax(0, 1fr);
+  align-items: start; column-gap: var(--s-2);
+  width: 100%; padding: 9px 4px 9px var(--s-4);
   font: inherit; color: inherit; text-align: start; cursor: pointer;
-  transition: background var(--fast);
 }
 .word-row-open:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; border-radius: var(--r-lg); }
 @media (hover: hover) {
-  /* A slip lifted off the tray: visible enough to read as a rectangle, never
-     a second card competing with the words. */
-  .word-row-open:hover { background: color-mix(in srgb, var(--surface-2) 62%, var(--surface)); }
+  /* A slip lifted off the tray — the whole slip, including the delete
+     column, so the tint has no cut edge. */
+  .word-row:hover,
+  .word-list:has(> .word-row) > .word-row:hover { background: color-mix(in srgb, var(--surface-2) 62%, var(--surface)); }
 }
-.word-row-word { grid-area: word; display: flex; align-items: baseline; gap: 5px; min-width: 0; }
-/* The English headword never gives way to its sense: the sense is the
-   margin note, so it is the one that clips when the line runs out. */
-.word-row-word b {
-  flex: 0 0 auto; max-width: 100%; min-width: 0; font-weight: 600;
+/* The keyboard path gets the same slip, whether focus is on the word or the
+   delete beside it. */
+.word-row:focus-within,
+.word-list:has(> .word-row) > .word-row:focus-within { background: color-mix(in srgb, var(--surface-2) 62%, var(--surface)); }
+/* The text column: headword and sense, the example, the facts. The gap is the
+   only rhythm; no line reserves space for a line that is not there. */
+.word-row-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+/* The headword and its sense stack: the sense no longer steals the headword's
+   line, so a long one can use the full width underneath. */
+.word-row-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; min-width: 0; }
+/* The English headword stays on one line. On hover or keyboard focus the
+   highlighter from the word card sweeps under it — the list's one flourish,
+   and a quiet sign that the whole row is the way in. */
+.word-row-head b {
+  width: fit-content; max-width: 100%; min-width: 0; font-weight: 600;
+  line-height: 1.3; padding-inline: .06em; margin-inline: -.06em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background-image: linear-gradient(transparent 62%, color-mix(in srgb, var(--mark) 46%, transparent) 62%);
+  background-repeat: no-repeat; background-size: 0% 100%;
+  transition: background-size 220ms cubic-bezier(.2, .8, .2, 1);
 }
-/* The sense in brackets names the meaning; it must never compete with the
-   word itself. Same weight as a margin note, a step quieter than the meta. */
-.word-row-word .sense {
-  flex: 0 1 auto; min-width: 0;
-  color: var(--ink-3); font-weight: 400; font-size: .86em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.word-row-open:hover .word-row-head b,
+.word-row-open:focus-visible .word-row-head b { background-size: 100% 100%; }
+/* The sense names the meaning. It gets two lines of its own instead of
+   clipping beside the word; the card holds the full text. No brackets: the
+   smaller, quieter line and its place under the headword already say what it
+   is, and a long sense reads as a sentence rather than a footnote. */
+.word-row-head .sense {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  line-clamp: 2; overflow: hidden;
+  color: var(--ink-2); font-size: var(--text-sm); font-weight: 400;
+  line-height: 1.42; letter-spacing: .001em; text-wrap: pretty;
+  overflow-wrap: anywhere;
 }
 /* Auto-fill is still working: a quiet English status where the state would
    be, so the row never pretends to be finished. */
 .word-row-filling { color: var(--ink-3); font-weight: 500; }
-/* One example line under the word. It never wraps; the full sentence is in
-   the card, and the title attribute shows it on hover. */
+/* One example line under the word: the card's serif pull quote, set small.
+   It never wraps; the full sentence is in the card, and the title attribute
+   shows it on hover. */
 .word-row-ex {
-  grid-area: ex; min-width: 0;
-  color: var(--ink-2); font-size: var(--text-sm); font-style: italic; line-height: 1.45;
+  min-width: 0;
+  color: var(--ink-2); font-family: var(--font-ipa); font-size: var(--text-sm);
+  font-style: italic; line-height: 1.5;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.word-row-ex.is-empty { min-height: 1.45em; }
 /* Delete is visible without hovering: a row can be removed from the list. */
 .word-row-del {
   justify-self: center; width: 40px; height: 40px; min-width: 40px;
@@ -231,17 +254,18 @@
 }
 .word-row-del:hover, .word-row-del:focus-visible { color: var(--bad); background: var(--bad-soft); }
 @media (pointer: coarse) { .word-row-del { width: 44px; height: 44px; min-width: 44px; } }
-/* One status treatment at every width: a dot by the word and the word
+/* One status treatment at every width: a dot in the gutter and the word
    "New / Learning / Mastered" leading the meta line (V3.8). */
 .word-row-dot {
-  display: block; flex: none; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--line-strong); align-self: flex-start; margin-top: .48em;
+  display: block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--line-strong); align-self: start; justify-self: start;
+  margin-top: .48em;
 }
 .word-row[data-status="learning"] .word-row-dot { background: var(--mark); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-mark) 28%, transparent); }
 .word-row[data-status="mastered"] .word-row-dot { background: var(--good); }
 .word-row-meta {
-  grid-area: meta; min-width: 0;
-  font-size: var(--text-2xs); color: var(--ink-3);
+  min-width: 0;
+  font-size: var(--text-2xs); color: var(--ink-3); line-height: 1.5;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .word-row-meta .icon { display: inline; vertical-align: -3px; width: 13px; height: 13px; }
@@ -251,6 +275,12 @@
 .word-row-state { font-weight: 600; }
 .word-row-state[data-s="learning"] { color: var(--on-mark-soft); }
 .word-row-state[data-s="mastered"] { color: var(--good); }
+/* The CEFR level keeps the card's colour language: a small, meaningful
+   accent in an otherwise grey fact line. */
+.word-row-level { font-weight: 600; }
+.word-row-level.lvl-a { color: var(--lvl-a); }
+.word-row-level.lvl-b { color: var(--lvl-b); }
+.word-row-level.lvl-c { color: var(--lvl-c); }
 .word-row-sep { margin-inline: 3px; color: var(--line-strong); }
 
 /* ── The word's reading column ──────────────────────────────────
@@ -337,9 +367,8 @@
 @media (max-width: 599px) { .word-edit-mistake-grid { grid-template-columns: 1fr; } }
 
 @media (max-width: 1023px) {
-  .word-row-open { padding-inline-start: 14px; }
-  .word-row-word { gap: 7px; }
-  .word-row-word b { font-size: 1rem; line-height: 1.35; }
+  .word-row-open { padding-inline-start: 14px; column-gap: 6px; }
+  .word-row-head b { font-size: 1rem; line-height: 1.35; }
   .word-row-meta { font-size: var(--text-2xs); line-height: 1.35; }
   .word-row-freq { white-space: nowrap; }
   .word-row-note { display: none; }

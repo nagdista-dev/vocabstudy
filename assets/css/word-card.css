@@ -84,7 +84,7 @@ html.word-card-open body { overflow: hidden; }
   background: var(--card-paper);
 }
 .word-card-hero-main { grid-area: main; min-width: 0; }
-.word-card-title-row { display: flex; align-items: center; justify-content: flex-start; gap: var(--s-3); }
+.word-card-title-row { display: flex; align-items: flex-start; justify-content: flex-start; gap: var(--s-3); }
 /* The word being learned wears the spelling face, never the display face:
    the learner is reading it letter by letter. */
 .word-card-title {
@@ -107,11 +107,16 @@ html.word-card-open body { overflow: hidden; }
   background-image: none; background-color: var(--mark); color: var(--on-mark);
   border-radius: 4px;
 }
+/* The sense is the word's subtitle: under the headword, never a bracket
+   fighting the title for width. Long senses wrap and the full meaning lives
+   in the Meaning chapter below. */
 .word-card-title .sense {
-  font-family: var(--font-body); font-size: .48em; font-weight: 500;
-  letter-spacing: 0; color: var(--ink-3); white-space: nowrap;
+  display: block; margin-top: .38em;
+  font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500;
+  letter-spacing: 0; color: var(--ink-3); white-space: normal;
+  line-height: 1.4; text-wrap: pretty;
 }
-.word-card-title-row .speak-btn { margin-top: 2px; }
+.word-card-title-row .speak-btn { margin-top: .18em; }
 .word-card-sound { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; margin-top: 5px; }
 .word-card-sound .ipa { font-size: 1.05rem; }
 /* Type, level and frequency in one quiet line — a dot between facts, not a
@@ -197,14 +202,15 @@ html.word-card-open body { overflow: hidden; }
 }
 .word-card-sec .word-check { margin: 0; }
 
-/* The meaning and its example read as one chapter. */
+/* The meaning stands alone; the example is its own chapter below. The
+   definition keeps the app's reading measure (52ch) so a desktop line never
+   runs the full width of the card. */
 .word-card-sec[data-sec="meaning"] .word-definition {
-  max-width: 64ch; margin: 0;
+  max-width: 52ch; margin: 0;
   font-size: var(--text-md); font-weight: 500; line-height: 1.6;
   text-wrap: pretty;
 }
-.word-card-sec[data-sec="meaning"] .word-example { margin-top: var(--s-2); }
-.word-card-sec[data-sec="meaning"] .word-ex-tools { margin-top: 2px; padding-inline-start: 0; }
+.word-card-sec[data-sec="example"] .word-ex-tools { padding-inline-start: 0; }
 
 /* The example is a pull quote from a dictionary: serif, italic, no bar. */
 .word-card .word-example { display: block; }
