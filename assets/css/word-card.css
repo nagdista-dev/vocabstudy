@@ -162,9 +162,12 @@ html.word-card-open body { overflow: hidden; }
 .word-card-tags .tag:hover { background: none; color: var(--brand); text-decoration-color: var(--brand); }
 .word-card-hero .word-check { margin: 0; }
 
-/* Three quiet text actions, one line, one height. The icon and the word are
+/* The card's actions: one quiet line, one height. The icon and the word are
    the affordance; the underline is the hover, not a permanent box. */
 .word-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4); }
+/* The three older actions stay together when the line is too narrow for all
+   four: the AI action moves to its own line instead of orphaning Delete. */
+.word-card-more { display: inline-flex; flex: none; flex-wrap: wrap; align-items: center; gap: var(--s-4); max-width: 100%; }
 .word-card-act {
   display: inline-flex; align-items: center; gap: 6px;
   min-height: var(--tap); padding: 0;
@@ -174,9 +177,38 @@ html.word-card-open body { overflow: hidden; }
 .word-card-act .icon { width: 15px; height: 15px; }
 .word-card-act:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .word-card-edit { color: var(--ink); }
+.word-card-ai { color: var(--brand); }
+.word-card-ai:hover { color: var(--brand); }
 .word-card-share:hover { color: var(--brand); }
 .word-card-delete { color: var(--ink-3); }
 .word-card-delete:hover { color: var(--bad); }
+
+/* The card's own toast: the global one lives outside the modal dialog and is
+   invisible on a phone. Fixed inside the top layer, it stays above the card. */
+.word-card-toast {
+  position: fixed; z-index: 9; left: 50%; bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: var(--s-2);
+  width: min(440px, calc(100vw - 32px)); transform: translateX(-50%);
+  padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
+  background: var(--ink); color: var(--paper);
+  font-size: var(--text-sm); line-height: 1.4; font-weight: 500;
+  box-shadow: var(--shadow-2);
+}
+.word-card-toast[hidden] { display: none; }
+.word-card-toast .icon { flex: none; width: 16px; height: 16px; color: var(--mark); }
+.word-card-toast-text { min-width: 0; flex: 1; }
+.word-card-toast-action {
+  flex: none; min-height: var(--tap); padding: 0 var(--s-2);
+  border: 0; border-radius: var(--r-sm); background: transparent;
+  color: var(--mark); font: inherit; font-weight: 700; cursor: pointer;
+}
+.word-card-toast-action:hover { background: rgb(255 255 255 / .08); }
+.word-card-toast-action[hidden] { display: none; }
+/* At night the message is a raised dark panel, not a bright block (same as
+   the global toast); the yellow action keeps its contrast on the dark fill. */
+:root[data-theme="night"] .word-card-toast {
+  background: #2a3346; color: var(--ink); border: 1px solid var(--line-strong);
+}
 
 /* ── Chapters: one hairline between them, nothing else ──────────── */
 .word-card-sec {
@@ -386,10 +418,17 @@ html.word-card-open body { overflow: hidden; }
 }
 
 /* ── Edit, in the same frame as the card ────────────────────────── */
-.word-edit-wrap { display: grid; gap: var(--s-4); padding: var(--s-5); }
+.word-edit-wrap, .word-ai-wrap { display: grid; gap: var(--s-4); padding: var(--s-5); }
 .word-edit-head h2 { font-size: var(--text-xl); }
 .word-edit-head h2 span { color: var(--ink-2); font-weight: 600; }
 .word-edit-head .hint { margin-top: 2px; }
+/* The panel is one narrow column: never let a nowrap chip or a two-button
+   row widen it past the card (320px phones, or 1.25× text). */
+.word-ai-wrap { grid-template-columns: minmax(0, 1fr); }
+.word-ai-wrap > * { min-width: 0; }
+.word-ai { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
+.word-ai > * { min-width: 0; }
+.word-ai .row { margin-top: var(--s-1); }
 
 /* ── Phone: a sheet from the thumb, one column ──────────────────── */
 @media (max-width: 599px) {
@@ -418,9 +457,9 @@ html.word-card-open body { overflow: hidden; }
   .word-card .word-memory .ruler-mini::before { top: 16.5px; }
   .word-card .met { padding: var(--s-3) var(--s-4); }
   .word-card-note .note { padding: var(--s-3) var(--s-4); }
-  .word-edit-wrap { padding: var(--s-4) var(--gutter) var(--s-5); }
+  .word-edit-wrap, .word-ai-wrap { padding: var(--s-4) var(--gutter) var(--s-5); }
 }
 @media (max-width: 374px) {
-  .word-card-actions { gap: 12px; }
+  .word-card-actions, .word-card-more { gap: 12px; }
   .word-card-act { gap: 5px; }
 }

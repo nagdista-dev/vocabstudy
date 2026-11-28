@@ -33,6 +33,7 @@
     const w = VS.byId[el.dataset.id];
     const body = el.closest(".word-card-body");
     if (!w || !body) return;
+    clearCardNote();
     body.innerHTML = String(html`
       <div class="word-edit-wrap">
         <div class="word-edit-head">
@@ -331,7 +332,7 @@
     return words.join(" ").replace(/[^\w' -]+$/g, "").toLowerCase();
   };
   /** The AI's answer → { field: value } (only fields that look right). */
-  VS.parseAiWord = function (text) {
+  VS.parseAiWord = function (text, opts) {
     let t = String(text || "").replace(/```[a-z]*\n?/gi, "").trim();
     const raw = {};
     let json = null;
@@ -381,7 +382,9 @@
     delete out.mistake;
     // The sense is the short label beside the headword. If an answer skipped
     // it, take the first phrase of the definition: the card is never bare.
-    if (!out.sense && out.definition) out.sense = VS.senseFrom(out.definition);
+    // The quick refresh passes deriveSense: false — the word already has a
+    // label, and a partial answer must not rename it (and change its id).
+    if (!(opts && opts.deriveSense === false) && !out.sense && out.definition) out.sense = VS.senseFrom(out.definition);
     return out;
   };
   /**
@@ -685,6 +688,71 @@
       if (label && label.dataset.rest) label.textContent = label.dataset.rest;
     }, 2200);
   };
+  /* The quick AI refresh from the card: same prompt and paste as Edit, but it
+     writes the answer straight back to the word instead of filling a form.
+     The panel stays one calm column; the button says exactly what happens. */
+  const AI_QUICK_LABELS = {
+    word: "word", sense: "sense", arabic: "Arabic", definition: "definition",
+    example: "example", type: "type", level: "level", ipa: "IPA",
+    tags: "tags", synonyms: "similar words", antonyms: "opposites",
+    goes: "word partners", memory: "memory hook", context: "where you met it",
+    source: "source", mistakeWrong: "the mistake", mistakeRight: "the mistake", mistakeWhy: "the mistake",
+  };
+  VS.aiQuickChanges = (found) => {
+    const changes = {};
+    const labels = [];
+    const seen = new Set();
+    Object.keys(found).forEach((k) => {
+      const label = AI_QUICK_LABELS[k];
+      if (!label) return;
+      if (k !== "mistakeWrong" && k !== "mistakeRight" && k !== "mistakeWhy") {
+        changes[k] = LIST_FIELDS.includes(k) ? VS.parseTags(found[k]) : found[k];
+      }
+      if (!seen.has(label)) { seen.add(label); labels.push(label); }
+    });
+    const mistake = VS.cleanMistake({ wrong: found.mistakeWrong, right: found.mistakeRight, why: found.mistakeWhy });
+    if (mistake) changes.mistake = mistake;
+    return { changes, labels };
+  };
+  VS.aiQuickStatus = (panel, labels, hasText) => {
+    const status = panel && panel.querySelector(".ai-fill-status");
+    const btn = panel && panel.querySelector('[data-action="word-ai-apply"]');
+    if (status) {
+      status.hidden = !hasText;
+      status.classList.toggle("is-ok", labels.length > 0);
+      status.innerHTML = labels.length
+        ? String(html`${icon("check", "icon-sm")}<span><b>${VS.plural(labels.length, "field")} ready</b> — ${labels.join(", ")}. Press Update word to apply.</span>`)
+        : "Nothing usable yet — paste the whole answer.";
+    }
+    if (btn) btn.disabled = !labels.length;
+  };
+  VS.aiQuick = (w) => html`
+    <div class="word-ai-wrap">
+      <div class="word-edit-head">
+        <h2 id="wordCardTitle" tabindex="-1">Fill in <span>“${VS.cap(w.word)}”</span> with AI</h2>
+        <p class="hint">Ask an AI, paste its answer, and this word updates. Nothing changes until you press Update.</p>
+      </div>
+      <div class="word-ai">
+        ${VS.levelPick()}
+        <div class="ai-step">
+          <span class="ai-step-n" aria-hidden="true">1</span>
+          <div class="ai-step-copy"><b>Ask the AI</b><span>Open a chat with the prompt already typed — or copy it for Gemini.</span></div>
+        </div>
+        ${VS.aiAsk({ openAction: "ai-fill-open", copyAction: "ai-copy", id: w.id })}
+        <div class="ai-step">
+          <span class="ai-step-n" aria-hidden="true">2</span>
+          <div class="ai-step-copy"><b>Paste its answer</b><span>We read it and show what will change.</span></div>
+        </div>
+        <textarea class="ai-fill-input" rows="4" dir="auto" data-ai-quick aria-label="The AI's answer"
+          placeholder="arabic: …&#10;definition: …&#10;example: …"></textarea>
+        <p class="ai-fill-status" aria-live="polite" hidden></p>
+        <p class="ai-fill-foot">Nothing is saved until you press <b>Update word</b>.</p>
+        <div class="row">
+          <button class="btn btn-primary" type="button" data-action="word-ai-apply" data-id="${w.id}" disabled>Update word</button>
+          <button class="btn btn-quiet" type="button" data-action="word-ai-cancel" data-id="${w.id}">Cancel</button>
+        </div>
+      </div>
+    </div>`;
 
   /**
    * The moment a word joins the library (every way of adding ends in
@@ -782,6 +850,14 @@
       if (first) requestAnimationFrame(() => first.focus({ preventScroll: true }));
     }
   });
+  // The card's quick AI panel has no form to fill: it shows what is ready and
+  // waits for the learner's own Update. The status line is the only feedback.
+  document.addEventListener("input", (e) => {
+    if (!e.target.matches || !e.target.matches("[data-ai-quick]")) return;
+    const panel = e.target.closest(".word-ai");
+    const { labels } = VS.aiQuickChanges(VS.parseAiWord(e.target.value, { deriveSense: false }));
+    VS.aiQuickStatus(panel, labels, !!e.target.value.trim());
+  });
 
   VS.actions["word-save"] = (el) => {
     const form = el.closest("form");
@@ -805,6 +881,55 @@
     const id = el.dataset.id;
     if (id) refreshWord(id, '[data-action="word-edit"]');
     else VS.app.render();
+  };
+  /* The quick AI refresh: open the panel in the card, read the pasted answer,
+     and write it back to the word in place. No edit form, no page reload. */
+  VS.actions["word-ai"] = (el) => {
+    const w = VS.byId[el.dataset.id];
+    const body = el.closest(".word-card-body");
+    if (!w || !body) return;
+    clearCardNote();
+    body.innerHTML = String(VS.aiQuick(w));
+    const head = body.querySelector(".word-edit-head h2");
+    if (head) head.focus({ preventScroll: true });
+  };
+  VS.actions["word-ai-cancel"] = (el) => {
+    const id = el.dataset.id;
+    if (id) refreshWord(id, '[data-action="word-ai"]');
+    else VS.closeWordCard();
+  };
+  VS.actions["word-ai-apply"] = (el) => {
+    const w = VS.byId[el.dataset.id];
+    const panel = el.closest(".word-ai");
+    const box = panel && panel.querySelector("[data-ai-quick]");
+    if (!w || !box) return;
+    const { changes } = VS.aiQuickChanges(VS.parseAiWord(box.value, { deriveSense: false }));
+    if (!Object.keys(changes).length) { VS.cardNote("Paste the AI's answer first.") || VS.toast("Paste the AI's answer first."); return; }
+    // A partial answer is allowed: keep what the learner already has.
+    if (!changes.word) changes.word = w.word;
+    if (!changes.arabic) changes.arabic = w.arabic;
+    const snap = VS.store.snapshot([w.id]);
+    const result = VS.store.editUserWord(w.id, changes);
+    if (result.error === "duplicate") { VS.cardNote("“" + result.word.word + "” with that Arabic meaning is already in your library."); return; }
+    if (result.error === "needsArabic") { VS.cardNote("“" + result.word.word + "” is already in your library — add this meaning's Arabic to keep a second word."); return; }
+    if (result.error) { VS.cardNote("That word is no longer in your library."); return; }
+    if (result.id !== w.id) { location.reload(); return; }
+    // Same word, same meaning: update the live card and row at once. Mirror
+    // what editUserWord did to the stored copy (context, mistake, variant).
+    const prevContext = w.context;
+    const live = VS.byId[w.id];
+    if (live) {
+      Object.assign(live, changes);
+      delete live.check;
+      if ("context" in changes && changes.context !== prevContext) delete live.fromContext;
+      if ("mistake" in changes) {
+        const m = VS.cleanMistake(changes.mistake);
+        if (m) live.mistake = m; else delete live.mistake;
+      }
+      if (result.variant !== undefined) live.variant = result.variant;
+    }
+    refreshWord(w.id, '[data-action="word-ai"]');
+    VS.cardNote("Updated with AI — check the card.", { label: "Undo", run: () => { VS.store.restore(snap); refreshWord(w.id); } });
   };
   VS.actions["sentence-fix"] = (el) => {
     const id = el.dataset.id, i = Number(el.dataset.index);
@@ -996,6 +1121,7 @@
      list behind never moves, so the learner keeps their place. */
   let cardId = null;              // the word shown now
   let cardOpener = null;          // the row button focus goes back to
+  let cardNoteAction = null;      // the card note's one action (Undo, Settings)
   const cardEl = () => document.getElementById("wordCard");
 
   function focusView() {
@@ -1058,6 +1184,7 @@
     cardId = id;
     cardOpener = (opts && opts.opener) || rowBtn ||
       (document.activeElement && document.activeElement.closest && document.activeElement.closest(".word-row-open")) || null;
+    clearCardNote();
     dlg.innerHTML = String(VS.ui.wordCard(w));
     document.documentElement.classList.add("word-card-open");
     if (!dlg.open) dlg.showModal();
@@ -1066,9 +1193,46 @@
     dlg.focus({ preventScroll: true });
   };
 
+  /* Take the card note away and cancel its timer, so a later note never
+     inherits an old action (or an old timer hiding it early). */
+  function clearCardNote() {
+    const dlg = cardEl();
+    const note = dlg && dlg.querySelector(".word-card-toast");
+    if (note) { clearTimeout(note._t); note.hidden = true; }
+    cardNoteAction = null;
+  }
+
   VS.closeWordCard = () => {
+    clearCardNote();
     const dlg = cardEl();
     if (dlg && dlg.open) dlg.close();
+  };
+
+  /* A note inside the open card, in the top layer with it. The global toast
+     sits outside a modal dialog and is invisible on a phone; speech errors and
+     AI updates need to be seen exactly where they happen. */
+  VS.cardNote = (message, action, kind) => {
+    const dlg = cardEl();
+    const note = dlg && dlg.open && dlg.querySelector(".word-card-toast");
+    if (!note) return false;
+    const text = note.querySelector(".word-card-toast-text");
+    if (text) text.textContent = message;
+    const btn = note.querySelector(".word-card-toast-action");
+    cardNoteAction = action || null;
+    note.dataset.kind = kind || "";
+    if (btn) {
+      btn.hidden = !action;
+      if (action) btn.textContent = action.label;
+    }
+    note.hidden = false;
+    clearTimeout(note._t);
+    note._t = setTimeout(() => { note.hidden = true; cardNoteAction = null; }, action ? 10000 : 7000);
+    return true;
+  };
+  VS.actions["card-toast-action"] = () => {
+    const action = cardNoteAction;
+    cardNoteAction = null;
+    if (action && action.run) action.run();
   };
 
   /* The focused control's twin after a redraw (same action, same word). */
@@ -1076,6 +1240,9 @@
   function cardFocusKey(dlg) {
     const el = document.activeElement;
     if (!el || !dlg.contains(el)) return null;
+    // The toast is about to be hidden by the redraw; it is not a place to
+    // return the keyboard to.
+    if (el.closest(".word-card-toast")) return null;
     if (el.id) return "#" + CSS.escape(el.id);
     const parts = CARD_FOCUS_KEYS.filter((k) => el.dataset[k] !== undefined)
       .map((k) => `[data-${k}="${CSS.escape(el.dataset[k])}"]`);
@@ -1088,6 +1255,7 @@
     if (!dlg || !dlg.open || cardId !== id) return false;
     const w = VS.byId[id];
     if (!w) { dlg.close(); return true; }
+    clearCardNote();
     const body = dlg.querySelector(".word-card-body");
     const top = body ? body.scrollTop : 0;
     const key = cardFocusKey(dlg);
@@ -1845,6 +2013,11 @@
             <span class="word-card-state" data-s="${s}"><i class="word-card-dot" aria-hidden="true"></i>${state}</span>
             <button class="icon-btn word-card-close" type="button" data-action="word-close" aria-label="Close “${w.word}”" title="Close">${icon("x")}</button>
           </header>
+          <div class="word-card-toast" role="status" aria-live="polite" hidden>
+            ${icon("info", "icon-sm")}
+            <span class="word-card-toast-text"></span>
+            <button class="word-card-toast-action" type="button" data-action="card-toast-action" hidden></button>
+          </div>
           <div class="word-card-body">
             <div class="word-entry">
               <div class="word-card-hero">
@@ -1872,10 +2045,13 @@
                   ${w.tags.length ? html`<div class="word-tags word-card-tags">${VS.ui.tags(w)}</div>` : ""}
                   ${VS.ui.checkLine(w)}
                   <div class="word-card-actions">
-                    <button class="word-card-act word-card-edit" type="button" data-action="word-edit" data-id="${w.id}">${icon("pen", "icon-sm")} Edit</button>
-                    <a class="word-card-act word-card-share" href="#/share?ids=${encodeURIComponent(w.id)}">${icon("share", "icon-sm")} Share</a>
-                    <button class="word-card-act word-card-delete" type="button" data-action="word-delete" data-id="${w.id}"
-                      aria-label="Delete “${w.word}”" title="Delete “${w.word}”">${icon("trash", "icon-sm")} Delete</button>
+                    <button class="word-card-act word-card-ai" type="button" data-action="word-ai" data-id="${w.id}">${icon("sparkles", "icon-sm")} Fill in with AI</button>
+                    <span class="word-card-more">
+                      <button class="word-card-act word-card-edit" type="button" data-action="word-edit" data-id="${w.id}">${icon("pen", "icon-sm")} Edit</button>
+                      <a class="word-card-act word-card-share" href="#/share?ids=${encodeURIComponent(w.id)}">${icon("share", "icon-sm")} Share</a>
+                      <button class="word-card-act word-card-delete" type="button" data-action="word-delete" data-id="${w.id}"
+                        aria-label="Delete “${w.word}”" title="Delete “${w.word}”">${icon("trash", "icon-sm")} Delete</button>
+                    </span>
                   </div>
                 </div>
               </div>

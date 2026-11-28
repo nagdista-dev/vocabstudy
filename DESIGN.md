@@ -426,8 +426,22 @@ close button and the backdrop close it; focus returns to the row that asked.
   the left: a quiet label, a hairline dot, then the Arabic at `--ink-2` in its
   own face. The two languages are separated by whitespace, not a rule.
 - **Tags and actions.** Tags are plain `#hashtags` with a dotted underline;
-  `Edit`, `Share` and `Delete` are three equal text actions (icon + word,
-  44px) with no fills. Delete turns red only on hover/focus.
+  `Fill in with AI`, `Edit`, `Share` and `Delete` are text actions (icon + word,
+  44px) with no fills. The AI action is brand-coloured; the rest are ink. The
+  three older actions stay together when the line is too narrow, so Delete is
+  never orphaned. Delete turns red only on hover/focus.
+- **A quick AI refresh.** `Fill in with AI` swaps the card body for the same
+  two-step panel as Edit (ask an AI, paste its answer) but writes the answer
+  straight back to the word: the status line names the fields it read, `Update
+  word` applies them in place, and a card toast offers Undo. A partial answer
+  keeps the current word, Arabic and sense label; nothing is saved until
+  Update. Cancel returns focus to the button that opened it.
+- **When the voice stays quiet.** A speaker tap that produces no sound says
+  why in a card toast: sound off (with Settings), a browser without a voice,
+  a blocked or busy audio device, no network voice, or a delayed start after
+  1.5s. Automatic pronunciation never explains itself; repeated identical
+  notices wait five seconds. The toast lives inside the dialog because the
+  global toast sits under it on a phone.
 - **Bilingual chapter heads.** `Meaning · المعنى`, `Example · المثال`,
   `In context · في السياق`, `Memory · الذاكرة`, `Your sentences · جُملك`,
   `Good to know · للمعرفة`. The English title uses the display face; the

@@ -16,6 +16,50 @@
   let voice = null;
   let voiceFor = "";
   let player = null;       // the recording playing now
+  let activeSpeech = null; // the utterance waiting to start or speaking
+  let lastNotice = { text: "", at: 0 };
+
+  /** A quiet, specific explanation — in the card when one is open, else a toast. */
+  function notice(text, action, kind) {
+    const now = Date.now();
+    if (text === lastNotice.text && now - lastNotice.at < 5000) return;
+    lastNotice = { text, at: now };
+    // The card note can carry one action. The global toast's button is the
+    // shared Undo slot, so outside the card the message stays button-free.
+    if (VS.cardNote && VS.cardNote(text, action, kind)) return;
+    if (VS.toast) VS.toast(text);
+  }
+
+  /** Why the browser's voice did not answer, in words a learner can act on. */
+  function reasonFor(code) {
+    switch (code) {
+      case "not-allowed":
+        return "Your browser blocked the sound. Allow it for this site, then tap the speaker again.";
+      case "audio-busy":
+        return "Another app is using the speaker. Close it and tap again.";
+      case "audio-hardware":
+        return "The speaker isn't available. Check your sound output and tap again.";
+      case "network":
+        return "The voice needs the internet right now. Check your connection and tap again.";
+      case "language-unavailable":
+      case "voice-unavailable":
+        return "No English voice is installed. Add one in your system settings, then tap again.";
+      case "synthesis-unavailable":
+      case "synthesis-failed":
+        return "The voice engine stopped. Tap again — if it stays quiet, restart the browser.";
+      case "text-too-long":
+      case "invalid-argument":
+        return "That text can't be spoken. Try a shorter one.";
+      default:
+        return "The voice didn't start. Check your volume, then tap again.";
+    }
+  }
+
+  /** A delay note has done its job once the voice actually starts. */
+  function hideDelayNote() {
+    const note = document.querySelector("#wordCard[open] .word-card-toast");
+    if (note && note.dataset.kind === "delay") note.hidden = true;
+  }
 
   /** The best voice for the chosen accent (Settings → Accent): natural voices first. */
   function pickVoice() {
@@ -42,21 +86,47 @@
     return (st.voice === "uk" ? a.uk || a.us : a.us || a.uk) || "";
   }
 
-  function speak(text, button, rate) {
+  function speak(text, button, rate, quiet) {
     if (!synth) return;
     const u = new SpeechSynthesisUtterance(text);
     if (!voice || voiceFor !== VS.store.settings().voice) voice = pickVoice();
     if (voice) u.voice = voice;
     u.lang = voice ? voice.lang : "en-US";
     u.rate = rate || VS.store.settings().rate;
-    if (button) {
-      button.classList.add("is-speaking");
-      u.onend = u.onerror = () => button.classList.remove("is-speaking");
+    if (button) button.classList.add("is-speaking");
+    let started = false;
+    let delayTimer = 0;
+    const entry = { u, done: null };
+    const done = () => {
+      clearTimeout(delayTimer);
+      if (button) button.classList.remove("is-speaking");
+      if (activeSpeech === entry) activeSpeech = null;
+    };
+    entry.done = done;
+    u.onstart = () => { started = true; clearTimeout(delayTimer); hideDelayNote(); };
+    u.onend = done;
+    u.onerror = (e) => {
+      done();
+      const code = e && e.error;
+      // A new word, a closed card or the learner tapping again: not a failure.
+      if (code === "canceled" || code === "interrupted") return;
+      if (!quiet) notice(reasonFor(code));
+    };
+    // Some browsers queue a voice and then never start it. Say so, gently,
+    // instead of leaving the learner tapping a silent button.
+    delayTimer = setTimeout(() => {
+      if (!started && !quiet) notice("The voice is still waking up. Give it a second, then tap again.", null, "delay");
+    }, 1500);
+    activeSpeech = entry;
+    try {
+      synth.speak(u);
+    } catch (err) {
+      done();
+      if (!quiet) notice("The voice engine refused. Tap again — if it stays quiet, restart the browser.");
     }
-    synth.speak(u);
   }
 
-  function play(url, text, button, rate) {
+  function play(url, text, button, rate, quiet) {
     const audio = new Audio(url);
     player = audio;
     // Speaking speed applies to recordings too (Normal = 0.9 = as recorded).
@@ -67,7 +137,7 @@
     const fallback = () => {
       if (fell || player !== audio) return;
       fell = true; player = null; done();
-      speak(text, button, rate);
+      speak(text, button, rate, quiet);
     };
     if (button) button.classList.add("is-speaking");
     audio.addEventListener("ended", () => { if (player === audio) player = null; done(); });
@@ -75,24 +145,38 @@
     audio.play().catch(fallback);
   }
 
+  const settingsAction = () => (VS.actions && VS.actions["open-settings"]
+    ? { label: "Settings", run: () => VS.actions["open-settings"]() }
+    : null);
+
   VS.speech = {
     supported: !!synth,
 
-    /** Say text. `button` (optional) shows a speaking state while it plays. */
-    say(text, button, rate) {
-      if (!VS.store.settings().sound || !text) return;
+    /** Say text. `button` (optional) shows a speaking state while it plays.
+        `quiet` is for automatic speech: it never explains a silence. */
+    say(text, button, rate, quiet) {
+      if (!text) return;
+      if (!VS.store.settings().sound) {
+        if (!quiet) notice("Sound is off, so the word stays quiet. Turn it on in Settings to hear words.", settingsAction(), "sound-off");
+        return;
+      }
       this.stop();
       const url = recordingFor(text);
-      if (url) play(url, text, button, rate);
-      else speak(text, button, rate);
+      if (url) { play(url, text, button, rate, quiet); return; }
+      if (!synth) {
+        if (!quiet) notice("This browser has no voice. Open the app in Chrome, Edge or Safari to hear words.");
+        return;
+      }
+      speak(text, button, rate, quiet);
     },
 
     stop() {
+      if (activeSpeech) { activeSpeech.done(); activeSpeech = null; }
       if (synth) synth.cancel();
       if (player) { player.pause(); player = null; }
     },
 
     /** Say a new word on its own — only if "Say new words automatically" is on. */
-    auto(text) { if (VS.store.settings().autoplay) this.say(text); },
+    auto(text) { if (VS.store.settings().autoplay) this.say(text, null, null, true); },
   };
 })();
